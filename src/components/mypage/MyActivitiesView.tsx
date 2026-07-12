@@ -287,12 +287,12 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                                 </Badge>
                               )}
                               {(a.year || a.semester) && (
-                                <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                                <Badge variant="secondary" className={cn("text-[10px]", STATUS_CHIP.info)}>
                                   {formatSemester(a.year, a.semester)}
                                 </Badge>
                               )}
                               {role && <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px] dark:bg-sky-950/40 dark:text-sky-300">{role}</Badge>}
-                              {a.leaderId === user?.id && <Badge className="bg-amber-50 text-amber-700 text-[10px] dark:bg-amber-950/40 dark:text-amber-300">{a.type === "study" ? "모임장" : "담당자"}</Badge>}
+                              {a.leaderId === user?.id && <Badge className={cn("text-[10px]", STATUS_CHIP.warning)}>{a.type === "study" ? "모임장" : "담당자"}</Badge>}
                             </div>
                             <p className="mt-1 truncate font-medium">{a.title}</p>
                             <p className="mt-0.5 text-xs text-muted-foreground">
@@ -388,7 +388,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                       <div className="flex items-start justify-between">
                         <div>
                           <div className="flex items-center gap-2">
-                            <Badge variant="secondary" className={c.type === "completion" ? "bg-primary/10 text-primary" : c.type === "appointment" ? "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300" : "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"}>
+                            <Badge variant="secondary" className={c.type === "completion" ? "bg-primary/10 text-primary" : c.type === "appointment" ? STATUS_CHIP.info : STATUS_CHIP.warning}>
                               {c.type === "completion" ? "수료증" : c.type === "appointment" ? "임명장" : "감사장"}
                             </Badge>
                             {c.certificateNo && (
@@ -446,7 +446,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
                                 <Mic size={14} className="text-blue-600" />
-                                <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px] dark:bg-blue-950/40 dark:text-blue-300">인터뷰</Badge>
+                                <Badge variant="secondary" className={cn("text-[10px]", STATUS_CHIP.info)}>인터뷰</Badge>
                                 <Badge
                                   variant="outline"
                                   className={cn(
@@ -500,7 +500,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
                               <Mic size={14} className="text-blue-600" />
-                              <Badge variant="secondary" className="bg-blue-50 text-blue-700 text-[10px] dark:bg-blue-950/40 dark:text-blue-300">인터뷰</Badge>
+                              <Badge variant="secondary" className={cn("text-[10px]", STATUS_CHIP.info)}>인터뷰</Badge>
                               {p.interview?.deadline && (
                                 <Badge variant="outline" className="text-[10px]">
                                   마감 {new Date(p.interview.deadline).toLocaleDateString("ko-KR")}

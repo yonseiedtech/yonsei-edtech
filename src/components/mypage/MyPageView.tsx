@@ -23,6 +23,7 @@ import { Badge } from "@/components/ui/badge";
 import PageHeader from "@/components/ui/page-header";
 import PageContainer from "@/components/ui/page-container";
 import { cn } from "@/lib/utils";
+import { SEMANTIC, STATUS_CHIP } from "@/lib/design-tokens";
 import {
   User as UserIcon,
   LogOut,
@@ -748,22 +749,22 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                     {pendingApps.length > 0 && (
                       <Link
                         href="/mypage/activities"
-                        className="block rounded-2xl border border-amber-200/70 bg-amber-50/60 p-4 transition hover:border-amber-300 hover:bg-amber-50"
+                        className={cn("block rounded-2xl border p-4 transition hover:border-amber-300 hover:bg-amber-50", SEMANTIC.warning.border, SEMANTIC.warning.bg)}
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-200/60 text-amber-700">
+                          <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-200/60", SEMANTIC.warning.accent)}>
                             <AlertCircle size={18} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-amber-900">
+                            <p className={cn("text-sm font-semibold", SEMANTIC.warning.titleStrong)}>
                               신청 결과 대기 {pendingApps.length}건
                             </p>
-                            <p className="mt-0.5 truncate text-xs text-amber-800/80">
+                            <p className={cn("mt-0.5 truncate text-xs", SEMANTIC.warning.textMuted)}>
                               {pendingApps.slice(0, 2).map((x) => x.a.title).join(" · ")}
                               {pendingApps.length > 2 ? ` 외 ${pendingApps.length - 2}건` : ""}
                             </p>
                           </div>
-                          <ChevronRight size={16} className="shrink-0 self-center text-amber-700" />
+                          <ChevronRight size={16} className={cn("shrink-0 self-center", SEMANTIC.warning.accent)} />
                         </div>
                       </Link>
                     )}
@@ -772,21 +773,21 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                       <Link
                         key={`prv-${s.id}`}
                         href={`/seminars/${s.id}/review`}
-                        className="block rounded-2xl border border-blue-200/70 bg-blue-50/50 p-4 transition hover:border-blue-300 hover:bg-blue-50"
+                        className={cn("block rounded-2xl border p-4 transition hover:border-blue-300 hover:bg-blue-50", SEMANTIC.info.border, SEMANTIC.info.bg)}
                       >
                         <div className="flex items-start gap-3">
-                          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-200/60 text-blue-700">
+                          <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-200/60", SEMANTIC.info.accent)}>
                             <PenSquare size={18} />
                           </div>
                           <div className="min-w-0 flex-1">
-                            <p className="text-sm font-semibold text-blue-900">
+                            <p className={cn("text-sm font-semibold", SEMANTIC.info.titleStrong)}>
                               세미나 리뷰를 작성해보세요
                             </p>
-                            <p className="mt-0.5 truncate text-xs text-blue-800/80">
+                            <p className={cn("mt-0.5 truncate text-xs", SEMANTIC.info.textMuted)}>
                               {s.title} · {formatDate(s.date)}
                             </p>
                           </div>
-                          <ChevronRight size={16} className="shrink-0 self-center text-blue-700" />
+                          <ChevronRight size={16} className={cn("shrink-0 self-center", SEMANTIC.info.accent)} />
                         </div>
                       </Link>
                     ))}
@@ -1242,8 +1243,8 @@ function ReadinessDelta({ delta }: { delta: number }) {
     <span
       className={
         up
-          ? "inline-flex items-center rounded-full bg-emerald-50 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
-          : "inline-flex items-center rounded-full bg-rose-50 px-1.5 py-0.5 text-[10px] font-semibold tabular-nums text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
+          ? cn("inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums", STATUS_CHIP.success)
+          : cn("inline-flex items-center rounded-full px-1.5 py-0.5 text-[10px] font-semibold tabular-nums", STATUS_CHIP.danger)
       }
     >
       {up ? "▲" : "▼"} {up ? "+" : ""}

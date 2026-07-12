@@ -18,6 +18,8 @@ import {
 } from "lucide-react";
 import { auth } from "@/lib/firebase";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 import AuthGuard from "@/features/auth/AuthGuard";
 import PageContainer from "@/components/ui/page-container";
 
@@ -110,11 +112,11 @@ function DataExportContent() {
         </section>
 
         {/* 개인정보 주의 안내 */}
-        <div className="flex items-start gap-3 rounded-2xl border border-amber-200 bg-amber-50/60 p-4">
-          <ShieldAlert size={18} className="mt-0.5 shrink-0 text-amber-700" />
+        <div className={cn("flex items-start gap-3 rounded-2xl border p-4", SEMANTIC.warning.border, SEMANTIC.warning.bg)}>
+          <ShieldAlert size={18} className={cn("mt-0.5 shrink-0", SEMANTIC.warning.accent)} />
           <div className="min-w-0">
-            <p className="text-sm font-semibold text-amber-900">개인정보 보호 주의</p>
-            <p className="mt-0.5 text-xs text-amber-800/80">
+            <p className={cn("text-sm font-semibold", SEMANTIC.warning.titleStrong)}>개인정보 보호 주의</p>
+            <p className={cn("mt-0.5 text-xs", SEMANTIC.warning.textMuted)}>
               다운로드 파일에는 본인의 이름·이메일·학번·활동 기록 등 민감한 개인정보가 포함됩니다.
               제3자에게 공유하거나 공개 저장소에 업로드하지 마세요.
             </p>

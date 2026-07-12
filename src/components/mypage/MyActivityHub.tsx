@@ -37,6 +37,7 @@ import {
   type Seminar,
 } from "@/types";
 import { formatEventDate, isPastEvent, formatWon } from "@/features/networking/networking-helpers";
+import { SEMANTIC } from "@/lib/design-tokens";
 
 type ApplicationLite = {
   activityId: string;
@@ -61,19 +62,19 @@ type HubStatus = "approved" | "pending" | "rejected" | "upcoming" | "past";
 const STATUS_META: Record<HubStatus, { label: string; cls: string }> = {
   approved: {
     label: "신청완료",
-    cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+    cls: cn(SEMANTIC.success.chipBg, SEMANTIC.success.chipText),
   },
   pending: {
     label: "승인 대기",
-    cls: "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+    cls: cn(SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText),
   },
   rejected: {
     label: "반려",
-    cls: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+    cls: cn(SEMANTIC.danger.chipBg, SEMANTIC.danger.chipText),
   },
   upcoming: {
     label: "예정",
-    cls: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
+    cls: cn(SEMANTIC.info.chipBg, SEMANTIC.info.chipText),
   },
   past: {
     label: "지난 일정",
@@ -334,20 +335,20 @@ export default function MyActivityHub({
       {unpaidDues.length > 0 && (
         <Link
           href="/gatherings"
-          className="flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50/60 p-3.5 transition hover:border-amber-300 dark:border-amber-900 dark:bg-amber-950/30"
+          className={cn("flex items-center gap-3 rounded-2xl border p-3.5 transition hover:border-amber-300", SEMANTIC.warning.border, SEMANTIC.warning.bg)}
         >
-          <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300">
+          <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText)}>
             <Wallet size={18} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+            <p className={cn("text-sm font-semibold", SEMANTIC.warning.titleStrong)}>
               미납 회비 {unpaidDues.length}건 · {formatWon(unpaidTotal)}
             </p>
-            <p className="mt-0.5 text-xs text-amber-700/80 dark:text-amber-300/80">
+            <p className={cn("mt-0.5 text-xs", SEMANTIC.warning.textMuted)}>
               모임 회비가 아직 납부되지 않았습니다. 총무에게 납부해 주세요.
             </p>
           </div>
-          <ChevronRight size={16} className="shrink-0 text-amber-600 dark:text-amber-400" />
+          <ChevronRight size={16} className={cn("shrink-0", SEMANTIC.warning.accent)} />
         </Link>
       )}
 

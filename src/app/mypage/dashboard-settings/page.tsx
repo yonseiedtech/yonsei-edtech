@@ -46,6 +46,8 @@ import {
   buildPresetLayout,
   type DashboardPresetId,
 } from "@/lib/dashboard-presets";
+import { cn } from "@/lib/utils";
+import { STATUS_CHIP } from "@/lib/design-tokens";
 import {
   DndContext,
   PointerSensor,
@@ -444,7 +446,7 @@ function DashboardSettingsContent() {
       />
 
       {/* D-2c 인라인 편집 안내 — /dashboard 우상단 ✏️ 편집 버튼으로 직접 조정 가능 */}
-      <p className="mt-6 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2.5 text-xs text-emerald-700">
+      <p className={cn("mt-6 rounded-lg border px-4 py-2.5 text-xs", STATUS_CHIP.success)}>
         💡 대시보드 화면에서 직접 편집할 수 있습니다.{" "}
         <a href="/dashboard" className="font-medium underline underline-offset-2">
           /dashboard
@@ -463,13 +465,13 @@ function DashboardSettingsContent() {
       </section>
 
       {/* D-2b 안내 배너 — 순서 변경은 /dashboard 에 즉시 반영됨 */}
-      <p className="mt-4 rounded-lg border border-blue-200 bg-blue-50 px-4 py-2.5 text-xs text-blue-700">
+      <p className={cn("mt-4 rounded-lg border px-4 py-2.5 text-xs", STATUS_CHIP.info)}>
         위젯 순서·표시 설정은 저장 즉시{" "}
         <span className="font-medium">/dashboard 화면에 반영</span>됩니다.
       </p>
 
       {/* D-3 알림 끄기 안내 배너 */}
-      <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-2.5 text-xs text-amber-700">
+      <p className={cn("mt-2 rounded-lg border px-4 py-2.5 text-xs", STATUS_CHIP.warning)}>
         <Bell size={12} className="mr-1 inline-block" />
         <span className="font-medium">알림 끄기</span> 옵션은 알림을 가진 위젯에만 표시됩니다.
         실제 위젯 내부 적용은 다음 업데이트(D-3b)에서 점진 적용됩니다.
