@@ -37,3 +37,10 @@
 - **순화어 매칭 점검**: 노션 순화어 57건 vs 신규 개념 44종 → 유효 매칭 2건(피드백→되알리기, 문제 기반 학습→실제 문제 기반 학습). 운영자 폼 입력 권장.
 - **executor 병렬**: v3-G2 학습효과 증명 루프(진단↔복습 % 시계열)·v3-M1 색상 마이그레이션 번들1(마이페이지·대시보드)·진단 문항 2·3차 21종 확충.
 - 운영: 세션 한도(21:10 리셋)로 executor 1회 중단→재가동(작업트리 오염 없음). worklog heredoc append가 파일을 훼손해 git 커밋본에서 복원 — **worklog 갱신은 Edit 도구 사용**(shell append 금지) 교훈.
+
+## 2026-07-13 연속 세션 (『교수학습공학』 라운드 + 개념 설명 인덱스, 5차 게이트 1193c49a까지 LIVE)
+- **『교수학습공학』(이명근, 2025) 반영**: 제안서(docs/plans/instruction-learning-tech-book-proposal-2026-07-12.md) 승인 → B(4차 학습이론 7종: 조건화 4형제·형태주의·잠재학습·관찰학습, LEE_REF·purifiedName 순화 병기: 작동 조건화·신호학습) → A(학습이론 가계도 /archive/theory-map — 3사조 19노드) → 프로그램 개발 가이드(/steppingstone/program-development — ADDIE 5단계·이론 렌즈·개념 링크 25) → D(계보 문항 24종, 총 201) — 신간 기사만 제외(사용자 지시).
+- **AECT '개념 설명 형태' 개선(사용자 재강조)**: 5차 개념 11종(교수설계·미시전략·매체 계열) → 개념 총 86종 + /archive/terminology를 개념 설명 인덱스로 전환(설명 인라인·통계·필터).
+- **순화어 시드 경로**: SeedConcept.purifiedName + refresh 빈 값 채움(운영자 입력 보존·멱등).
+- 세션 한도 2회차(02:20 리셋)로 executor 3기 중단 → 산출물 디스크 보존 확인 후 검수·커밋으로 복구. Explore 에이전트는 Write 불가 + 최종 메시지 유실 3회 → 메인 직접 grep으로 구조 확인(여정=ResearchJourneyGuide.tsx, 연구 탭=MyResearchView.tsx).
+- **진행 중**: 연구 여정 개편(윤리·도구확정 제거→'연구 설계' 단계·페이지 신설, research_designs 컬렉션, MyResearchView 탭, 콘솔 [userId] 탭, 연구방법 초안 조립) — 스펙 docs/plans/research-design-stage-spec-2026-07-13.md, executor 구현 중.

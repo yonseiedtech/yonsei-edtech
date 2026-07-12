@@ -22,7 +22,7 @@ import {
   ChevronRight,
   Compass,
   BookOpen,
-  ShieldCheck,
+  DraftingCompass,
   MessageSquareQuote,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -31,24 +31,26 @@ import {
   researchReportsApi,
   writingPapersApi,
   researchPapersApi,
+  researchDesignsApi,
   advisorFeedbackApi,
 } from "@/lib/bkend";
-import { ETHICS_ITEMS } from "./EthicsChecklistPanel";
+import { computeDesignProgress } from "@/types/research-design";
 import type {
   ResearchProposal,
   ResearchReport,
+  ResearchDesign,
   WritingPaper,
   AdvisorFeedbackNote,
 } from "@/types";
 
-export type ResearchJourneyStep = "proposal" | "report" | "thesis";
+export type ResearchJourneyStep = "proposal" | "report" | "design" | "thesis";
 
 type JourneyKey =
   | "topic"
   | "literature"
   | "report"
+  | "design"
   | "proposal"
-  | "ethics"
   | "thesis"
   | "defense";
 
@@ -98,6 +100,15 @@ const STEPS: StepMeta[] = [
     editorSub: "report",
   },
   {
+    key: "design",
+    label: "연구 설계",
+    semester: "2~3학기",
+    purpose: "연구 모형·대상·방법·도구·분석 계획을 설계합니다",
+    icon: DraftingCompass,
+    kind: "editor",
+    editorSub: "design",
+  },
+  {
     key: "proposal",
     label: "연구 계획서",
     semester: "3학기",
@@ -105,15 +116,6 @@ const STEPS: StepMeta[] = [
     icon: ClipboardList,
     kind: "editor",
     editorSub: "proposal",
-  },
-  {
-    key: "ethics",
-    label: "윤리·도구 확정",
-    semester: "3~4학기",
-    purpose: "IRB·동의 절차를 점검하고 측정도구를 확정합니다",
-    icon: ShieldCheck,
-    kind: "support",
-    href: "/mypage/research?tab=writing",
   },
   {
     key: "thesis",
@@ -229,6 +231,15 @@ export default function ResearchJourneyGuide({ userId, current, readOnly }: Prop
     staleTime: 1000 * 30,
   });
 
+  const { data: design } = useQuery({
+    queryKey: ["journey-guide", "research_design", userId],
+    queryFn: async () => {
+      const res = await researchDesignsApi.listByUser(userId);
+      return (res.data[0] ?? null) as ResearchDesign | null;
+    },
+    staleTime: 1000 * 30,
+  });
+
   const { data: paper } = useQuery({
     queryKey: ["journey-guide", "writing_paper", userId],
     queryFn: async () => {
@@ -260,17 +271,20 @@ export default function ResearchJourneyGuide({ userId, current, readOnly }: Prop
     const papers = myPapers as { isDraft?: boolean; readStatus?: string }[];
     const registered = papers.filter((pp) => !pp.isDraft).length;
     const completed = papers.filter((pp) => !pp.isDraft && pp.readStatus === "completed").length;
-    const ethicsDone = (paper?.ethicsChecked ?? []).length;
+    // 연구 설계: 완성도(%)를 started/rich 로 환산 — 문서 존재 + 섹션 완성도
+    const designProgress = computeDesignProgress(design ?? null);
+    const designStatus: StepStatus =
+      designProgress <= 0 ? "empty" : designProgress < 60 ? "started" : "rich";
     return {
       topic: statusOfCount(registered, 3),
       literature: statusOfCount(completed, 3),
       report: statusOf(reportChars(report ?? undefined)),
+      design: designStatus,
       proposal: statusOf(proposalChars(proposal ?? undefined)),
-      ethics: statusOfCount(ethicsDone, ETHICS_ITEMS.length),
       thesis: statusOf(thesisChars(paper ?? undefined)),
       defense: statusOfCount(feedbackNotes.length, 3),
     };
-  }, [myPapers, proposal, report, paper, feedbackNotes]);
+  }, [myPapers, proposal, report, design, paper, feedbackNotes]);
 
   // "지금 무엇부터" — 비어 있는 첫 단계를 다음 권장 단계로 안내
   const nextRecommended = useMemo<JourneyKey | null>(() => {
@@ -287,7 +301,14 @@ export default function ResearchJourneyGuide({ userId, current, readOnly }: Prop
     }
     if (step.editorSub === current) return;
     // QA-v3 L: 개편된 평탄화 탭 키로 직접 발행 (legacy writing&sub= shim 의존 제거)
-    const flatTab = step.editorSub === "report" ? "reportdoc" : step.editorSub === "proposal" ? "proposal" : "writing";
+    const flatTab =
+      step.editorSub === "report"
+        ? "reportdoc"
+        : step.editorSub === "design"
+          ? "design"
+          : step.editorSub === "proposal"
+            ? "proposal"
+            : "writing";
     const params = new URLSearchParams(searchParams.toString());
     params.delete("sub");
     params.set("tab", flatTab);
@@ -309,7 +330,7 @@ export default function ResearchJourneyGuide({ userId, current, readOnly }: Prop
           <h2 className="text-sm font-bold tracking-tight">연구 여정</h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
             주제 탐색부터 심사 대응까지 — 산출물은{" "}
-            <span className="font-medium">보고서 → 계획서 → 논문</span> 순으로 이어집니다. 지금은{" "}
+            <span className="font-medium">보고서 → 설계 → 계획서 → 논문</span> 순으로 이어집니다. 지금은{" "}
             <span className="font-semibold text-primary">{currentMeta.label}</span> 단계 —{" "}
             {currentMeta.purpose}.
           </p>

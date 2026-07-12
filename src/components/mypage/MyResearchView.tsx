@@ -23,7 +23,7 @@ import type { User, StudySession } from "@/types";
 import {
   BookOpen, FileText, BookOpenCheck, FileBarChart2,
   X, CalendarRange, Printer, FileEdit, ClipboardList,
-  Clock, Plus, Pencil, Trash2, GraduationCap, Lightbulb,
+  Clock, Plus, Pencil, Trash2, GraduationCap, Lightbulb, DraftingCompass,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,7 @@ const ResearchDashboard = dynamic(() => import("@/features/research/ResearchDash
 const ResearchReportPrint = dynamic(() => import("@/features/research/ResearchReportPrint"), { ssr: false, loading: panelFallback });
 const ResearchReportEditor = dynamic(() => import("@/features/research/ResearchReportEditor"), { ssr: false, loading: panelFallback });
 const ResearchProposalEditor = dynamic(() => import("@/features/research/ResearchProposalEditor"), { ssr: false, loading: panelFallback });
+const ResearchDesignEditor = dynamic(() => import("@/features/research/ResearchDesignEditor"), { ssr: false, loading: panelFallback });
 const StudyTimerStats = dynamic(() => import("@/features/research/study-timer/StudyTimerStats"), { ssr: false, loading: panelFallback });
 const PaperReadingSection = dynamic(() => import("@/features/research/study-timer/PaperReadingSection"), { ssr: false, loading: panelFallback });
 const ThesisJourney = dynamic(() => import("@/features/research/ThesisJourney"), { ssr: false, loading: panelFallback });
@@ -62,12 +63,12 @@ interface Props {
   readOnly?: boolean;
 }
 
-type ResearchTab = "report" | "explore" | "reading" | "reportdoc" | "proposal" | "writing" | "feedback";
+type ResearchTab = "report" | "explore" | "reading" | "reportdoc" | "design" | "proposal" | "writing" | "feedback";
 type WritingPeriodMode = "semester" | "1year" | "yearly" | "custom";
 
 function isResearchTab(v: string | null): v is ResearchTab {
   return v === "report" || v === "explore" || v === "reading" || v === "reportdoc"
-    || v === "proposal" || v === "writing" || v === "feedback";
+    || v === "design" || v === "proposal" || v === "writing" || v === "feedback";
 }
 
 /** 2026-07-04 탭 개편 이전 URL 하위호환 — timer→리포트(통합), writing&sub=… → 평탄화 탭 */
@@ -385,6 +386,9 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
             <TabsTrigger value="reportdoc" className="flex-none">
               <FileEdit size={14} />연구보고서
             </TabsTrigger>
+            <TabsTrigger value="design" className="flex-none">
+              <DraftingCompass size={14} />연구 설계
+            </TabsTrigger>
             <TabsTrigger value="proposal" className="flex-none">
               <ClipboardList size={14} />연구계획서
             </TabsTrigger>
@@ -410,6 +414,11 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
           {/* ── 연구보고서 ── */}
           <TabsContent value="reportdoc" className="mt-5">
             <ResearchReportEditor user={user} readOnly={!isSelf || readOnly} />
+          </TabsContent>
+
+          {/* ── 연구 설계 ── */}
+          <TabsContent value="design" className="mt-5">
+            <ResearchDesignEditor user={user} readOnly={!isSelf || readOnly} />
           </TabsContent>
 
           {/* ── 연구계획서 ── */}

@@ -12,6 +12,7 @@ import {
   ChevronRight,
   ClipboardList,
   PenLine,
+  DraftingCompass,
 } from "lucide-react";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Input } from "@/components/ui/input";
@@ -23,6 +24,7 @@ import {
   researchPapersApi,
   studySessionsApi,
   researchProposalsApi,
+  researchDesignsApi,
   writingPapersApi,
 } from "@/lib/bkend";
 import type {
@@ -31,20 +33,29 @@ import type {
   ResearchPaper,
   StudySession,
   ResearchProposal,
+  ResearchDesign,
   WritingPaper,
 } from "@/types";
+import {
+  designSectionStatus,
+  computeDesignProgress,
+  RESEARCH_DESIGN_APPROACH_LABELS,
+} from "@/types/research-design";
+import { buildResearchMethodDraft } from "@/lib/research-design-draft";
 import { cn } from "@/lib/utils";
 
 interface UserResearchSummary {
   user: User;
   report?: ResearchReport;
   proposal?: ResearchProposal;
+  design?: ResearchDesign;
   writing?: WritingPaper;
   papers: ResearchPaper[];
   sessions: StudySession[];
   totalMinutes: number;
   reportProgress: number; // 0~100
   proposalProgress: number; // 0~100
+  designProgress: number; // 0~100
   writingCharCount: number;
   lastActivityAt?: string;
 }
@@ -135,6 +146,11 @@ export default function ConsoleResearchPage() {
     queryFn: () => researchProposalsApi.listAll(500),
   });
 
+  const { data: designsData, isLoading: loadingDesigns } = useQuery({
+    queryKey: ["console-research", "designs"],
+    queryFn: () => researchDesignsApi.listAll(500),
+  });
+
   const { data: writingsData, isLoading: loadingWritings } = useQuery({
     queryKey: ["console-research", "writings"],
     queryFn: () => writingPapersApi.listAll(1000),
@@ -177,6 +193,7 @@ export default function ConsoleResearchPage() {
   const baseUsers = profilesData?.data ?? [];
   const reports = reportsData?.data ?? [];
   const proposals = proposalsData?.data ?? [];
+  const designs = designsData?.data ?? [];
   const writings = writingsData?.data ?? [];
 
   // 연구 데이터가 있지만 approved 회원 목록에 없는 userId(예: 관리자, 미승인)를 별도 조회.
@@ -185,6 +202,7 @@ export default function ConsoleResearchPage() {
     const ids = new Set<string>();
     reports.forEach((r) => r.userId && !baseUserIds.has(r.userId) && ids.add(r.userId));
     proposals.forEach((p) => p.userId && !baseUserIds.has(p.userId) && ids.add(p.userId));
+    designs.forEach((d) => d.userId && !baseUserIds.has(d.userId) && ids.add(d.userId));
     writings.forEach((w) => w.userId && !baseUserIds.has(w.userId) && ids.add(w.userId));
     if (papersBundles) {
       for (const uid of papersBundles.keys()) if (!baseUserIds.has(uid)) ids.add(uid);
@@ -193,7 +211,7 @@ export default function ConsoleResearchPage() {
       for (const uid of sessionBundles.keys()) if (!baseUserIds.has(uid)) ids.add(uid);
     }
     return Array.from(ids);
-  }, [reports, proposals, writings, papersBundles, sessionBundles, baseUserIds]);
+  }, [reports, proposals, designs, writings, papersBundles, sessionBundles, baseUserIds]);
 
   const { data: extraUsers = [] } = useQuery({
     queryKey: ["console-research", "extra-users", dataOnlyUserIds.slice().sort().join(",")],
@@ -221,6 +239,13 @@ export default function ConsoleResearchPage() {
         proposalMap.set(p.userId, p);
       }
     }
+    const designMap = new Map<string, ResearchDesign>();
+    for (const d of designs) {
+      const existing = designMap.get(d.userId);
+      if (!existing || (d.updatedAt ?? "").localeCompare(existing.updatedAt ?? "") > 0) {
+        designMap.set(d.userId, d);
+      }
+    }
     const writingMap = new Map<string, WritingPaper>();
     for (const w of writings) {
       const existing = writingMap.get(w.userId);
@@ -232,16 +257,19 @@ export default function ConsoleResearchPage() {
       .map((u) => {
         const report = reportMap.get(u.id);
         const proposal = proposalMap.get(u.id);
+        const design = designMap.get(u.id);
         const writing = writingMap.get(u.id);
         const papers = papersBundles?.get(u.id) ?? [];
         const sessions = sessionBundles?.get(u.id) ?? [];
         const totalMinutes = sessions.reduce((acc, s) => acc + (s.durationMinutes ?? 0), 0);
         const reportProgress = calcReportProgress(report);
         const proposalProgress = calcProposalProgress(proposal);
+        const designProgress = computeDesignProgress(design);
         const writingCharCount = calcWritingCharCount(writing);
         const lastActivityAt = [
           report?.updatedAt,
           proposal?.updatedAt ?? proposal?.lastSavedAt,
+          design?.updatedAt ?? design?.lastSavedAt,
           writing?.updatedAt ?? writing?.lastSavedAt,
           sessions
             .map((s) => s.endTime ?? s.startTime)
@@ -256,12 +284,14 @@ export default function ConsoleResearchPage() {
           user: u,
           report,
           proposal,
+          design,
           writing,
           papers,
           sessions,
           totalMinutes,
           reportProgress,
           proposalProgress,
+          designProgress,
           writingCharCount,
           lastActivityAt,
         };
@@ -270,11 +300,12 @@ export default function ConsoleResearchPage() {
         (s) =>
           s.report ||
           s.proposal ||
+          s.design ||
           s.writing ||
           s.papers.length > 0 ||
           s.sessions.length > 0,
       );
-  }, [users, reports, proposals, writings, papersBundles, sessionBundles]);
+  }, [users, reports, proposals, designs, writings, papersBundles, sessionBundles]);
 
   const filtered = useMemo(() => {
     const kw = keyword.trim().toLowerCase();
@@ -312,6 +343,7 @@ export default function ConsoleResearchPage() {
     loadingProfiles ||
     loadingReports ||
     loadingProposals ||
+    loadingDesigns ||
     loadingWritings ||
     loadingPapers ||
     loadingSessions;
@@ -417,12 +449,14 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
     user,
     report,
     proposal,
+    design,
     writing,
     papers,
     sessions,
     totalMinutes,
     reportProgress,
     proposalProgress,
+    designProgress,
     writingCharCount,
     lastActivityAt,
   } = summary;
@@ -474,6 +508,9 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
               <BookOpen size={11} /> 읽기 {papers.length}편
             </span>
             <span className="inline-flex items-center gap-1">
+              <DraftingCompass size={11} /> 설계 {designProgress}%
+            </span>
+            <span className="inline-flex items-center gap-1">
               <ClipboardList size={11} /> 계획서 {proposalProgress}%
             </span>
             <span className="inline-flex items-center gap-1">
@@ -494,18 +531,23 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
       {open && (
         <div className="border-t bg-muted/20 px-4 py-4 text-sm">
           {/* 진행 현황 미니 요약 — 내 연구활동 페이지와 동일 순서 */}
-          <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-4">
+          <div className="mb-3 grid grid-cols-2 gap-2 sm:grid-cols-5">
             <MiniProgress label="연구 보고서" value={reportProgress} hint={report ? "작성 중" : "미작성"} icon={FileText} />
+            <MiniProgress label="연구 설계" value={designProgress} hint={design ? "작성 중" : "미작성"} icon={DraftingCompass} />
             <MiniProgress label="연구 계획서" value={proposalProgress} hint={proposal ? "작성 중" : "미작성"} icon={ClipboardList} />
             <MiniProgress label="논문 작성" value={Math.min(100, Math.round((writingCharCount / 7500) * 100))} hint={`${writingCharCount.toLocaleString()}자`} icon={PenLine} />
             <MiniProgress label="논문 읽기" value={Math.min(100, papers.length * 10)} hint={`${papers.length}편`} icon={BookOpen} />
           </div>
 
           <Tabs defaultValue="report" className="w-full">
-            <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-4 sm:max-w-2xl">
+            <TabsList className="grid w-full grid-cols-2 gap-1 sm:grid-cols-5 sm:max-w-3xl">
               <TabsTrigger value="report" className="flex items-center gap-1.5 text-xs">
                 <FileText size={12} />
                 연구 보고서
+              </TabsTrigger>
+              <TabsTrigger value="design" className="flex items-center gap-1.5 text-xs">
+                <DraftingCompass size={12} />
+                연구 설계
               </TabsTrigger>
               <TabsTrigger value="proposal" className="flex items-center gap-1.5 text-xs">
                 <ClipboardList size={12} />
@@ -523,6 +565,10 @@ function ResearchRow({ summary }: { summary: UserResearchSummary }) {
 
             <TabsContent value="report" className="mt-3 space-y-3">
               <ReportTab report={report} reportProgress={reportProgress} />
+            </TabsContent>
+
+            <TabsContent value="design" className="mt-3 space-y-3">
+              <DesignTab design={design} designProgress={designProgress} />
             </TabsContent>
 
             <TabsContent value="proposal" className="mt-3 space-y-3">
@@ -801,6 +847,81 @@ function ProposalTab({
             <FullField label="연구 방법" value={proposal.method} />
             <FullField label="연구 내용" value={proposal.content} />
           </div>
+        </DetailBlock>
+      )}
+    </div>
+  );
+}
+
+const DESIGN_SECTION_LABELS: { key: keyof ReturnType<typeof designSectionStatus>; label: string }[] = [
+  { key: "approach", label: "유형·접근" },
+  { key: "model", label: "연구 모형" },
+  { key: "participants", label: "연구 대상" },
+  { key: "procedure", label: "연구 절차" },
+  { key: "instruments", label: "연구 도구" },
+  { key: "program", label: "프로그램" },
+  { key: "collectionAnalysis", label: "수집·분석" },
+];
+
+function DesignTab({
+  design,
+  designProgress,
+}: {
+  design?: ResearchDesign;
+  designProgress: number;
+}) {
+  const [showFull, setShowFull] = useState(false);
+  if (!design) {
+    return (
+      <DetailBlock title="연구 설계">
+        <p className="text-xs text-muted-foreground">아직 작성된 연구 설계가 없습니다.</p>
+      </DetailBlock>
+    );
+  }
+  const status = designSectionStatus(design);
+  const approachLabel = design.approach ? RESEARCH_DESIGN_APPROACH_LABELS[design.approach] : "미선택";
+  return (
+    <div className="space-y-3">
+      <DetailBlock title="연구 설계">
+        <div className="space-y-2 text-xs">
+          <KV label="연구 접근" value={approachLabel} />
+          <KV label="연구방법" value={design.methodName || "—"} />
+          <KV label="연구 모형" value={design.modelId ? "연결됨" : "미연결"} />
+          <div className="pt-1">
+            <div className="flex flex-wrap gap-1">
+              {DESIGN_SECTION_LABELS.map(({ key, label }) => (
+                <span
+                  key={key}
+                  className={cn(
+                    "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
+                    status[key]
+                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      : "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {label}
+                </span>
+              ))}
+            </div>
+          </div>
+          <div className="pt-1 text-[11px] text-muted-foreground">
+            마지막 수정: {formatDate(design.updatedAt ?? design.lastSavedAt)}
+          </div>
+          <div className="pt-1">
+            <ProgressBar value={designProgress} />
+            <div className="mt-1 text-[10px] text-muted-foreground">진행률 {designProgress}%</div>
+          </div>
+          <div className="pt-2">
+            <ToggleFullButton showFull={showFull} setShowFull={setShowFull} />
+          </div>
+        </div>
+      </DetailBlock>
+
+      {showFull && (
+        <DetailBlock title="연구방법 초안">
+          <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-[11px] leading-relaxed text-foreground">
+            {buildResearchMethodDraft(design)}
+          </pre>
         </DetailBlock>
       )}
     </div>

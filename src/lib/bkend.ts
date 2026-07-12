@@ -39,7 +39,7 @@ import type {
   SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry, DirectMessage,
   Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog, UserActivityLog,
   ActivityProgress, ActivityMaterial, EmailLog, ProgressMeeting,
-  Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, WritingPaper, WritingPaperHistory, WritingPaperVersion, AdvisorFeedbackNote,
+  Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, ResearchDesign, WritingPaper, WritingPaperHistory, WritingPaperVersion, AdvisorFeedbackNote,
   InterviewResponseReaction, InterviewResponseComment,
   ProfileLike, ProfileView, StudySession,
   ApplicantEntry, PublicSpeaker,
@@ -1698,6 +1698,27 @@ export const researchProposalsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<ResearchProposal>("research_proposals", id, data),
   delete: (id: string) => dataApi.delete("research_proposals", id),
+};
+
+// ── 연구 설계 (research_designs — 사용자당 1건, 본인 rw + staff read) ──
+export const researchDesignsApi = {
+  listByUser: (userId: string) =>
+    // HOTFIX 관례: filter+orderBy 복합 인덱스 회피 — 클라이언트 정렬
+    dataApi
+      .list<ResearchDesign>("research_designs", { "filter[userId]": userId, limit: 50 })
+      .then((res) => ({
+        ...res,
+        data: [...res.data].sort((a, b) => (b.updatedAt ?? "").localeCompare(a.updatedAt ?? "")),
+      })),
+  /** 운영진 콘솔용 — 모든 회원의 연구 설계를 한 번에 로드 */
+  listAll: (limit = 500) =>
+    dataApi.list<ResearchDesign>("research_designs", { sort: "updatedAt:desc", limit }),
+  get: (id: string) => dataApi.get<ResearchDesign>("research_designs", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<ResearchDesign>("research_designs", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<ResearchDesign>("research_designs", id, data),
+  delete: (id: string) => dataApi.delete("research_designs", id),
 };
 
 export const notificationsApi = {

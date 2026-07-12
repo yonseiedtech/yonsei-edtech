@@ -11,6 +11,7 @@ import {
   FileText,
   ExternalLink,
   Calendar,
+  DraftingCompass,
 } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
@@ -21,8 +22,14 @@ import {
   researchPapersApi,
   studySessionsApi,
   researchReportsApi,
+  researchDesignsApi,
 } from "@/lib/bkend";
-import type { User, ResearchPaper, StudySession, ResearchReport } from "@/types";
+import type { User, ResearchPaper, StudySession, ResearchReport, ResearchDesign } from "@/types";
+import {
+  designSectionStatus,
+  computeDesignProgress,
+} from "@/types/research-design";
+import { buildResearchMethodDraft } from "@/lib/research-design-draft";
 import { cn } from "@/lib/utils";
 
 function formatDate(iso?: string | null): string {
@@ -71,6 +78,15 @@ export default function ConsoleResearchUserDetailPage() {
     queryFn: async () => {
       const r = await researchReportsApi.listByUser(userId);
       return (r.data ?? [])[0] as ResearchReport | undefined;
+    },
+  });
+
+  const { data: designData } = useQuery({
+    queryKey: ["console-research-detail", "design", userId],
+    enabled: !!userId,
+    queryFn: async () => {
+      const r = await researchDesignsApi.listByUser(userId);
+      return (r.data ?? [])[0] as ResearchDesign | undefined;
     },
   });
 
@@ -262,6 +278,69 @@ export default function ConsoleResearchUserDetailPage() {
             )}
           </Panel>
         </aside>
+      </div>
+
+      {/* 연구 설계 (읽기 전용) */}
+      <section className="rounded-lg border bg-card">
+        <div className="flex items-center justify-between border-b px-4 py-2">
+          <div className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">
+            <DraftingCompass size={12} /> 연구 설계 (읽기 전용)
+          </div>
+          <span className="text-[11px] text-muted-foreground">
+            완성도 {computeDesignProgress(designData)}%
+          </span>
+        </div>
+        <div className="p-4">
+          <DesignSummary design={designData} />
+        </div>
+      </section>
+    </div>
+  );
+}
+
+const DESIGN_SECTION_LABELS: { key: keyof ReturnType<typeof designSectionStatus>; label: string }[] = [
+  { key: "approach", label: "유형·접근" },
+  { key: "model", label: "연구 모형" },
+  { key: "participants", label: "연구 대상" },
+  { key: "procedure", label: "연구 절차" },
+  { key: "instruments", label: "연구 도구" },
+  { key: "program", label: "프로그램" },
+  { key: "collectionAnalysis", label: "수집·분석" },
+];
+
+function DesignSummary({ design }: { design?: ResearchDesign }) {
+  if (!design) {
+    return <p className="py-4 text-center text-xs text-muted-foreground">아직 작성된 연구 설계가 없습니다.</p>;
+  }
+  const status = designSectionStatus(design);
+  const draft = buildResearchMethodDraft(design);
+  return (
+    <div className="space-y-3">
+      {/* 섹션 완성도 MiniProgress */}
+      <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-4 lg:grid-cols-7">
+        {DESIGN_SECTION_LABELS.map(({ key, label }) => (
+          <div
+            key={key}
+            className={cn(
+              "flex flex-col gap-0.5 rounded-md border px-2 py-1.5 text-[11px]",
+              status[key]
+                ? "border-emerald-200 bg-emerald-50/50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400"
+                : "border-border bg-muted/20 text-muted-foreground",
+            )}
+          >
+            <span className="font-medium">{label}</span>
+            <span>{status[key] ? "완성" : "—"}</span>
+          </div>
+        ))}
+      </div>
+      {/* 조립된 연구방법 초안 */}
+      <div>
+        <p className="mb-1 text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">
+          연구방법 초안
+        </p>
+        <pre className="max-h-96 overflow-auto whitespace-pre-wrap rounded-md border bg-muted/30 p-3 text-[11px] leading-relaxed text-foreground">
+          {draft}
+        </pre>
       </div>
     </div>
   );

@@ -26,6 +26,7 @@ export * from "./board";
 // Phase 3 — 연구 활동 / 보고서
 export * from "./research-paper";
 export * from "./research-report";
+export * from "./research-design";
 
 // Phase 4 — 세미나
 export * from "./seminar";

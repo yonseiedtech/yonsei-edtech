@@ -645,6 +645,17 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
+    // ─── Research Designs (연구 설계 — 사용자당 1건) ───
+    match /research_designs/{docId} {
+      // 운영진(staff 이상)은 /console/research 어드민에서 회원 설계를 조회해야 함
+      allow read: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid || isStaffOrAbove());
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
     // ─── Study Sessions (연구 타이머 세션 — 통계/잔디용) ───
     match /study_sessions/{docId} {
       // 운영진(staff 이상)은 회원 누적 시간/세션 통계 조회 필요
