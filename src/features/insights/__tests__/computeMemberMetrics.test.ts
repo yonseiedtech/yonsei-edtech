@@ -9,6 +9,9 @@ import { describe, expect, it } from "vitest";
 import { computeMemberMetrics } from "@/features/insights/computeMemberMetrics";
 import type { User } from "@/types";
 
+// 고정 기준 시각 (2026-05-13 KST)
+const NOW_MS = new Date("2026-05-13T00:00:00Z").getTime();
+
 function mkMember(partial: Partial<User> = {}): User {
   return {
     id: "u_test",
@@ -17,18 +20,17 @@ function mkMember(partial: Partial<User> = {}): User {
     role: "member" as const,
     approved: true,
     generation: 20,
-    createdAt: new Date(Date.now() - 60 * 86_400_000).toISOString(), // 60일 전
+    // NOW_MS 기준 60일 전 — Date.now() 기준으로 두면 실제 날짜가 흐르면서
+    // createdDays<=30(new) 분기로 뒤집히는 날짜 의존 테스트 부패 발생 (2026-07-12 수정)
+    createdAt: new Date(NOW_MS - 60 * 86_400_000).toISOString(),
     ...partial,
   } as User;
 }
 
-// 고정 기준 시각 (2026-05-13 KST)
-const NOW_MS = new Date("2026-05-13T00:00:00Z").getTime();
-
 describe("computeMemberMetrics — 점수 및 segment", () => {
   it("만점(100) 케이스 — champion", () => {
     const result = computeMemberMetrics({
-      member: mkMember({ role: "staff", createdAt: new Date(Date.now() - 90 * 86_400_000).toISOString() }),
+      member: mkMember({ role: "staff", createdAt: new Date(NOW_MS - 90 * 86_400_000).toISOString() }),
       attendanceCount: 5,   // 15점 (cap 15)
       activityCount: 3,     // 15점 (cap 15) → engagement 30
       postCount: 4,         // 12점 (cap 12)

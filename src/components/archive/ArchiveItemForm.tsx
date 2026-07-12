@@ -76,6 +76,10 @@ export default function ArchiveItemForm({
   const [purifiedName, setPurifiedName] = useState(
     (initial as { purifiedName?: string } | null)?.purifiedName ?? "",
   );
+  // AECT 공식 역어 — 『교육공학 용어해설』(학지사 2020) 표제어 병기 (개념 한정).
+  const [aectTerm, setAectTerm] = useState(
+    (initial as { aectTerm?: string } | null)?.aectTerm ?? "",
+  );
   const [description, setDescription] = useState(initial?.description ?? "");
   const [altNames, setAltNames] = useState(
     ((initial as { altNames?: string[] } | null)?.altNames ?? []).join(", "),
@@ -181,7 +185,11 @@ export default function ArchiveItemForm({
       let saved: AnyItem;
       if (type === "concept") {
         // 순화어는 개념에만 병기. 빈 값이면 명시적으로 비움(undefined).
-        const conceptPayload = { ...base, purifiedName: purifiedName.trim() || undefined };
+        const conceptPayload = {
+          ...base,
+          purifiedName: purifiedName.trim() || undefined,
+          aectTerm: aectTerm.trim() || undefined,
+        };
         if (isEdit && initial) {
           saved = await archiveConceptsApi.update(initial.id, conceptPayload);
         } else {
@@ -334,6 +342,23 @@ export default function ArchiveItemForm({
               />
               <p className="mt-1 text-[11px] text-muted-foreground">
                 노션 용어사전집 기준의 우리말 순화어. 입력하면 개념명 옆에 병기됩니다. 비워두면 표시되지 않습니다.
+              </p>
+            </div>
+          )}
+
+          {type === "concept" && (
+            <div>
+              <label htmlFor="aectTerm" className="text-xs font-medium block mb-1">
+                AECT 공식 역어
+              </label>
+              <Input
+                id="aectTerm"
+                value={aectTerm}
+                onChange={(e) => setAectTerm(e.target.value)}
+                placeholder="예: 사정 (Assessment)"
+              />
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                『교육공학 용어해설』(학지사, 2020) 표제어 기준 공식 번역어. 개념명과 다를 때만 병기됩니다.
               </p>
             </div>
           )}

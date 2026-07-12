@@ -303,6 +303,9 @@ export default function ArchiveDetailPage() {
   const altNames = (item as { altNames?: string[] }).altNames ?? [];
   // 순화어 — 노션 용어사전집 병기 (개념에만 존재하나 generic read 안전)
   const purifiedName = (item as { purifiedName?: string }).purifiedName?.trim();
+  // AECT 공식 역어 — 『교육공학 용어해설』(학지사 2020). name 과 다를 때만 병기.
+  const aectTermRaw = (item as { aectTerm?: string }).aectTerm?.trim();
+  const aectTerm = aectTermRaw && aectTermRaw !== item.name ? aectTermRaw : undefined;
   // 이 항목을 추천 개념으로 포함하는 논문 여정 단계 (개념 한정)
   const journeyStagesForItem =
     type === "concept" && item.name
@@ -367,11 +370,18 @@ export default function ArchiveDetailPage() {
                 {ARCHIVE_ITEM_TYPE_LABELS[type]}
               </Badge>
               <CardTitle className="text-2xl">{item.name}</CardTitle>
-              {purifiedName && (
-                <p className="mt-1.5">
-                  <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-800 dark:border-teal-400/30 dark:bg-teal-950/30 dark:text-teal-300">
-                    순화어 · {purifiedName}
-                  </span>
+              {(purifiedName || aectTerm) && (
+                <p className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                  {purifiedName && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-800 dark:border-teal-400/30 dark:bg-teal-950/30 dark:text-teal-300">
+                      순화어 · {purifiedName}
+                    </span>
+                  )}
+                  {aectTerm && (
+                    <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-800 dark:border-indigo-400/30 dark:bg-indigo-950/30 dark:text-indigo-300">
+                      AECT · {aectTerm}
+                    </span>
+                  )}
                 </p>
               )}
               {altNames.length > 0 && (

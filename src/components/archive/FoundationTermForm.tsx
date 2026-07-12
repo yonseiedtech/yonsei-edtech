@@ -59,6 +59,8 @@ export default function FoundationTermForm({ initial, userId }: Props) {
   const [termName, setTermName] = useState(initial?.term ?? "");
   // 순화어 — 노션 용어사전집 병기. 운영진 자유 수정 가능.
   const [purifiedName, setPurifiedName] = useState(initial?.purifiedName ?? "");
+  // AECT 공식 역어 — 『교육공학 용어해설』(학지사 2020) 표제어 병기.
+  const [aectTerm, setAectTerm] = useState(initial?.aectTerm ?? "");
   const [abbreviation, setAbbreviation] = useState(initial?.abbreviation ?? "");
   const [englishName, setEnglishName] = useState(initial?.englishName ?? "");
   const [category, setCategory] = useState<FoundationTermCategory>(
@@ -289,6 +291,7 @@ export default function FoundationTermForm({ initial, userId }: Props) {
       const payload = {
         term: termName.trim(),
         purifiedName: purifiedName.trim() || undefined,
+        aectTerm: aectTerm.trim() || undefined,
         abbreviation: abbreviation.trim() || undefined,
         englishName: englishName.trim() || undefined,
         category,
@@ -370,6 +373,16 @@ export default function FoundationTermForm({ initial, userId }: Props) {
               onChange={(e) => setPurifiedName(e.target.value)}
               placeholder="예: 실험 (처치)"
             />
+          </Field>
+          <Field label="AECT 공식 역어">
+            <Input
+              value={aectTerm}
+              onChange={(e) => setAectTerm(e.target.value)}
+              placeholder="예: 사정 (Assessment)"
+            />
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              『교육공학 용어해설』(학지사, 2020) 표제어 기준 공식 번역어. 용어명과 다를 때만 병기됩니다.
+            </p>
           </Field>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <Field label="약어">

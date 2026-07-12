@@ -353,6 +353,37 @@ export default function CitationGuidePage() {
                 에서 확인하세요. 아카이브의 측정도구·개념 항목에 정리된 reference 정보를 참고문헌 작성에
                 활용할 수도 있습니다.
               </p>
+              {/* 번역서 인용 (2026-07-12 추가) — 원서/역서 이중 표기 */}
+              <div className="space-y-2 rounded-xl border bg-muted/10 p-3.5">
+                <p className="text-sm font-medium">번역서 인용 — 원서·역서 이중 표기</p>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  번역서를 읽고 인용할 때는 <strong className="text-foreground">원저자·원서 출판연도</strong>와{" "}
+                  <strong className="text-foreground">역자·번역서 출판연도</strong>를 함께 밝힙니다. 본문에는 두
+                  연도를 빗금으로 병기합니다.
+                </p>
+                <div className="rounded-lg border bg-background p-3 text-xs leading-relaxed">
+                  <p className="font-medium text-muted-foreground">참고문헌 목록 (예: AECT 공식 용어집)</p>
+                  <p className="mt-1">
+                    Richey, R. C. (편). (2020). <span className="italic">교육공학 용어해설</span> (이현우,
+                    임규연, 정재삼, 허희옥 공역). 학지사. (원저 2013년 출판)
+                  </p>
+                  <p className="mt-2 font-medium text-muted-foreground">본문 인용</p>
+                  <p className="mt-1">… 로 정의된다(Richey, 2013/2020, p. 42).</p>
+                </div>
+                <p className="text-xs leading-relaxed text-muted-foreground">
+                  영어 논문에서는{" "}
+                  <span className="font-mono text-[11px]">
+                    Richey, R. C. (Ed.). (2013). Encyclopedia of terminology for educational communications
+                    and technology. Springer.
+                  </span>{" "}
+                  처럼 원서를 직접 인용합니다. 원서와 번역서의 페이지가 다르므로{" "}
+                  <strong className="text-foreground">실제로 읽은 판본의 페이지</strong>를 표기하세요.{" "}
+                  <Link href="/archive/terminology" className="font-medium text-primary underline">
+                    AECT 용어 표준 사전
+                  </Link>
+                  에서 이 용어집의 표제어·공식 역어를 검색할 수 있습니다.
+                </p>
+              </div>
               <p className="text-xs leading-relaxed text-muted-foreground">
                 ※ 기관 저자·저자 없음·연도 없음 자료, 표·그림 출처 표기 등의 구체 형식은 APA 7판 통용
                 규칙을 따르되, 세부 표기는 소속 대학원·투고 학술지 지침을 확인하시기 바랍니다.

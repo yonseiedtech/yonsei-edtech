@@ -50,6 +50,11 @@ export interface ArchiveConcept extends ArchiveOperationalMeta {
    * 기존 용어명(name)은 그대로 두고 병기해 표시한다. 운영진이 폼에서 수정 가능.
    */
   purifiedName?: string;
+  /**
+   * AECT 공식 역어 — 『교육공학 용어해설』(Richey 편, 학지사 2020) 표제어 기준.
+   * name과 다를 때만 병기 표시.
+   */
+  aectTerm?: string;
   /** 영문/약어 */
   altNames?: string[];
   tags?: string[];

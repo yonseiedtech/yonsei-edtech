@@ -83,6 +83,11 @@ export interface FoundationTerm extends ArchiveOperationalMeta {
   term: string; // 한국어 용어 (예: "독립변인")
   /** 순화어 — 노션 용어사전집 기준 우리말 다듬은 용어. term 과 병기 표시, 운영진 수정 가능. */
   purifiedName?: string;
+  /**
+   * AECT 공식 역어 — 『교육공학 용어해설』(Richey 편, 학지사 2020) 표제어 기준.
+   * term과 다를 때만 병기 표시.
+   */
+  aectTerm?: string;
   abbreviation?: string; // 약어 (예: "IV", "ISD")
   englishName?: string; // 영문 (예: "Independent Variable")
   category: FoundationTermCategory;

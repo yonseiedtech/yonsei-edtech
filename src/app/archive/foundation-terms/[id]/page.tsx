@@ -326,11 +326,19 @@ export default function FoundationTermDetailPage() {
             {term.englishName && (
               <p className="mt-1 text-sm text-muted-foreground">{term.englishName}</p>
             )}
-            {term.purifiedName?.trim() && (
-              <p className="mt-1.5">
-                <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-800 dark:border-teal-400/30 dark:bg-teal-950/30 dark:text-teal-300">
-                  순화어 · {term.purifiedName.trim()}
-                </span>
+            {(term.purifiedName?.trim() ||
+              (term.aectTerm?.trim() && term.aectTerm.trim() !== term.term)) && (
+              <p className="mt-1.5 flex flex-wrap items-center gap-1.5">
+                {term.purifiedName?.trim() && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-800 dark:border-teal-400/30 dark:bg-teal-950/30 dark:text-teal-300">
+                    순화어 · {term.purifiedName.trim()}
+                  </span>
+                )}
+                {term.aectTerm?.trim() && term.aectTerm.trim() !== term.term && (
+                  <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-800 dark:border-indigo-400/30 dark:bg-indigo-950/30 dark:text-indigo-300">
+                    AECT · {term.aectTerm.trim()}
+                  </span>
+                )}
               </p>
             )}
             <div className="mt-3 flex flex-wrap items-center gap-2">

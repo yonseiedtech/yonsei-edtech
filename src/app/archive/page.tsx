@@ -21,6 +21,7 @@ import {
   Quote,
   Wand2,
   Compass,
+  BookMarked,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -431,6 +432,31 @@ export default function ArchiveLandingPage() {
                   <h3 className="text-lg font-semibold tracking-tight">교육공학 기초 용어 가이드</h3>
                   <p className="text-sm text-muted-foreground">
                     변인·연구설계·교수설계·체제이론·측정·학습이론 기초 용어와 &ldquo;비슷하지만 다른&rdquo; 용어 페어를 정리합니다.
+                  </p>
+                </div>
+                <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                  보기
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </div>
+              </div>
+            </article>
+          </Link>
+
+          {/* AECT 용어 표준 사전 (『교육공학 용어해설』 학지사 2020) */}
+          <Link
+            href="/archive/terminology"
+            className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+            aria-label="AECT 용어 표준 사전 보기"
+          >
+            <article className="rounded-2xl border-l-4 border-l-indigo-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+              <div className="flex items-center gap-4 p-5">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                  <BookMarked className="h-5 w-5" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-semibold tracking-tight">AECT 용어 표준 사전 — 공식 용어·역어 186개</h3>
+                  <p className="text-sm text-muted-foreground">
+                    『교육공학 용어해설』(학지사, 2020) 공식 표제어·역어 186개를 6개 영역별로 검색·브라우징합니다.
                   </p>
                 </div>
                 <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">

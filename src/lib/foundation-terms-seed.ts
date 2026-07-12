@@ -25,6 +25,8 @@ interface SeedEntry {
   term: string;
   abbreviation?: string;
   englishName?: string;
+  /** AECT 공식 역어 — 『교육공학 용어해설』(Richey 편, 학지사 2020) 표제어 기준. */
+  aectTerm?: string;
   category: FoundationTermCategory;
   summary: string;
   accessibleSummary?: string;
@@ -199,6 +201,7 @@ const SEED_FOUNDATION_TERMS: SeedEntry[] = [
     term: "교수체제설계",
     abbreviation: "ISD",
     englishName: "Instructional Systems Design",
+    aectTerm: "교수체제설계",
     category: "instructional-design",
     summary:
       "분석·설계·개발·실행·평가의 체계적 절차로 교수·학습 환경을 설계하는 시스템적 접근 (예: ADDIE 모형).",
@@ -221,6 +224,7 @@ const SEED_FOUNDATION_TERMS: SeedEntry[] = [
     term: "교수설계",
     abbreviation: "ID",
     englishName: "Instructional Design",
+    aectTerm: "교수설계",
     category: "instructional-design",
     summary:
       "학습 목표 달성을 위해 학습 내용·전략·자료·평가를 계획하고 구조화하는 활동.",
@@ -242,6 +246,7 @@ const SEED_FOUNDATION_TERMS: SeedEntry[] = [
   {
     term: "교육과정",
     englishName: "Curriculum",
+    aectTerm: "교육과정",
     category: "instructional-design",
     summary:
       "학습 목표·내용·경험·평가의 총체적 계획 — 한 과목·학년·학교 단위의 학습 경험을 포괄.",
@@ -307,6 +312,7 @@ const SEED_FOUNDATION_TERMS: SeedEntry[] = [
   {
     term: "체제적 분석",
     englishName: "Systemic Analysis",
+    aectTerm: "체제 분석",
     category: "systems-theory",
     summary:
       "구성요소 간 상호작용과 전체성을 함께 고려하여 문제를 진단·해결하는 분석 접근.",
@@ -465,12 +471,58 @@ const SEED_FOUNDATION_TERMS: SeedEntry[] = [
       },
     ],
   },
+  // ─── 2026-07-12 보강: AECT 공식 구분 '사정 vs 평가' (『교육공학 용어해설』 pp.42, 167) ───
+  {
+    term: "사정",
+    englishName: "Assessment",
+    aectTerm: "사정",
+    category: "measurement",
+    summary:
+      "학습자의 지식·기능·태도에 관한 자료를 체계적으로 수집·확인하는 활동 — AECT 공식 역어는 '사정'으로, 가치 판단이 개입하는 '평가(evaluation)' 와 구분된다.",
+    accessibleSummary:
+      "'지금 어디까지 알고 있는지'를 재어 보는 일. 점수를 매겨 좋다/나쁘다를 판정하기(평가) 전에, 먼저 상태를 확인하는 단계라고 생각하면 쉽습니다.",
+    examples: [
+      "학습자의 사전 지식을 사정(assessment)하기 위해 진단검사를 실시하였다.",
+      "형성적 사정 결과를 토대로 다음 차시 수업 전략을 조정하였다.",
+      "본 프로그램은 수행 사정(performance assessment) 방식으로 학습 성과 자료를 수집하였다.",
+    ],
+    confusedWith: [
+      {
+        label: "평가",
+        distinction:
+          "사정(assessment)은 자료를 수집해 현재 상태를 확인하는 활동이고, 평가(evaluation)는 수집된 근거에 비추어 가치·질을 판단하는 활동입니다. AECT 용어 표준(『교육공학 용어해설』)도 두 용어를 구분하며, 한국어 논문에서 assessment 를 '평가' 로 옮기면 evaluation 과 뒤섞이므로 주의가 필요합니다.",
+      },
+    ],
+  },
+  {
+    term: "평가",
+    englishName: "Evaluation",
+    aectTerm: "평가",
+    category: "measurement",
+    summary:
+      "프로그램·산출물·수행의 가치와 질을 준거에 비추어 판단하는 활동 — 형성평가·총괄평가, CIPP 등 평가 모형이 이 범주에 속한다.",
+    accessibleSummary:
+      "모아 놓은 자료(사정 결과)를 근거로 '얼마나 좋은가, 계속할 가치가 있는가'를 판단하는 일. 성적 판정, 프로그램 존폐 결정이 대표적인 예입니다.",
+    examples: [
+      "개발된 프로그램의 효과성을 검증하기 위해 형성평가와 총괄평가를 순차적으로 실시하였다.",
+      "CIPP 모형에 따라 상황·투입·과정·산출 평가를 수행하였다.",
+      "전문가 평가 결과를 반영하여 콘텐츠를 2차 수정하였다.",
+    ],
+    confusedWith: [
+      {
+        label: "사정",
+        distinction:
+          "평가(evaluation)는 가치 판단이 핵심이고, 사정(assessment)은 판단 이전의 자료 수집·상태 확인이 핵심입니다. '무엇을 아는지 확인' 은 사정, '그래서 이 프로그램이 좋은가' 는 평가에 해당합니다.",
+      },
+    ],
+  },
 
   // ─── learning-theory (학습이론 2종) ───
   {
     term: "근접발달영역",
     abbreviation: "ZPD",
     englishName: "Zone of Proximal Development",
+    aectTerm: "근접발달영역",
     category: "learning-theory",
     summary:
       "학습자가 혼자서는 해결하기 어렵지만 유능한 타인의 도움(scaffolding) 으로는 해결할 수 있는 과제 영역 — Vygotsky.",
@@ -485,6 +537,7 @@ const SEED_FOUNDATION_TERMS: SeedEntry[] = [
   {
     term: "인지부하",
     englishName: "Cognitive Load",
+    aectTerm: "인지부하",
     category: "learning-theory",
     summary:
       "작업기억에 가해지는 정신적 처리 부담 — 내재적·외재적·관련 부하로 구분 (Sweller 외).",
@@ -537,6 +590,7 @@ export async function seedFoundationTerms(
       term: entry.term,
       abbreviation: entry.abbreviation,
       englishName: entry.englishName,
+      aectTerm: entry.aectTerm,
       category: entry.category,
       summary: entry.summary,
       accessibleSummary: entry.accessibleSummary,

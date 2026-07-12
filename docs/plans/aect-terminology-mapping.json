@@ -1,0 +1,334 @@
+{
+  "source": {
+    "titleKo": "교육공학 용어해설",
+    "titleEn": "Encyclopedia of Terminology for Educational Communications and Technology",
+    "editor": "Rita C. Richey (편)",
+    "translators": ["이현우", "임규연", "정재삼", "허희옥"],
+    "publisherKo": "학지사",
+    "publisherEn": "Springer New York",
+    "yearOriginal": 2013,
+    "yearTranslation": 2020,
+    "note": "AECT 용어정의위원회 공식 용어집. 본 파일은 표제어·공식 역어 대응(사실 정보)만 수록 — 해설 본문은 저작권 보호 대상이므로 전재 금지, 반영 시 자체 재서술(패러프레이즈) + 출처 표기 필수.",
+    "termCount": 186,
+    "mappingPagesBook": "pp.15-24 (내용 영역별 용어 정리)",
+    "bodyStartsBook": "p.27 (A~Z 알파벳순 해설)"
+  },
+  "domains": [
+    {
+      "name": "기반",
+      "subcategories": [
+        {
+          "name": "연구와 실천의 기본 영역",
+          "terms": [
+            { "en": "Audiovisual Instruction", "ko": "시청각 교수법" },
+            { "en": "Communication", "ko": "커뮤니케이션" },
+            { "en": "Curriculum", "ko": "교육과정" },
+            { "en": "Development", "ko": "개발" },
+            { "en": "Educational Media", "ko": "교육매체" },
+            { "en": "Educational Technology", "ko": "교육공학" },
+            { "en": "Information and Communications Technology", "ko": "정보통신공학" },
+            { "en": "Instruction", "ko": "교수" },
+            { "en": "Instructional Design", "ko": "교수설계" },
+            { "en": "Learning", "ko": "학습" },
+            { "en": "Pedagogy", "ko": "교육학" },
+            { "en": "Project Management", "ko": "프로젝트 관리" },
+            { "en": "Semiotics", "ko": "기호학" },
+            { "en": "Technology", "ko": "테크놀로지" }
+          ]
+        },
+        {
+          "name": "정책, 표준 및 법규",
+          "terms": [
+            { "en": "Accessibility", "ko": "접근성" },
+            { "en": "Children's Internet Protection Act", "ko": "아동의 인터넷 보호법" },
+            { "en": "Children's Online Privacy Protection Act", "ko": "아동의 온라인 개인정보 보호법" },
+            { "en": "Competency", "ko": "역량" },
+            { "en": "Ethics", "ko": "윤리" },
+            { "en": "Intellectual Property", "ko": "지적 재산" },
+            { "en": "Open Educational Resources", "ko": "공개교육자료" },
+            { "en": "Professional Standards", "ko": "전문직 표준" },
+            { "en": "Universal Design for Learning", "ko": "보편적 학습설계" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "교수설계",
+      "subcategories": [
+        {
+          "name": "설계 과정 및 절차",
+          "terms": [
+            { "en": "Competency Modeling and Development", "ko": "역량 모델링과 개발" },
+            { "en": "Cone of Experience", "ko": "경험의 원추" },
+            { "en": "Culture-Neutral Design", "ko": "문화 중립적 설계" },
+            { "en": "Culture-Specific Design", "ko": "문화 특수적 설계" },
+            { "en": "Elaboration Sequencing", "ko": "정교화 계열" },
+            { "en": "Instructional Design Models", "ko": "교수설계 모형" },
+            { "en": "Instructional Objectives", "ko": "교수목표" },
+            { "en": "Learning Hierarchy", "ko": "학습위계" },
+            { "en": "Message Design", "ko": "메시지 설계" },
+            { "en": "Rapid Prototyping", "ko": "래피드 프로토타이핑" },
+            { "en": "Sequencing", "ko": "계열화" },
+            { "en": "Systems Approach", "ko": "체제적 접근" },
+            { "en": "Visual Message Design", "ko": "시각적 메시지 설계" }
+          ]
+        },
+        {
+          "name": "교수 내용 및 맥락",
+          "terms": [
+            { "en": "Context", "ko": "맥락" },
+            { "en": "Learning Types", "ko": "학습유형" },
+            { "en": "Problem", "ko": "문제" }
+          ]
+        },
+        {
+          "name": "거시적 교수전략",
+          "terms": [
+            { "en": "Collaborative Learning", "ko": "협력학습" },
+            { "en": "Constructivist Approach", "ko": "구성주의적 접근" },
+            { "en": "Differentiated Instruction", "ko": "수준별 수업" },
+            { "en": "Discovery-Expository Learning Continuum", "ko": "발견식-설명식 학습연속성" },
+            { "en": "Discovery Learning", "ko": "발견학습" },
+            { "en": "Individualized Instruction", "ko": "개별화 수업" },
+            { "en": "Inquiry-Based Learning", "ko": "탐구 기반 학습" },
+            { "en": "Just-in-Time Learning", "ko": "적시학습" },
+            { "en": "Learner-Centered Instruction", "ko": "학습자 중심 수업" },
+            { "en": "Learning by Doing", "ko": "행함으로써 배움" },
+            { "en": "Mastery Learning", "ko": "완전학습" },
+            { "en": "Mental Model Progression", "ko": "정신모형 진전" },
+            { "en": "Open Education", "ko": "공개교육" },
+            { "en": "Problem-Based Learning", "ko": "문제 기반 학습" },
+            { "en": "Programmed Instruction", "ko": "프로그램 수업" },
+            { "en": "Project-Based Learning", "ko": "프로젝트 기반 학습" },
+            { "en": "Self-Directed Learning", "ko": "자기주도학습" },
+            { "en": "Simplifying Conditions Methods", "ko": "단순화 조건법" }
+          ]
+        },
+        {
+          "name": "미시적 교수전략",
+          "terms": [
+            { "en": "Advance Organizer", "ko": "선행조직자" },
+            { "en": "Analogy", "ko": "비유" },
+            { "en": "Anchored Instruction", "ko": "앵커드 교수법" },
+            { "en": "Authentic Activity", "ko": "실제적 활동" },
+            { "en": "Chunking", "ko": "청킹" },
+            { "en": "Cognitive Apprenticeship", "ko": "인지적 도제" },
+            { "en": "Comparison and Contrast", "ko": "비교와 대조" },
+            { "en": "Elaboration Strategies", "ko": "정교화 전략" },
+            { "en": "Elaboration, Types of", "ko": "정교화 유형" },
+            { "en": "Examples and Non-examples", "ko": "사례와 비사례" },
+            { "en": "Feedback", "ko": "피드백" },
+            { "en": "Generality", "ko": "일반성" },
+            { "en": "Generative and Supplantive Instructional Strategies", "ko": "생성적-주입식 교수전략" },
+            { "en": "Interaction", "ko": "상호작용" },
+            { "en": "Mnemonic", "ko": "기억술" },
+            { "en": "Practice", "ko": "연습" },
+            { "en": "Prompting", "ko": "암시" },
+            { "en": "Reinforcement", "ko": "강화" },
+            { "en": "Repetition", "ko": "반복" },
+            { "en": "Situated Cognition", "ko": "상황인지" }
+          ]
+        },
+        {
+          "name": "학습자 특성",
+          "terms": [
+            { "en": "Digital Divide", "ko": "정보격차" },
+            { "en": "Digital Natives and Immigrants", "ko": "디지털 원주민과 이민자" },
+            { "en": "Expertise", "ko": "전문성" },
+            { "en": "Learner Characteristics and Traits", "ko": "학습자 특성 및 성향" },
+            { "en": "Literacy", "ko": "리터러시" },
+            { "en": "Motivation", "ko": "동기" },
+            { "en": "Prerequisite Skills", "ko": "선수 기능" },
+            { "en": "Self-Efficacy", "ko": "자기효능감" },
+            { "en": "Self-Regulation", "ko": "자기조절" },
+            { "en": "Visual Competency", "ko": "시각 역량" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "테크놀로지와 매체",
+      "subcategories": [
+        {
+          "name": "개발 절차 및 기법",
+          "terms": [
+            { "en": "Agent", "ko": "에이전트" },
+            { "en": "Animation", "ko": "애니메이션" },
+            { "en": "Avatar", "ko": "아바타" },
+            { "en": "Digital Mapping", "ko": "디지털 매핑" },
+            { "en": "Digital Storytelling", "ko": "디지털 스토리텔링" },
+            { "en": "Graphics", "ko": "그래픽" },
+            { "en": "Learning Object", "ko": "학습객체" },
+            { "en": "Production", "ko": "제작" },
+            { "en": "User-Generated Content", "ko": "사용자 제작 콘텐츠" }
+          ]
+        },
+        {
+          "name": "이러닝",
+          "terms": [
+            { "en": "Blended Learning", "ko": "블렌디드 러닝" },
+            { "en": "Distance Education and Learning", "ko": "원격교육 및 학습" },
+            { "en": "Mobile Devices and Functions", "ko": "모바일 기기와 기능" },
+            { "en": "Mobile Learning", "ko": "모바일 학습" },
+            { "en": "Online Behavior", "ko": "온라인 행동" }
+          ]
+        },
+        {
+          "name": "시뮬레이션과 게임",
+          "terms": [
+            { "en": "Digital Game-Based Learning", "ko": "디지털 게임 기반 학습" },
+            { "en": "Game Design", "ko": "게임 설계" },
+            { "en": "Simulation", "ko": "시뮬레이션" },
+            { "en": "Virtual Worlds", "ko": "가상세계" }
+          ]
+        },
+        {
+          "name": "테크놀로지 기반 커뮤니케이션",
+          "terms": [
+            { "en": "Blog", "ko": "블로그" },
+            { "en": "Communication Mapping", "ko": "커뮤니케이션 매핑" },
+            { "en": "Multimedia Representations of Research, Teaching and Learning", "ko": "연구, 교수, 학습의 멀티미디어 표상" },
+            { "en": "Social Computing", "ko": "소셜 컴퓨팅" },
+            { "en": "Social Media", "ko": "소셜 미디어" },
+            { "en": "Technological Communication", "ko": "테크놀로지 활용 커뮤니케이션" }
+          ]
+        },
+        {
+          "name": "테크놀로지 기반 학습",
+          "terms": [
+            { "en": "Cognitive Tools", "ko": "인지도구" },
+            { "en": "Computer-Based Training", "ko": "컴퓨터 기반 훈련" },
+            { "en": "e-Portfolio", "ko": "e-포트폴리오" },
+            { "en": "Information-Rich Environments", "ko": "정보가 풍부한 환경" },
+            { "en": "Media Utilization", "ko": "매체 활용" },
+            { "en": "Multi-Channel Instruction", "ko": "다중채널 교수" },
+            { "en": "Multimedia Learning", "ko": "멀티미디어 학습" },
+            { "en": "Technological Pedagogical Content Knowledge", "ko": "테크놀로지 활용 교수내용지식" },
+            { "en": "Technology-Enabled Learning", "ko": "테크놀로지 활용 학습" },
+            { "en": "Technology-Enhanced Learning Environment", "ko": "테크놀로지 기반 학습 환경" },
+            { "en": "Usability", "ko": "사용성" }
+          ]
+        },
+        {
+          "name": "테크놀로지의 유형",
+          "terms": [
+            { "en": "Cloud Computing", "ko": "클라우드 컴퓨팅" },
+            { "en": "Expert System", "ko": "전문가 시스템" },
+            { "en": "Integrated Technologies", "ko": "통합공학" },
+            { "en": "Media", "ko": "매체" },
+            { "en": "Really Simple Syndication", "ko": "RSS 피드" },
+            { "en": "Rich Media", "ko": "리치 미디어" },
+            { "en": "Web 2.0", "ko": "웹 2.0" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "분석 및 평가",
+      "subcategories": [
+        {
+          "name": "분석 및 평가",
+          "terms": [
+            { "en": "Analysis", "ko": "분석" },
+            { "en": "Assessment", "ko": "사정" },
+            { "en": "Criterion-Referenced Measurement", "ko": "준거 참조 측정" },
+            { "en": "Evaluation", "ko": "평가" },
+            { "en": "Evaluation Models", "ko": "평가 모형" },
+            { "en": "Need", "ko": "요구" },
+            { "en": "Needs Assessment", "ko": "요구사정" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "관리 및 조직 개발",
+      "subcategories": [
+        {
+          "name": "변화 관리",
+          "terms": [
+            { "en": "Change", "ko": "변화" },
+            { "en": "Change Models", "ko": "변화 모형" },
+            { "en": "Innovation", "ko": "혁신" },
+            { "en": "Knowledge Management", "ko": "지식경영" },
+            { "en": "Learning Organization", "ko": "학습조직" },
+            { "en": "Organizational Change", "ko": "조직 변화" }
+          ]
+        },
+        {
+          "name": "수행 향상 절차",
+          "terms": [
+            { "en": "Electronic Performance Support System", "ko": "전자수행지원 시스템" },
+            { "en": "Job Aid", "ko": "직무보조" },
+            { "en": "Management Systems", "ko": "관리 시스템" },
+            { "en": "Performance Improvement", "ko": "수행 향상" }
+          ]
+        },
+        {
+          "name": "자원 및 전달 체제 관리",
+          "terms": [
+            { "en": "Information Access", "ko": "정보 접근" },
+            { "en": "Information Classification", "ko": "정보 분류" },
+            { "en": "Information Gatekeeper", "ko": "정보 게이트키퍼" },
+            { "en": "Information Resources", "ko": "정보자원" },
+            { "en": "Information Retrieval", "ko": "정보 검색" },
+            { "en": "Information Storage", "ko": "정보 저장" },
+            { "en": "Integrated Learning Systems", "ko": "통합학습체제" }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "연구와 이론",
+      "subcategories": [
+        {
+          "name": "이론적 지향",
+          "terms": [
+            { "en": "Attribution Theory", "ko": "귀인이론" },
+            { "en": "Behaviorism", "ko": "행동주의" },
+            { "en": "Cognitive Dissonance Theory", "ko": "인지부조화이론" },
+            { "en": "Cognitive Learning Theory", "ko": "인지주의 학습이론" },
+            { "en": "Communication Theory and Models", "ko": "커뮤니케이션 이론과 모형" },
+            { "en": "Constructivism", "ko": "구성주의" },
+            { "en": "Cultural Historical Activity Theory", "ko": "문화역사적 활동이론" },
+            { "en": "Dual Coding Theory", "ko": "이중부호화이론" },
+            { "en": "Information Theory", "ko": "정보이론" },
+            { "en": "Information Processing Theory", "ko": "정보처리이론" },
+            { "en": "Mathematical Model of Communication", "ko": "수학적 커뮤니케이션 모형" },
+            { "en": "Schema Theory", "ko": "스키마이론" },
+            { "en": "Taxonomy", "ko": "분류체계" }
+          ]
+        },
+        {
+          "name": "연구 지향",
+          "terms": [
+            { "en": "Design and Development Research", "ko": "설계 개발 연구" },
+            { "en": "Design-Based Research", "ko": "설계 기반 연구" },
+            { "en": "Designer Decision-Making Research", "ko": "설계자 의사결정 연구" }
+          ]
+        },
+        {
+          "name": "학습 과정",
+          "terms": [
+            { "en": "Cognitive Load", "ko": "인지부하" },
+            { "en": "Cognitive Processes", "ko": "인지과정" },
+            { "en": "Cognitive Strategies", "ko": "인지전략" },
+            { "en": "Community of Practice", "ko": "실천공동체" },
+            { "en": "Complex Learning", "ko": "복잡한 학습" },
+            { "en": "Conditions of Learning", "ko": "학습의 조건" },
+            { "en": "Distributed Cognition", "ko": "분산인지" },
+            { "en": "Field Dependence and Independence", "ko": "장의존과 장독립" },
+            { "en": "Learning Path", "ko": "학습경로" },
+            { "en": "Learning with Information", "ko": "정보를 활용한 학습" },
+            { "en": "Memory", "ko": "기억" },
+            { "en": "Metacognition", "ko": "메타인지" },
+            { "en": "Perceptual Modality", "ko": "지각 양식" },
+            { "en": "Problem Solving Strategies", "ko": "문제해결전략" },
+            { "en": "Scaffolding", "ko": "스캐폴딩" },
+            { "en": "Transfer", "ko": "전이" },
+            { "en": "Visual and Pictorial Learning", "ko": "시각 및 이미지 활용 학습" }
+          ]
+        }
+      ]
+    }
+  ]
+}
