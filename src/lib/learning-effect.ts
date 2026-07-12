@@ -178,3 +178,195 @@ export function improvementRate(improved: number, total: number): number | null 
   if (total <= 0) return null;
   return Math.round((improved / total) * 100);
 }
+
+// ── 개념별 재진단 향상 추세 (R4 심화 / G2) — 정답률 % 시계열 ──
+//
+// computeLearningEffect 는 "약점 재등장 여부"의 이진 판정이었다. 여기서는 같은 개념을
+// 여러 번 진단했을 때의 "정답률 % 추세"(첫 진단 → 최근)와 복습 교차(상관)를 산출한다.
+//
+// 회차별 개념 판정(정확·honest — 분모를 지어내지 않는다):
+//  - tested   : 그 회차 정답 문항 중 이 개념 문항이 있거나(correctQuestionIds→concept),
+//               약점 개념(weakConceptIds)에 포함 → "이 개념이 출제된 회차".
+//  - mastered : tested 이면서 그 회차 약점에 없음(= 틀린 문항 없음) → "완전 정답".
+//  정답률(%)  : mastered 회차 수 / tested 회차 수 × 100. tested 회차를 시간순으로 앞/뒤
+//               절반으로 나눠 firstRate → recentRate, 변화량(deltaPp)을 낸다.
+//
+// 복습 교차(상관): 이 개념 카드의 누적 복습 횟수와, 첫~최근 tested 구간 내 복습 여부.
+// ⚠️ 인과 금지 — "복습 후 향상됐어요"(상관)까지만. "복습 덕분에" 금지.
+
+/** questionId → 이 문항이 다루는 아카이브 개념(weakConceptIds 와 같은 id 체계). 미매핑은 undefined. */
+export type QuestionConceptResolver = (
+  questionId: string,
+) => { id: string; name: string } | undefined;
+
+/** 개념 1건의 정답률 % 추세 + 복습 교차. */
+export interface ConceptImprovementEntry {
+  conceptId: string;
+  conceptName: string;
+  /** 이 개념이 출제된 회차 수(재진단 포함). */
+  testedCount: number;
+  /** 앞 절반 회차의 정답률(%). */
+  firstRate: number;
+  /** 뒤 절반 회차의 정답률(%). */
+  recentRate: number;
+  /** recentRate − firstRate (%p). 양수=향상, 음수=하락, 0=유지. */
+  deltaPp: number;
+  /** 이 개념 카드의 누적 복습 횟수(여러 카드 합산, 표시용). */
+  reviewCount: number;
+  /** 첫~최근 tested 구간(첫 회차 이후, 최근 회차 이하)에 복습 기록이 있었는가. */
+  reviewedInWindow: boolean;
+  /** 앞 절반 대표 회차(가장 이른 tested) createdAt. */
+  firstDate?: string;
+  /** 뒤 절반 대표 회차(가장 최근 tested) createdAt. */
+  recentDate?: string;
+}
+
+export interface ConceptImprovementResult {
+  status: "ok" | "insufficient";
+  /** insufficient 사유 (UI 안내용). */
+  reason?: "need_two_diagnostics" | "no_repeated_concepts";
+  /** 개념별 추세 — 향상 큰 순 → 복습 있는 것 → 회차 많은 것 → 이름. */
+  concepts: ConceptImprovementEntry[];
+  /** deltaPp>0 (향상)된 개념 수. */
+  improvedCount: number;
+  /** 향상되고 구간 내 복습 기록도 있는 개념 수(상관 강조용). */
+  improvedWithReviewCount: number;
+}
+
+interface ConceptRoundStatus {
+  time: number;
+  date?: string;
+  mastered: boolean;
+}
+
+/**
+ * 개념별 재진단 향상 추세 계산 — 진단 다회차 × 암기카드 복습 교차.
+ * @param results 본인 진단 결과들 (정렬 무관 — 내부에서 createdAt 오름차순 정렬).
+ * @param cards   본인 암기카드들.
+ * @param resolveQuestionConcept correctQuestionIds 의 문항 id → 개념 해석기 (풀+개념으로 구성).
+ */
+export function computeConceptImprovement(
+  results: DiagnosticResult[],
+  cards: Flashcard[],
+  resolveQuestionConcept: QuestionConceptResolver,
+): ConceptImprovementResult {
+  const empty: ConceptImprovementResult = {
+    status: "insufficient",
+    reason: "need_two_diagnostics",
+    concepts: [],
+    improvedCount: 0,
+    improvedWithReviewCount: 0,
+  };
+
+  // 진단 2회 미만이면 같은 개념의 재진단(추세)이 있을 수 없다.
+  if (!Array.isArray(results) || results.length < 2) return empty;
+
+  const sorted = [...results].sort((a, b) => {
+    const ta = parseTime(a.createdAt);
+    const tb = parseTime(b.createdAt);
+    if (Number.isNaN(ta) && Number.isNaN(tb)) return 0;
+    if (Number.isNaN(ta)) return 1;
+    if (Number.isNaN(tb)) return -1;
+    return ta - tb;
+  });
+
+  const nameById = new Map<string, string>();
+  const roundsByConcept = new Map<string, ConceptRoundStatus[]>();
+
+  for (const r of sorted) {
+    const time = parseTime(r.createdAt);
+    const weakIds = Array.isArray(r.weakConceptIds) ? r.weakConceptIds : [];
+    const weakNames = Array.isArray(r.weakConceptNames) ? r.weakConceptNames : [];
+    weakIds.forEach((cid, i) => {
+      if (cid && weakNames[i] && !nameById.has(cid)) nameById.set(cid, weakNames[i]);
+    });
+    const weakSet = new Set(weakIds.filter(Boolean));
+
+    // 이 회차에 출제된(tested) 개념 = 정답 문항→개념 ∪ 약점 개념.
+    const testedIds = new Set<string>(weakSet);
+    for (const qid of Array.isArray(r.correctQuestionIds) ? r.correctQuestionIds : []) {
+      const c = resolveQuestionConcept(qid);
+      if (c?.id) {
+        testedIds.add(c.id);
+        if (!nameById.has(c.id)) nameById.set(c.id, c.name);
+      }
+    }
+
+    for (const cid of testedIds) {
+      const mastered = !weakSet.has(cid); // tested & 약점 아님 = 그 회차 완전 정답
+      const arr = roundsByConcept.get(cid) ?? [];
+      arr.push({ time, date: r.createdAt, mastered });
+      roundsByConcept.set(cid, arr);
+    }
+  }
+
+  // 개념별 누적 복습 횟수 + 마지막 복습 시각(여러 카드 합산/최댓값).
+  const reviewByConcept = new Map<string, { reviewCount: number; lastReviewedAt: number }>();
+  for (const c of Array.isArray(cards) ? cards : []) {
+    if (!c.conceptId) continue;
+    const prev = reviewByConcept.get(c.conceptId) ?? { reviewCount: 0, lastReviewedAt: NaN };
+    const lr = parseTime(c.lastReviewedAt ?? undefined);
+    reviewByConcept.set(c.conceptId, {
+      reviewCount: prev.reviewCount + (c.reviewCount ?? 0),
+      lastReviewedAt: Number.isNaN(prev.lastReviewedAt)
+        ? lr
+        : Number.isNaN(lr)
+          ? prev.lastReviewedAt
+          : Math.max(prev.lastReviewedAt, lr),
+    });
+  }
+
+  const rate = (rs: ConceptRoundStatus[]): number =>
+    rs.length === 0 ? 0 : Math.round((rs.filter((x) => x.mastered).length / rs.length) * 100);
+
+  const entries: ConceptImprovementEntry[] = [];
+  for (const [cid, roundsRaw] of roundsByConcept) {
+    const rounds = [...roundsRaw].sort((a, b) => a.time - b.time);
+    if (rounds.length < 2) continue; // 재진단 없으면 추세 불가 — 제외.
+    const n = rounds.length;
+    const mid = Math.floor(n / 2);
+    const firstRate = rate(rounds.slice(0, mid));
+    const recentRate = rate(rounds.slice(mid));
+    const agg = reviewByConcept.get(cid);
+    const firstTime = rounds[0].time;
+    const lastTime = rounds[n - 1].time;
+    const reviewedInWindow =
+      !!agg &&
+      !Number.isNaN(agg.lastReviewedAt) &&
+      !Number.isNaN(firstTime) &&
+      !Number.isNaN(lastTime) &&
+      agg.lastReviewedAt > firstTime &&
+      agg.lastReviewedAt <= lastTime;
+
+    entries.push({
+      conceptId: cid,
+      conceptName: nameById.get(cid) ?? cid,
+      testedCount: n,
+      firstRate,
+      recentRate,
+      deltaPp: recentRate - firstRate,
+      reviewCount: agg?.reviewCount ?? 0,
+      reviewedInWindow,
+      firstDate: rounds[0].date,
+      recentDate: rounds[n - 1].date,
+    });
+  }
+
+  if (entries.length === 0) {
+    return { ...empty, reason: "no_repeated_concepts" };
+  }
+
+  entries.sort((a, b) => {
+    if (b.deltaPp !== a.deltaPp) return b.deltaPp - a.deltaPp;
+    if (a.reviewedInWindow !== b.reviewedInWindow) return a.reviewedInWindow ? -1 : 1;
+    if (b.testedCount !== a.testedCount) return b.testedCount - a.testedCount;
+    return a.conceptName.localeCompare(b.conceptName);
+  });
+
+  const improvedCount = entries.filter((e) => e.deltaPp > 0).length;
+  const improvedWithReviewCount = entries.filter(
+    (e) => e.deltaPp > 0 && e.reviewedInWindow,
+  ).length;
+
+  return { status: "ok", concepts: entries, improvedCount, improvedWithReviewCount };
+}

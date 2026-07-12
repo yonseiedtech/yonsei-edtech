@@ -29,6 +29,7 @@ import {
   Legend,
 } from "recharts";
 import { History, Radar as RadarIcon, TrendingUp, Sparkles, AlertTriangle } from "lucide-react";
+import DiagnosisLearningEffect from "@/components/diagnosis/DiagnosisLearningEffect";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -367,6 +368,9 @@ export default function DiagnosisHistorySection({ userId }: DiagnosisHistorySect
           ))}
         </CardContent>
       </Card>
+
+      {/* 복습 ↔ 재진단 학습 효과 (R4 심화 / G2) — 개념별 정답률 % 추세 + 복습 교차 */}
+      <DiagnosisLearningEffect userId={userId} />
     </div>
   );
 }

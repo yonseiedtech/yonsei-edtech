@@ -29,3 +29,11 @@
 
 ## 환경 이슈
 - node_modules가 WSL(리눅스)에서 설치돼 rolldown Windows 바인딩 누락 → `npm install --no-save @rolldown/binding-win32-x64-msvc`로 해결 (vitest 실행용, package.json 무변경).
+
+## 자율 재개분 (같은 날 저녁)
+- **1차분 게이트 완료**: bb7ca36b·d119b939(2차 개념 12종)·4157945b(진단 문항 32종) → push + Vercel 배포 + QA 스모크 9라우트 200.
+- **AECT 3차 개념 9종** (fbbc7a6c): CHAT·정교화 전략·학습의 조건·귀인이론·탐구 기반 학습·학습자 중심 수업·피드백·상호작용·적시학습 — 개념 시드 총 68종. 개념↔변인 링크 3건.
+- **기초용어 메타 갱신 경로** (7ac36629): refreshFoundationTermsMeta(aectTerm 채움 + 빈 영문명/약어 보충, 본문 보존) + /console/archive/foundation-terms "메타 갱신" 버튼.
+- **순화어 매칭 점검**: 노션 순화어 57건 vs 신규 개념 44종 → 유효 매칭 2건(피드백→되알리기, 문제 기반 학습→실제 문제 기반 학습). 운영자 폼 입력 권장.
+- **executor 병렬**: v3-G2 학습효과 증명 루프(진단↔복습 % 시계열)·v3-M1 색상 마이그레이션 번들1(마이페이지·대시보드)·진단 문항 2·3차 21종 확충.
+- 운영: 세션 한도(21:10 리셋)로 executor 1회 중단→재가동(작업트리 오염 없음). worklog heredoc append가 파일을 훼손해 git 커밋본에서 복원 — **worklog 갱신은 Edit 도구 사용**(shell append 금지) 교훈.
