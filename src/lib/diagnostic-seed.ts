@@ -2818,6 +2818,377 @@ export const SEED_DIAGNOSTIC_QUESTIONS: SeedDiagnosticQuestion[] = [
     explanation:
       "탐구 기반 학습은 학습자가 과학적·논리적 규칙을 체계적으로 익히며 증거로 결론에 이르는 점이 강조되고, 발견학습은 학습자가 문제 공간을 탐구하며 스스로 규칙성을 찾도록 이끄는 귀납적 전략이다. 두 개념은 가까운 한 계열이다.",
   },
+
+  // ═════════════════════════════════════════════════════════════
+  // 학습이론 계보·교수설계 계열 확충 (2026-07-13) — archive-seed.ts 보강 4차·5차
+  // 신규 18개 개념: 학습이론 7종(concept:classical-conditioning ~ observational-learning)
+  //  + 교수설계·미시전략·매체 11종(concept:instructional-objectives ~ mental-model-progression).
+  // 각 문항은 해당 개념 description 에 명시된 검증 가능한 사실만 근거로 작성.
+  // ── mcq (10) — dx:concept:46~55 ──
+  // ═════════════════════════════════════════════════════════════
+  {
+    seedKey: "dx:concept:46",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:classical-conditioning",
+    question:
+      "무조건 자극(먹이)에 자연히 따르는 무조건 반응(침 분비) 앞에 중립 자극(종소리)을 반복해서 짝지으면 중립 자극만으로도 반응이 일어난다고 본, 소화 생리학 연구에서 출발한 학습이론과 학자로 옳은 것은?",
+    options: [
+      "Pavlov - 고전적 조건화",
+      "Skinner - 작동적 조건화",
+      "Thorndike - 결합 조건화",
+      "Bandura - 관찰학습",
+    ],
+    answerIndex: 0,
+    explanation:
+      "고전적 조건화는 Pavlov가 소화 생리학 연구 과정에서 발견해 체계화했으며, 무조건 자극-무조건 반응 앞에 중립 자극을 반복 짝지어 조건 자극-조건 반응의 연합을 형성한다. 학습을 자극 간 연합으로 설명하는 연합론의 원형이다.",
+  },
+  {
+    seedKey: "dx:concept:47",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:connectionism-conditioning",
+    question:
+      "학습을 자극과 반응 사이의 결합(connection)이 형성·강화되는 과정으로 보고, 만족스러운 결과가 뒤따른 결합이 강해진다는 '효과의 법칙'을 비롯한 3대 학습법칙(준비도·연습·효과)을 제시한 최초의 현대 학습이론가는?",
+    options: ["Thorndike", "Guthrie", "Köhler", "Tolman"],
+    answerIndex: 0,
+    explanation:
+      "결합 조건화의 Thorndike는 시행착오를 거쳐 보상을 얻는 데 성공한 반응이 살아남는다고 보았고, 효과의 법칙은 이후 Skinner의 강화 개념으로 이어지는 다리가 되었다.",
+  },
+  {
+    seedKey: "dx:concept:48",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:operant-conditioning",
+    question:
+      "행동을 유발하는 사전 자극을 정확히 짚을 수 있는 고전·결합 조건화와 달리, 유기체가 먼저 방출한 행동(작동 반응)이 뒤따르는 결과에 의해 미래 발생 가능성이 결정된다고 본 Skinner의 이론은?",
+    options: ["작동적 조건화", "고전적 조건화", "인접 조건화", "잠재학습"],
+    answerIndex: 0,
+    explanation:
+      "작동적 조건화는 '강화 유관(reinforcement contingency)에 의한 작동 반응의 조형(shaping)'으로 요약되며, 결과가 행동을 늘리면 강화, 줄이면 벌이다. 프로그램 수업·행동목표 등 교육공학 초기 방법론의 직접적 뿌리다.",
+  },
+  {
+    seedKey: "dx:concept:49",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:gestalt-learning-theory",
+    question:
+      "행동주의의 요소 분해적 접근에 맞서 학습을 지각 전체 구조(형태)의 재조직으로 설명하며, 문제 상황의 요소 관계를 한순간에 재구조화하는 '통찰(insight)'을 대표 현상으로 든 학습이론은?",
+    options: ["형태주의 학습이론", "결합 조건화", "정보처리이론", "행동주의"],
+    answerIndex: 0,
+    explanation:
+      "형태주의 학습이론(Köhler 등)의 근본 원리는 심리적 사상이 완전하고 단순해지려는 함축의 원리(Prägnanz)이며, 통찰을 통해 형태를 파악하고 문제에 대한 정확한 표상 형성을 학습의 본질로 보아 인지주의의 선구가 되었다.",
+  },
+  {
+    seedKey: "dx:concept:50",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:observational-learning",
+    question:
+      "직접 강화를 받지 않아도 타인(모델)의 행동과 그 결과를 관찰하는 것만으로 학습이 일어난다고 보며, 주의·파지·산출·동기의 과정으로 학습을 설명한 Bandura의 이론은?",
+    options: [
+      "관찰학습(사회인지이론)",
+      "작동적 조건화",
+      "인접 조건화",
+      "완전학습",
+    ],
+    answerIndex: 0,
+    explanation:
+      "관찰학습은 파지된 인지 표상이 본보기가 되어 부호화·저장되었다가 강화가 예상될 때 산출된다고 본다. 모델이 강화받는 것을 보는 대리 강화가 동기를 유발하며, 자기효능감·자기조절학습 이론으로 발전했다.",
+  },
+  {
+    seedKey: "dx:concept:51",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:instructional-objectives",
+    question:
+      "미리 설계된 수업을 마친 뒤 학생이 할 수 있게 되는 것을 관찰·측정 가능한 수행으로 기술한 진술문으로, Mager의 고전적 정식에서 수행 행동·조건·준거의 세 요소로 구성하는 것은?",
+    options: ["교수목표(행동목표)", "요구사정", "선행조직자", "형성평가"],
+    answerIndex: 0,
+    explanation:
+      "교수목표는 콘텐츠 선정·계열화·평가 문항 설계의 기준점이 되어 교수설계 전 과정을 정렬(alignment)시키며 준거 참조 평가와 직접 연결된다. Mager는 수행 행동(무엇을)·조건(어떤 상황)·준거(어느 수준)의 3요소를 제시했다.",
+  },
+  {
+    seedKey: "dx:concept:52",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:programmed-instruction",
+    question:
+      "수업을 '프레임'이라는 아주 작은 단계로 나누고, 각 프레임 끝에 응답하게 한 뒤 곧바로 정답을 제시해 즉각적 피드백을 주는, 1950년대 중반 Skinner의 논문으로 각광받은 수업 방식은?",
+    options: ["프로그램 수업", "발견학습", "앵커드 교수법", "완전학습"],
+    answerIndex: 0,
+    explanation:
+      "프로그램 수업은 올바른 반응 직후의 피드백이 긍정적 강화로 작동한다는 작동적 조건화 원리의 직접 적용으로, 개별화 수업·CAI·적응학습으로 이어지는 계보의 출발점이다.",
+  },
+  {
+    seedKey: "dx:concept:53",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:media-utilization",
+    question:
+      "교수설계에서 매체를 선택·활용할 때 효과성뿐 아니라 실행가능성·현실성(비용·접근성)을 함께 고려해야 한다는 개념을 둘러싼 대표 논쟁으로, '매체는 학습에 영향을 주지 않는 운반 수단인가'를 다투는 논쟁은?",
+    options: [
+      "Clark-Kozma 논쟁",
+      "Piaget-Vygotsky 논쟁",
+      "Bloom-Gagné 논쟁",
+      "Skinner-Bandura 논쟁",
+    ],
+    answerIndex: 0,
+    explanation:
+      "매체 활용은 계열화·상호작용성을 높이고 학습에 정서적·미적 요소를 더하는 수단으로, '매체는 학습에 영향을 주지 않는 운반 수단인가'를 다투는 Clark-Kozma 논쟁과 Merrill의 으뜸원리(시연 통한 학습)가 대표 논의다.",
+  },
+  {
+    seedKey: "dx:concept:54",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:mental-model-progression",
+    question:
+      "사례·문제·완성된 예제의 범주가 점진적으로 더 정교화된 정신모형이 되도록, 가장 단순하고 대표적이며 구체적인 것에서 복잡한 것으로 배열하는 van Merriënboer의 중간 수준 계열화 접근은?",
+    options: ["정신모형 진전", "요구사정", "청킹", "기억술"],
+    answerIndex: 0,
+    explanation:
+      "정신모형 진전은 이후 모형이 이전 모형에 복잡성과 상세함을 더해 가며 정교화되며, Reigeluth의 정교화이론·전체-부분 접근법과 밀접하고 4C/ID 같은 복잡한 학습 설계에서 지원 정보 계열화의 원리로 쓰인다.",
+  },
+  {
+    seedKey: "dx:concept:55",
+    type: "mcq",
+    cognitiveLevel: "understand",
+    area: "concept",
+    conceptSeedKey: "concept:systems-approach",
+    question:
+      "교수 문제를 서로 연결된 요소들의 전체(체제)로 보고 투입-과정-산출-피드백의 순환 속에서 분석·설계·평가하며, 교수체제설계(ISD)와 ADDIE 계열 모형의 철학적 토대가 되는 관점은?",
+    options: ["체제적 접근", "발견학습", "형태주의 학습이론", "개별화 수업"],
+    answerIndex: 0,
+    explanation:
+      "체제적 접근은 일반체제이론에서 비롯되어 부분의 합이 아닌 요소 간 상호작용으로 성과가 결정된다고 보며, 한 요소의 변화가 다른 요소의 조정을 요구하고 형성평가 피드백이 체제를 지속적으로 개선한다.",
+  },
+
+  // ── term (4) — dx:concept:term:16~19 ──
+  {
+    seedKey: "dx:concept:term:16",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:contiguous-conditioning",
+    prompt:
+      "자극과 반응이 시간적으로 붙어(인접) 일어나는 것 자체를 학습의 충분조건으로 보아, 강화나 반복 없이도 마지막 행동이 그 상황과 단번에 연합된다는 '일회시행 학습'을 주장한 Guthrie의 이론은? (한글 또는 영문)",
+    answer: "인접 조건화",
+    acceptedAnswers: [
+      "contiguous conditioning",
+      "근접 조건형성",
+      "contiguity theory",
+      "인접조건화",
+    ],
+    explanation:
+      "인접 조건화는 Guthrie가 고전 조건화(Pavlov)·결합 조건화(Thorndike)의 영향 아래 수립했으며, 일회시행 학습(one-trial learning)과 습관 교정법(역치법·피로법·상반자극법)이 특징적 주장이다.",
+  },
+  {
+    seedKey: "dx:concept:term:17",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:individualized-instruction",
+    prompt:
+      "학습자마다 다른 특성·요구·흥미에 부합하도록 속도·내용·교수적 처치를 조정하고, 진도를 모니터링해 성취 결과에 따라 다음 수업을 처방하는 순환을 기본 구조로 하는 수업 접근은? (한글 또는 영문)",
+    answer: "개별화 수업",
+    acceptedAnswers: [
+      "individualized instruction",
+      "개별화 교육",
+      "개별 학습",
+      "개별화수업",
+    ],
+    explanation:
+      "개별화 수업은 Burk의 자기교수 단원, Washburne의 위네트카 계획까지 거슬러 오르며 프로그램 수업과 함께 교육공학의 중심 주제가 되었고, 오늘날 적응학습·AI 기반 개인화의 역사적 뿌리다.",
+  },
+  {
+    seedKey: "dx:concept:term:18",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:instructional-design-models",
+    prompt:
+      "교수설계 절차를 단순화해 소개하는 표상으로, 대개 과정의 흐름도를 시각적으로 제시하고 설계 과제에서 수행할 단계들을 설명하며 ADDIE·Dick & Carey·Kemp 등이 대표적인 것은? (한글 또는 영문)",
+    answer: "교수설계 모형",
+    acceptedAnswers: [
+      "instructional design models",
+      "ID 모형",
+      "교수설계모델",
+      "교수설계모형",
+      "ID model",
+    ],
+    explanation:
+      "교수설계 모형은 어느 정도의 구조와 순서를 갖고 제시된 실재의 재현이며 주제에 대한 이상적 관점을 반영한다. 어떤 모형을 고르는가는 프로젝트의 맥락·규모·불확실성에 따른 설계 판단의 문제다.",
+  },
+  {
+    seedKey: "dx:concept:term:19",
+    type: "term",
+    cognitiveLevel: "remember",
+    area: "concept",
+    conceptSeedKey: "concept:practice",
+    prompt:
+      "학습자가 특정 기술의 일부 또는 전체를 반복 수행하도록 하는 교수 기법으로, 효과적이려면 수행에 대한 피드백이 반드시 동반되어야 하는 것은? (한글 또는 영문)",
+    answer: "연습",
+    acceptedAnswers: ["practice", "훈련", "반복 연습", "반복연습"],
+    explanation:
+      "이유는 달라도 대부분의 교수이론(행동주의·정보처리이론·구성주의)이 연습을 강조하며, 전체 과제 대 부분 과제 연습, 전문성 개발을 위한 주도면밀한 연습(deliberate practice, Ericsson) 논의로 이어진다.",
+  },
+
+  // ── ox (4) — dx:concept:ox:14~17 ──
+  {
+    seedKey: "dx:concept:ox:14",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:latent-learning",
+    statement:
+      "Tolman의 잠재학습은 강화 없이도 학습이 일어나 저장되었다가 필요할 때 수행으로 드러난다는 현상을 통해 학습과 수행을 개념적으로 분리했다.",
+    answerBool: true,
+    explanation:
+      "참. Tolman은 미로를 학습한 쥐가 공간의 인지도(cognitive map)를 형성한다고 보았고, 목적적 행동주의는 행동주의와 인지주의를 잇는 가교로 평가된다.",
+  },
+  {
+    seedKey: "dx:concept:ox:15",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:operant-conditioning",
+    statement:
+      "작동적 조건화에서 행동을 늘리는 강화인(reinforcer)은 목표 달성의 수단으로 주어지는 보상(reward)과 개념적으로 동일한 것으로 취급된다.",
+    answerBool: false,
+    explanation:
+      "거짓. Skinner의 작동적 조건화에서 강화인(reinforcer)은 보상(reward)과 개념적으로 구분된다. 강화는 결과가 이후 행동의 발생 가능성을 늘리는 것을 가리키는 개념이다.",
+  },
+  {
+    seedKey: "dx:concept:ox:16",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:chunking",
+    statement:
+      "청킹은 Miller의 단기기억 용량 연구(7±2)에서 창안된 개념으로, 낱개 정보를 유의미한 덩이로 재조직하면 작동기억에서 처리 가능한 정보량이 실질적으로 늘어난다.",
+    answerBool: true,
+    explanation:
+      "참. 청킹은 Miller(1956)의 7±2 연구에서 나왔으며(이후 연구는 용량을 약 4개 청크로 보기도 함), 학습 콘텐츠 분할·화면 설계·마이크로러닝 설계의 근거가 된다.",
+  },
+  {
+    seedKey: "dx:concept:ox:17",
+    type: "ox",
+    area: "concept",
+    cognitiveLevel: "understand",
+    conceptSeedKey: "concept:sequencing",
+    statement:
+      "계열화는 학습자가 학습목표에 도달하도록 콘텐츠를 효율적으로 배열하는 일로, Gagné의 학습위계와 Reigeluth의 정교화 이론이 대표적 접근이다.",
+    answerBool: true,
+    explanation:
+      "참. 계열화는 콘텐츠를 어떻게 묶고 어떤 순서로 제시할지 결정하는 활동으로 교수설계 지식기반의 핵심 영역이며, Gagné의 학습위계·Reigeluth의 정교화이론·Bruner의 나선형 교육과정이 대표적 접근이다.",
+  },
+
+  // ── compare (6) — dx:concept:cmp:14~19 ──
+  {
+    seedKey: "dx:concept:cmp:14",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:classical-conditioning",
+    question:
+      "'반응을 유발하는 사전 자극을 정확히 짚을 수 있는' 조건화와 '유기체가 먼저 방출한 행동이 뒤따르는 결과에 의해 조성되는' 조건화로 올바르게 짝지어진 것은?",
+    options: [
+      "고전적 조건화(사전 자극) · 작동적 조건화(행동의 결과)",
+      "작동적 조건화(사전 자극) · 고전적 조건화(행동의 결과)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "고전적 조건화는 반응을 유발하는 사전 자극(무조건·조건 자극)을 짚을 수 있는 반면, 작동적 조건화는 먼저 방출한 작동 반응이 그 결과(강화·벌)에 의해 미래 발생 가능성이 결정된다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:15",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:connectionism-conditioning",
+    question:
+      "'만족스러운 결과가 뒤따른 결합이 강해진다는 효과의 법칙'을 제시한 이론과 '강화 유관에 의한 작동 반응의 조형'으로 학습을 설명한 이론으로 올바르게 짝지어진 것은?",
+    options: [
+      "결합 조건화(Thorndike·효과의 법칙) · 작동적 조건화(Skinner·강화)",
+      "작동적 조건화(Thorndike·효과의 법칙) · 결합 조건화(Skinner·강화)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "Thorndike의 효과의 법칙(결합 조건화)이 Skinner의 강화(작동적 조건화) 개념으로 이어지는 다리가 되었다는 점에서 두 이론은 연속선상에 있다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:16",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:gestalt-learning-theory",
+    question:
+      "'문제 상황의 요소 관계를 한순간에 재구조화하는 통찰'로 문제를 해결한다고 본 접근과 '시행착오를 거쳐 성공한 반응이 살아남는다'고 본 접근으로 올바르게 짝지어진 것은?",
+    options: [
+      "형태주의 학습이론(통찰) · 결합 조건화(시행착오)",
+      "결합 조건화(통찰) · 형태주의 학습이론(시행착오)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "형태주의 학습이론(Köhler)은 지각의 재조직인 통찰로, 결합 조건화(Thorndike)는 시행착오를 거쳐 성공한 반응이 살아남는 과정으로 학습을 설명한다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:17",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:observational-learning",
+    question:
+      "관찰학습에서 '모델이 강화받는 것을 관찰함으로써 기대를 형성하고 동기를 얻는' 강화와 '학습자 자신이 직접 결과로 받는' 강화로 올바르게 짝지어진 것은?",
+    options: [
+      "대리 강화(모델 관찰) · 직접 강화(자신이 받음)",
+      "직접 강화(모델 관찰) · 대리 강화(자신이 받음)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "대리 강화는 모델이 강화받는 것을 보고 기대를 형성해 동기를 유발하는 정보적 기능을 하며, 직접 강화는 학습자 자신이 받는 강화다. Bandura는 자기 관찰·자기 평가에서 오는 내적(자기) 강화가 외재적 강화보다 강력하다고 보았다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:18",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:chunking",
+    question:
+      "'정보를 의미 있는 덩이로 묶어 작동기억에서 처리 가능한 정보량을 늘리는' 전략과 '정보를 더 기억하기 쉽게 조직·부호화(대개 심상 동반)하는' 전략으로 올바르게 짝지어진 것은?",
+    options: [
+      "청킹(덩이짓기) · 기억술(부호화·심상)",
+      "기억술(덩이짓기) · 청킹(부호화·심상)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "청킹은 낱개 정보를 유의미한 덩이로 재조직해 작동기억 처리량을 늘리고, 기억술은 두문자어·쇄기법·장소법처럼 심상을 동반해 정보를 기억하기 쉽게 조직·부호화하는 미시전략이다.",
+  },
+  {
+    seedKey: "dx:concept:cmp:19",
+    type: "compare",
+    area: "concept",
+    cognitiveLevel: "analyze",
+    conceptSeedKey: "concept:programmed-instruction",
+    question:
+      "프로그램 수업에서 '모든 학습자가 같은 순서를 밟는' 프로그램과 '응답에 따라 경로가 갈라지는' Crowder의 프로그램으로 올바르게 짝지어진 것은?",
+    options: [
+      "선형적 프로그램(같은 순서) · 분기형(내재적) 프로그램(경로 분기)",
+      "분기형(내재적) 프로그램(같은 순서) · 선형적 프로그램(경로 분기)",
+    ],
+    answerIndex: 0,
+    explanation:
+      "프로그램 수업은 모든 학습자가 같은 순서를 밟는 선형적 프로그램과 응답에 따라 경로가 갈라지는 Crowder의 내재적(분기형) 프로그램으로 나뉜다.",
+  },
 ];
 
 /**
