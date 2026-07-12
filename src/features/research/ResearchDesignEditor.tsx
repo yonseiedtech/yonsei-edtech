@@ -14,7 +14,7 @@ import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import {
   DraftingCompass, CheckCircle2, ChevronRight, Save, Plus, Trash2, X,
-  Copy, Wand2, ClipboardList, Link2, ExternalLink, Sparkles,
+  Copy, Wand2, ClipboardList, Link2, ExternalLink, Sparkles, Sigma,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -24,13 +24,16 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   researchMethodsApi,
   archiveMeasurementsApi,
+  statisticalMethodsApi,
 } from "@/lib/bkend";
 import { researchModelsApi } from "@/lib/research-models-api";
 import type {
   User,
   ResearchDesign,
   ResearchMethod,
+  ResearchMethodKind,
   ArchiveMeasurementTool,
+  StatisticalMethod,
 } from "@/types";
 import {
   ADDIE_STEPS,
@@ -57,6 +60,8 @@ import { useLogWritingActivity } from "./useWritingPaperHistory";
 import ResearchJourneyGuide from "./ResearchJourneyGuide";
 import EditorSaveBar from "./EditorSaveBar";
 import EthicsChecklistPanel from "./EthicsChecklistPanel";
+import MethodRecommenderDialog from "./MethodRecommenderDialog";
+import StatMethodGuideDialog from "./StatMethodGuideDialog";
 
 interface Props {
   user: User;
@@ -75,6 +80,7 @@ interface FormState {
   programDesign: ResearchDesignProgram;
   dataCollection: string;
   dataAnalysis: string;
+  selectedStatMethods: string[];
   ethicsChecked: string[];
 }
 
@@ -90,6 +96,7 @@ const EMPTY_FORM: FormState = {
   programDesign: { ...EMPTY_PROGRAM },
   dataCollection: "",
   dataAnalysis: "",
+  selectedStatMethods: [],
   ethicsChecked: [],
 };
 
@@ -107,6 +114,7 @@ function fromDesign(d: ResearchDesign | null | undefined): FormState {
     programDesign: { ...EMPTY_PROGRAM, ...(d.programDesign ?? {}) },
     dataCollection: d.dataCollection ?? "",
     dataAnalysis: d.dataAnalysis ?? "",
+    selectedStatMethods: d.selectedStatMethods ?? [],
     ethicsChecked: d.ethicsChecked ?? [],
   };
 }
@@ -126,6 +134,7 @@ function toDesign(form: FormState, base: ResearchDesign): ResearchDesign {
     programDesign: form.programDesign,
     dataCollection: form.dataCollection,
     dataAnalysis: form.dataAnalysis,
+    selectedStatMethods: form.selectedStatMethods,
     ethicsChecked: form.ethicsChecked,
   };
 }
@@ -148,6 +157,9 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
   const [dirty, setDirty] = useState(false);
   const ensureTriggeredRef = useRef(false);
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const [methodGuideOpen, setMethodGuideOpen] = useState(false);
+  const [statGuideOpen, setStatGuideOpen] = useState(false);
+  const [showAllMethods, setShowAllMethods] = useState(false);
 
   // 연구방법 가이드(절차 프리필 소스)·측정도구 아카이브
   const { data: methods = [] } = useQuery({
@@ -158,6 +170,11 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
   const { data: measurements = [] } = useQuery({
     queryKey: ["archive_measurements", "all"],
     queryFn: async () => (await archiveMeasurementsApi.list()).data as ArchiveMeasurementTool[],
+    staleTime: 5 * 60_000,
+  });
+  const { data: statMethods = [] } = useQuery({
+    queryKey: ["archive_statistical_methods", "published"],
+    queryFn: async () => (await statisticalMethodsApi.listPublished()).data as StatisticalMethod[],
     staleTime: 5 * 60_000,
   });
   const { data: model } = useQuery({
@@ -202,6 +219,7 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
               programDesign: form.programDesign,
               dataCollection: form.dataCollection,
               dataAnalysis: form.dataAnalysis,
+              selectedStatMethods: form.selectedStatMethods,
               ethicsChecked: form.ethicsChecked,
               lastSavedAt: now,
             },
@@ -362,21 +380,57 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
     [form, design],
   );
 
-  const kindFilter: Record<ResearchDesignApproach, string[]> = {
+  // 접근(kind)에 정확히 대응하는 연구방법만 노출. '다른 접근의 방법 보기' 토글 시 전체 노출.
+  const strictKind: Record<ResearchDesignApproach, ResearchMethodKind[]> = {
     "": [],
-    quantitative: ["quantitative", "mixed"],
-    qualitative: ["qualitative", "mixed"],
-    mixed: ["quantitative", "qualitative", "mixed"],
+    quantitative: ["quantitative"],
+    qualitative: ["qualitative"],
+    mixed: ["mixed"],
   };
   const methodOptions = useMemo(() => {
-    const kinds = kindFilter[form.approach];
+    const kinds = strictKind[form.approach];
     return methods
-      .filter((m) => kinds.length === 0 || kinds.includes(m.kind))
+      .filter(
+        (m) => showAllMethods || kinds.length === 0 || kinds.includes(m.kind),
+      )
       .sort((a, b) => a.name.localeCompare(b.name, "ko"));
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [methods, form.approach]);
+  }, [methods, form.approach, showAllMethods]);
+
+  const selectedMethod = useMemo(
+    () => methods.find((m) => m.name === form.methodName) ?? null,
+    [methods, form.methodName],
+  );
 
   const isQual = form.approach === "qualitative";
+  const showStatMethods = form.approach === "quantitative" || form.approach === "mixed";
+
+  // 추천 가이드에서 방법 선택 → 접근(kind)·방법 이름 동시 반영 + 절차 프리필
+  function applyRecommendedMethod(methodName: string, kind: ResearchMethodKind) {
+    const m = methods.find((x) => x.name === methodName);
+    setForm((prev) => {
+      const nextSteps =
+        m?.procedures && m.procedures.length > 0 && prev.procedureSteps.length === 0
+          ? m.procedures.map((p) => ({ step: p.step, detail: p.detail ?? "" }))
+          : prev.procedureSteps;
+      return { ...prev, approach: kind, methodName, procedureSteps: nextSteps };
+    });
+    setDirty(true);
+    toast.success(`'${methodName}'을(를) 연구방법으로 반영했습니다.`);
+  }
+
+  function toggleStatMethod(name: string) {
+    setForm((prev) => {
+      const has = prev.selectedStatMethods.includes(name);
+      return {
+        ...prev,
+        selectedStatMethods: has
+          ? prev.selectedStatMethods.filter((n) => n !== name)
+          : [...prev.selectedStatMethods, name],
+      };
+    });
+    setDirty(true);
+  }
 
   async function copyDraft() {
     try {
@@ -476,9 +530,21 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
         </div>
 
         <div className="mt-4">
-          <label className="mb-1 block text-xs font-medium text-muted-foreground">
-            연구방법 선택 (표준 절차 프리필)
-          </label>
+          <div className="mb-1 flex flex-wrap items-center justify-between gap-2">
+            <label className="block text-xs font-medium text-muted-foreground">
+              연구방법 선택 (표준 절차 프리필)
+            </label>
+            {!readOnly && (
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 text-xs"
+                onClick={() => setMethodGuideOpen(true)}
+              >
+                <Wand2 size={12} className="mr-1" /> 가이드로 내 연구에 맞는 방법 찾기
+              </Button>
+            )}
+          </div>
           <select
             value={form.methodName}
             disabled={readOnly}
@@ -492,12 +558,50 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
               </option>
             ))}
           </select>
-          <Link
-            href="/archive/research-methods"
-            className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
-          >
-            연구방법 가이드 보기 <ExternalLink size={10} />
-          </Link>
+          <div className="mt-1.5 flex flex-wrap items-center justify-between gap-2">
+            <Link
+              href="/archive/research-methods"
+              className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
+            >
+              연구방법 가이드 보기 <ExternalLink size={10} />
+            </Link>
+            {form.approach && !readOnly && (
+              <label className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={showAllMethods}
+                  onChange={(e) => setShowAllMethods(e.target.checked)}
+                  className="h-3 w-3 accent-primary"
+                />
+                다른 접근의 방법도 보기
+              </label>
+            )}
+          </div>
+
+          {/* 선택 방법 즉시 설명 카드 */}
+          {selectedMethod && (
+            <div className="mt-2.5 rounded-lg border bg-muted/20 p-3">
+              <div className="flex items-center gap-2">
+                <span className="text-xs font-semibold text-foreground">
+                  {selectedMethod.name}
+                </span>
+                <span className="rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                  {RESEARCH_METHOD_KIND_LABELS[selectedMethod.kind]}
+                </span>
+              </div>
+              {selectedMethod.summary && (
+                <p className="mt-1.5 text-[11px] leading-relaxed text-foreground/85">
+                  {selectedMethod.summary}
+                </p>
+              )}
+              {selectedMethod.accessibleSummary && (
+                <p className="mt-1.5 text-[11px] leading-relaxed text-muted-foreground">
+                  <span className="font-medium text-primary">쉽게 이해하기 · </span>
+                  {selectedMethod.accessibleSummary}
+                </p>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="mt-4">
@@ -784,6 +888,95 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
               : "예: 가설1 — 사전점수 통제 ANCOVA / 가설2 — 위계적 회귀분석. SPSS 27 사용."}
             rows={4} />
         </Field>
+
+        {/* 통계방법 선택 (양적·혼합) */}
+        {showStatMethods && (
+          <div className="mt-3">
+            <div className="mb-1.5 flex flex-wrap items-center justify-between gap-2">
+              <label className="block text-xs font-medium text-muted-foreground">
+                통계 분석 방법 (여러 개 선택 가능 — 가설별로 다른 방법 가능)
+              </label>
+              {!readOnly && (
+                <Button
+                  size="sm"
+                  variant="outline"
+                  className="h-7 text-xs"
+                  onClick={() => setStatGuideOpen(true)}
+                >
+                  <Sigma size={12} className="mr-1" /> 가이드에서 통계방법 찾기
+                </Button>
+              )}
+            </div>
+            {statMethods.length > 0 ? (
+              <div className="flex flex-wrap gap-1.5">
+                {statMethods
+                  .slice()
+                  .sort((a, b) => a.name.localeCompare(b.name, "ko"))
+                  .map((m) => {
+                    const on = form.selectedStatMethods.includes(m.name);
+                    return (
+                      <button
+                        key={m.id}
+                        type="button"
+                        disabled={readOnly}
+                        onClick={() => toggleStatMethod(m.name)}
+                        aria-pressed={on}
+                        className={cn(
+                          "rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors disabled:opacity-60",
+                          on
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border bg-card text-muted-foreground hover:border-primary/40",
+                        )}
+                      >
+                        {on && <CheckCircle2 size={10} className="mr-1 inline" />}
+                        {m.name}
+                      </button>
+                    );
+                  })}
+              </div>
+            ) : (
+              <p className="text-[11px] text-muted-foreground">
+                공개된 통계방법 데이터가 아직 없습니다. 가이드 팝업에서 확인하세요.
+              </p>
+            )}
+
+            {/* 선택된 통계방법 한 줄 설명 */}
+            {form.selectedStatMethods.length > 0 && (
+              <ul className="mt-2.5 space-y-1.5">
+                {form.selectedStatMethods.map((name) => {
+                  const m = statMethods.find((x) => x.name === name);
+                  const desc = m?.accessibleSummary || m?.summary || "";
+                  return (
+                    <li
+                      key={name}
+                      className="flex items-start gap-2 rounded-lg border bg-muted/20 px-2.5 py-1.5"
+                    >
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-medium text-foreground">{name}</p>
+                        {desc && (
+                          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                            {desc}
+                          </p>
+                        )}
+                      </div>
+                      {!readOnly && (
+                        <button
+                          type="button"
+                          onClick={() => toggleStatMethod(name)}
+                          className="mt-0.5 rounded-md p-0.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600"
+                          aria-label={`${name} 제거`}
+                        >
+                          <X size={12} />
+                        </button>
+                      )}
+                    </li>
+                  );
+                })}
+              </ul>
+            )}
+          </div>
+        )}
+
         <Link
           href="/archive/statistical-methods"
           className="mt-2 inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
@@ -826,6 +1019,24 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
           savedAt={savedAt}
           onSave={() => void doSave(true)}
         />
+      )}
+
+      {!readOnly && (
+        <>
+          <MethodRecommenderDialog
+            open={methodGuideOpen}
+            onOpenChange={setMethodGuideOpen}
+            methods={methods}
+            onSelect={applyRecommendedMethod}
+          />
+          <StatMethodGuideDialog
+            open={statGuideOpen}
+            onOpenChange={setStatGuideOpen}
+            methods={statMethods}
+            selected={form.selectedStatMethods}
+            onToggle={toggleStatMethod}
+          />
+        </>
       )}
     </div>
   );

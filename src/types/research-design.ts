@@ -111,6 +111,8 @@ export interface ResearchDesign {
   dataCollection: string;
   /** 자료 분석 — 양적: 가설별 통계방법 / 질적: 코딩·주제분석·신뢰성 */
   dataAnalysis: string;
+  /** 선택한 통계분석 방법 이름 목록 (archive_statistical_methods.name) — 양적·혼합. 하위호환 위해 옵셔널. */
+  selectedStatMethods?: string[];
   /** 연구윤리 체크(EthicsChecklistPanel.ETHICS_ITEMS id) — 윤리 단계 흡수 */
   ethicsChecked?: string[];
   lastSavedAt?: string;

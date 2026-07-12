@@ -108,11 +108,17 @@ export function buildResearchMethodDraft(design: ResearchDesign | null | undefin
   ]);
 
   // 4. 자료 수집·분석
+  const statMethods = (d?.selectedStatMethods ?? [])
+    .map((s) => clean(s))
+    .filter((s) => s.length > 0);
   const analysisLines = joinLines([
     "### 4. 자료 수집·분석",
     clean(d?.dataCollection) && `- 자료 수집: ${clean(d?.dataCollection)}`,
     clean(d?.dataAnalysis) && `- 자료 분석: ${clean(d?.dataAnalysis)}`,
-    !clean(d?.dataCollection) && !clean(d?.dataAnalysis) ? "_(작성 전)_" : undefined,
+    statMethods.length > 0 && `- 통계 분석 방법: ${statMethods.join(", ")}`,
+    !clean(d?.dataCollection) && !clean(d?.dataAnalysis) && statMethods.length === 0
+      ? "_(작성 전)_"
+      : undefined,
   ]);
 
   return [header, participantLines, instrumentLines, procedureLines, analysisLines].join(

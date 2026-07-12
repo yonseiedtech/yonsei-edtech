@@ -98,6 +98,17 @@ describe("buildResearchMethodDraft", () => {
     expect(md).toContain("- ADDIE 단계: 분석 (Analysis), 설계 (Design), 평가 (Evaluation)");
   });
 
+  it("선택한 통계방법을 자료 수집·분석 절에 반영한다", () => {
+    const md = buildResearchMethodDraft(
+      makeDesign({
+        approach: "quantitative",
+        dataAnalysis: "가설별 통계 검증",
+        selectedStatMethods: ["ANCOVA (공분산분석)", "다중회귀분석"],
+      }),
+    );
+    expect(md).toContain("- 통계 분석 방법: ANCOVA (공분산분석), 다중회귀분석");
+  });
+
   it("질적 설계 — 질적 도구(면담 프로토콜)를 반영한다", () => {
     const md = buildResearchMethodDraft(
       makeDesign({
