@@ -5,12 +5,25 @@
  *
  * 알림 / 할 일 / 쪽지 3탭 + 각 탭 펼침 리스트(스크롤). 자주 확인하는 개인 현황을
  * 프로필 옆 시선 가까이. 할 일은 마감 D-day로 '다가오는 일정' 역할을 겸한다.
+ *
+ * 2026-07-13: 항목별 읽음/완료 처리 + 일괄 처리(모두 읽음·모두 완료) 추가.
+ * 반복 알림(수업 리마인더 등)이 쌓여도 한 번에 정리할 수 있게 한다.
  */
 
 import { useState } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
-import { Bell, ListTodo, MessageSquare, ChevronRight } from "lucide-react";
+import {
+  Bell,
+  ListTodo,
+  MessageSquare,
+  ChevronRight,
+  Check,
+  CheckCheck,
+  X,
+  Loader2,
+} from "lucide-react";
+import { toast } from "sonner";
 import { notificationsApi, courseTodosApi, messagesApi } from "@/lib/bkend";
 import type { AppNotification, CourseTodo, DirectMessage } from "@/types";
 import { cn } from "@/lib/utils";
@@ -44,16 +57,66 @@ function Empty({ text }: { text: string }) {
   return <p className="px-2 py-6 text-center text-xs text-muted-foreground">{text}</p>;
 }
 
-function NotifList({ items }: { items: AppNotification[] }) {
+/** 행 우측 액션 아이콘 버튼 (읽음·완료·삭제) */
+function RowAction({
+  label,
+  onClick,
+  icon: Icon,
+  tone = "muted",
+  disabled,
+}: {
+  label: string;
+  onClick: () => void;
+  icon: typeof Check;
+  tone?: "muted" | "primary";
+  disabled?: boolean;
+}) {
+  return (
+    <button
+      type="button"
+      aria-label={label}
+      title={label}
+      disabled={disabled}
+      onClick={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        onClick();
+      }}
+      className={cn(
+        "shrink-0 rounded-md p-1 transition-colors disabled:opacity-40",
+        tone === "primary"
+          ? "text-primary hover:bg-primary/10"
+          : "text-muted-foreground/60 hover:bg-muted hover:text-foreground",
+      )}
+    >
+      <Icon size={13} />
+    </button>
+  );
+}
+
+function NotifList({
+  items,
+  onRead,
+  onDelete,
+  busy,
+}: {
+  items: AppNotification[];
+  onRead: (id: string) => void;
+  onDelete: (id: string) => void;
+  busy: boolean;
+}) {
   if (items.length === 0) return <Empty text="알림이 없어요." />;
   return (
     <ul className="space-y-0.5">
       {items.slice(0, 20).map((n) => (
-        <li key={n.id}>
+        <li key={n.id} className="group/row relative">
           <Link
             href={n.link || "/mypage/notifications"}
+            onClick={() => {
+              if (!n.read) onRead(n.id);
+            }}
             className={cn(
-              "block rounded-lg px-2 py-1.5 transition-colors hover:bg-muted/50",
+              "block rounded-lg py-1.5 pl-2 pr-14 transition-colors hover:bg-muted/50",
               !n.read && "bg-primary/5",
             )}
           >
@@ -68,13 +131,27 @@ function NotifList({ items }: { items: AppNotification[] }) {
               <p className="mt-0.5 truncate text-[11px] text-muted-foreground">{n.message}</p>
             )}
           </Link>
+          <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 opacity-0 transition-opacity group-hover/row:opacity-100 focus-within:opacity-100">
+            {!n.read && (
+              <RowAction label="읽음 처리" icon={Check} tone="primary" disabled={busy} onClick={() => onRead(n.id)} />
+            )}
+            <RowAction label="알림 삭제" icon={X} disabled={busy} onClick={() => onDelete(n.id)} />
+          </div>
         </li>
       ))}
     </ul>
   );
 }
 
-function TodoList({ items }: { items: CourseTodo[] }) {
+function TodoList({
+  items,
+  onComplete,
+  busy,
+}: {
+  items: CourseTodo[];
+  onComplete: (id: string) => void;
+  busy: boolean;
+}) {
   if (items.length === 0) return <Empty text="남은 할 일이 없어요. 👍" />;
   const sorted = [...items].sort((a, b) =>
     (a.dueDate ?? "9999-99-99").localeCompare(b.dueDate ?? "9999-99-99"),
@@ -84,23 +161,30 @@ function TodoList({ items }: { items: CourseTodo[] }) {
       {sorted.slice(0, 20).map((t) => {
         const dday = t.dueDate ? ddayLabel(t.dueDate) : null;
         return (
-          <li key={t.id} className="rounded-lg px-2 py-1.5 hover:bg-muted/50">
-            <div className="flex items-start gap-1.5">
-              <ListTodo size={12} className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400" />
-              <p className="flex-1 text-xs text-foreground">{t.content}</p>
-              {dday && (
-                <span
-                  className={cn(
-                    "shrink-0 rounded px-1 py-0.5 text-[10px] font-semibold",
-                    dday.urgent
-                      ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
-                      : "bg-muted text-muted-foreground",
-                  )}
-                >
-                  {dday.label}
-                </span>
-              )}
-            </div>
+          <li key={t.id} className="group/row flex items-start gap-1.5 rounded-lg px-2 py-1.5 hover:bg-muted/50">
+            <button
+              type="button"
+              aria-label="완료 처리"
+              title="완료 처리"
+              disabled={busy}
+              onClick={() => onComplete(t.id)}
+              className="mt-0.5 shrink-0 rounded-full border border-emerald-500/60 p-0.5 text-transparent transition-colors hover:bg-emerald-500 hover:text-white disabled:opacity-40 dark:border-emerald-400/60"
+            >
+              <Check size={9} />
+            </button>
+            <p className="flex-1 text-xs text-foreground">{t.content}</p>
+            {dday && (
+              <span
+                className={cn(
+                  "shrink-0 rounded px-1 py-0.5 text-[10px] font-semibold",
+                  dday.urgent
+                    ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+                    : "bg-muted text-muted-foreground",
+                )}
+              >
+                {dday.label}
+              </span>
+            )}
           </li>
         );
       })}
@@ -108,7 +192,17 @@ function TodoList({ items }: { items: CourseTodo[] }) {
   );
 }
 
-function MessageList({ items }: { items: DirectMessage[] }) {
+function MessageList({
+  items,
+  onRead,
+  onDelete,
+  busy,
+}: {
+  items: DirectMessage[];
+  onRead: (id: string) => void;
+  onDelete: (id: string) => void;
+  busy: boolean;
+}) {
   if (items.length === 0) return <Empty text="받은 쪽지가 없어요." />;
   return (
     <ul className="space-y-0.5">
@@ -116,7 +210,7 @@ function MessageList({ items }: { items: DirectMessage[] }) {
         <li
           key={m.id}
           className={cn(
-            "rounded-lg px-2 py-1.5",
+            "group/row relative rounded-lg py-1.5 pl-2 pr-14",
             !m.read && "bg-primary/5",
           )}
         >
@@ -128,6 +222,12 @@ function MessageList({ items }: { items: DirectMessage[] }) {
             </span>
           </div>
           <p className="mt-0.5 line-clamp-2 text-[11px] text-muted-foreground">{m.content}</p>
+          <div className="absolute right-1.5 top-1.5 flex items-center gap-0.5 opacity-0 transition-opacity group-hover/row:opacity-100 focus-within:opacity-100">
+            {!m.read && (
+              <RowAction label="읽음 처리" icon={Check} tone="primary" disabled={busy} onClick={() => onRead(m.id)} />
+            )}
+            <RowAction label="쪽지 삭제" icon={X} disabled={busy} onClick={() => onDelete(m.id)} />
+          </div>
         </li>
       ))}
     </ul>
@@ -148,6 +248,8 @@ function FooterLink({ href, label }: { href: string; label: string }) {
 
 export default function ProfileSideWidget({ userId }: { userId: string }) {
   const [tab, setTab] = useState<SideTab>("notif");
+  const [busy, setBusy] = useState(false);
+  const qc = useQueryClient();
 
   const { data: notifRes } = useQuery({
     queryKey: ["profile-side-notifs", userId],
@@ -169,11 +271,80 @@ export default function ProfileSideWidget({ userId }: { userId: string }) {
   const openTodos = (todoRes?.data ?? []).filter((t) => !t.completed);
   const messages = msgRes?.data ?? [];
 
+  const invalidate = (key: string) => qc.invalidateQueries({ queryKey: [key, userId] });
+
+  /** 액션 래퍼 — busy 가드 + 에러 토스트 + 관련 쿼리 무효화 */
+  async function run(fn: () => Promise<unknown>, key: string, failMsg: string) {
+    if (busy) return;
+    setBusy(true);
+    try {
+      await fn();
+      await invalidate(key);
+    } catch (err) {
+      console.error("[ProfileSideWidget]", failMsg, err);
+      toast.error(failMsg);
+    } finally {
+      setBusy(false);
+    }
+  }
+
+  // ── 알림 ──
+  const readNotif = (id: string) =>
+    run(() => notificationsApi.markRead(id), "profile-side-notifs", "읽음 처리에 실패했어요.");
+  const deleteNotif = (id: string) =>
+    run(() => notificationsApi.delete(id), "profile-side-notifs", "알림 삭제에 실패했어요.");
+  const readAllNotif = () =>
+    run(async () => {
+      await notificationsApi.markAllRead(userId);
+      toast.success("알림을 모두 읽음 처리했어요.");
+    }, "profile-side-notifs", "일괄 읽음 처리에 실패했어요.");
+
+  // ── 쪽지 ──
+  const readMsg = (id: string) =>
+    run(() => messagesApi.markRead(id), "profile-side-messages", "읽음 처리에 실패했어요.");
+  const deleteMsg = (id: string) =>
+    run(() => messagesApi.delete(id), "profile-side-messages", "쪽지 삭제에 실패했어요.");
+  const readAllMsg = () =>
+    run(async () => {
+      const unread = messages.filter((m) => !m.read);
+      await Promise.all(unread.map((m) => messagesApi.markRead(m.id)));
+      toast.success("쪽지를 모두 읽음 처리했어요.");
+    }, "profile-side-messages", "일괄 읽음 처리에 실패했어요.");
+
+  // ── 할 일 ──
+  const completeTodo = (id: string) =>
+    run(() => courseTodosApi.update(id, { completed: true }), "profile-side-todos", "완료 처리에 실패했어요.");
+  const completeAllTodos = () => {
+    if (openTodos.length === 0) return;
+    if (!confirm(`남은 할 일 ${openTodos.length}건을 모두 완료 처리할까요?`)) return;
+    run(async () => {
+      await Promise.all(openTodos.map((t) => courseTodosApi.update(t.id, { completed: true })));
+      toast.success("할 일을 모두 완료 처리했어요.");
+    }, "profile-side-todos", "일괄 완료 처리에 실패했어요.");
+  };
+
+  const unreadNotifCount = notifs.filter((n) => !n.read).length;
+  const unreadMsgCount = messages.filter((m) => !m.read).length;
+
   const TABS = [
-    { key: "notif" as const, label: "알림", icon: Bell, count: notifs.filter((n) => !n.read).length },
+    { key: "notif" as const, label: "알림", icon: Bell, count: unreadNotifCount },
     { key: "todo" as const, label: "할 일", icon: ListTodo, count: openTodos.length },
-    { key: "message" as const, label: "쪽지", icon: MessageSquare, count: messages.filter((m) => !m.read).length },
+    { key: "message" as const, label: "쪽지", icon: MessageSquare, count: unreadMsgCount },
   ];
+
+  // 탭별 일괄 처리 버튼 노출 여부·라벨
+  const bulk =
+    tab === "notif"
+      ? unreadNotifCount > 0
+        ? { label: "모두 읽음", onClick: readAllNotif }
+        : null
+      : tab === "message"
+        ? unreadMsgCount > 0
+          ? { label: "모두 읽음", onClick: readAllMsg }
+          : null
+        : openTodos.length > 0
+          ? { label: "모두 완료", onClick: completeAllTodos }
+          : null;
 
   return (
     <section className="rounded-2xl border bg-card shadow-sm" aria-label="알림 · 할 일 · 쪽지">
@@ -207,10 +378,28 @@ export default function ProfileSideWidget({ userId }: { userId: string }) {
         })}
       </div>
 
+      {bulk && (
+        <div className="flex justify-end border-b bg-muted/20 px-2 py-1.5">
+          <button
+            type="button"
+            disabled={busy}
+            onClick={bulk.onClick}
+            className="inline-flex items-center gap-1 rounded-md px-2 py-1 text-[11px] font-medium text-primary transition-colors hover:bg-primary/10 disabled:opacity-40"
+          >
+            {busy ? <Loader2 size={12} className="animate-spin" /> : <CheckCheck size={13} />}
+            {bulk.label}
+          </button>
+        </div>
+      )}
+
       <div className="max-h-72 overflow-y-auto p-2">
-        {tab === "notif" && <NotifList items={notifs} />}
-        {tab === "todo" && <TodoList items={openTodos} />}
-        {tab === "message" && <MessageList items={messages} />}
+        {tab === "notif" && (
+          <NotifList items={notifs} onRead={readNotif} onDelete={deleteNotif} busy={busy} />
+        )}
+        {tab === "todo" && <TodoList items={openTodos} onComplete={completeTodo} busy={busy} />}
+        {tab === "message" && (
+          <MessageList items={messages} onRead={readMsg} onDelete={deleteMsg} busy={busy} />
+        )}
       </div>
 
       <div className="border-t px-3 py-2">
