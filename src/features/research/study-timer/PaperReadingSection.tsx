@@ -7,12 +7,13 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { BookOpenCheck, Plus, Star, Clock } from "lucide-react";
+import { BookOpenCheck, Plus, Star, Clock, TrendingUp } from "lucide-react";
 import { usePaperReadingLogs } from "../usePaperReadingLogs";
 import ReadingLogModal from "./ReadingLogModal";
 import { PAPER_READING_SOURCE_LABELS } from "@/types/paper-reading";
 import { DEFAULT_WEEKLY_READING_GOAL } from "@/types/paper-reading";
 import { todayYmdLocal } from "@/lib/dday";
+import { computeWeeklyReadingTrend } from "@/lib/reading-defense-loop";
 import { cn } from "@/lib/utils";
 
 function weekStartYmd(): string {
@@ -47,6 +48,13 @@ export default function PaperReadingSection() {
   }, [logs]);
 
   const goalPct = Math.min(100, Math.round((thisWeek / DEFAULT_WEEKLY_READING_GOAL) * 100));
+
+  // ── 읽기 환류(M5): 최근 4주 주별 읽기 추이 + "쌓이는 중" 경향 ──
+  const trend = useMemo(() => computeWeeklyReadingTrend(logs, 4), [logs]);
+  const maxWeekCount = useMemo(
+    () => trend.weeks.reduce((m, w) => Math.max(m, w.count), 0),
+    [trend],
+  );
 
   return (
     <section className="rounded-2xl border bg-card p-4 shadow-sm">
@@ -112,6 +120,50 @@ export default function PaperReadingSection() {
           />
         </div>
       </div>
+
+      {/* 읽기 환류(M5): 최근 4주 주별 읽기 추이 — 기록이 있을 때만 노출 */}
+      {trend.status === "ok" && (
+        <div className="mt-4 rounded-xl border bg-background p-3">
+          <div className="mb-2 flex items-center justify-between">
+            <span className="text-[11px] font-medium text-muted-foreground">
+              최근 4주 읽기 추이
+            </span>
+            {trend.accumulating && (
+              <span className="inline-flex items-center gap-0.5 text-[11px] font-semibold text-primary">
+                <TrendingUp className="h-3 w-3" />
+                읽기가 쌓이는 중
+              </span>
+            )}
+          </div>
+          <div className="flex items-end gap-2">
+            {trend.weeks.map((wk) => {
+              const pct = maxWeekCount === 0 ? 0 : Math.round((wk.count / maxWeekCount) * 100);
+              return (
+                <div key={wk.weekStart} className="flex flex-1 flex-col items-center gap-1">
+                  <div
+                    className="flex h-14 w-full items-end overflow-hidden rounded-md bg-muted"
+                    title={`${wk.label} 주 · ${wk.count}편 · ${wk.minutes}분`}
+                  >
+                    <div
+                      className="w-full rounded-md bg-primary/70 transition-all"
+                      style={{ height: `${wk.count > 0 ? Math.max(8, pct) : 0}%` }}
+                      aria-hidden="true"
+                    />
+                  </div>
+                  <span className="text-[10px] font-semibold tabular-nums text-foreground">
+                    {wk.count}
+                  </span>
+                  <span className="text-[9px] text-muted-foreground/70">{wk.label}</span>
+                </div>
+              );
+            })}
+          </div>
+          <p className="mt-2 text-[10px] leading-snug text-muted-foreground">
+            주별 읽은 편수예요. 최근 4주 {trend.totalCount}편·{trend.totalMinutes}분을 읽었어요. 꾸준한
+            읽기가 연구 진척과 함께 쌓입니다.
+          </p>
+        </div>
+      )}
 
       {/* 최근 타임라인 */}
       <div className="mt-3 space-y-1.5">

@@ -6,8 +6,10 @@ import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   MessageSquareQuote, Plus, Edit3, Trash2, Play, ChevronDown, ChevronRight,
   GripVertical, ListChecks, Sparkles, Mic, Target, ArrowRight,
+  TrendingUp, TrendingDown, Minus,
 } from "lucide-react";
 import { defensePracticesApi, defenseQuestionTemplatesApi } from "@/lib/bkend";
+import { computeDefenseScoreTrend } from "@/lib/reading-defense-loop";
 import { useAuthStore } from "@/features/auth/auth-store";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Button } from "@/components/ui/button";
@@ -124,6 +126,9 @@ export default function DefensePracticeListView({
           </Button>
         </div>
       )}
+
+      {/* 심사 환류(M5): 회차별 점수 시계열 추이 — 세트가 있을 때만 */}
+      {sets.length > 0 && <DefenseScoreTrendBanner sets={sets} />}
 
       {isLoading ? (
         <p className="py-8 text-center text-sm text-muted-foreground">불러오는 중...</p>
@@ -630,6 +635,123 @@ function PracticeSetEditor({
           </div>
         </div>
       )}
+    </div>
+  );
+}
+
+// ───────── 심사 환류: 점수 시계열 추이 배너 (M5) ─────────
+
+function DefenseScoreTrendBanner({ sets }: { sets: DefensePracticeSet[] }) {
+  const trend = computeDefenseScoreTrend(sets);
+
+  // 시도가 전혀 없으면 숨김.
+  if (trend.status === "none") return null;
+
+  // 시도 1회 — 한 번 더 연습하도록 안내(추이 미표시).
+  if (trend.status === "single") {
+    return (
+      <div className="rounded-2xl border bg-card p-4">
+        <div className="flex items-start gap-3">
+          <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+            <Mic size={18} />
+          </span>
+          <div className="min-w-0">
+            <h3 className="text-sm font-semibold">심사 연습 추세</h3>
+            <p className="mt-0.5 text-sm text-muted-foreground">
+              한 번 더 연습하면 회차별 점수 추이를 그래프로 보여드려요. 지금 점수는{" "}
+              <b className="tabular-nums text-foreground">{Math.round(trend.recentScore ?? 0)}</b>점이에요.
+            </p>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  // 시도 2회 이상 — 첫 → 최근 변화 + 미니 스파크라인(순수 SVG).
+  const points = trend.points.slice(-12); // 최근 12회만
+  const n = points.length;
+  const delta = trend.delta ?? 0;
+  const W = 320;
+  const H = 72;
+  const PAD_X = 8;
+  const PAD_Y = 10;
+  const innerW = W - PAD_X * 2;
+  const innerH = H - PAD_Y * 2;
+  const xAt = (i: number) => PAD_X + (n === 1 ? innerW / 2 : (innerW * i) / (n - 1));
+  const yAt = (score: number) =>
+    PAD_Y + innerH - (Math.max(0, Math.min(100, score)) / 100) * innerH;
+  const linePath = points.map((p, i) => `${xAt(i)},${yAt(p.score)}`).join(" ");
+  const areaPath =
+    `${xAt(0)},${PAD_Y + innerH} ` +
+    points.map((p, i) => `${xAt(i)},${yAt(p.score)}`).join(" ") +
+    ` ${xAt(n - 1)},${PAD_Y + innerH}`;
+
+  const TrendIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
+
+  return (
+    <div className="rounded-2xl border bg-card p-4">
+      <div className="flex items-start gap-3">
+        <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+          <Mic size={18} />
+        </span>
+        <div className="min-w-0 flex-1">
+          <div className="flex flex-wrap items-baseline gap-x-2">
+            <h3 className="text-sm font-semibold">심사 연습 추세</h3>
+            <span className="text-[11px] tabular-nums text-muted-foreground">
+              최근 {n}회
+            </span>
+          </div>
+          <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-sm text-muted-foreground">
+            첫 연습 <b className="tabular-nums text-foreground">{Math.round(trend.firstScore ?? 0)}</b>점
+            <ArrowRight size={12} className="text-muted-foreground/60" />
+            최근 <b className="tabular-nums text-foreground">{Math.round(trend.recentScore ?? 0)}</b>점
+            <span className="inline-flex items-center gap-0.5 text-[12px] font-semibold text-foreground">
+              <TrendIcon size={13} />
+              <span className="tabular-nums">{delta > 0 ? `+${delta}` : delta}점</span>
+            </span>
+          </p>
+        </div>
+      </div>
+
+      <svg
+        viewBox={`0 0 ${W} ${H}`}
+        className="mt-3 w-full"
+        role="img"
+        aria-label={`심사 연습 최근 ${n}회 평균 점수 추이, 첫 ${Math.round(trend.firstScore ?? 0)}점에서 최근 ${Math.round(trend.recentScore ?? 0)}점`}
+        preserveAspectRatio="none"
+      >
+        <line
+          x1={PAD_X}
+          y1={yAt(50)}
+          x2={W - PAD_X}
+          y2={yAt(50)}
+          className="stroke-border"
+          strokeWidth={1}
+          strokeDasharray="3 3"
+        />
+        <polygon points={areaPath} className="fill-primary/10" />
+        <polyline
+          points={linePath}
+          fill="none"
+          className="stroke-primary"
+          strokeWidth={2}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+        {points.map((p, i) => (
+          <circle
+            key={`${p.at}-${i}`}
+            cx={xAt(i)}
+            cy={yAt(p.score)}
+            r={i === n - 1 ? 3.5 : 2.5}
+            className={i === n - 1 ? "fill-primary" : "fill-primary/60"}
+          />
+        ))}
+      </svg>
+
+      <p className="mt-2 text-[11px] text-muted-foreground">
+        회차별 평균 점수(0~100)의 흐름이에요. 점선은 50점 기준입니다. 경향일 뿐 인과는 아닙니다.
+      </p>
     </div>
   );
 }
