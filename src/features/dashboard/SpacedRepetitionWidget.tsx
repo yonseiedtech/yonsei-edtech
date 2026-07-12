@@ -13,6 +13,8 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 import Link from "next/link";
 import { ArrowRight, RotateCcw, Sparkles, MessageSquare, FileText, Layers } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -184,7 +186,7 @@ export default function SpacedRepetitionWidget() {
         </Link>
       )}
       {!loading && flashcardDue.due === 0 && flashcardDue.total > 0 && (
-        <p className="mb-3 rounded-xl border border-emerald-200/70 bg-emerald-50/60 px-3 py-2 text-[11px] font-medium text-emerald-700 dark:border-emerald-800/50 dark:bg-emerald-950/20 dark:text-emerald-300">
+        <p className={cn("mb-3 rounded-xl border px-3 py-2 text-[11px] font-medium", SEMANTIC.success.border, SEMANTIC.success.bg, SEMANTIC.success.accent)}>
           ✅ 오늘 복습할 암기카드를 모두 마쳤습니다 (전체 {flashcardDue.total}장)
         </p>
       )}

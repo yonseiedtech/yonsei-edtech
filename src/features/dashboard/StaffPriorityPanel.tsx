@@ -23,6 +23,8 @@ import {
   ChevronRight,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 import { usePendingMembers } from "@/features/member/useMembers";
 import { useInquiries } from "@/features/inquiry/useInquiry";
 import { todosApi } from "@/lib/bkend";
@@ -71,11 +73,11 @@ export default function StaffPriorityPanel({ muted = false }: StaffPriorityPanel
   if (totalPriorityCount === 0) return null;
 
   return (
-    <section className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 shadow-sm">
+    <section className={cn("rounded-2xl border p-4 shadow-sm", SEMANTIC.warning.border, SEMANTIC.warning.bg)}>
       <div className="flex items-center gap-2">
-        <Shield size={16} className="text-amber-700" />
-        <h2 className="text-sm font-bold text-amber-900">운영진 우선순위</h2>
-        <Badge className="bg-amber-100 text-amber-700">{totalPriorityCount}건</Badge>
+        <Shield size={16} className={SEMANTIC.warning.accent} />
+        <h2 className={cn("text-sm font-bold", SEMANTIC.warning.titleStrong)}>운영진 우선순위</h2>
+        <Badge className={cn(SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText)}>{totalPriorityCount}건</Badge>
       </div>
       <div className="mt-3 grid gap-2 sm:grid-cols-2">
         {pendingCount > 0 && (
@@ -84,7 +86,7 @@ export default function StaffPriorityPanel({ muted = false }: StaffPriorityPanel
             className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 transition-colors hover:bg-amber-50"
           >
             <span className="flex items-center gap-2">
-              <ShieldAlert size={14} className="text-amber-700" />
+              <ShieldAlert size={14} className={SEMANTIC.warning.accent} />
               <span className="text-sm font-medium">
                 승인 대기 회원 {pendingCount}명
               </span>
@@ -98,7 +100,7 @@ export default function StaffPriorityPanel({ muted = false }: StaffPriorityPanel
             className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 transition-colors hover:bg-amber-50"
           >
             <span className="flex items-center gap-2">
-              <HelpCircle size={14} className="text-rose-600" />
+              <HelpCircle size={14} className={SEMANTIC.danger.accent} />
               <span className="text-sm font-medium">
                 미답변 문의 {unansweredCount}건
               </span>
@@ -122,7 +124,7 @@ export default function StaffPriorityPanel({ muted = false }: StaffPriorityPanel
                 >
                   <span className="flex min-w-0 items-center gap-1.5">
                     {t.priority === "high" && (
-                      <Badge className="shrink-0 bg-rose-100 text-[10px] text-rose-700">
+                      <Badge className={cn("shrink-0 text-[10px]", SEMANTIC.danger.chipBg, SEMANTIC.danger.chipText)}>
                         높음
                       </Badge>
                     )}

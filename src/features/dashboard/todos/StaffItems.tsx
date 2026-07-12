@@ -7,6 +7,8 @@
 
 import Link from "next/link";
 import { Badge } from "@/components/ui/badge";
+import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 
 export interface StaffItemsProps {
   pendingMembersCount: number;
@@ -35,7 +37,7 @@ export function StaffItems({
             <span className="font-medium">
               승인 대기 회원 {pendingMembersCount}명
             </span>
-            <Badge className="bg-amber-100 text-amber-700">처리 필요</Badge>
+            <Badge className={cn(SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText)}>처리 필요</Badge>
           </Link>
         </li>
       )}
@@ -48,7 +50,7 @@ export function StaffItems({
             <span className="font-medium">
               미답변 문의 {unansweredInquiriesCount}건
             </span>
-            <Badge className="bg-amber-100 text-amber-700">답변 필요</Badge>
+            <Badge className={cn(SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText)}>답변 필요</Badge>
           </Link>
         </li>
       )}

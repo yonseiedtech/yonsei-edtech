@@ -32,6 +32,7 @@ import { ROLE_LABELS } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatDate } from "@/lib/utils";
+import { STATUS_CHIP } from "@/lib/design-tokens";
 import {
   inferSeminarMode,
   SEMINAR_MODE_BADGE,
@@ -340,14 +341,14 @@ function DashboardContent() {
                 icon={Shield}
                 label="승인 대기"
                 value={pendingCount}
-                color="bg-amber-50 text-amber-600 dark:bg-amber-950/40 dark:text-amber-400"
+                color={STATUS_CHIP.warning}
                 href="/console/members"
               />
               <StatCard
                 icon={HelpCircle}
                 label="미답변 문의"
                 value={unansweredCount}
-                color="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
+                color={STATUS_CHIP.danger}
                 href="/console/inquiries"
               />
             </>

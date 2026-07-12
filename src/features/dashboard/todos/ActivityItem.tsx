@@ -10,15 +10,16 @@ import { ChevronRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { formatDday } from "@/lib/dday";
 import { cn } from "@/lib/utils";
+import { STATUS_CHIP } from "@/lib/design-tokens";
 import { ACTIVITY_LABELS, TYPE_ROUTE, type ActivityFlat } from "./types";
 
 export function ActivityItem({ a }: { a: ActivityFlat }) {
   const dd = a.date ? formatDday(a.date) : null;
   const ddCls = dd
     ? dd.kind === "past"
-      ? "bg-rose-50 text-rose-700 border border-rose-200"
+      ? cn("border", STATUS_CHIP.danger)
       : dd.kind === "today"
-        ? "bg-amber-50 text-amber-800 border border-amber-200"
+        ? cn("border", STATUS_CHIP.warning)
         : dd.diffDays <= 3
           ? "bg-orange-50 text-orange-700 border border-orange-200"
           : "bg-muted/60 text-muted-foreground border"

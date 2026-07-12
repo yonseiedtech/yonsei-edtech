@@ -29,6 +29,8 @@ import {
   CircleUserRound,
   Sparkles,
 } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { STATUS_CHIP } from "@/lib/design-tokens";
 import { getEffectiveSemesterCount } from "@/lib/interview-target";
 import { userActivityLogsApi } from "@/lib/bkend";
 import { ENROLLMENT_STATUS_LABELS } from "@/types";
@@ -144,7 +146,7 @@ export default function ProfileSummaryCard({ user }: { user: User }) {
               {user.name}
             </span>
             {statusLabel && (
-              <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-400">
+              <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", STATUS_CHIP.success)}>
                 {statusLabel}
               </span>
             )}

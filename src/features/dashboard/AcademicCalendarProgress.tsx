@@ -11,16 +11,17 @@ import {
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isPresidentOrAbove } from "@/lib/permissions";
 import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 import WidgetCard from "@/components/ui/widget-card";
 import SkeletonWidget from "@/components/ui/skeleton-widget";
 
 const PHASE_COLORS: Record<SemesterPhase, string> = {
   before: "bg-muted text-muted-foreground",
-  regular_pre_midterm: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-  midterm: "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300",
-  regular_post_midterm: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
-  final: "bg-rose-100 text-rose-700 dark:bg-rose-950/50 dark:text-rose-300",
-  post_final: "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300",
+  regular_pre_midterm: cn(SEMANTIC.success.chipBg, SEMANTIC.success.chipText),
+  midterm: cn(SEMANTIC.danger.chipBg, SEMANTIC.danger.chipText),
+  regular_post_midterm: cn(SEMANTIC.success.chipBg, SEMANTIC.success.chipText),
+  final: cn(SEMANTIC.danger.chipBg, SEMANTIC.danger.chipText),
+  post_final: cn(SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText),
   break: "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
   after: "bg-muted text-muted-foreground",
 };
@@ -93,7 +94,7 @@ export default function AcademicCalendarProgress() {
         priority="primary"
         actions={editAction ?? undefined}
       >
-        <p className="mt-4 rounded-md border border-amber-200 bg-amber-50/60 px-3 py-2 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <p className={cn("mt-4 rounded-md border px-3 py-2 text-xs", SEMANTIC.warning.border, SEMANTIC.warning.bg, SEMANTIC.warning.text)}>
           {canEdit
             ? "개강일·종강일이 비어 있어 진행도를 계산할 수 없습니다. 학사일정을 다시 확인해 주세요."
             : "개강일·종강일 정보가 등록되지 않아 진행도를 계산할 수 없습니다."}

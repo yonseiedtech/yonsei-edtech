@@ -15,6 +15,7 @@ import {
 } from "@/types";
 import type { ParsedSchedule } from "@/lib/courseSchedule";
 import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 import { DAY_CHARS, MODE_BADGE } from "./types";
 
 export interface FinishedClassEntry {
@@ -60,14 +61,14 @@ export function FinishedClassPrompts({
         return (
           <div
             key={offering.id}
-            className="rounded-2xl border border-emerald-200 bg-emerald-50/50 p-3"
+            className={cn("rounded-2xl border p-3", SEMANTIC.success.border, SEMANTIC.success.bg)}
           >
             <div className="flex flex-wrap items-center justify-between gap-2">
               <div className="flex-1 text-[13px]">
-                <p className="font-medium text-emerald-900">
+                <p className={cn("font-medium", SEMANTIC.success.titleStrong)}>
                   오늘도 <b>{offering.courseName}</b> 수업 들으시느라 고생하셨습니다.
                 </p>
-                <p className="text-[11px] text-emerald-800/70">
+                <p className={cn("text-[11px]", SEMANTIC.success.textMuted)}>
                   오늘 수업에 대한 메모 또는 할 일을 남겨둘까요?
                 </p>
               </div>
@@ -98,7 +99,7 @@ export function FinishedClassPrompts({
 
             {/* 다음주 수업 형태 편집 */}
             <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-emerald-200/60 pt-2">
-              <span className="text-[11px] font-medium text-emerald-900">
+              <span className={cn("text-[11px] font-medium", SEMANTIC.success.titleStrong)}>
                 다음주 {nextWeekday}요일 ({nextWeekDate}) 수업 형태:
               </span>
               {(["in_person", "zoom", "assignment", "cancelled", "exam"] as ClassSessionMode[]).map(

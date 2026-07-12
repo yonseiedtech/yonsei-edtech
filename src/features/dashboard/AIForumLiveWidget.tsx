@@ -10,6 +10,8 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight, Bot, Sparkles } from "lucide-react";
+import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 import { aiForumsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useIsWidgetMuted } from "@/lib/dashboard-layout";
@@ -23,11 +25,11 @@ const STATUS_LABEL: Record<string, { label: string; cls: string }> = {
   scheduled: { label: "예정", cls: "bg-muted text-muted-foreground" },
   in_progress: {
     label: "진행 중",
-    cls: "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+    cls: cn(SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText),
   },
   completed: {
     label: "종료",
-    cls: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300",
+    cls: cn(SEMANTIC.success.chipBg, SEMANTIC.success.chipText),
   },
   archived: { label: "보관", cls: "bg-muted text-muted-foreground" },
 };
@@ -131,7 +133,7 @@ export default function AIForumLiveWidget() {
                   라운드 {t.currentRound} / {t.maxRounds}
                 </span>
                 {t.status === "in_progress" && (
-                  <span className="inline-flex items-center gap-0.5 text-[10px] font-semibold text-amber-700 dark:text-amber-300">
+                  <span className={cn("inline-flex items-center gap-0.5 text-[10px] font-semibold", SEMANTIC.warning.accent)}>
                     <Sparkles size={9} />
                     LIVE
                   </span>

@@ -51,6 +51,7 @@ import {
   type Flashcard,
 } from "@/types";
 import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 
 const HIDE_KEY_PREFIX = "dashboard.nextActionBanner.hiddenUntil";
 
@@ -114,8 +115,8 @@ function formatRemaining(diffMs: number): string {
 
 /** 잔여 시간에 따른 색상 — 부담 줄이기: 임계값(<=30분)만 강조, 나머지는 중성 */
 function urgencyClass(diffMs: number): string {
-  if (diffMs <= 30 * 60_000) return "border-rose-200 bg-rose-50/50";
-  if (diffMs < 3 * 60 * 60_000) return "border-amber-200 bg-amber-50/40";
+  if (diffMs <= 30 * 60_000) return cn(SEMANTIC.danger.border, SEMANTIC.danger.bg);
+  if (diffMs < 3 * 60 * 60_000) return cn(SEMANTIC.warning.border, SEMANTIC.warning.bg);
   return "border-border bg-card";
 }
 
@@ -501,12 +502,12 @@ export default function NextActionBanner() {
       <div className="mx-auto max-w-6xl px-4">
         <Link
           href="/mypage#graduation-checklist"
-          className="group flex items-center gap-2 rounded-2xl border border-emerald-200 bg-emerald-50/50 px-3 py-1.5 shadow-sm transition-colors hover:bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30 sm:gap-3 sm:py-2"
+          className={cn("group flex items-center gap-2 rounded-2xl border px-3 py-1.5 shadow-sm transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/30 sm:gap-3 sm:py-2", SEMANTIC.success.border, SEMANTIC.success.bg)}
           role="status"
           aria-label={`졸업요건 ${remainingCount}개 남음 · 마이페이지 체크표로 이동`}
         >
           <div
-            className="flex h-7 w-7 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
+            className={cn("flex h-7 w-7 shrink-0 items-center justify-center rounded-lg", SEMANTIC.success.chipBg, SEMANTIC.success.chipText)}
             aria-hidden="true"
           >
             <GraduationCap size={14} />
@@ -516,7 +517,7 @@ export default function NextActionBanner() {
               <span className="truncate text-sm font-semibold text-foreground">
                 졸업요건 {remainingCount}개 남음
               </span>
-              <span className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+              <span className={cn("shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-semibold", SEMANTIC.success.chipBg, SEMANTIC.success.chipText)}>
                 체크표
               </span>
             </div>
@@ -554,7 +555,7 @@ export default function NextActionBanner() {
     diffMs <= 30 * 60_000
       ? "bg-rose-600 text-white"
       : diffMs <= 3 * 60 * 60_000
-        ? "bg-amber-100 text-amber-900"
+        ? cn(SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText)
         : "bg-muted text-muted-foreground";
 
   return (

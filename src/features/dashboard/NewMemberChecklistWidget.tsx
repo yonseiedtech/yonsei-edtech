@@ -86,6 +86,7 @@ import {
 import { NEXT_CTA_MAP } from "@/lib/onboarding-next-cta";
 import WidgetCard from "@/components/ui/widget-card";
 import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 
 const THIRTY_DAYS_MS = 30 * 24 * 60 * 60 * 1000;
 const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
@@ -675,14 +676,15 @@ export default function NewMemberChecklistWidget() {
                   className={cn(
                     "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-all",
                     justCompleted &&
-                      "animate-pulse bg-emerald-50 text-emerald-700 ring-2 ring-emerald-300 dark:bg-emerald-950/40 dark:text-emerald-200 dark:ring-emerald-700/50",
+                      cn("animate-pulse ring-2 ring-emerald-300 dark:ring-emerald-700/50", SEMANTIC.success.chipBg, SEMANTIC.success.chipText),
                   )}
                   aria-label={`${it.label} 완료`}
                 >
                   <StatusIcon
                     size={16}
                     className={cn(
-                      "shrink-0 text-emerald-600 transition-transform",
+                      "shrink-0 transition-transform",
+                      SEMANTIC.success.accent,
                       justCompleted && "scale-125",
                     )}
                     aria-hidden="true"
@@ -705,7 +707,7 @@ export default function NewMemberChecklistWidget() {
                   className={cn(
                     "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-muted/40",
                     it.priority === "high" &&
-                      "border-l-2 border-rose-400 bg-rose-50 hover:bg-rose-100 dark:bg-rose-950/30 dark:hover:bg-rose-950/50",
+                      cn("border-l-2 border-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50", SEMANTIC.danger.bg),
                     it.priority === "low" && "text-muted-foreground",
                   )}
                   aria-label={`${it.label} 시작하기${it.priority === "high" ? " (우선)" : ""}`}
@@ -713,7 +715,7 @@ export default function NewMemberChecklistWidget() {
                   {it.priority === "high" ? (
                     <AlertCircle
                       size={16}
-                      className="shrink-0 text-rose-500"
+                      className={cn("shrink-0", SEMANTIC.danger.accent)}
                       aria-hidden="true"
                     />
                   ) : (
@@ -727,7 +729,7 @@ export default function NewMemberChecklistWidget() {
                     size={14}
                     className={cn(
                       "shrink-0",
-                      it.priority === "high" ? "text-rose-600" : "text-primary",
+                      it.priority === "high" ? SEMANTIC.danger.accent : "text-primary",
                       it.priority === "low" && "text-muted-foreground",
                     )}
                     aria-hidden="true"
@@ -735,7 +737,7 @@ export default function NewMemberChecklistWidget() {
                   <span
                     className={cn(
                       "truncate font-medium",
-                      it.priority === "high" && "text-rose-900 dark:text-rose-100",
+                      it.priority === "high" && SEMANTIC.danger.titleStrong,
                     )}
                   >
                     {it.label}

@@ -20,6 +20,7 @@ import {
   type SemesterTerm,
 } from "@/types";
 import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 
 export interface LectureReviewItemProps {
   t: CourseTodo;
@@ -100,7 +101,7 @@ export function LectureReviewItem({
   }
 
   return (
-    <li className="rounded-md border border-rose-200 bg-rose-50/40 px-2.5 py-2">
+    <li className={cn("rounded-md border px-2.5 py-2", SEMANTIC.danger.border, SEMANTIC.danger.bg)}>
       <div className="flex items-center gap-2 text-[12px]">
         <input
           type="checkbox"
@@ -128,7 +129,7 @@ export function LectureReviewItem({
             {sessionLabel}
           </span>
         )}
-        <span className="ml-auto truncate text-[11px] font-semibold text-rose-700">
+        <span className={cn("ml-auto truncate text-[11px] font-semibold", SEMANTIC.danger.accent)}>
           한 줄 후기 작성
         </span>
       </div>

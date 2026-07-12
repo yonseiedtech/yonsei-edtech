@@ -19,6 +19,7 @@ import {
   type SemesterTerm,
 } from "@/types";
 import { cn } from "@/lib/utils";
+import { SEMANTIC, STATUS_CHIP } from "@/lib/design-tokens";
 import { LectureReviewItem } from "./LectureReviewItem";
 
 export interface CourseInfo {
@@ -145,9 +146,9 @@ export function CourseTodoItem({
           if (!dd) return null;
           const cls =
             dd.kind === "past"
-              ? "bg-rose-50 text-rose-700 border border-rose-200"
+              ? cn("border", STATUS_CHIP.danger)
               : dd.kind === "today"
-                ? "bg-amber-50 text-amber-800 border border-amber-200"
+                ? cn("border", STATUS_CHIP.warning)
                 : dd.diffDays <= 3
                   ? "bg-orange-50 text-orange-700 border border-orange-200"
                   : "bg-muted/60 text-muted-foreground border";
@@ -168,7 +169,7 @@ export function CourseTodoItem({
           <button
             type="button"
             onClick={() => void onSaveEdit(t)}
-            className="rounded p-1 text-emerald-600 hover:bg-emerald-50"
+            className={cn("rounded p-1 hover:bg-emerald-50", SEMANTIC.success.accent)}
             title="저장 (Enter)"
             aria-label="저장"
           >

@@ -10,6 +10,8 @@
  */
 
 import Link from "next/link";
+import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 import { todayYmdKst, isoToKstYmd } from "@/lib/dday";
 import { useMemo, useState, useRef, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
@@ -193,7 +195,7 @@ export default function VacationModeCard({
           ) : null}
         </p>
         {achieved && (
-          <p className="mt-1.5 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+          <p className={cn("mt-1.5 inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium", SEMANTIC.success.chipBg, SEMANTIC.success.chipText)}>
             🎉 이번 주 목표 달성! 잔디 +5
             {consecutiveWeeks >= 2 && <span className="font-bold">· 🔥 {consecutiveWeeks}주 연속</span>}
           </p>
