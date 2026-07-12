@@ -9,6 +9,7 @@ import {
   RESEARCH_DESIGN_APPROACH_LABELS,
   type ResearchDesign,
 } from "@/types/research-design";
+import { buildDesignConditionSummary } from "@/lib/stat-method-recommender";
 
 function clean(v?: string): string {
   return (v ?? "").trim();
@@ -111,12 +112,19 @@ export function buildResearchMethodDraft(design: ResearchDesign | null | undefin
   const statMethods = (d?.selectedStatMethods ?? [])
     .map((s) => clean(s))
     .filter((s) => s.length > 0);
+  const conditionSummary = d?.designConditions
+    ? clean(buildDesignConditionSummary(d.designConditions))
+    : "";
   const analysisLines = joinLines([
     "### 4. 자료 수집·분석",
     clean(d?.dataCollection) && `- 자료 수집: ${clean(d?.dataCollection)}`,
+    conditionSummary && `- 설계 조건: ${conditionSummary}`,
     clean(d?.dataAnalysis) && `- 자료 분석: ${clean(d?.dataAnalysis)}`,
     statMethods.length > 0 && `- 통계 분석 방법: ${statMethods.join(", ")}`,
-    !clean(d?.dataCollection) && !clean(d?.dataAnalysis) && statMethods.length === 0
+    !clean(d?.dataCollection) &&
+    !clean(d?.dataAnalysis) &&
+    statMethods.length === 0 &&
+    !conditionSummary
       ? "_(작성 전)_"
       : undefined,
   ]);

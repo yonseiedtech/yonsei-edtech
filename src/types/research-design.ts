@@ -16,6 +16,24 @@ export const RESEARCH_DESIGN_APPROACH_LABELS: Record<
   mixed: "혼합 연구",
 };
 
+/**
+ * 설계 조건 — 집단 비교(효과 검증) 연구에서 통계방법을 결정짓는 4가지 조건.
+ * 사전검사 유무·무선할당·사전 동질성에 따라 사후 t-test/ANOVA·ANCOVA·대응표본 t-test가 갈린다.
+ * 모두 옵셔널(하위호환) — 미입력 시 통계 추천을 건너뛴다.
+ */
+export interface DesignConditions {
+  /** 비교 집단 수 (1: 단일집단 / 2: 2집단 / 3plus: 3집단 이상) */
+  groupCount?: "1" | "2" | "3plus";
+  /** 사전검사 실시 여부 */
+  hasPretest?: boolean;
+  /** 무선할당 여부 (참일 때 실험, 거짓일 때 준실험·비동등 집단 성격) */
+  randomAssignment?: boolean;
+  /** 사전검사 기준 집단 동질성 — 동질 확보 / 차이 존재 / 불확실 */
+  pretestEquivalence?: "equivalent" | "different" | "unknown";
+}
+
+export const EMPTY_DESIGN_CONDITIONS: DesignConditions = {};
+
 /** 3. 연구 대상 — 모집단·표본·표집·보호 */
 export interface ResearchDesignParticipants {
   /** 모집단 */
@@ -113,6 +131,8 @@ export interface ResearchDesign {
   dataAnalysis: string;
   /** 선택한 통계분석 방법 이름 목록 (archive_statistical_methods.name) — 양적·혼합. 하위호환 위해 옵셔널. */
   selectedStatMethods?: string[];
+  /** 설계 조건(집단 수·사전검사·무선할당·사전 동질성) — 통계방법 추천 근거. 하위호환 위해 옵셔널. */
+  designConditions?: DesignConditions;
   /** 연구윤리 체크(EthicsChecklistPanel.ETHICS_ITEMS id) — 윤리 단계 흡수 */
   ethicsChecked?: string[];
   lastSavedAt?: string;

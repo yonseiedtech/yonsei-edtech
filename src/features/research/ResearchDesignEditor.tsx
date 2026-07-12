@@ -39,6 +39,7 @@ import {
   ADDIE_STEPS,
   EMPTY_PARTICIPANTS,
   EMPTY_PROGRAM,
+  EMPTY_DESIGN_CONDITIONS,
   RESEARCH_DESIGN_APPROACH_LABELS,
   designSectionStatus,
   computeDesignProgress,
@@ -47,9 +48,11 @@ import {
   type ResearchDesignParticipants,
   type ResearchDesignProcedureStep,
   type ResearchDesignProgram,
+  type DesignConditions,
 } from "@/types/research-design";
 import { RESEARCH_METHOD_KIND_LABELS } from "@/types/research-method";
 import { buildResearchMethodDraft } from "@/lib/research-design-draft";
+import { recommendStatMethods } from "@/lib/stat-method-recommender";
 import {
   useResearchDesign,
   useEnsureResearchDesign,
@@ -61,7 +64,7 @@ import ResearchJourneyGuide from "./ResearchJourneyGuide";
 import EditorSaveBar from "./EditorSaveBar";
 import EthicsChecklistPanel from "./EthicsChecklistPanel";
 import MethodRecommenderDialog from "./MethodRecommenderDialog";
-import StatMethodGuideDialog from "./StatMethodGuideDialog";
+import StatMethodGuideDialog, { DesignConditionForm } from "./StatMethodGuideDialog";
 
 interface Props {
   user: User;
@@ -81,6 +84,7 @@ interface FormState {
   dataCollection: string;
   dataAnalysis: string;
   selectedStatMethods: string[];
+  designConditions: DesignConditions;
   ethicsChecked: string[];
 }
 
@@ -97,11 +101,18 @@ const EMPTY_FORM: FormState = {
   dataCollection: "",
   dataAnalysis: "",
   selectedStatMethods: [],
+  designConditions: { ...EMPTY_DESIGN_CONDITIONS },
   ethicsChecked: [],
 };
 
 function fromDesign(d: ResearchDesign | null | undefined): FormState {
-  if (!d) return { ...EMPTY_FORM, participants: { ...EMPTY_PARTICIPANTS }, programDesign: { ...EMPTY_PROGRAM } };
+  if (!d)
+    return {
+      ...EMPTY_FORM,
+      participants: { ...EMPTY_PARTICIPANTS },
+      programDesign: { ...EMPTY_PROGRAM },
+      designConditions: { ...EMPTY_DESIGN_CONDITIONS },
+    };
   return {
     approach: d.approach ?? "",
     methodName: d.methodName ?? "",
@@ -115,6 +126,7 @@ function fromDesign(d: ResearchDesign | null | undefined): FormState {
     dataCollection: d.dataCollection ?? "",
     dataAnalysis: d.dataAnalysis ?? "",
     selectedStatMethods: d.selectedStatMethods ?? [],
+    designConditions: { ...EMPTY_DESIGN_CONDITIONS, ...(d.designConditions ?? {}) },
     ethicsChecked: d.ethicsChecked ?? [],
   };
 }
@@ -135,6 +147,7 @@ function toDesign(form: FormState, base: ResearchDesign): ResearchDesign {
     dataCollection: form.dataCollection,
     dataAnalysis: form.dataAnalysis,
     selectedStatMethods: form.selectedStatMethods,
+    designConditions: form.designConditions,
     ethicsChecked: form.ethicsChecked,
   };
 }
@@ -220,6 +233,7 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
               dataCollection: form.dataCollection,
               dataAnalysis: form.dataAnalysis,
               selectedStatMethods: form.selectedStatMethods,
+              designConditions: form.designConditions,
               ethicsChecked: form.ethicsChecked,
               lastSavedAt: now,
             },
@@ -430,6 +444,30 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
       };
     });
     setDirty(true);
+  }
+
+  function setDesignConditions(next: DesignConditions) {
+    setField("designConditions", next);
+  }
+
+  // 설계 조건 → 통계방법 추천 (순수 함수)
+  const statRecommend = useMemo(
+    () => recommendStatMethods(form.designConditions),
+    [form.designConditions],
+  );
+
+  // 추천 통계방법을 selectedStatMethods 에 일괄 반영 (중복 제거)
+  function applyRecommendedStats() {
+    const names = statRecommend.recommended.map((r) => r.name);
+    if (names.length === 0) return;
+    setForm((prev) => ({
+      ...prev,
+      selectedStatMethods: Array.from(
+        new Set([...prev.selectedStatMethods, ...names]),
+      ),
+    }));
+    setDirty(true);
+    toast.success(`추천 통계방법 ${names.length}개를 반영했습니다.`);
   }
 
   async function copyDraft() {
@@ -889,6 +927,98 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
             rows={4} />
         </Field>
 
+        {/* 설계 조건 → 통계방법 추천 (양적·혼합, 집단 비교 연구) */}
+        {showStatMethods && (
+          <div className="mt-3 rounded-xl border border-primary/20 bg-primary/5 p-3">
+            <p className="text-xs font-semibold text-foreground">
+              설계 조건으로 통계방법 추천받기
+            </p>
+            <p className="mt-0.5 text-[11px] text-muted-foreground">
+              집단 비교(효과 검증) 연구라면 아래 조건을 고르세요. 사전검사·무선할당·동질성에 따라 사후검사 t-test/ANOVA·ANCOVA 등이 달라집니다.
+            </p>
+            <div className="mt-2.5">
+              <DesignConditionForm
+                value={form.designConditions}
+                onChange={readOnly ? () => {} : setDesignConditions}
+              />
+            </div>
+
+            {(statRecommend.recommended.length > 0 ||
+              statRecommend.cautions.length > 0) && (
+              <div className="mt-3 space-y-2">
+                {statRecommend.recommended.map((r) => {
+                  const on = form.selectedStatMethods.includes(r.name);
+                  return (
+                    <div
+                      key={r.name}
+                      className="rounded-lg border bg-card p-2.5"
+                    >
+                      <div className="flex items-start justify-between gap-2">
+                        <div className="min-w-0 flex-1">
+                          <p className="text-xs font-semibold text-foreground">
+                            이 설계라면 · {r.name}
+                          </p>
+                          <p className="mt-0.5 text-[11px] leading-relaxed text-muted-foreground">
+                            {r.rationale}
+                          </p>
+                        </div>
+                        {!readOnly && (
+                          <button
+                            type="button"
+                            onClick={() => toggleStatMethod(r.name)}
+                            aria-pressed={on}
+                            className={cn(
+                              "inline-flex shrink-0 items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                              on
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border text-muted-foreground hover:border-primary/40 hover:text-foreground",
+                            )}
+                          >
+                            {on ? (
+                              <>
+                                <CheckCircle2 size={11} /> 선택됨
+                              </>
+                            ) : (
+                              <>
+                                <Plus size={11} /> 선택
+                              </>
+                            )}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  );
+                })}
+
+                {statRecommend.cautions.length > 0 && (
+                  <ul className="space-y-1 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5">
+                    {statRecommend.cautions.map((c, i) => (
+                      <li
+                        key={i}
+                        className="flex gap-1.5 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300"
+                      >
+                        <span aria-hidden>⚠</span>
+                        <span>{c}</span>
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                {!readOnly && statRecommend.recommended.length > 0 && (
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    className="h-7 text-xs"
+                    onClick={applyRecommendedStats}
+                  >
+                    <CheckCircle2 size={12} className="mr-1" /> 추천 반영
+                  </Button>
+                )}
+              </div>
+            )}
+          </div>
+        )}
+
         {/* 통계방법 선택 (양적·혼합) */}
         {showStatMethods && (
           <div className="mt-3">
@@ -1035,6 +1165,8 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
             methods={statMethods}
             selected={form.selectedStatMethods}
             onToggle={toggleStatMethod}
+            designConditions={form.designConditions}
+            onDesignConditionsChange={setDesignConditions}
           />
         </>
       )}

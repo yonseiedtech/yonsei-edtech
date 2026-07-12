@@ -109,6 +109,26 @@ describe("buildResearchMethodDraft", () => {
     expect(md).toContain("- 통계 분석 방법: ANCOVA (공분산분석), 다중회귀분석");
   });
 
+  it("설계 조건(비동등 집단)을 자료 수집·분석 절에 ANCOVA 문장으로 반영한다", () => {
+    const md = buildResearchMethodDraft(
+      makeDesign({
+        approach: "quantitative",
+        designConditions: {
+          groupCount: "2",
+          hasPretest: true,
+          randomAssignment: false,
+          pretestEquivalence: "different",
+        },
+      }),
+    );
+    expect(md).toContain("- 설계 조건:");
+    expect(md).toContain("ANCOVA");
+    expect(md).toContain("공변량");
+    // 설계 조건이 있으면 자료 수집·분석 절은 작성 전 플레이스홀더가 아니다
+    const analysisSection = md.split("### 4. 자료 수집·분석")[1] ?? "";
+    expect(analysisSection).not.toContain("_(작성 전)_");
+  });
+
   it("질적 설계 — 질적 도구(면담 프로토콜)를 반영한다", () => {
     const md = buildResearchMethodDraft(
       makeDesign({
