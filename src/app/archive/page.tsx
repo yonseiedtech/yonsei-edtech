@@ -22,6 +22,7 @@ import {
   Wand2,
   Compass,
   BookMarked,
+  GitFork,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -457,6 +458,31 @@ export default function ArchiveLandingPage() {
                   <h3 className="text-lg font-semibold tracking-tight">AECT 용어 표준 사전 — 공식 용어·역어 186개</h3>
                   <p className="text-sm text-muted-foreground">
                     『교육공학 용어해설』(학지사, 2020) 공식 표제어·역어 186개를 6개 영역별로 검색·브라우징합니다.
+                  </p>
+                </div>
+                <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                  보기
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </div>
+              </div>
+            </article>
+          </Link>
+
+          {/* 학습이론 가계도 (Theory Map) — 사조·계열·학자 지도 */}
+          <Link
+            href="/archive/theory-map"
+            className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+            aria-label="학습이론 가계도 보기"
+          >
+            <article className="rounded-2xl border-l-4 border-l-violet-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+              <div className="flex items-center gap-4 p-5">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                  <GitFork className="h-5 w-5" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-semibold tracking-tight">학습이론 가계도</h3>
+                  <p className="text-sm text-muted-foreground">
+                    행동주의계·인지주의계·구성주의계 3대 사조와 세부 계열·대표 학자를 지도로 정리하고, 각 이론을 아카이브 개념 상세로 연결합니다.
                   </p>
                 </div>
                 <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">

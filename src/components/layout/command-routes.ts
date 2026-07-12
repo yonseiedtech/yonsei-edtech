@@ -96,6 +96,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
   { key: "r:archive-literature-review", group: "연구 · 아카이브", label: "문헌 고찰 가이드", href: "/archive/literature-review-guide", icon: BookOpen, keywords: "문헌 고찰 literature review 선행연구", visibility: "both" },
   { key: "r:archive-foundation-terms", group: "연구 · 아카이브", label: "기초 용어", href: "/archive/foundation-terms", icon: Lightbulb, keywords: "기초 용어 foundation terms 개념", visibility: "both" },
   { key: "r:archive-terminology", group: "연구 · 아카이브", label: "AECT 용어 표준 사전", sub: "공식 용어·역어 186개", href: "/archive/terminology", icon: BookMarked, keywords: "aect 용어 표준 사전 교육공학 용어해설 richey 역어 표제어 terminology 학지사", visibility: "both" },
+  { key: "r:archive-theory-map", group: "연구 · 아카이브", label: "학습이론 가계도", sub: "사조·계열·학자 지도", href: "/archive/theory-map", icon: Network, keywords: "학습이론 가계도 이론 지도 계보 사조 행동주의 인지주의 구성주의 파블로프 스키너 피아제 비고츠키 반두라 theory map family", visibility: "both" },
   { key: "r:journal", group: "연구 · 아카이브", label: "연구지 (Journal)", href: "/journal", icon: BookMarked, keywords: "연구지 학회지 저널 journal 논문집", visibility: "both" },
 
   // ── 커뮤니티 ──
