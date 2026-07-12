@@ -12,6 +12,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
+import { useInvalidateArchiveDraftBadge } from "@/features/admin/useArchiveDraftBadge";
 import { statisticalMethodsApi } from "@/lib/bkend";
 import { seedStatisticalMethods } from "@/lib/statistical-methods-seed";
 import {
@@ -51,11 +52,14 @@ export default function ConsoleStatisticalMethodsPage() {
   const [seeding, setSeeding] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
 
+  const invalidateBadge = useInvalidateArchiveDraftBadge();
+
   async function load() {
     setLoading(true);
     try {
       const res = await statisticalMethodsApi.list();
       setMethods(res.data);
+      invalidateBadge();
     } catch (err) {
       console.error("[console-statistical-methods] load failed", err);
       toast.error("로드 실패");
@@ -110,6 +114,7 @@ export default function ConsoleStatisticalMethodsPage() {
       setMethods((prev) =>
         prev.map((x) => (x.id === m.id ? { ...x, published: next } : x)),
       );
+      invalidateBadge();
       toast.success(next ? "공개 전환" : "비공개(draft) 전환");
     } catch (err) {
       console.error("[console-statistical-methods] publish toggle failed", err);

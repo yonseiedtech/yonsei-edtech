@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
+import { useInvalidateArchiveDraftBadge } from "@/features/admin/useArchiveDraftBadge";
 import { foundationTermsApi } from "@/lib/bkend";
 import { refreshFoundationTermsMeta, seedFoundationTerms } from "@/lib/foundation-terms-seed";
 import {
@@ -57,11 +58,14 @@ export default function ConsoleFoundationTermsPage() {
   const [seeding, setSeeding] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
 
+  const invalidateBadge = useInvalidateArchiveDraftBadge();
+
   async function load() {
     setLoading(true);
     try {
       const res = await foundationTermsApi.list();
       setTerms(res.data);
+      invalidateBadge();
     } catch (err) {
       console.error("[console-foundation-terms] load failed", err);
       toast.error("로드 실패");
@@ -135,6 +139,7 @@ export default function ConsoleFoundationTermsPage() {
       const next = !t.published;
       await foundationTermsApi.update(t.id, { published: next });
       setTerms((prev) => prev.map((x) => (x.id === t.id ? { ...x, published: next } : x)));
+      invalidateBadge();
       toast.success(next ? "공개 전환" : "비공개(draft) 전환");
     } catch (err) {
       console.error("[console-foundation-terms] publish toggle failed", err);

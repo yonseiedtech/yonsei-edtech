@@ -22,6 +22,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
+import { useInvalidateArchiveDraftBadge } from "@/features/admin/useArchiveDraftBadge";
 import { writingTipsApi } from "@/lib/bkend";
 import { seedWritingTips } from "@/lib/writing-tips-seed";
 import {
@@ -56,11 +57,14 @@ export default function ConsoleWritingTipsPage() {
   const [seeding, setSeeding] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
 
+  const invalidateBadge = useInvalidateArchiveDraftBadge();
+
   async function load() {
     setLoading(true);
     try {
       const res = await writingTipsApi.list();
       setTips(res.data);
+      invalidateBadge();
     } catch (err) {
       console.error("[console-writing-tips] load failed", err);
       toast.error("로드 실패");
@@ -113,6 +117,7 @@ export default function ConsoleWritingTipsPage() {
       const next = !t.published;
       await writingTipsApi.update(t.id, { published: next });
       setTips((prev) => prev.map((x) => (x.id === t.id ? { ...x, published: next } : x)));
+      invalidateBadge();
       toast.success(next ? "공개 전환" : "비공개(draft) 전환");
     } catch (err) {
       console.error("[console-writing-tips] publish toggle failed", err);

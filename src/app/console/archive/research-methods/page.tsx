@@ -14,6 +14,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { researchMethodsApi } from "@/lib/bkend";
 import { seedResearchMethods } from "@/lib/research-methods-seed";
+import { useInvalidateArchiveDraftBadge } from "@/features/admin/useArchiveDraftBadge";
 import {
   RESEARCH_METHOD_KIND_COLORS,
   RESEARCH_METHOD_KIND_LABELS,
@@ -37,12 +38,14 @@ export default function ConsoleResearchMethodsPage() {
   const [q, setQ] = useState("");
   const [seeding, setSeeding] = useState(false);
   const [toggling, setToggling] = useState<string | null>(null);
+  const invalidateBadge = useInvalidateArchiveDraftBadge();
 
   async function load() {
     setLoading(true);
     try {
       const res = await researchMethodsApi.list();
       setMethods(res.data);
+      invalidateBadge();
     } catch (err) {
       console.error("[console-research-methods] load failed", err);
       toast.error("로드 실패");
@@ -97,6 +100,7 @@ export default function ConsoleResearchMethodsPage() {
       setMethods((prev) =>
         prev.map((x) => (x.id === m.id ? { ...x, published: next } : x)),
       );
+      invalidateBadge();
       toast.success(next ? "공개 전환" : "비공개(draft) 전환");
     } catch (err) {
       console.error("[console-research-methods] publish toggle failed", err);
