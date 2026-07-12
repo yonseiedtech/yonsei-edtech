@@ -181,14 +181,14 @@ export default function SteppingstoneHubPage() {
               </div>
               <div className="flex-1">
                 <h3 className="text-lg font-bold tracking-tight sm:text-xl">
-                  교육훈련 프로그램 개발 가이드
+                  프로그램 설계·개발
                 </h3>
-                <p className="text-xs text-muted-foreground">ADDIE 5단계 · 이론 렌즈 · 산출물 체크리스트</p>
+                <p className="text-xs text-muted-foreground">ADDIE · 가네 9절차 · 학습목표/과정안 작성 도구</p>
               </div>
             </div>
             <p className="mt-4 text-sm leading-relaxed text-muted-foreground">
-              연수·수업·HRD 프로그램을 분석·설계·개발·실행·평가 다섯 단계로 따라가며, 각 단계에서
-              참고할 교육공학 개념과 산출물을 정리한 셀프 가이드입니다.
+              연수·수업·HRD 프로그램을 ADDIE와 가네 9절차로 설계·개발하며, 각 단계에서 참고할 교육공학
+              개념과 함께 학습목표·과정안 작성 도구까지 담은 셀프 가이드입니다.
             </p>
             <div className="mt-5 flex items-center gap-1 text-sm font-semibold text-primary transition-all group-hover:gap-2">
               <span>바로가기</span>
