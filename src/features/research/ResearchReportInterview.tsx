@@ -14,6 +14,7 @@ import {
   CheckCircle2, Circle, Pencil, PartyPopper, Trophy,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 import type { FormState, SetField } from "./ResearchReportEditor";
 import type {
   EducationFormat,
@@ -243,8 +244,8 @@ function ArchiveConceptRecommender({
 
   if (matches.length === 0) return null;
   return (
-    <div className="rounded-lg border border-emerald-200 bg-emerald-50/40 p-3">
-      <p className="text-[11px] font-semibold text-emerald-900">
+    <div className={cn("rounded-lg border p-3", SEMANTIC.success.bg, SEMANTIC.success.border)}>
+      <p className={cn("text-[11px] font-semibold", SEMANTIC.success.text)}>
         🔍 archive 매칭 개념 — 클릭 시 이론카드 핵심개념 목록에 자동 추가
       </p>
       <div className="mt-2 flex flex-wrap gap-1.5">
@@ -563,7 +564,7 @@ function ResearchLogicMap({
                 <p className="text-center text-[10px] font-bold leading-tight sm:text-xs">{n.label}</p>
                 <p className="text-base font-bold tabular-nums sm:text-lg">{n.fill}%</p>
                 {clickable && n.fill < 80 && (
-                  <p className="text-[9px] font-medium text-rose-700">미작성 → 이동</p>
+                  <p className={cn("text-[9px] font-medium", SEMANTIC.danger.accent)}>미작성 → 이동</p>
                 )}
               </Element>
             );
@@ -781,7 +782,7 @@ export function TaskStepsField({
             type="button"
             onClick={() => removeAt(idx)}
             disabled={visible.length === 1 && !s.trim()}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-rose-500 hover:bg-rose-50 disabled:opacity-30"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md text-destructive hover:bg-destructive/10 disabled:opacity-30"
             aria-label="삭제"
             title="삭제"
           >×</button>
@@ -839,8 +840,8 @@ function TheoryNameRenderer({ form, setField }: { form: FormState; setField: Set
   return (
     <div className="space-y-3">
       {/* Sprint 72 F2: 대표 이론 프리셋 chip */}
-      <div className="rounded-lg border-2 border-dashed border-emerald-200 bg-emerald-50/40 p-2.5">
-        <p className="mb-1.5 text-[11px] font-semibold text-emerald-900">
+      <div className={cn("rounded-lg border-2 border-dashed p-2.5", SEMANTIC.success.bg, SEMANTIC.success.border)}>
+        <p className={cn("mb-1.5 text-[11px] font-semibold", SEMANTIC.success.text)}>
           💡 자주 쓰이는 교육공학 이론 — 한 번 클릭하면 자동 입력됩니다 (수정 가능)
         </p>
         <div className="flex flex-wrap gap-1">
@@ -867,7 +868,7 @@ function TheoryNameRenderer({ form, setField }: { form: FormState; setField: Set
             <button
               type="button"
               onClick={() => setShowAllPresets(true)}
-              className="inline-flex items-center rounded-full border border-emerald-200 bg-card px-2.5 py-1 text-[11px] text-emerald-700 hover:bg-emerald-50"
+              className={cn("inline-flex items-center rounded-full border bg-card px-2.5 py-1 text-[11px]", SEMANTIC.success.border, SEMANTIC.success.accent)}
             >
               + {POPULAR_THEORIES.length - 8}개 더 보기
             </button>
@@ -912,7 +913,7 @@ function TheoryNameRenderer({ form, setField }: { form: FormState; setField: Set
             {(card?.concepts ?? []).map((k) => (
               <span
                 key={k.id}
-                className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] text-emerald-900"
+                className={cn("inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px]", SEMANTIC.success.chipBg, SEMANTIC.success.text)}
               >
                 {k.name}
                 <button
@@ -921,7 +922,7 @@ function TheoryNameRenderer({ form, setField }: { form: FormState; setField: Set
                     const next = (card?.concepts ?? []).filter((x) => x.id !== k.id);
                     ensureFirstTheoryCard(form, setField, { concepts: next });
                   }}
-                  className="ml-0.5 text-emerald-700 hover:text-rose-600"
+                  className={cn("ml-0.5", SEMANTIC.success.accent, "hover:text-destructive")}
                   aria-label={`${k.name} 개념 삭제`}
                 >
                   ×
@@ -1315,9 +1316,9 @@ const SLIDES: SlideDef[] = [
             })}
           </div>
           {cur && (
-            <div className="rounded-lg border-l-4 border-l-amber-400 bg-amber-50/60 p-3 text-xs leading-relaxed">
-              <p className="font-semibold text-amber-900">📋 처치 적합성·차시 가이드</p>
-              <div className="mt-1.5 space-y-1 text-amber-900/90">
+            <div className={cn("rounded-lg border-l-4 p-3 text-xs leading-relaxed", SEMANTIC.warning.bg, "border-l-amber-400")}>
+              <p className={cn("font-semibold", SEMANTIC.warning.text)}>📋 처치 적합성·차시 가이드</p>
+              <div className={cn("mt-1.5 space-y-1", SEMANTIC.warning.textMuted)}>
                 {cur === "cognitive" && (
                   <>
                     <p>✅ 권장 차시 예시: <strong>2~6차시 (단기 가능)</strong></p>
@@ -1346,7 +1347,7 @@ const SLIDES: SlideDef[] = [
                     <p>⚠️ 어느 영역이 주(主)인지 명시해 주세요.</p>
                   </>
                 )}
-                <p className="mt-2 rounded-md border border-amber-300/70 bg-card/60 px-2 py-1.5 text-[11px] font-medium text-amber-900">
+                <p className={cn("mt-2 rounded-md border bg-card/60 px-2 py-1.5 text-[11px] font-medium", SEMANTIC.warning.border, SEMANTIC.warning.text)}>
                   ⓘ 위 차시 안내는 일반적 권장 범위입니다. 실제 차시 수는 연구 맥락·연구 일정에 따라 달라지므로 반드시 지도교수님과 상의해 결정하세요.
                 </p>
               </div>
@@ -1399,7 +1400,7 @@ const SLIDES: SlideDef[] = [
     render: (form, setField) => (
       <div className="space-y-2">
         <div className="rounded-lg border bg-card p-2.5">
-          <p className="mb-1 text-[11px] font-semibold text-blue-900">A · Audience (학습자)</p>
+          <p className={cn("mb-1 text-[11px] font-semibold", SEMANTIC.info.text)}>A · Audience (학습자)</p>
           <Input
             value={form.outcomeMagerA}
             onChange={(e) => setField("outcomeMagerA", e.target.value)}
@@ -1409,7 +1410,7 @@ const SLIDES: SlideDef[] = [
           />
         </div>
         <div className="rounded-lg border bg-card p-2.5">
-          <p className="mb-1 text-[11px] font-semibold text-emerald-900">B · Behavior (관찰 가능한 행동)</p>
+          <p className={cn("mb-1 text-[11px] font-semibold", SEMANTIC.success.text)}>B · Behavior (관찰 가능한 행동)</p>
           <Textarea
             value={form.outcomeMagerB}
             onChange={(e) => setField("outcomeMagerB", e.target.value)}
@@ -1420,7 +1421,7 @@ const SLIDES: SlideDef[] = [
           />
         </div>
         <div className="rounded-lg border bg-card p-2.5">
-          <p className="mb-1 text-[11px] font-semibold text-amber-900">C · Condition (수행 조건)</p>
+          <p className={cn("mb-1 text-[11px] font-semibold", SEMANTIC.warning.text)}>C · Condition (수행 조건)</p>
           <Input
             value={form.outcomeMagerC}
             onChange={(e) => setField("outcomeMagerC", e.target.value)}
@@ -1430,7 +1431,7 @@ const SLIDES: SlideDef[] = [
           />
         </div>
         <div className="rounded-lg border bg-card p-2.5">
-          <p className="mb-1 text-[11px] font-semibold text-rose-900">D · Degree (성취 기준)</p>
+          <p className={cn("mb-1 text-[11px] font-semibold", SEMANTIC.danger.text)}>D · Degree (성취 기준)</p>
           <Input
             value={form.outcomeMagerD}
             onChange={(e) => setField("outcomeMagerD", e.target.value)}
@@ -1440,9 +1441,9 @@ const SLIDES: SlideDef[] = [
           />
         </div>
         {form.outcomeMagerABCD && !form.outcomeMagerA && !form.outcomeMagerB && !form.outcomeMagerC && !form.outcomeMagerD && (
-          <details className="rounded-md border border-amber-200 bg-amber-50 p-2 text-[11px] text-amber-900">
+          <details className={cn("rounded-md border p-2 text-[11px]", SEMANTIC.warning.bg, SEMANTIC.warning.border, SEMANTIC.warning.text)}>
             <summary className="cursor-pointer font-medium">예전에 통합 입력하신 내용 보기 (참고용)</summary>
-            <p className="mt-1 whitespace-pre-wrap text-amber-900/80">{form.outcomeMagerABCD}</p>
+            <p className={cn("mt-1 whitespace-pre-wrap", SEMANTIC.warning.textMuted)}>{form.outcomeMagerABCD}</p>
           </details>
         )}
       </div>
@@ -1464,9 +1465,9 @@ const SLIDES: SlideDef[] = [
       return (
         <div className="space-y-2">
           {domain && (
-            <div className="rounded-2xl border-2 border-dashed border-amber-200 bg-amber-50/60 p-3 text-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-amber-700">학습자에게 우선적으로 변화시키려는 영역</p>
-              <p className="mt-1 text-amber-900/90 font-bold">{domainLabel}</p>
+            <div className={cn("rounded-2xl border-2 border-dashed p-3 text-sm", SEMANTIC.warning.bg, SEMANTIC.warning.border)}>
+              <p className={cn("text-[11px] font-semibold uppercase tracking-wider", SEMANTIC.warning.accent)}>학습자에게 우선적으로 변화시키려는 영역</p>
+              <p className={cn("mt-1 font-bold", SEMANTIC.warning.textMuted)}>{domainLabel}</p>
             </div>
           )}
           {profile && (
@@ -1561,7 +1562,7 @@ const SLIDES: SlideDef[] = [
       const phen = form.problemPhenomena.find((p) => p.trim());
       if (!phen) return null;
       return (
-        <p className="rounded-md bg-amber-50 px-2 py-1.5 text-[11px] text-amber-900">
+        <p className={cn("rounded-md px-2 py-1.5 text-[11px]", SEMANTIC.warning.bg, SEMANTIC.warning.text)}>
           🏫 정의한 현상: <strong className="ml-0.5">{phen.trim().slice(0, 80)}</strong>
         </p>
       );
@@ -1604,8 +1605,8 @@ const SLIDES: SlideDef[] = [
         ]),
       ).slice(0, 6);
       return (
-        <div className="rounded-2xl border-2 border-dashed border-blue-200 bg-blue-50/60 p-4 text-sm">
-          <p className="font-semibold text-blue-900">검색 키워드 후보</p>
+        <div className={cn("rounded-2xl border-2 border-dashed p-4 text-sm", SEMANTIC.info.bg, SEMANTIC.info.border)}>
+          <p className={cn("font-semibold", SEMANTIC.info.text)}>검색 키워드 후보</p>
           {keywords.length === 0 ? (
             <p className="mt-2 text-muted-foreground">
               앞 단계 답변이 비어있어 키워드를 추출하지 못했어요.
@@ -1615,7 +1616,7 @@ const SLIDES: SlideDef[] = [
               {keywords.map((k) => (
                 <span
                   key={k}
-                  className="rounded-full bg-card px-2 py-0.5 text-xs font-medium text-blue-900 ring-1 ring-blue-200"
+                  className={cn("rounded-full bg-card px-2 py-0.5 text-xs font-medium ring-1", SEMANTIC.info.text, SEMANTIC.info.border)}
                 >
                   {k}
                 </span>
@@ -1652,7 +1653,7 @@ const SLIDES: SlideDef[] = [
       return (
         <div className="space-y-1">
           {theoryName && (
-            <p className="rounded-md bg-emerald-50 px-2 py-1.5 text-[11px] text-emerald-900">
+            <p className={cn("rounded-md px-2 py-1.5 text-[11px]", SEMANTIC.success.bg, SEMANTIC.success.text)}>
               📚 선택 이론: <strong className="ml-0.5">{theoryName}</strong>
             </p>
           )}
@@ -1950,9 +1951,9 @@ export default function ResearchReportInterview({
                       initial={{ opacity: 0, y: 8 }}
                       animate={{ opacity: 1, y: 0 }}
                       transition={{ delay: 0.4, duration: 0.3 }}
-                      className="mt-3 flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 p-2.5 text-[11px] text-amber-900 sm:text-xs"
+                      className={cn("mt-3 flex items-start gap-2 rounded-lg border p-2.5 text-[11px] sm:text-xs", SEMANTIC.warning.bg, SEMANTIC.warning.border, SEMANTIC.warning.text)}
                     >
-                      <AlertTriangle size={14} className="mt-0.5 shrink-0 text-amber-600" />
+                      <AlertTriangle size={14} className={cn("mt-0.5 shrink-0", SEMANTIC.warning.iconStrong)} />
                       <span>{msg}</span>
                     </motion.div>
                   );
@@ -2082,12 +2083,12 @@ function PreviousAnswerCard({
     const firstRef = items[0];
     if (!firstRef?.targetSlide || firstRef.targetIdx < 0) return null;
     return (
-      <div className="mt-3 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed border-amber-300 bg-amber-50/60 px-4 py-5 text-center sm:py-6">
-        <div className="mb-1.5 flex h-9 w-9 items-center justify-center rounded-full bg-amber-100 text-amber-700 sm:h-10 sm:w-10">
+      <div className={cn("mt-3 flex flex-col items-center justify-center rounded-2xl border-2 border-dashed px-4 py-5 text-center sm:py-6", SEMANTIC.warning.bg, SEMANTIC.warning.border)}>
+        <div className={cn("mb-1.5 flex h-9 w-9 items-center justify-center rounded-full sm:h-10 sm:w-10", SEMANTIC.warning.chipBg, SEMANTIC.warning.accent)}>
           <Pencil size={16} />
         </div>
-        <p className="text-sm font-semibold text-amber-900">앞 단계 답변이 비어있어요</p>
-        <p className="mt-1 max-w-md text-[11px] leading-relaxed text-amber-900/80 sm:text-xs">
+        <p className={cn("text-sm font-semibold", SEMANTIC.warning.text)}>앞 단계 답변이 비어있어요</p>
+        <p className={cn("mt-1 max-w-md text-[11px] leading-relaxed sm:text-xs", SEMANTIC.warning.textMuted)}>
           이 질문은 앞서 작성한 <strong>{firstRef.targetSlide.prompt}</strong> 답변을 토대로 풀어가면 더 자연스럽습니다.
           먼저 그 답변부터 채워보세요.
         </p>
@@ -2111,7 +2112,7 @@ function PreviousAnswerCard({
       {items.filter((it) => it.value).map((it) => (
         <div
           key={it.ref.slideId}
-          className="flex items-start gap-2 rounded-lg border border-slate-200 bg-card px-3 py-2"
+          className="flex items-start gap-2 rounded-lg border border-border bg-card px-3 py-2"
         >
           <div className="min-w-0 flex-1">
             <p className="text-[10px] font-medium text-muted-foreground">
@@ -2123,7 +2124,7 @@ function PreviousAnswerCard({
             <button
               type="button"
               onClick={() => onJump(it.targetIdx)}
-              className="shrink-0 inline-flex items-center gap-0.5 rounded-md border border-slate-200 bg-slate-50 px-2 py-1 text-[10px] font-medium text-slate-700 hover:bg-slate-100"
+              className="shrink-0 inline-flex items-center gap-0.5 rounded-md border border-border bg-muted px-2 py-1 text-[10px] font-medium text-foreground hover:bg-muted/80"
               title="이 답변을 수정하러 가기"
             >
               <Pencil size={10} />

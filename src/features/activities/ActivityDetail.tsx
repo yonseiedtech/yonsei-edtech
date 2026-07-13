@@ -15,6 +15,7 @@ import {
   Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter,
 } from "@/components/ui/dialog";
 import { cn } from "@/lib/utils";
+import { SEMANTIC } from "@/lib/design-tokens";
 import { toast } from "sonner";
 import {
   ArrowLeft, Calendar, MapPin, Users, User, UserPlus, Check, X,
@@ -66,10 +67,10 @@ import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
 import { useAllMembers } from "@/features/member/useMembers";
 
 const STATUS_LABELS: Record<string, string> = { upcoming: "예정", ongoing: "진행 중", completed: "완료" };
-const STATUS_COLORS: Record<string, string> = { upcoming: "bg-blue-50 text-blue-700", ongoing: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
+const STATUS_COLORS: Record<string, string> = { upcoming: SEMANTIC.info.chip, ongoing: SEMANTIC.warning.chip, completed: SEMANTIC.default.chip };
 const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed: "모집마감", in_progress: "진행중", completed: "완료" };
 const RECRUIT_LABELS_STUDY: Record<string, string> = { recruiting: "모집중", closed: "모집완료" };
-const RECRUIT_COLORS: Record<string, string> = { recruiting: "bg-green-50 text-green-700", closed: "bg-red-50 text-red-700", in_progress: "bg-amber-50 text-amber-700", completed: "bg-muted text-muted-foreground" };
+const RECRUIT_COLORS: Record<string, string> = { recruiting: SEMANTIC.success.chip, closed: SEMANTIC.danger.chip, in_progress: SEMANTIC.warning.chip, completed: SEMANTIC.default.chip };
 
 type Tab = "overview" | "progress" | "staff" | "presenters" | "volunteers" | "participants" | "applicants" | "form-settings" | "report" | "settings" | "my-sessions" | "archive" | "study-report";
 
@@ -835,7 +836,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 const days = Math.ceil(msUntilStart / (1000 * 60 * 60 * 24));
                 if (days > 0) {
                   return (
-                    <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-[10px] font-bold text-blue-700 dark:bg-blue-950/50 dark:text-blue-300">
+                    <span className={cn("rounded-full px-2.5 py-0.5 text-[10px] font-bold", SEMANTIC.info.chipBg, SEMANTIC.info.chipText)}>
                       모집까지 D-{days}
                     </span>
                   );
@@ -854,8 +855,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   <span className={cn(
                     "rounded-full px-2.5 py-0.5 text-[10px] font-bold",
                     days <= 3
-                      ? "bg-amber-100 text-amber-700 dark:bg-amber-950/50 dark:text-amber-300"
-                      : "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/50 dark:text-emerald-300",
+                      ? cn(SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText)
+                      : cn(SEMANTIC.success.chipBg, SEMANTIC.success.chipText),
                   )}>
                     마감 D-{days}
                   </span>
@@ -868,7 +869,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
           <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 text-sm text-muted-foreground sm:mt-5">
             <span className="flex items-center gap-1.5"><Calendar size={14} />{activity.date}{activity.endDate ? ` ~ ${activity.endDate}` : ""}</span>
             {(activity.year || activity.semester) && (
-              <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
+              <Badge variant="secondary" className={cn("text-[10px]", SEMANTIC.info.chipBg, SEMANTIC.info.chipText)}>
                 {formatSemester(activity.year, activity.semester)}
               </Badge>
             )}
@@ -976,16 +977,16 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
           {/* 모집 자동 안내 — 미개시/마감 임박/마감됨 (자동 계산 모드일 때만) */}
           {recruitmentComputed.auto && (recruitmentComputed.notStarted || (recruitmentStatus === "closed" && (activity.recruitmentStartAt || activity.recruitmentEndAt))) && (
-            <div className="mt-6 border-t border-slate-100 pt-5 sm:mt-7 sm:pt-6">
+            <div className="mt-6 border-t border-border pt-5 sm:mt-7 sm:pt-6">
               {recruitmentComputed.notStarted ? (
-                <div className="rounded-lg border border-blue-200 bg-blue-50/60 p-3 text-xs text-blue-800 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+                <div className={cn("rounded-lg border p-3 text-xs", SEMANTIC.info.bg, SEMANTIC.info.border, SEMANTIC.info.text)}>
                   <div className="font-medium">모집 예정</div>
                   <div className="mt-1 text-[11px] opacity-90">
                     {recruitmentPeriodLabel ? `${recruitmentPeriodLabel} 모집이 시작됩니다.` : "곧 모집이 시작됩니다."}
                   </div>
                 </div>
               ) : (
-                <div className="rounded-lg border border-red-200 bg-red-50/60 p-3 text-xs text-red-800 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+                <div className={cn("rounded-lg border p-3 text-xs", SEMANTIC.danger.bg, SEMANTIC.danger.border, SEMANTIC.danger.text)}>
                   <div className="font-medium">모집이 마감되었습니다</div>
                   {recruitmentPeriodLabel && (
                     <div className="mt-1 text-[11px] opacity-90">모집 기간 {recruitmentPeriodLabel}</div>
@@ -999,8 +1000,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               회원에게 신청 버튼이 숨겨진 경우. 자동 계산 모드(recruitmentStartAt/End 설정)가 아닐 때만. */}
           {isStaff && registrationMethod === "open" && recruitmentStatus !== "recruiting"
             && !recruitmentComputed.auto && (
-            <div className="mt-6 rounded-lg border border-amber-300 bg-amber-50 p-4 dark:border-amber-800 dark:bg-amber-950/30">
-              <div className="flex items-start gap-2 text-sm text-amber-900 dark:text-amber-200">
+            <div className={cn("mt-6 rounded-lg border p-4", SEMANTIC.warning.bg, SEMANTIC.warning.border)}>
+              <div className={cn("flex items-start gap-2 text-sm", SEMANTIC.warning.text)}>
                 <Clock size={16} className="mt-0.5 shrink-0" />
                 <div className="flex-1">
                   <p className="font-medium">
@@ -1026,9 +1027,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
           {/* 참여 버튼 — 헤더와 시각적으로 분리 */}
           {(((!isJoined && !hasApplied && recruitmentStatus === "recruiting" && registrationMethod === "open") || isJoined || (hasApplied && !isJoined))) && (
-            <div className="mt-6 border-t border-slate-100 pt-5 sm:mt-7 sm:pt-6">
+            <div className="mt-6 border-t border-border pt-5 sm:mt-7 sm:pt-6">
               {recruitmentComputed.auto && recruitmentStatus === "recruiting" && recruitmentComputed.msUntilEnd !== null && recruitmentComputed.msUntilEnd <= 1000 * 60 * 60 * 24 * 3 && (
-                <div className="mb-3 rounded-md border border-amber-200 bg-amber-50/60 p-2 text-[11px] text-amber-800 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                <div className={cn("mb-3 rounded-md border p-2 text-[11px]", SEMANTIC.warning.bg, SEMANTIC.warning.border, SEMANTIC.warning.text)}>
                   마감까지 약 {Math.max(1, Math.ceil(recruitmentComputed.msUntilEnd / (1000 * 60 * 60)))}시간 남았습니다.
                 </div>
               )}
@@ -1070,8 +1071,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   </Link>
                 )
               )}
-              {isJoined && <Badge className="bg-green-50 px-3 py-1 text-sm text-green-700"><Check size={14} className="mr-1" />참여 중</Badge>}
-              {hasApplied && !isJoined && <Badge className="bg-amber-50 px-3 py-1 text-sm text-amber-700"><Clock size={14} className="mr-1" />신청 대기중</Badge>}
+              {isJoined && <Badge className={cn("px-3 py-1 text-sm", SEMANTIC.success.chip)}><Check size={14} className="mr-1" />참여 중</Badge>}
+              {hasApplied && !isJoined && <Badge className={cn("px-3 py-1 text-sm", SEMANTIC.warning.chip)}><Clock size={14} className="mr-1" />신청 대기중</Badge>}
               {type === "external" && user && (() => {
                 const mine = applicants.find((a) => a.userId === user.id);
                 return mine ? (
@@ -1355,8 +1356,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                   className={cn(
                                     "text-[10px]",
                                     p.mode === "in_person"
-                                      ? "bg-emerald-50 text-emerald-700"
-                                      : "bg-blue-50 text-blue-700",
+                                      ? SEMANTIC.success.chip
+                                      : SEMANTIC.info.chip,
                                   )}
                                 >
                                   {ACTIVITY_PROGRESS_MODE_LABELS[p.mode]}
@@ -1402,7 +1403,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                               {/* UX polish: 출석/자료 카운트도 같은 행에 노출 (이미 expanded view 에는 있음) */}
                               {((p.attendedUserIds as string[] | undefined)?.length ?? 0) > 0 && (
                                 <span
-                                  className="inline-flex items-center gap-0.5 rounded bg-emerald-50 px-1 py-0.5 text-[9px] text-emerald-700"
+                                  className={cn("inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px]", SEMANTIC.success.chipBg, SEMANTIC.success.chipText)}
                                   title={`출석 ${(p.attendedUserIds as string[]).length}명`}
                                 >
                                   ✓ {(p.attendedUserIds as string[]).length}
@@ -1410,7 +1411,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                               )}
                               {((p.materials as ActivityProgress["materials"])?.length ?? 0) > 0 && (
                                 <span
-                                  className="inline-flex items-center gap-0.5 rounded bg-amber-50 px-1 py-0.5 text-[9px] text-amber-700"
+                                  className={cn("inline-flex items-center gap-0.5 rounded px-1 py-0.5 text-[9px]", SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText)}
                                   title={`자료 ${(p.materials as ActivityProgress["materials"])!.length}건`}
                                 >
                                   📎 {(p.materials as ActivityProgress["materials"])!.length}
@@ -1453,7 +1454,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                   console.error("[activity-progress/delete]", e);
                                   toast.error(e instanceof Error ? `삭제 실패: ${e.message}` : "삭제에 실패했습니다.");
                                 }
-                              }} className="rounded p-1 text-muted-foreground hover:text-red-500"><Trash2 size={14} /></button>
+                              }} className="rounded p-1 text-muted-foreground hover:text-destructive"><Trash2 size={14} /></button>
                             )}
                           </div>
                         </div>
@@ -1524,20 +1525,20 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                           className={cn(
                                             "flex items-center gap-1.5 rounded-md border px-2 py-1 text-left text-[11px] transition",
                                             attended
-                                              ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                                              ? cn(SEMANTIC.success.border, SEMANTIC.success.bg, SEMANTIC.success.text)
                                               : "border-border bg-background text-foreground hover:border-primary/30",
                                             !(isStaff || isLeader) && "cursor-default opacity-80",
                                           )}
                                         >
                                           {attended ? (
-                                            <CheckCircle2 size={12} className="shrink-0 text-emerald-600" />
+                                            <CheckCircle2 size={12} className={cn("shrink-0", SEMANTIC.success.iconStrong)} />
                                           ) : (
                                             <Circle size={12} className="shrink-0 text-muted-foreground" />
                                           )}
                                           <span className="truncate">
                                             {name}
                                             {pid === leaderId && (
-                                              <span className="ml-1 text-[9px] text-amber-600">(리더)</span>
+                                              <span className={cn("ml-1 text-[9px]", SEMANTIC.warning.iconStrong)}>(리더)</span>
                                             )}
                                           </span>
                                         </button>
@@ -1731,9 +1732,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     ) : enrollment ? (
                       <Badge variant="secondary" className={cn(
                         "text-[10px]",
-                        enrollment === "enrolled" && "bg-green-50 text-green-700",
-                        enrollment === "on_leave" && "bg-amber-50 text-amber-700",
-                        enrollment === "graduated" && "bg-slate-100 text-slate-700",
+                        enrollment === "enrolled" && SEMANTIC.success.chip,
+                        enrollment === "on_leave" && SEMANTIC.warning.chip,
+                        enrollment === "graduated" && SEMANTIC.default.chip,
                       )}>
                         {ENROLLMENT_STATUS_LABELS[enrollment]}
                       </Badge>
@@ -1746,7 +1747,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       <span className="font-medium">{displayName(pid)}</span>
                       {m?.generation && <Badge variant="secondary" className="text-[10px]">{m.generation}기</Badge>}
                       {isLeaderRow && (
-                        <Badge className="bg-amber-50 text-amber-700 text-[10px]">
+                        <Badge className={cn("text-[10px]", SEMANTIC.warning.chip)}>
                           {type === "study" ? "모임장" : "담당자"}
                         </Badge>
                       )}
@@ -1812,7 +1813,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             onClick={() => {
                               if (confirm("참여에서 제외하시겠습니까?")) removeParticipantMutation.mutate(pid);
                             }}
-                            className="rounded p-1 text-muted-foreground hover:text-red-500"
+                            className="rounded p-1 text-muted-foreground hover:text-destructive"
                             title="제외"
                           >
                             <X size={14} />
@@ -1844,11 +1845,11 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 <div className="space-y-3">
                   {/* 운영진 직접 추가 — 회원 검색 → 추가(기본 역할 "운영진" 자동 부여) → 역할 다이얼로그 자동 오픈 */}
                   {canManageParticipants && (
-                    <div className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 space-y-3">
-                      <h3 className="text-sm font-semibold flex items-center gap-1 text-amber-900">
+                    <div className={cn("rounded-2xl border p-4 space-y-3", SEMANTIC.warning.bg, SEMANTIC.warning.border)}>
+                      <h3 className={cn("text-sm font-semibold flex items-center gap-1", SEMANTIC.warning.text)}>
                         <UserCog size={14} />운영진 추가
                       </h3>
-                      <p className="text-xs text-amber-900/80">
+                      <p className={cn("text-xs", SEMANTIC.warning.textMuted)}>
                         {type === "external"
                           ? "학술대회 운영진(담당자·발표자·진행자·자원봉사 등)을 회원에서 검색하여 직접 추가합니다."
                           : "운영진(담당자·발표자·기록자 등)을 회원에서 검색하여 직접 추가합니다."}
@@ -1861,8 +1862,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         placeholder="회원 이름 또는 학번으로 검색하여 운영진 추가"
                       />
                       {/* 비회원 운영진 추가 — 회원 DB에 없는 외부 인사를 이름만으로 추가 */}
-                      <div className="rounded-lg border border-amber-200 bg-card/70 p-3">
-                        <p className="mb-2 text-xs font-medium text-amber-900">
+                      <div className={cn("rounded-lg border bg-card/70 p-3", SEMANTIC.warning.border)}>
+                        <p className={cn("mb-2 text-xs font-medium", SEMANTIC.warning.text)}>
                           회원으로 검색되지 않는 외부 인사 추가 (비회원)
                         </p>
                         <div className="flex gap-2">
@@ -1887,7 +1888,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             <UserPlus size={13} />이름만으로 추가
                           </Button>
                         </div>
-                        <p className="mt-1.5 text-[11px] text-amber-900/70">
+                        <p className={cn("mt-1.5 text-[11px]", SEMANTIC.warning.textMuted)}>
                           학번·이메일 등 추가 정보 없이 이름만 등록됩니다. 추가 후 메모 또는 역할에 추가 정보를 기재할 수 있습니다.
                         </p>
                       </div>
@@ -1930,9 +1931,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
 
                   {/* 운영진 테이블 */}
                   <div className="rounded-2xl border bg-card overflow-hidden">
-                    <div className="flex items-center gap-2 border-b bg-amber-50/60 px-4 py-2.5">
-                      <UserCog size={14} className="text-amber-700" />
-                      <h3 className="text-sm font-semibold text-amber-900">운영진 ({staffPids.length})</h3>
+                    <div className={cn("flex items-center gap-2 border-b px-4 py-2.5", SEMANTIC.warning.bg)}>
+                      <UserCog size={14} className={SEMANTIC.warning.accent} />
+                      <h3 className={cn("text-sm font-semibold", SEMANTIC.warning.text)}>운영진 ({staffPids.length})</h3>
                       <span className="text-[11px] text-muted-foreground">담당자 · 역할 보유자</span>
                     </div>
                     {staffPids.length === 0 ? (
@@ -1971,8 +1972,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       {type === "study" && isLeader ? "모임장 권한으로 참여자를 추가할 수 있습니다." : "운영진 권한으로 참여자를 추가/제거할 수 있습니다. 역할을 부여하면 운영진 탭으로 이동합니다."}
                     </p>
                     {/* 비회원 참가자 추가 — 회원 DB에 없는 외부 인원을 이름만으로 추가 */}
-                    <div className="rounded-lg border border-slate-200 bg-slate-50/60 p-3">
-                      <p className="mb-2 text-xs font-medium text-slate-700">
+                    <div className="rounded-lg border border-border bg-muted/40 p-3">
+                      <p className="mb-2 text-xs font-medium text-foreground">
                         회원으로 검색되지 않는 사람 추가 (비회원)
                       </p>
                       <div className="flex gap-2">
@@ -2006,9 +2007,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 )}
 
                 <div className="rounded-2xl border bg-card overflow-hidden">
-                  <div className="flex items-center gap-2 border-b bg-slate-50 px-4 py-2.5">
-                    <Users size={14} className="text-slate-600" />
-                    <h3 className="text-sm font-semibold text-slate-700">일반 참가자 ({regularPids.length})</h3>
+                  <div className="flex items-center gap-2 border-b bg-muted/40 px-4 py-2.5">
+                    <Users size={14} className="text-muted-foreground" />
+                    <h3 className="text-sm font-semibold text-foreground">일반 참가자 ({regularPids.length})</h3>
                   </div>
                   {regularPids.length === 0 ? (
                     <p className="p-6 text-center text-sm text-muted-foreground">일반 참가자가 없습니다.</p>
@@ -2338,7 +2339,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         )}
                         {effectiveStatus === "approved" && (
                           <>
-                            <Badge className="bg-green-50 text-green-700 text-[10px]">승인</Badge>
+                            <Badge className={cn("text-[10px]", SEMANTIC.success.chip)}>승인</Badge>
                             {isStaff && (
                               <Button
                                 variant="outline"
@@ -2359,7 +2360,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         )}
                         {effectiveStatus === "rejected" && (
                           <>
-                            <Badge className="bg-red-50 text-red-700 text-[10px]">거절</Badge>
+                            <Badge className={cn("text-[10px]", SEMANTIC.danger.chip)}>거절</Badge>
                             {isStaff && (
                               <Button
                                 variant="ghost"
@@ -2375,7 +2376,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             )}
                           </>
                         )}
-                        {effectiveStatus === "pending" && !isStaff && <Badge className="bg-amber-50 text-amber-700 text-[10px]">대기</Badge>}
+                        {effectiveStatus === "pending" && !isStaff && <Badge className={cn("text-[10px]", SEMANTIC.warning.chip)}>대기</Badge>}
                       </div>
                     </div>
                   );})}
@@ -2514,9 +2515,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                     <Badge
                                       className={cn(
                                         "text-[11px]",
-                                        a.status === "approved" && "bg-green-50 text-green-700",
-                                        a.status === "pending" && "bg-amber-50 text-amber-700",
-                                        a.status === "rejected" && "bg-red-50 text-red-700",
+                                        a.status === "approved" && SEMANTIC.success.chip,
+                                        a.status === "pending" && SEMANTIC.warning.chip,
+                                        a.status === "rejected" && SEMANTIC.danger.chip,
                                       )}
                                     >
                                       {a.status === "approved" ? "승인" : a.status === "pending" ? "대기" : "반려"}
@@ -2596,9 +2597,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                                 <Badge
                                   className={cn(
                                     "text-[11px]",
-                                    a.status === "approved" && "bg-green-50 text-green-700",
-                                    a.status === "pending" && "bg-amber-50 text-amber-700",
-                                    a.status === "rejected" && "bg-red-50 text-red-700",
+                                    a.status === "approved" && SEMANTIC.success.chip,
+                                    a.status === "pending" && SEMANTIC.warning.chip,
+                                    a.status === "rejected" && SEMANTIC.danger.chip,
                                   )}
                                 >
                                   {a.status === "approved" ? "승인" : a.status === "pending" ? "대기" : "반려"}
@@ -2679,15 +2680,15 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   <p className="text-xs text-muted-foreground">총 신청</p>
                 </div>
                 <div className="rounded-lg border bg-card p-4 text-center">
-                  <p className="text-2xl font-bold text-green-600">{reportStats.approved}</p>
+                  <p className={cn("text-2xl font-bold", SEMANTIC.success.accent)}>{reportStats.approved}</p>
                   <p className="text-xs text-muted-foreground">승인</p>
                 </div>
                 <div className="rounded-lg border bg-card p-4 text-center">
-                  <p className="text-2xl font-bold text-red-500">{reportStats.rejected}</p>
+                  <p className="text-2xl font-bold text-destructive">{reportStats.rejected}</p>
                   <p className="text-xs text-muted-foreground">거절</p>
                 </div>
                 <div className="rounded-lg border bg-card p-4 text-center">
-                  <p className="text-2xl font-bold text-amber-500">{reportStats.pending}</p>
+                  <p className={cn("text-2xl font-bold", SEMANTIC.warning.accent)}>{reportStats.pending}</p>
                   <p className="text-xs text-muted-foreground">대기</p>
                 </div>
                 <div className="rounded-lg border bg-card p-4 text-center">
@@ -3154,7 +3155,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 const cols = enabledTypes.length === 1 ? "grid-cols-1" : enabledTypes.length === 2 ? "grid-cols-2" : "grid-cols-3";
                 return (
                   <section>
-                    <label className="mb-2.5 block text-sm font-semibold text-slate-800">참석 유형 <span className="text-red-500">*</span></label>
+                    <label className="mb-2.5 block text-sm font-semibold text-slate-800">참석 유형 <span className="text-destructive">*</span></label>
                     <div className={cn("grid gap-2", cols)}>
                       {enabledTypes.map((t) => {
                         const active = applyParticipantType === t;
@@ -3187,7 +3188,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 <section className="space-y-4 rounded-2xl border-2 border-purple-200 bg-purple-50/40 p-4">
                   <div className="space-y-2">
                     <label className="block text-sm font-semibold text-slate-800">
-                      발표 유형 <span className="text-red-500">*</span>
+                      발표 유형 <span className="text-destructive">*</span>
                     </label>
                     <div className="grid grid-cols-3 gap-2">
                       {(["paper", "poster", "media"] as const).map((s) => {
@@ -3213,7 +3214,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   </div>
                   <div className="space-y-1.5">
                     <label className="block text-sm font-semibold text-slate-800">
-                      {applySpeakerSubmissionType === "media" ? "작품 제목" : "논문 제목"} <span className="text-red-500">*</span>
+                      {applySpeakerSubmissionType === "media" ? "작품 제목" : "논문 제목"} <span className="text-destructive">*</span>
                     </label>
                     <Input
                       value={applySpeakerPaperTitle}
@@ -3229,15 +3230,15 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 <h3 className="text-sm font-semibold text-slate-800">신청자 정보</h3>
                 <div className="grid gap-3 sm:grid-cols-2">
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-slate-600">이름 <span className="text-red-500">*</span></label>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-600">이름 <span className="text-destructive">*</span></label>
                     <Input value={applyName} onChange={(e) => setApplyName(e.target.value)} />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-slate-600">학번 {!user && <span className="text-red-500">*</span>}</label>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-600">학번 {!user && <span className="text-destructive">*</span>}</label>
                     <Input value={applyStudentId} onChange={(e) => setApplyStudentId(e.target.value)} placeholder={!user ? "예: 2023432001" : undefined} />
                   </div>
                   <div>
-                    <label className="mb-1.5 block text-xs font-medium text-slate-600">이메일 {!user && <span className="text-red-500">*</span>}</label>
+                    <label className="mb-1.5 block text-xs font-medium text-slate-600">이메일 {!user && <span className="text-destructive">*</span>}</label>
                     <Input type="email" value={applyEmail} onChange={(e) => setApplyEmail(e.target.value)} placeholder="name@example.com" />
                   </div>
                   <div>
@@ -3309,7 +3310,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             <div className="grid gap-3">
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                  이름 <span className="text-red-500">*</span>
+                  이름 <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={lookupName}
@@ -3319,7 +3320,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               </div>
               <div>
                 <label className="mb-1.5 block text-xs font-medium text-slate-600">
-                  학번 <span className="text-red-500">*</span>
+                  학번 <span className="text-destructive">*</span>
                 </label>
                 <Input
                   value={lookupStudentId}
@@ -3330,7 +3331,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
             </div>
 
             {lookupResult === "notfound" && (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 text-sm text-amber-800">
+              <div className={cn("rounded-lg border p-3 text-sm", SEMANTIC.warning.bg, SEMANTIC.warning.border, SEMANTIC.warning.text)}>
                 입력하신 이름·학번과 일치하는 신청 내역을 찾을 수 없습니다. 입력값을 다시 확인해 주세요.
               </div>
             )}
@@ -3341,9 +3342,9 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 : r.status === "rejected" ? "신청 취소 / 거절"
                 : "신청 대기중";
               const statusCls =
-                r.status === "approved" ? "bg-green-50 text-green-700"
-                : r.status === "rejected" ? "bg-rose-50 text-rose-700"
-                : "bg-amber-50 text-amber-700";
+                r.status === "approved" ? SEMANTIC.success.chip
+                : r.status === "rejected" ? SEMANTIC.danger.chip
+                : SEMANTIC.warning.chip;
               const ptype = (r.participantType ?? "attendee") as ExternalParticipantType;
               return (
                 <div className="space-y-3 rounded-xl border bg-muted/20 p-3.5">
