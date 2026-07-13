@@ -19,11 +19,20 @@ import {
   Sparkles,
   ListChecks,
   X,
+  BookOpen,
+  GitFork,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { flashcardsApi } from "@/lib/bkend";
+import DiagnosisLoopSteps from "@/components/diagnosis/DiagnosisLoopSteps";
+import {
+  conceptDetailHref,
+  conceptMatchesTheory,
+  THEORY_MAP_HREF,
+  FLASHCARDS_HREF,
+} from "@/features/diagnosis/weak-concept-links";
 import type { WrongCardSeed } from "@/types";
 import PeerComparison, {
   type PeerStatsPayload,
@@ -367,7 +376,7 @@ export default function DiagnosisReport({
         </Card>
       )}
 
-      {/* 약점 개념 → 아카이브 연결 */}
+      {/* 약점 개념 → 학습 자산 원클릭 동선 (H3: 개념 설명·이론 계보·암기카드) */}
       {weakConcepts.length > 0 && (
         <Card className="mt-6 rounded-2xl border-amber-200 bg-amber-50/40 shadow-sm dark:border-amber-800 dark:bg-amber-950/20">
           <CardHeader className="pb-2">
@@ -378,31 +387,44 @@ export default function DiagnosisReport({
           </CardHeader>
           <CardContent>
             <p className="mb-3 text-sm text-muted-foreground">
-              틀린 문항과 연결된 개념입니다. 아카이브에서 정의·관련 변인·측정도구를 확인해 보세요.
+              틀린 문항과 연결된 개념입니다. 개념 설명·이론 계보·암기카드로 바로 이어 학습하세요.
             </p>
-            <div className="flex flex-wrap gap-1.5">
-              {weakConcepts.map((c, i) =>
-                c.id ? (
-                  <Link key={c.id} href={`/archive/concept/${c.id}`}>
+            <ul className="space-y-2.5">
+              {weakConcepts.map((c, i) => (
+                <li
+                  key={c.id ?? `${c.name}-${i}`}
+                  className="rounded-xl border border-border bg-card/70 p-3"
+                >
+                  <div className="flex items-center gap-2">
                     <Badge
                       variant="outline"
-                      className="cursor-pointer gap-1 border-violet-200 bg-violet-50 text-violet-800 transition-shadow hover:shadow-sm dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300"
+                      className="border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300"
                     >
                       {c.name}
-                      <ArrowRight className="h-3 w-3" aria-hidden />
                     </Badge>
-                  </Link>
-                ) : (
-                  <Badge
-                    key={`${c.name}-${i}`}
-                    variant="outline"
-                    className="border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300"
-                  >
-                    {c.name}
-                  </Badge>
-                ),
-              )}
-            </div>
+                  </div>
+                  <div className="mt-2 flex flex-wrap gap-1.5">
+                    <WeakConceptAction
+                      href={conceptDetailHref(c)}
+                      icon={BookOpen}
+                      label="개념 설명 보기"
+                    />
+                    {conceptMatchesTheory(c.name) && (
+                      <WeakConceptAction
+                        href={THEORY_MAP_HREF}
+                        icon={GitFork}
+                        label="이론 계보에서 보기"
+                      />
+                    )}
+                    <WeakConceptAction
+                      href={FLASHCARDS_HREF}
+                      icon={Layers}
+                      label="암기카드로 학습"
+                    />
+                  </div>
+                </li>
+              ))}
+            </ul>
             <div className="mt-4">
               <Link href="/archive">
                 <Button variant="outline" size="sm">
@@ -414,6 +436,9 @@ export default function DiagnosisReport({
           </CardContent>
         </Card>
       )}
+
+      {/* 진단↔학습↔증명 순환 안내 — 약점 학습 자산이 '학습' 단계에 편입됨을 시각화 */}
+      <DiagnosisLoopSteps active="learn" className="mt-6" />
 
       {/* 틀린 문항 복습 카드 — 오답을 암기카드로 저장 */}
       {wrongItems.length > 0 && (
@@ -446,6 +471,28 @@ export default function DiagnosisReport({
         </Button>
       </div>
     </div>
+  );
+}
+
+/** 약점 개념 학습 동선 링크 — 개념 설명·이론 계보·암기카드로 원클릭 이동. */
+function WeakConceptAction({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string;
+  icon: typeof BookOpen;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
+    >
+      <Icon className="h-3.5 w-3.5 text-primary" aria-hidden />
+      {label}
+      <ArrowRight className="h-3 w-3 text-muted-foreground" aria-hidden />
+    </Link>
   );
 }
 

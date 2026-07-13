@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import {
   ClipboardCheck,
   Sparkles,
@@ -8,6 +9,9 @@ import {
   AlertTriangle,
   SlidersHorizontal,
   ChevronDown,
+  GitFork,
+  BookMarked,
+  Layers,
 } from "lucide-react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -109,6 +113,39 @@ export default function DiagnosisLanding({
           </span>
         }
       />
+
+      {/* 약점을 학습 자산으로 바로 잇기 — 진단 전/후 학습 동선 안내 (H3) */}
+      <div className="mt-4 rounded-2xl border border-primary/20 bg-primary/5 p-4 dark:bg-primary/10">
+        <p className="mb-2 text-sm font-medium text-foreground">
+          약점을 학습 자산으로 바로 잇기
+        </p>
+        <div className="flex flex-wrap gap-1.5">
+          <Link
+            href="/archive/theory-map"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
+          >
+            <GitFork className="h-3.5 w-3.5 text-primary" aria-hidden />
+            학습이론 가계도
+            <ArrowRight className="h-3 w-3 text-muted-foreground" aria-hidden />
+          </Link>
+          <Link
+            href="/archive/terminology"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
+          >
+            <BookMarked className="h-3.5 w-3.5 text-primary" aria-hidden />
+            용어 표준 사전
+            <ArrowRight className="h-3 w-3 text-muted-foreground" aria-hidden />
+          </Link>
+          <Link
+            href="/flashcards"
+            className="inline-flex items-center gap-1.5 rounded-full border border-border bg-background px-3 py-1.5 text-xs font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1"
+          >
+            <Layers className="h-3.5 w-3.5 text-primary" aria-hidden />
+            내 암기카드
+            <ArrowRight className="h-3 w-3 text-muted-foreground" aria-hidden />
+          </Link>
+        </div>
+      </div>
 
       {/* 전체 진단 시작 카드 */}
       <Card className="mt-6 overflow-hidden rounded-2xl border-l-4 border-l-primary shadow-sm">

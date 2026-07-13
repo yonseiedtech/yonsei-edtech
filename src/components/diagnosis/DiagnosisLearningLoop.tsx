@@ -37,6 +37,7 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import DiagnosisLoopSteps from "@/components/diagnosis/DiagnosisLoopSteps";
 import { diagnosticResultsApi, flashcardsApi } from "@/lib/bkend";
 import type { DiagnosticResult } from "@/types";
 import type { Flashcard } from "@/types/flashcard";
@@ -124,6 +125,9 @@ export default function DiagnosisLearningLoop({ userId }: DiagnosisLearningLoopP
         약점 개념이 시간에 따라 개선됐는지, 암기카드 복습이 재진단 결과로 이어졌는지 교차 분석합니다.
         본인 데이터만 사용합니다.
       </p>
+
+      {/* 진단↔학습↔증명 순환 안내 — 재진단(rediagnose)을 다음 단계로 부각 */}
+      <DiagnosisLoopSteps active="rediagnose" className="mb-4" />
 
       {/* 데이터 부족 — 다회차 없으면 추세·상관 모두 판단 불가 */}
       {!multiRound ? (
