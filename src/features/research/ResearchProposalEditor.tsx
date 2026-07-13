@@ -9,6 +9,7 @@ import { Input } from "@/components/ui/input";
 import {
   Save, CheckCircle2, ClipboardList, Link2, X,
   BookMarked, MessageSquareQuote, LayoutList, ChevronLeft, ChevronRight, Sparkles,
+  DraftingCompass,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -21,6 +22,8 @@ import {
 import { researchProposalsApi } from "@/lib/bkend";
 import EditorSaveBar from "./EditorSaveBar";
 import { useResearchReport } from "./useResearchReport";
+import { useResearchDesign } from "./useResearchDesign";
+import { buildResearchMethodDraft } from "@/lib/research-design-draft";
 import { RESEARCH_APPROACH_LABELS } from "@/types";
 import { useResearchPapers } from "./useResearchPapers";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
@@ -291,6 +294,8 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
   const { proposal, isLoading } = useResearchProposal(user.id);
   // R3-확장(2026-07-04): 보고서 → 계획서 시딩 소스
   const { report } = useResearchReport(readOnly ? undefined : user.id);
+  // H1(2026-07-13): 연구 설계 → 계획서 연구방법 import 소스
+  const { design } = useResearchDesign(readOnly ? undefined : user.id);
   const ensure = useEnsureResearchProposal();
   const update = useUpdateResearchProposal();
   const logActivity = useLogWritingActivity();
@@ -433,6 +438,47 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
     setDirty(true);
     const LABELS: Record<string, string> = { purpose: "연구 목적", scope: "연구 범위", method: "연구 방법", content: "연구 내용" };
     toast.success(`보고서에서 ${keys.map((k) => LABELS[k]).join("·")} 초안을 가져왔습니다 — 제출 문장 수준으로 다듬어 저장하세요.`);
+  }
+
+  // H1: 연구 설계에 의미 있는 작성분이 있는지 — 있을 때만 '가져오기' 노출
+  const designHasContent = useMemo(() => {
+    if (!design) return false;
+    const p = design.participants;
+    return !!(
+      design.approach ||
+      design.methodName?.trim() ||
+      design.dataCollection?.trim() ||
+      design.dataAnalysis?.trim() ||
+      (design.selectedStatMethods ?? []).length > 0 ||
+      (design.procedureSteps ?? []).some((s) => s.step?.trim() || s.detail?.trim()) ||
+      (design.instruments ?? []).some((it) => it.name?.trim() || it.plan?.trim()) ||
+      (p && (p.population?.trim() || p.sampleSize?.trim() || p.samplingMethod?.trim() || p.protection?.trim()))
+    );
+  }, [design]);
+
+  /** H1: 연구 설계(buildResearchMethodDraft) → 계획서 '연구 방법' 필드에 실제 삽입 */
+  function seedMethodFromDesign() {
+    if (readOnly) return;
+    if (!design) {
+      toast.info("아직 작성된 연구 설계가 없습니다 — '연구 설계' 단계에서 먼저 작성하세요.");
+      return;
+    }
+    const text = buildResearchMethodDraft(design).trim();
+    if (!text) {
+      toast.info("가져올 설계 내용이 없습니다.");
+      return;
+    }
+    const existing = form.method.trim();
+    let next = text;
+    if (existing) {
+      const ok = confirm(
+        "'연구 방법'에 이미 작성된 내용이 있습니다.\n확인 = 기존 내용 아래에 설계 초안을 이어 붙이기 / 취소 = 중단",
+      );
+      if (!ok) return;
+      next = `${existing}\n\n${text}`;
+    }
+    setField("method", next);
+    toast.success("연구 설계에서 연구방법 초안을 가져왔습니다 — 제출 문장 수준으로 다듬어 저장하세요.");
   }
 
   const total = useMemo(() => totalChars(form), [form]);
@@ -851,6 +897,18 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
         title="4. 연구 방법"
         sub="연구 설계, 표집, 자료 수집·분석 방법을 상세히 기술합니다."
       >
+        {!readOnly && designHasContent && (
+          <div className="mb-2 flex justify-end">
+            <Button
+              size="sm"
+              variant="outline"
+              className="h-7 text-xs"
+              onClick={seedMethodFromDesign}
+            >
+              <DraftingCompass size={12} className="mr-1" /> 연구 설계에서 가져오기
+            </Button>
+          </div>
+        )}
         <Textarea
           value={form.method}
           onChange={(e) => setField("method", e.target.value)}

@@ -59,6 +59,11 @@ import {
   useUpdateResearchDesign,
 } from "./useResearchDesign";
 import { useResearchReport } from "./useResearchReport";
+import {
+  useResearchProposal,
+  useEnsureResearchProposal,
+  useUpdateResearchProposal,
+} from "./useResearchProposal";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
 import ResearchJourneyGuide from "./ResearchJourneyGuide";
 import EditorSaveBar from "./EditorSaveBar";
@@ -162,6 +167,10 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
   const ensure = useEnsureResearchDesign();
   const update = useUpdateResearchDesign();
   const logActivity = useLogWritingActivity();
+  // H1(2026-07-13): 설계 → 계획서 연구방법 실제 반영(import) 파이프라인
+  const { proposal } = useResearchProposal(readOnly ? undefined : user.id);
+  const ensureProposal = useEnsureResearchProposal();
+  const updateProposal = useUpdateResearchProposal();
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [hydrated, setHydrated] = useState(false);
@@ -173,6 +182,7 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
   const [methodGuideOpen, setMethodGuideOpen] = useState(false);
   const [statGuideOpen, setStatGuideOpen] = useState(false);
   const [showAllMethods, setShowAllMethods] = useState(false);
+  const [applyingProposal, setApplyingProposal] = useState(false);
 
   // 연구방법 가이드(절차 프리필 소스)·측정도구 아카이브
   const { data: methods = [] } = useQuery({
@@ -476,6 +486,42 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
       toast.success("연구방법 초안을 복사했습니다.");
     } catch {
       toast.error("복사에 실패했습니다. 텍스트를 직접 선택해 복사하세요.");
+    }
+  }
+
+  // H1: 연구방법 초안을 계획서(research_proposals.method)에 실제 삽입.
+  // 기존 method 가 있으면 이어붙이기 confirm — 자동 저장 흐름과 사용자 작성분 보존.
+  async function applyToProposal() {
+    if (readOnly) return;
+    const text = draft.trim();
+    if (!text) {
+      toast.info("반영할 초안이 없습니다 — 설계를 먼저 작성하세요.");
+      return;
+    }
+    setApplyingProposal(true);
+    try {
+      const target = proposal ?? (await ensureProposal.mutateAsync(user.id));
+      const existing = (target.method ?? "").trim();
+      let nextMethod = text;
+      if (existing) {
+        const ok = confirm(
+          "연구계획서 '연구 방법'에 이미 작성된 내용이 있습니다.\n확인 = 기존 내용 아래에 설계 초안을 이어 붙이기 / 취소 = 중단",
+        );
+        if (!ok) {
+          setApplyingProposal(false);
+          return;
+        }
+        nextMethod = `${existing}\n\n${text}`;
+      }
+      await updateProposal.mutateAsync({
+        id: target.id,
+        data: { method: nextMethod, lastSavedAt: new Date().toISOString() },
+      });
+      toast.success("연구계획서 '연구 방법'에 설계 초안을 반영했습니다 — 계획서에서 다듬어 저장하세요.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "계획서 반영에 실패했습니다.");
+    } finally {
+      setApplyingProposal(false);
     }
   }
 
@@ -1121,6 +1167,16 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
           위 작성 내용을 학위논문 &lsquo;III. 연구방법&rsquo; 아웃라인으로 자동 조립했습니다. 복사해 계획서·논문 작성 탭에서 이어 쓰세요.
         </p>
         <div className="flex flex-wrap gap-2">
+          {!readOnly && (
+            <Button
+              size="sm"
+              className="h-8 text-xs"
+              onClick={applyToProposal}
+              disabled={applyingProposal}
+            >
+              <ClipboardList size={12} className="mr-1" /> 연구계획서 연구방법에 반영
+            </Button>
+          )}
           <Button size="sm" variant="outline" className="h-8 text-xs" onClick={copyDraft}>
             <Copy size={12} className="mr-1" /> 초안 복사
           </Button>
