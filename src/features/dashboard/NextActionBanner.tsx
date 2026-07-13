@@ -24,6 +24,7 @@ import {
   Activity,
   Layers,
   FolderPlus,
+  DraftingCompass,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useIsWidgetMuted } from "@/lib/dashboard-layout";
@@ -37,6 +38,7 @@ import {
   awardsApi,
   externalActivitiesApi,
   contentCreationsApi,
+  researchDesignsApi,
 } from "@/lib/bkend";
 import { parseSchedule } from "@/lib/courseSchedule";
 import { inferCurrentSemester } from "@/lib/semester";
@@ -128,9 +130,9 @@ const KIND_META: Record<NextActionKind, { label: string; iconClass: string; Icon
 
 /**
  * 발견성 넛지 — 시간 임박 액션이 없을 때 1건만 노출하는 "먼저 권하는" 추천.
- * 우선순위: 진단 미응시 > due 암기카드 > 빈 포트폴리오 (졸업요건 넛지는 이보다 낮음).
+ * 우선순위: 진단 미응시 > due 암기카드 > 연구 설계 미착수 > 빈 포트폴리오 (졸업요건 넛지는 이보다 낮음).
  */
-type DiscoveryKind = "diagnostic" | "flashcard" | "portfolio";
+type DiscoveryKind = "diagnostic" | "flashcard" | "design" | "portfolio";
 
 interface DiscoveryNudge {
   kind: DiscoveryKind;
@@ -352,9 +354,27 @@ export default function NextActionBanner() {
     [flashcards],
   );
 
-  // 빈 포트폴리오는 대시보드 비상주 신규 쿼리(3콜)라 앞선 넛지가 모두 해당 없을 때만 지연 로드.
-  const needPortfolioCheck =
+  // 연구 설계 미착수 넛지 — 오늘 배포한 연구 설계 단계(H2 발견성)로 연결.
+  // 앞선 넛지(진단·암기카드)가 모두 해당 없을 때만 지연 로드(비상주 쿼리 1콜).
+  const needDesignCheck =
     !!userId && !top && diagnosticCount !== undefined && diagnosticCount > 0 && dueCardCount === 0;
+  const { data: designCount } = useQuery({
+    queryKey: ["nudge-design-count", userId],
+    queryFn: async () => (await researchDesignsApi.listByUser(userId as string)).data.length,
+    enabled: needDesignCheck,
+    staleTime: 5 * 60_000,
+  });
+
+  // 빈 포트폴리오는 대시보드 비상주 신규 쿼리(3콜)라 앞선 넛지가 모두 해당 없을 때만 지연 로드.
+  // 연구 설계 넛지가 뜨는 상황(designCount === 0)에서는 포트폴리오 조회를 보류해 불필요한 로드를 막는다.
+  const needPortfolioCheck =
+    !!userId &&
+    !top &&
+    diagnosticCount !== undefined &&
+    diagnosticCount > 0 &&
+    dueCardCount === 0 &&
+    designCount !== undefined &&
+    designCount > 0;
   const { data: portfolioCount } = useQuery({
     queryKey: ["nudge-portfolio-count", userId],
     queryFn: async () => {
@@ -405,7 +425,22 @@ export default function NextActionBanner() {
           "border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 dark:border-indigo-900 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/30",
       };
     }
-    // 3) 빈 포트폴리오 (포트폴리오 쿼리가 로드된 뒤에만 판정)
+    // 3) 연구 설계 미착수 (설계 쿼리가 로드된 뒤에만 판정) — 오늘 배포한 연구 설계 단계로 연결
+    if (designCount === 0) {
+      return {
+        kind: "design",
+        href: "/mypage/research?tab=design",
+        Icon: DraftingCompass,
+        title: "연구 설계 시작하기",
+        badge: "설계",
+        subtitle: "연구 모형·대상·방법·도구·분석 계획을 단계별로 설계",
+        ariaLabel: "연구 설계 시작 · 연구 설계 편집기로 이동",
+        iconWrapClass: cn(SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText),
+        badgeClass: cn(SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText),
+        accentClass: cn(SEMANTIC.warning.border, SEMANTIC.warning.bg, "hover:bg-muted/40"),
+      };
+    }
+    // 4) 빈 포트폴리오 (포트폴리오 쿼리가 로드된 뒤에만 판정)
     if (portfolioCount === 0) {
       return {
         kind: "portfolio",
@@ -422,7 +457,7 @@ export default function NextActionBanner() {
       };
     }
     return null;
-  }, [userId, diagnosticCount, dueCardCount, portfolioCount]);
+  }, [userId, diagnosticCount, dueCardCount, designCount, portfolioCount]);
 
   // ── 졸업요건 미달 넛지 (최저 우선순위: 시간 임박 액션·발견성 넛지가 모두 없을 때만) ──
   const { remainingCount, topUnmet } = useGraduationSummary(userId);

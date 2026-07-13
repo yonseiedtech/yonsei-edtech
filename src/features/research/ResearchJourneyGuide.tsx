@@ -13,6 +13,7 @@
  */
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import {
@@ -24,6 +25,15 @@ import {
   BookOpen,
   DraftingCompass,
   MessageSquareQuote,
+  Network,
+  BookMarked,
+  Library,
+  Blocks,
+  BarChart3,
+  Target,
+  PenLine,
+  Quote,
+  type LucideIcon,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import {
@@ -136,6 +146,41 @@ const STEPS: StepMeta[] = [
     href: "/steppingstone/thesis-defense",
   },
 ];
+
+/**
+ * 발견성(H2): 산출물 단계별로 "이 단계에 도움되는 도구"를 안내한다.
+ * 오늘 배포한 학습 자산(학습이론 가계도·용어사전·프로그램 설계 가이드·통계/연구방법 찾기)이
+ * 아카이브 랜딩에만 고립되지 않도록, 연구 여정에서 단계 맥락에 맞는 딥링크로 노출한다.
+ */
+interface StepTool {
+  href: string;
+  label: string;
+  desc: string;
+  icon: LucideIcon;
+}
+
+const STEP_TOOLS: Record<ResearchJourneyStep, StepTool[]> = {
+  report: [
+    { href: "/archive/theory-map", label: "학습이론 가계도", desc: "행동·인지·구성주의 사조와 대표 학자 지도 — 이론적 배경 정리에 활용", icon: Network },
+    { href: "/archive/terminology", label: "용어 개념 인덱스", desc: "AECT 공식 용어·역어와 개념 설명 — 핵심 용어 정의 확인", icon: BookMarked },
+    { href: "/archive", label: "개념·변인·측정도구", desc: "교육공학 아카이브에서 개념→변인→측정도구를 따라가며 이론을 구조화", icon: Library },
+  ],
+  design: [
+    { href: "/steppingstone/program-development", label: "프로그램 설계·개발 가이드", desc: "ADDIE·가네 9절차로 교수·프로그램 설계 절차를 안내", icon: Blocks },
+    { href: "/archive/statistical-methods", label: "통계방법 가이드", desc: "가정·절차·구문과 대안 비교표 — 분석 계획 수립에 활용", icon: BarChart3 },
+    { href: "/archive/method-finder", label: "통계방법 찾기", desc: "몇 가지 질문에 답해 연구 상황에 맞는 통계방법 추천", icon: Target },
+  ],
+  proposal: [
+    { href: "/archive/research-finder", label: "연구방법 찾기", desc: "연구 목적에 맞는 질적·양적·혼합 연구방법 추천", icon: Compass },
+    { href: "/archive/apa-style", label: "APA 7판 가이드", desc: "인용·참고문헌 형식 — 계획서 형식 다듬기에 활용", icon: FileText },
+    { href: "/archive/citation-guide", label: "인용 가이드", desc: "직접·간접 인용 구분과 표절 회피 — 선행연구 인용에 활용", icon: Quote },
+  ],
+  thesis: [
+    { href: "/archive/paper-guide", label: "논문 쓰기 가이드", desc: "장별 구성과 작성 요령 — 본문 집필에 활용", icon: FileText },
+    { href: "/archive/writing-tips", label: "학술 글쓰기 가이드", desc: "번역투·주술호응·시제 등 문장 다듬기 예시", icon: PenLine },
+    { href: "/archive/apa-style", label: "APA 7판 가이드", desc: "참고문헌·인용 형식 확정", icon: FileText },
+  ],
+};
 
 type StepStatus = "empty" | "started" | "rich";
 
@@ -425,6 +470,33 @@ export default function ResearchJourneyGuide({ userId, current, readOnly }: Prop
         점선 카드는 지원 단계 — 누르면 해당 도구(논문 읽기·연구윤리 체크리스트·심사 연습)로 이동합니다. 학기 라벨은
         &lsquo;나의 논문 여정&rsquo;(5학기 지도)과 같은 기준입니다.
       </p>
+
+      {/* 발견성(H2): 현재 산출물 단계에 도움되는 학습 자산 딥링크 */}
+      {!readOnly && STEP_TOOLS[current]?.length > 0 && (
+        <div className="mt-3 rounded-xl border border-dashed border-border bg-card/60 p-3">
+          <p className="mb-2 flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+            <Compass size={12} aria-hidden />
+            이 단계에 도움되는 도구
+          </p>
+          <ul className="flex flex-wrap gap-1.5">
+            {STEP_TOOLS[current].map((tool) => {
+              const ToolIcon = tool.icon;
+              return (
+                <li key={tool.href}>
+                  <Link
+                    href={tool.href}
+                    title={tool.desc}
+                    className="inline-flex items-center gap-1 rounded-full border border-border bg-card px-2.5 py-1 text-[11px] font-medium text-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
+                  >
+                    <ToolIcon size={12} className="text-primary" aria-hidden />
+                    {tool.label}
+                  </Link>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
+      )}
     </section>
   );
 }

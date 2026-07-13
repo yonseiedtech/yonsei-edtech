@@ -15,6 +15,7 @@ import {
   MessageSquare, FileText, Newspaper, Images, Image as ImageIcon, Network,
   Trophy, HelpCircle, Settings, Bell, NotebookPen, Download, Target,
   Building2, FlaskRound, ScrollText, Award, BookMarked, Palette, Blocks,
+  DraftingCompass,
   type LucideIcon,
 } from "lucide-react";
 
@@ -46,6 +47,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
   { key: "r:dashboard", group: "내 공간", label: "대시보드", href: "/dashboard", icon: LayoutDashboard, keywords: "대시보드 dashboard 홈 home 오늘 할일 일정", visibility: "auth" },
   { key: "r:mypage", group: "내 공간", label: "마이페이지", href: "/mypage", icon: User, keywords: "마이페이지 mypage 내 정보 프로필 잔디 활동", visibility: "auth" },
   { key: "r:mypage-research", group: "내 공간", label: "내 연구활동 · 논문 여정", href: "/mypage/research", icon: Microscope, keywords: "연구활동 논문 여정 학위논문 에디터 지도 노트 코크핏 journey research", visibility: "auth" },
+  { key: "r:research-design", group: "내 공간", label: "연구 설계", sub: "모형·대상·방법·도구·분석 계획", href: "/mypage/research?tab=design", icon: DraftingCompass, keywords: "연구 설계 research design 연구모형 연구대상 표집 연구방법 측정도구 분석 계획 설계 단계", visibility: "auth" },
   { key: "r:research-model", group: "내 공간", label: "연구 모형 그리기", sub: "마법사·템플릿", href: "/research-model", icon: Network, keywords: "연구 모형 변인 독립 종속 매개 조절 다이어그램 마법사 research model wizard", visibility: "auth" },
   { key: "r:literature-matrix", group: "내 공간", label: "문헌 리뷰 매트릭스", sub: "선행연구 비교표", href: "/mypage/research?tab=reading&focus=matrix", icon: BookMarked, keywords: "문헌 매트릭스 선행연구 비교표 리뷰 literature matrix", visibility: "auth" },
   { key: "r:topic-explorer", group: "내 공간", label: "주제 탐색 인터뷰", sub: "연구 주제 찾기", href: "/mypage/research?tab=explore", icon: BookMarked, keywords: "주제 탐색 연구주제 인터뷰 topic explorer 아이디어", visibility: "auth" },

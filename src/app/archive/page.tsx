@@ -455,9 +455,9 @@ export default function ArchiveLandingPage() {
                   <BookMarked className="h-5 w-5" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
-                  <h3 className="text-lg font-semibold tracking-tight">AECT 용어 표준 사전 — 공식 용어·역어 186개</h3>
+                  <h3 className="text-lg font-semibold tracking-tight">AECT 용어 표준 사전 — 개념 설명 인덱스</h3>
                   <p className="text-sm text-muted-foreground">
-                    『교육공학 용어해설』(학지사, 2020) 공식 표제어·역어 186개를 6개 영역별로 검색·브라우징합니다.
+                    『교육공학 용어해설』(학지사, 2020) 공식 표제어·역어 186개를 6개 영역별로 검색·브라우징하고, 아카이브 개념과 연결된 항목에는 개념 설명을 함께 제공합니다.
                   </p>
                 </div>
                 <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">

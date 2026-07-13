@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck, Compass, Layers, Check, ArrowRight } from "lucide-react";
+import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck, Compass, Layers, Check, ArrowRight, GitFork } from "lucide-react";
 import { JOURNEY_STAGES } from "@/features/research/ThesisJourney";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -601,6 +601,16 @@ export default function ArchiveDetailPage() {
                     </li>
                   ))}
                 </ul>
+              )}
+              {/* 발견성(H2): 이론 개념 → 학습이론 가계도 역링크 (사조·계열 맥락 확인) */}
+              {type === "concept" && (
+                <Link
+                  href="/archive/theory-map"
+                  className="mt-2 inline-flex w-fit items-center gap-1 text-xs font-medium text-violet-700 hover:underline dark:text-violet-300"
+                >
+                  <GitFork className="h-3.5 w-3.5" aria-hidden />
+                  학습이론 가계도에서 이 이론의 계보 보기
+                </Link>
               )}
             </div>
           )}
