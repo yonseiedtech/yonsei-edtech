@@ -17,6 +17,7 @@ import PageContainer from "@/components/ui/page-container";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { buildCandidateSlots, tallyAvailability, formatSlotLabel, effectivePollTimeSlots } from "@/features/networking/networking-utils";
 import type { NetworkingEvent, NetworkingAvailability, SlotTally } from "@/types";
+import GuestPollVoter from "@/features/networking/GuestPollVoter";
 
 export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
@@ -187,6 +188,16 @@ export default async function PollSummaryPage({ params }: Props) {
         )}
       </header>
 
+      {/* 작업 2 보완(2026-07-14): 게스트 투표 UI — 공유받은 비로그인 방문자가 이 페이지에서
+          학번+이름으로 바로 투표할 수 있도록 한다. 집계 뷰는 아래에 그대로 유지. */}
+      {!isConfirmed && (
+        <GuestPollVoter
+          eventId={event.id}
+          candidateSlots={candidateSlots}
+          pollDeadline={event.pollDeadline}
+        />
+      )}
+
       {/* 최다 가능 일정 상위 3 */}
       <section className="mb-6 rounded-2xl bg-indigo-50 p-4 dark:bg-indigo-950/40">
         <h2 className="flex items-center gap-1.5 text-sm font-semibold text-indigo-700 dark:text-indigo-200">
@@ -303,8 +314,7 @@ export default async function PollSummaryPage({ params }: Props) {
         </span>
       </div>
       <p className="mt-3 rounded-xl border border-dashed bg-muted/30 p-3 text-[11px] leading-relaxed text-muted-foreground">
-        응답자 개인정보 보호를 위해 이름은 표시하지 않고 가능 인원 수만 종합합니다. 이 페이지는 공개 모임의 투표 현황
-        공유용이며, 투표는 학회 로그인 후 모임·행사 페이지에서 참여할 수 있습니다.
+        응답자 개인정보 보호를 위해 이름은 표시하지 않고 가능 인원 수만 종합합니다. 로그인 없이 학번과 이름으로도 이 페이지 상단에서 바로 투표할 수 있습니다. 회원은 로그인 후 모임·행사 페이지에서 참여할 수 있습니다.
       </p>
     </PageContainer>
   );

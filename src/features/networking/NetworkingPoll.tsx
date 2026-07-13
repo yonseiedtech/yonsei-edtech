@@ -13,7 +13,7 @@
 import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
 import { useQuery, useQueryClient, useMutation } from "@tanstack/react-query";
-import { CalendarCheck, Sparkles, Users as UsersIcon, Lock, ChevronLeft, ChevronRight, Check, LogIn, ExternalLink } from "lucide-react";
+import { CalendarCheck, Sparkles, Users as UsersIcon, Lock, ChevronLeft, ChevronRight, Check, LogIn, ExternalLink, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -479,13 +479,17 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
       {!user && !guestVoter && !pollClosed && (
         <div className="mb-3 rounded-xl border border-dashed bg-muted/30 p-3">
           {!guestFormOpen ? (
-            <div className="flex flex-wrap gap-2">
-              <Link href="/login" className={cn(buttonVariants({ size: "sm" }))}>
-                <LogIn size={13} /> 로그인하고 투표
-              </Link>
-              <Button size="sm" variant="outline" onClick={() => setGuestFormOpen(true)}>
-                비로그인으로 투표
-              </Button>
+            <div className="space-y-2">
+              {/* 작업 3(2026-07-14): 비회원도 참여 가능함을 강조 — 게스트 투표 CTA 를 기본(강조) 버튼으로 */}
+              <p className="text-[11px] font-medium text-foreground">회원이 아니어도 참여할 수 있어요.</p>
+              <div className="flex flex-wrap gap-2">
+                <Button size="sm" onClick={() => setGuestFormOpen(true)}>
+                  <UserPlus size={13} /> 로그인 없이 학번·이름으로 투표하기
+                </Button>
+                <Link href="/login" className={cn(buttonVariants({ size: "sm", variant: "outline" }))}>
+                  <LogIn size={13} /> 로그인하고 투표
+                </Link>
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
