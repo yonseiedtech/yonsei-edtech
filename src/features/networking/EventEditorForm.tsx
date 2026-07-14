@@ -35,13 +35,19 @@ const EVENT_TYPES = Object.keys(NETWORKING_EVENT_TYPE_LABELS) as NetworkingEvent
 const EVENT_STATUSES = Object.keys(NETWORKING_EVENT_STATUS_LABELS) as NetworkingEventStatus[];
 
 /**
- * 시간대 프리셋 (작업 2026-07-14 · 칩 선택) — 교육대학원 야간 특성 반영해 저녁 시간대를 촘촘히.
- * 프리셋 외 시각은 커스텀 입력(HH:MM)으로 추가할 수 있다.
+ * 시간대 프리셋 (작업 2026-07-14 · 칩 선택) — 09:00~22:00 을 일관되게 30분 간격으로 생성.
+ * 프리셋 외 시각(범위 밖·비 30분 단위)은 커스텀 입력(HH:MM)으로 추가할 수 있다.
  */
-const POLL_TIME_PRESETS = [
-  "10:00", "12:00", "13:00", "15:00", "17:00", "18:00",
-  "18:30", "19:00", "19:30", "20:00", "20:30", "21:00",
-];
+function buildHalfHourGrid(startHour: number, endHour: number): string[] {
+  const out: string[] = [];
+  for (let m = startHour * 60; m <= endHour * 60; m += 30) {
+    const h = Math.floor(m / 60);
+    const mm = m % 60;
+    out.push(`${String(h).padStart(2, "0")}:${mm === 0 ? "00" : "30"}`);
+  }
+  return out;
+}
+const POLL_TIME_PRESETS = buildHalfHourGrid(9, 22); // 09:00 ~ 22:00, 30분 간격
 /** 신규/미설정 이벤트 기본 선택 (기존 자유 텍스트 기본값과 동일) */
 const DEFAULT_SLOT_SELECTION = ["12:00", "15:00", "18:00", "19:00", "20:00"];
 /** "HH:MM" 형식 검증 (0~23:0~59) */
