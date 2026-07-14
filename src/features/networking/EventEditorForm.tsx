@@ -34,6 +34,24 @@ import {
 const EVENT_TYPES = Object.keys(NETWORKING_EVENT_TYPE_LABELS) as NetworkingEventType[];
 const EVENT_STATUSES = Object.keys(NETWORKING_EVENT_STATUS_LABELS) as NetworkingEventStatus[];
 
+/**
+ * 시간대 프리셋 (작업 2026-07-14 · 칩 선택) — 교육대학원 야간 특성 반영해 저녁 시간대를 촘촘히.
+ * 프리셋 외 시각은 커스텀 입력(HH:MM)으로 추가할 수 있다.
+ */
+const POLL_TIME_PRESETS = [
+  "10:00", "12:00", "13:00", "15:00", "17:00", "18:00",
+  "18:30", "19:00", "19:30", "20:00", "20:30", "21:00",
+];
+/** 신규/미설정 이벤트 기본 선택 (기존 자유 텍스트 기본값과 동일) */
+const DEFAULT_SLOT_SELECTION = ["12:00", "15:00", "18:00", "19:00", "20:00"];
+/** "HH:MM" 형식 검증 (0~23:0~59) */
+const TIME_RE = /^([01]?\d|2[0-3]):[0-5]\d$/;
+
+const arraysEqual = (a: string[], b: string[]) =>
+  a.length === b.length && [...a].sort().join() === [...b].sort().join();
+/** 시각 정렬 (문자열 HH:MM 사전순 = 시간순) */
+const sortTimes = (arr: string[]) => Array.from(new Set(arr)).sort();
+
 interface EventForm {
   type: NetworkingEventType;
   title: string;
@@ -42,7 +60,10 @@ interface EventForm {
   startAt: string; // datetime-local
   pollPeriodStart: string; // date
   pollPeriodEnd: string; // date
-  pollTimeSlots: string; // 쉼표 구분 자유 입력 ("18:00, 19:00" 또는 "저녁, 오후")
+  // 시간대 — 칩 선택(작업 2026-07-14). 평일/주말 구분.
+  pollSameSlots: boolean; // 평일/주말 동일 세트 여부
+  pollTimeSlotsWeekday: string[]; // 평일(월~금) — same 모드면 공통 세트
+  pollTimeSlotsWeekend: string[]; // 주말(토·일)
   pollDeadline: string; // datetime-local
   pollDecisionMode: "manual" | "auto";
   location: string;
@@ -59,20 +80,29 @@ interface EventForm {
 
 const EMPTY_FORM: EventForm = {
   type: "regular", title: "", description: "", schedulingMode: "fixed", startAt: "",
-  // pollTimeSlots 기본값 — 비워 두면 투표가 "날짜만" 모드가 되어 시간대 선택이 비활성되던 문제 방지
-  // (렌더 측도 DEFAULT_POLL_TIME_SLOTS 폴백이 있지만, 폼에 보여 줘야 staff 가 수정할 수 있다)
-  pollPeriodStart: "", pollPeriodEnd: "", pollTimeSlots: "12:00, 15:00, 18:00, 19:00, 20:00", pollDeadline: "", pollDecisionMode: "auto",
+  // 시간대 기본 — 평일/주말 동일 세트로 기본값 선택(staff 가 칩으로 수정)
+  pollPeriodStart: "", pollPeriodEnd: "",
+  pollSameSlots: true,
+  pollTimeSlotsWeekday: [...DEFAULT_SLOT_SELECTION],
+  pollTimeSlotsWeekend: [...DEFAULT_SLOT_SELECTION],
+  pollDeadline: "", pollDecisionMode: "auto",
   location: "", feeAmount: "0", autoDues: false, rsvpDeadline: "", capacity: "", hostName: "", semester: "", visibility: "public", status: "upcoming", published: true,
 };
 
 /** NetworkingEvent → EventForm (수정·복제 공통 프리필) */
 function eventToForm(ev: NetworkingEvent): EventForm {
+  // 마이그레이션: weekday/weekend 필드가 있으면 그대로, 없으면 레거시 pollTimeSlots 로 평일·주말 프리필.
+  const legacy = ev.pollTimeSlots ?? [];
+  const weekday = ev.pollTimeSlotsWeekday && ev.pollTimeSlotsWeekday.length > 0 ? ev.pollTimeSlotsWeekday : legacy;
+  const weekend = ev.pollTimeSlotsWeekend && ev.pollTimeSlotsWeekend.length > 0 ? ev.pollTimeSlotsWeekend : weekday;
   return {
     type: ev.type, title: ev.title, description: ev.description ?? "",
     schedulingMode: ev.schedulingMode ?? "fixed",
     startAt: isoToLocal(ev.startAt),
     pollPeriodStart: ev.pollPeriodStart ?? "", pollPeriodEnd: ev.pollPeriodEnd ?? "",
-    pollTimeSlots: (ev.pollTimeSlots ?? []).join(", "),
+    pollSameSlots: arraysEqual(weekday, weekend),
+    pollTimeSlotsWeekday: sortTimes(weekday),
+    pollTimeSlotsWeekend: sortTimes(weekend),
     pollDeadline: isoToLocal(ev.pollDeadline), pollDecisionMode: ev.pollDecisionMode ?? "auto",
     location: ev.location ?? "",
     feeAmount: String(ev.feeAmount ?? 0), autoDues: ev.autoDues ?? false, rsvpDeadline: isoToLocal(ev.rsvpDeadline),
@@ -81,11 +111,6 @@ function eventToForm(ev: NetworkingEvent): EventForm {
     visibility: ev.visibility ?? "public",
     status: ev.status, published: ev.published,
   };
-}
-
-/** "18:00, 오후" 자유 입력 → 배열 (빈 항목 제거) */
-function parseTimeSlots(raw: string): string[] {
-  return raw.split(",").map((s) => s.trim()).filter(Boolean);
 }
 
 /** ISO ↔ datetime-local 변환 */
@@ -134,6 +159,34 @@ export default function EventEditorForm({
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const set = <K extends keyof EventForm>(k: K, v: EventForm[K]) => setForm((p) => ({ ...p, [k]: v }));
+
+  // 시간대 칩 — 커스텀 시각 입력(평일/주말 각각)
+  const [customWeekday, setCustomWeekday] = useState("");
+  const [customWeekend, setCustomWeekend] = useState("");
+  const slotKey = (kind: "weekday" | "weekend") =>
+    kind === "weekday" ? "pollTimeSlotsWeekday" : "pollTimeSlotsWeekend";
+  function toggleSlot(kind: "weekday" | "weekend", time: string) {
+    const key = slotKey(kind);
+    setForm((p) => {
+      const cur = p[key];
+      const next = cur.includes(time) ? cur.filter((t) => t !== time) : sortTimes([...cur, time]);
+      return { ...p, [key]: next };
+    });
+  }
+  function addCustomSlot(kind: "weekday" | "weekend") {
+    const raw = (kind === "weekday" ? customWeekday : customWeekend).trim();
+    if (!TIME_RE.test(raw)) {
+      toast.error("시각은 HH:MM 형식으로 입력해주세요. 예: 21:30");
+      return;
+    }
+    // 한 자리 시(예: 9:00)를 두 자리로 정규화해 프리셋과 정렬 일관성 유지
+    const [h, m] = raw.split(":");
+    const norm = `${h.padStart(2, "0")}:${m}`;
+    const key = slotKey(kind);
+    setForm((p) => (p[key].includes(norm) ? p : { ...p, [key]: sortTimes([...p[key], norm]) }));
+    if (kind === "weekday") setCustomWeekday("");
+    else setCustomWeekend("");
+  }
 
   // H2(2026-07-08): 비공개 모임 초대 알림 — 신규 초대 대상 선택 및 기존 초대자 표시
   const { members: allMembers } = useAllMembers();
@@ -224,6 +277,9 @@ export default function EventEditorForm({
           token = crypto.randomUUID();
         }
       }
+      // 시간대 — same 모드면 평일 세트를 주말에도 사용. pollTimeSlots(공통)은 하위호환으로 평일 세트를 저장.
+      const slotWeekday = sortTimes(form.pollTimeSlotsWeekday);
+      const slotWeekend = form.pollSameSlots ? slotWeekday : sortTimes(form.pollTimeSlotsWeekend);
       const payload = {
         type: form.type, title: form.title.trim(), description: form.description.trim() || undefined,
         schedulingMode: form.schedulingMode,
@@ -232,7 +288,9 @@ export default function EventEditorForm({
         startAt: isPoll ? "" : localToIso(form.startAt),
         pollPeriodStart: isPoll ? form.pollPeriodStart : undefined,
         pollPeriodEnd: isPoll ? form.pollPeriodEnd : undefined,
-        pollTimeSlots: isPoll ? parseTimeSlots(form.pollTimeSlots) : undefined,
+        pollTimeSlots: isPoll ? slotWeekday : undefined,
+        pollTimeSlotsWeekday: isPoll ? slotWeekday : undefined,
+        pollTimeSlotsWeekend: isPoll ? slotWeekend : undefined,
         pollDeadline: isPoll && form.pollDeadline ? localToIso(form.pollDeadline) : undefined,
         pollDecisionMode: isPoll ? form.pollDecisionMode : undefined,
         location: form.location.trim() || undefined,
@@ -333,6 +391,57 @@ export default function EventEditorForm({
     }
   }
 
+  /** 시간대 칩 섹션 (프리셋 ∪ 선택 → 정렬, 토글 + 커스텀 입력) */
+  function renderSlotChips(kind: "weekday" | "weekend", label: string) {
+    const selected = kind === "weekday" ? form.pollTimeSlotsWeekday : form.pollTimeSlotsWeekend;
+    const chips = sortTimes([...POLL_TIME_PRESETS, ...selected]);
+    const customVal = kind === "weekday" ? customWeekday : customWeekend;
+    const setCustomVal = kind === "weekday" ? setCustomWeekday : setCustomWeekend;
+    return (
+      <div>
+        <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">{label}</p>
+        <div className="flex flex-wrap gap-1.5" role="group" aria-label={`${label} 시간대 선택`}>
+          {chips.map((t) => {
+            const active = selected.includes(t);
+            return (
+              <button
+                key={t}
+                type="button"
+                aria-pressed={active}
+                onClick={() => toggleSlot(kind, t)}
+                className={cn(
+                  "rounded-full border px-2.5 py-1 text-[11px] font-medium tabular-nums transition-colors",
+                  active
+                    ? "border-indigo-600 bg-indigo-600 text-white dark:border-indigo-400 dark:bg-indigo-500"
+                    : "border-border bg-background text-muted-foreground hover:border-indigo-400 hover:text-foreground",
+                )}
+              >
+                {t}
+              </button>
+            );
+          })}
+        </div>
+        <div className="mt-1.5 flex items-center gap-1.5">
+          <Input
+            value={customVal}
+            onChange={(e) => setCustomVal(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter") {
+                e.preventDefault();
+                addCustomSlot(kind);
+              }
+            }}
+            placeholder="직접 추가 (예: 21:30)"
+            className="h-7 w-36 text-xs"
+          />
+          <Button type="button" size="sm" variant="outline" className="h-7 text-xs" onClick={() => addCustomSlot(kind)}>
+            추가
+          </Button>
+        </div>
+      </div>
+    );
+  }
+
   return (
     <div className="rounded-2xl border bg-card p-5 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
@@ -388,9 +497,32 @@ export default function EventEditorForm({
             <label className="text-xs">후보 기간 종료 *
               <Input type="date" value={form.pollPeriodEnd} onChange={(e) => set("pollPeriodEnd", e.target.value)} className="mt-1" />
             </label>
-            <label className="text-xs">시간대 옵션 (쉼표 구분, 비우면 날짜만)
-              <Input value={form.pollTimeSlots} onChange={(e) => set("pollTimeSlots", e.target.value)} className="mt-1" placeholder="예: 18:00, 19:00 (비우면 기본 시간대 12:00~20:00 적용)" />
-            </label>
+            <div className="text-xs sm:col-span-2">
+              <div className="flex flex-wrap items-center justify-between gap-2">
+                <span className="text-muted-foreground">가능 시간대 (칩을 눌러 선택)</span>
+                <label className="inline-flex items-center gap-1.5 font-normal text-muted-foreground">
+                  <input
+                    type="checkbox"
+                    checked={form.pollSameSlots}
+                    onChange={(e) => set("pollSameSlots", e.target.checked)}
+                  />
+                  평일/주말 동일
+                </label>
+              </div>
+              <div className="mt-2 space-y-3">
+                {form.pollSameSlots ? (
+                  renderSlotChips("weekday", "평일·주말 공통")
+                ) : (
+                  <>
+                    {renderSlotChips("weekday", "평일 (월~금)")}
+                    {renderSlotChips("weekend", "주말 (토·일)")}
+                  </>
+                )}
+              </div>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                아무것도 선택하지 않으면 기본 시간대(12:00~20:00)가 적용됩니다.
+              </p>
+            </div>
             <label className="text-xs">투표 마감
               <Input type="datetime-local" value={form.pollDeadline} onChange={(e) => set("pollDeadline", e.target.value)} className="mt-1" />
             </label>

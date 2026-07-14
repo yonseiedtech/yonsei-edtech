@@ -32,14 +32,49 @@ export function effectivePollTimeSlots(timeSlots?: string[]): string[] {
   return timeSlots && timeSlots.length > 0 ? timeSlots : DEFAULT_POLL_TIME_SLOTS;
 }
 
+/**
+ * 이벤트에서 평일·주말 슬롯을 폴백 규칙과 함께 뽑는다 (작업 2026-07-14).
+ *  - 평일: pollTimeSlotsWeekday → (없으면) pollTimeSlots
+ *  - 주말: pollTimeSlotsWeekend → (없으면) 평일 값
+ * 반환값이 빈 배열이면 buildCandidateSlots 에서 DEFAULT_POLL_TIME_SLOTS 로 폴백된다.
+ */
+export function eventPollSlots(ev: {
+  pollTimeSlots?: string[];
+  pollTimeSlotsWeekday?: string[];
+  pollTimeSlotsWeekend?: string[];
+}): { weekday: string[]; weekend: string[] } {
+  const weekday =
+    ev.pollTimeSlotsWeekday && ev.pollTimeSlotsWeekday.length > 0
+      ? ev.pollTimeSlotsWeekday
+      : ev.pollTimeSlots ?? [];
+  const weekend =
+    ev.pollTimeSlotsWeekend && ev.pollTimeSlotsWeekend.length > 0
+      ? ev.pollTimeSlotsWeekend
+      : weekday;
+  return { weekday, weekend };
+}
+
+/**
+ * 후보 슬롯 목록 — 날짜×시간 전개.
+ * weekdaySlots(3번째, 평일/공통) · weekendSlots(4번째, 주말 옵셔널).
+ * 각 날짜의 getDay() 로 토(6)·일(0) 이면 weekendSlots(있으면) 아니면 weekdaySlots 를 쓴다.
+ * 4번째 미전달 시 모든 날짜가 weekdaySlots 를 쓰므로 기존 caller(3-인자 호출)와 동작이 동일하다.
+ * 요일 판정은 listDates·formatSlotLabel 과 동일하게 로컬 필드 파싱(`${d}T00:00:00`) 기준.
+ */
 export function buildCandidateSlots(
   periodStart: string,
   periodEnd: string,
-  timeSlots?: string[],
+  weekdaySlots?: string[],
+  weekendSlots?: string[],
 ): string[] {
   const dates = listDates(periodStart, periodEnd);
-  const times = effectivePollTimeSlots(timeSlots);
-  return dates.flatMap((d) => times.map((t) => `${d}|${t}`));
+  const weekday = effectivePollTimeSlots(weekdaySlots);
+  const weekend = weekendSlots && weekendSlots.length > 0 ? weekendSlots : null;
+  return dates.flatMap((d) => {
+    const dow = new Date(`${d}T00:00:00`).getDay();
+    const times = weekend && (dow === 0 || dow === 6) ? weekend : weekday;
+    return times.map((t) => `${d}|${t}`);
+  });
 }
 
 /** 응답 → 슬롯별 집계 (실시간 히트맵용) */

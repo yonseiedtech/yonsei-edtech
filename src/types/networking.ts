@@ -38,8 +38,20 @@ export interface NetworkingEvent {
   /** poll 모드 후보 기간 (YYYY-MM-DD) */
   pollPeriodStart?: string;
   pollPeriodEnd?: string;
-  /** poll 모드 시간대 옵션 (예: ["18:00","19:00"]). 비우면 날짜만 */
+  /**
+   * poll 모드 시간대 옵션 (예: ["18:00","19:00"]). 비우면 날짜만.
+   * 평일/주말 동일 세트이거나 레거시 값. 하위호환용 공통 슬롯으로 유지된다.
+   */
   pollTimeSlots?: string[];
+  /**
+   * poll 모드 평일(월~금) 시간대 (작업 2026-07-14 · 칩 선택 + 평일/주말 구분).
+   * 미설정 시 pollTimeSlots 로 폴백(하위호환).
+   */
+  pollTimeSlotsWeekday?: string[];
+  /**
+   * poll 모드 주말(토·일) 시간대. 미설정 시 pollTimeSlotsWeekday(또는 pollTimeSlots)로 폴백.
+   */
+  pollTimeSlotsWeekend?: string[];
   /** poll 응답 마감 (ISO) */
   pollDeadline?: string;
   /** poll 결정 — manual: 운영진 지정 / auto: 최다 가능일 */

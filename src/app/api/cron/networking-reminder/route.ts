@@ -1,7 +1,7 @@
 import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
-import { buildCandidateSlots, tallyAvailability, bestSlots, resolveSlotStartAt } from "@/features/networking/networking-utils";
+import { buildCandidateSlots, eventPollSlots, tallyAvailability, bestSlots, resolveSlotStartAt } from "@/features/networking/networking-utils";
 import type { NetworkingAvailability } from "@/types";
 
 /**
@@ -52,6 +52,8 @@ export async function GET(req: NextRequest) {
         pollPeriodStart?: string;
         pollPeriodEnd?: string;
         pollTimeSlots?: string[];
+        pollTimeSlotsWeekday?: string[];
+        pollTimeSlotsWeekend?: string[];
         pollReminderSentAt?: string;
         duesReminderSentAt?: string;
         visibility?: "public" | "private";
@@ -239,10 +241,12 @@ export async function GET(req: NextRequest) {
             .where("eventId", "==", doc.id)
             .get();
           const responses = availSnap.docs.map((d) => d.data() as NetworkingAvailability);
+          const { weekday, weekend } = eventPollSlots(ev);
           const candidateSlots = buildCandidateSlots(
             ev.pollPeriodStart ?? "",
             ev.pollPeriodEnd ?? "",
-            ev.pollTimeSlots,
+            weekday,
+            weekend,
           );
           const best = bestSlots(tallyAvailability(responses, candidateSlots));
 

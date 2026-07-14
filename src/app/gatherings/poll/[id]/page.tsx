@@ -15,7 +15,7 @@ import type { Metadata } from "next";
 import { CalendarCheck, Users, Sparkles, CalendarClock, ShieldCheck } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 import { getAdminDb } from "@/lib/firebase-admin";
-import { buildCandidateSlots, tallyAvailability, formatSlotLabel, effectivePollTimeSlots } from "@/features/networking/networking-utils";
+import { buildCandidateSlots, eventPollSlots, tallyAvailability, formatSlotLabel, effectivePollTimeSlots } from "@/features/networking/networking-utils";
 import type { NetworkingEvent, NetworkingAvailability, SlotTally } from "@/types";
 import GuestPollVoter from "@/features/networking/GuestPollVoter";
 
@@ -90,10 +90,12 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   const data = await getPollData(id);
   if (!data) return { title: "일정 투표 현황" };
   const { event, responses } = data;
+  const { weekday: metaWeekday, weekend: metaWeekend } = eventPollSlots(event);
   const candidateSlots = buildCandidateSlots(
     event.pollPeriodStart ?? "",
     event.pollPeriodEnd ?? "",
-    event.pollTimeSlots,
+    metaWeekday,
+    metaWeekend,
   );
   const tallies = tallyAvailability(responses, candidateSlots);
   const top = [...tallies]
@@ -117,13 +119,19 @@ export default async function PollSummaryPage({ params }: Props) {
   if (!data) notFound();
   const { event, responses } = data;
 
-  // 시간대 미설정 이벤트도 기본 시간대 폴백 — 투표 UI(buildCandidateSlots)와 동일 슬롯 체계 유지
-  const timeSlots = effectivePollTimeSlots(event.pollTimeSlots);
+  // 시간대 미설정 이벤트도 기본 시간대 폴백 — 투표 UI(buildCandidateSlots)와 동일 슬롯 체계 유지.
+  // 평일/주말 슬롯이 다를 수 있으므로 표 헤더 시간대는 두 세트의 합집합(정렬)으로 구성한다.
+  // 특정 날짜에 없는 슬롯은 tally 에 후보가 없어 count 0(빈 칸)으로 렌더된다.
+  const { weekday: pollWeekday, weekend: pollWeekend } = eventPollSlots(event);
+  const effWeekday = effectivePollTimeSlots(pollWeekday);
+  const effWeekend = pollWeekend.length > 0 ? pollWeekend : effWeekday;
+  const timeSlots = Array.from(new Set([...effWeekday, ...effWeekend])).sort();
   const hasTime = timeSlots.length > 0;
   const candidateSlots = buildCandidateSlots(
     event.pollPeriodStart ?? "",
     event.pollPeriodEnd ?? "",
-    event.pollTimeSlots,
+    pollWeekday,
+    pollWeekend,
   );
   // 후보 기간이 없으면 종합할 것이 없음 → 404
   if (candidateSlots.length === 0) notFound();

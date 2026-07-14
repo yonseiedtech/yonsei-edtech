@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { checkRateLimit, getClientId } from "@/lib/rate-limit";
-import { buildCandidateSlots } from "@/features/networking/networking-utils";
+import { buildCandidateSlots, eventPollSlots } from "@/features/networking/networking-utils";
 import type { NetworkingEvent } from "@/types";
 
 /**
@@ -66,8 +66,9 @@ export async function POST(req: NextRequest) {
 
     // 서버 측 화이트리스트 — 선택 슬롯이 모두 후보 슬롯에 포함돼야 함
     // (effectivePollTimeSlots 폴백 포함 — 시간대 미설정 이벤트도 기본 시간대로 검증)
+    const { weekday, weekend } = eventPollSlots(ev);
     const candidateSlots = new Set(
-      buildCandidateSlots(ev.pollPeriodStart ?? "", ev.pollPeriodEnd ?? "", ev.pollTimeSlots),
+      buildCandidateSlots(ev.pollPeriodStart ?? "", ev.pollPeriodEnd ?? "", weekday, weekend),
     );
     if (candidateSlots.size === 0) {
       return NextResponse.json({ error: "후보 기간이 설정되지 않았습니다." }, { status: 400 });

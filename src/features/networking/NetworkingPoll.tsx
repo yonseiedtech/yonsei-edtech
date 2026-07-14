@@ -24,6 +24,7 @@ import { networkingAvailabilityApi, networkingEventsApi } from "@/lib/bkend";
 import type { NetworkingAvailability, NetworkingEvent, SlotTally } from "@/types";
 import {
   buildCandidateSlots,
+  eventPollSlots,
   tallyAvailability,
   bestSlots,
   formatSlotLabel,
@@ -119,10 +120,20 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
     }
   }, []);
 
-  const candidateSlots = useMemo(
-    () => buildCandidateSlots(event.pollPeriodStart ?? "", event.pollPeriodEnd ?? "", event.pollTimeSlots),
-    [event.pollPeriodStart, event.pollPeriodEnd, event.pollTimeSlots],
-  );
+  const candidateSlots = useMemo(() => {
+    const { weekday, weekend } = eventPollSlots({
+      pollTimeSlots: event.pollTimeSlots,
+      pollTimeSlotsWeekday: event.pollTimeSlotsWeekday,
+      pollTimeSlotsWeekend: event.pollTimeSlotsWeekend,
+    });
+    return buildCandidateSlots(event.pollPeriodStart ?? "", event.pollPeriodEnd ?? "", weekday, weekend);
+  }, [
+    event.pollPeriodStart,
+    event.pollPeriodEnd,
+    event.pollTimeSlots,
+    event.pollTimeSlotsWeekday,
+    event.pollTimeSlotsWeekend,
+  ]);
 
   // 후보 슬롯을 날짜별로 그룹화
   const slotsByDate = useMemo(() => {
