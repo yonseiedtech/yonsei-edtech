@@ -12,11 +12,13 @@
  */
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { CalendarCheck, Check, UserPlus } from "lucide-react";
+import Link from "next/link";
+import { CalendarCheck, Check, UserPlus, LogIn, ArrowRight } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/features/auth/auth-store";
 
 interface Props {
   eventId: string;
@@ -33,6 +35,9 @@ function fullDateLabel(date: string): string {
 }
 
 export default function GuestPollVoter({ eventId, candidateSlots, pollDeadline }: Props) {
+  const { user } = useAuthStore();
+  // 로그인 후 이 페이지로 복귀 → 회원은 모임 목록(카드)에서 회원 투표
+  const loginHref = `/login?next=${encodeURIComponent(`/gatherings/poll/${eventId}`)}`;
   // NetworkingPoll 과 동일한 localStorage 키 — 같은 브라우저에서 이미 투표한 경우 자동 프리필
   const [guestVoter, setGuestVoter] = useState<{ name: string; studentId: string } | null>(null);
   const [guestSlots, setGuestSlots] = useState<Set<string>>(new Set());
@@ -146,6 +151,27 @@ export default function GuestPollVoter({ eventId, candidateSlots, pollDeadline }
     );
   }
 
+  // 로그인 회원 — 회원 투표는 모임 목록(카드)에서. 안내만 표시.
+  if (user) {
+    return (
+      <section className="mb-6 rounded-2xl border bg-card p-4">
+        <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold">
+          <CalendarCheck size={15} className="text-indigo-600 dark:text-indigo-400" />
+          일정 투표 참여
+        </h2>
+        <p className="mb-3 text-xs text-muted-foreground">
+          <b className="text-foreground">{user.name ?? "회원"}</b> 님으로 로그인되어 있어요. 회원은 모임
+          목록에서 바로 투표할 수 있습니다.
+        </p>
+        <Link href="/gatherings">
+          <Button size="sm">
+            모임에서 투표하기 <ArrowRight size={13} className="ml-1" />
+          </Button>
+        </Link>
+      </section>
+    );
+  }
+
   return (
     <section className="mb-6 rounded-2xl border bg-card p-4">
       <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold">
@@ -154,22 +180,30 @@ export default function GuestPollVoter({ eventId, candidateSlots, pollDeadline }
       </h2>
 
       {!guestVoter ? (
-        /* 투표 진입 — 이름·학번 입력 */
+        /* 투표 진입 게이트 — 로그인 또는 비로그인(학번·이름) 선택 */
         <div className="rounded-xl border border-dashed bg-muted/30 p-3">
           {!guestFormOpen ? (
-            <div className="space-y-2">
+            <div className="space-y-2.5">
               <p className="text-[11px] font-medium text-foreground">
-                회원이 아니어도 학번과 이름으로 참여할 수 있어요.
+                로그인하거나, 비로그인 상태로 학번·이름을 입력해 투표할 수 있어요.
               </p>
-              <Button size="sm" onClick={() => setGuestFormOpen(true)}>
-                <UserPlus size={13} className="mr-1" />
-                로그인 없이 학번·이름으로 투표하기
-              </Button>
+              <div className="flex flex-col gap-2 sm:flex-row">
+                <Link href={loginHref} className="sm:flex-1">
+                  <Button size="sm" variant="outline" className="w-full">
+                    <LogIn size={13} className="mr-1" />
+                    로그인하고 투표하기
+                  </Button>
+                </Link>
+                <Button size="sm" className="sm:flex-1" onClick={() => setGuestFormOpen(true)}>
+                  <UserPlus size={13} className="mr-1" />
+                  비로그인으로 투표하기
+                </Button>
+              </div>
             </div>
           ) : (
             <div className="space-y-2">
               <p className="text-[11px] font-medium text-foreground">
-                이름과 학번을 입력하면 바로 투표할 수 있어요.
+                이름과 학번을 입력하면 투표 페이지로 넘어갑니다.
               </p>
               <div className="flex flex-col gap-2 sm:flex-row">
                 <Input
