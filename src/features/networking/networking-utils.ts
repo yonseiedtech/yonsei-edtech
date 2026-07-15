@@ -77,6 +77,54 @@ export function buildCandidateSlots(
   });
 }
 
+/** 응답자 고유 식별 — 회원 userId, 게스트 studentId, 폴백 guestName/userName */
+export function responderKey(r: {
+  userId?: string;
+  studentId?: string;
+  guestName?: string;
+  userName?: string;
+}): string {
+  if (r.userId) return `u:${r.userId}`;
+  if (r.studentId) return `g:${r.studentId}`;
+  return `n:${r.guestName ?? r.userName ?? ""}`;
+}
+
+/**
+ * 날짜별 "그 날 가능한 서로 다른 응답자 수" 집계.
+ *
+ * tallyAvailability(슬롯별) 는 candidateSlots 에 없는 슬롯을 버리므로, 시간대 설정을
+ * 바꾼 뒤(예: 특정 시각 제거) 과거 응답의 해당 슬롯이 통째로 누락돼 "응답 N명인데 최다 1명"
+ * 처럼 보이는 문제가 있었다(2026-07-16 리포트). 헤드라인("현재 최다 가능 일정")은 candidateSlots
+ * 필터를 거치지 않고 응답의 실제 슬롯 날짜(기간 내)로 응답자를 세어 손실 없이 반영한다.
+ */
+export function countRespondersByDate(
+  responses: {
+    availableSlots?: string[];
+    userId?: string;
+    studentId?: string;
+    guestName?: string;
+    userName?: string;
+  }[],
+  periodDates: Set<string>,
+): Record<string, number> {
+  const byDate = new Map<string, Set<string>>();
+  for (const r of responses) {
+    const key = responderKey(r);
+    const seenDates = new Set<string>();
+    for (const slot of r.availableSlots ?? []) {
+      const date = slot.split("|")[0];
+      if (!periodDates.has(date) || seenDates.has(date)) continue;
+      seenDates.add(date);
+      const set = byDate.get(date) ?? new Set<string>();
+      set.add(key);
+      byDate.set(date, set);
+    }
+  }
+  const out: Record<string, number> = {};
+  for (const [date, set] of byDate) out[date] = set.size;
+  return out;
+}
+
 /** 응답 → 슬롯별 집계 (실시간 히트맵용) */
 export function tallyAvailability(
   responses: NetworkingAvailability[],

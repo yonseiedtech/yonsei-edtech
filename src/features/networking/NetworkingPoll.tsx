@@ -26,6 +26,7 @@ import {
   buildCandidateSlots,
   eventPollSlots,
   tallyAvailability,
+  countRespondersByDate,
   bestSlots,
   formatSlotLabel,
   resolveSlotStartAt,
@@ -160,12 +161,17 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
   // 게스트(비로그인) 실시간 집계 — networking_availability 는 rules 로 못 읽으므로
   // 서버 집계 엔드포인트(슬롯별 카운트만, 개인정보 미노출)를 폴링한다.
   // 이게 없으면 게스트에겐 "현재 최다 가능 일정"이 항상 비어 보였다(2026-07-16 리포트).
-  const { data: guestTally } = useQuery({
+  type GuestTally = {
+    slotCounts: Record<string, number>;
+    dateResponderCounts: Record<string, number>;
+    responderCount: number;
+  };
+  const { data: guestTally } = useQuery<GuestTally>({
     queryKey: ["networking-availability-tally", event.id],
     queryFn: async () => {
       const res = await fetch(`/api/networking/availability-tally?eventId=${encodeURIComponent(event.id)}`);
-      if (!res.ok) return { tallies: {} as Record<string, number>, responderCount: 0 };
-      return (await res.json()) as { tallies: Record<string, number>; responderCount: number };
+      if (!res.ok) return { slotCounts: {}, dateResponderCounts: {}, responderCount: 0 };
+      return (await res.json()) as GuestTally;
     },
     refetchInterval: 7000,
     enabled: !user,
@@ -173,8 +179,8 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
 
   const tallies = useMemo<SlotTally[]>(() => {
     if (user) return tallyAvailability(responses, candidateSlots);
-    // 게스트: 서버 집계(카운트) 로 SlotTally 구성 — 이름은 표시하지 않는다.
-    const counts = guestTally?.tallies ?? {};
+    // 게스트: 서버 집계(슬롯 카운트) 로 SlotTally 구성 — 이름은 표시하지 않는다.
+    const counts = guestTally?.slotCounts ?? {};
     return candidateSlots.map((slot) => {
       const [date, time] = slot.split("|");
       return { slot, date, time, count: counts[slot] ?? 0, names: [] };
@@ -188,20 +194,35 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
   const maxCount = useMemo(() => Math.max(0, ...tallies.map((t) => t.count)), [tallies]);
   const best = useMemo(() => bestSlots(tallies), [tallies]);
 
-  // 날짜 단위 집계 — 각 날짜의 최고 슬롯 count + 그 시간대
+  // 날짜별 "그 날 가능한 서로 다른 응답자 수" — candidateSlots 필터 없이(손실 없음).
+  // 회원은 전체 응답으로, 게스트는 서버 집계로. 시간대 설정을 바꿔 일부 슬롯이 candidate 에서
+  // 빠져도 응답이 통째로 누락되지 않게 한다("응답 N명인데 최다 1명" 문제 해결, 2026-07-16).
+  const dateResponderCount = useMemo<Record<string, number>>(() => {
+    if (user) return countRespondersByDate(responses, periodDates);
+    return guestTally?.dateResponderCounts ?? {};
+  }, [user, responses, periodDates, guestTally]);
+
+  // 날짜 단위 집계 — 그 날 응답자 수(헤드라인) + 후보 슬롯 중 최다 시간대(부가 정보)
   const dateAgg = useMemo(() => {
     const m = new Map<string, { count: number; bestTime?: string }>();
     for (const [date, slots] of slotsByDate) {
-      let top: { count: number; bestTime?: string } = { count: 0, bestTime: undefined };
+      let bestTime: string | undefined;
+      let bestSlotCount = 0;
       for (const slot of slots) {
-        const t = tallyBySlot.get(slot);
-        const c = t?.count ?? 0;
-        if (c > top.count) top = { count: c, bestTime: t?.time };
+        const c = tallyBySlot.get(slot)?.count ?? 0;
+        if (c > bestSlotCount) { bestSlotCount = c; bestTime = tallyBySlot.get(slot)?.time; }
       }
-      m.set(date, top);
+      // 최다 시간대는 2명 이상 겹칠 때만 강조(겹치는 시간 없이 1명이면 표기 생략)
+      m.set(date, { count: dateResponderCount[date] ?? 0, bestTime: bestSlotCount >= 2 ? bestTime : undefined });
     }
     return m;
-  }, [slotsByDate, tallyBySlot]);
+  }, [slotsByDate, tallyBySlot, dateResponderCount]);
+
+  // 캘린더 셀 색상 정규화용 — 날짜 단위 최대 응답자 수(슬롯 단위 maxCount 와 별도 스케일)
+  const maxDateCount = useMemo(
+    () => Math.max(0, ...Array.from(dateAgg.values()).map((v) => v.count)),
+    [dateAgg],
+  );
 
   // 상위 최다 가능 날짜 (동률 포함, 상위 3개)
   const bestDates = useMemo(() => {
@@ -632,7 +653,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
               title={inPeriod && count > 0 ? `${count}명 가능` : undefined}
               className={cn(
                 "relative flex aspect-square flex-col items-center justify-center rounded-lg border p-0.5 text-[11px] tabular-nums transition-colors",
-                inPeriod ? heatClass(count, maxCount) : "border-transparent bg-transparent text-muted-foreground/40",
+                inPeriod ? heatClass(count, maxDateCount) : "border-transparent bg-transparent text-muted-foreground/40",
                 !cell.inMonth && "opacity-40",
                 inPeriod && clickable && "hover:border-indigo-400",
                 mine && "ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-card",

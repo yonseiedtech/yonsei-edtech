@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { checkRateLimit, getClientId } from "@/lib/rate-limit";
+import { listDates, countRespondersByDate } from "@/features/networking/networking-utils";
+import type { NetworkingEvent } from "@/types";
 
 /**
  * GET /api/networking/availability-tally?eventId=... (비로그인 집계 조회)
@@ -21,22 +23,51 @@ export async function GET(req: NextRequest) {
 
   try {
     const db = getAdminDb();
+
+    // 기간 내 날짜 집합 — 날짜별 응답자 집계 범위 제한용
+    const evSnap = await db.collection("networking_events").doc(eventId).get();
+    const ev = evSnap.exists ? (evSnap.data() as NetworkingEvent) : null;
+    const periodDates = new Set(listDates(ev?.pollPeriodStart ?? "", ev?.pollPeriodEnd ?? ""));
+
     const snap = await db
       .collection("networking_availability")
       .where("eventId", "==", eventId)
       .limit(2000)
       .get();
 
-    const tallies: Record<string, number> = {};
+    const slotCounts: Record<string, number> = {};
+    const responses: {
+      availableSlots?: string[];
+      userId?: string;
+      studentId?: string;
+      guestName?: string;
+      userName?: string;
+    }[] = [];
     snap.forEach((doc) => {
-      const data = doc.data() as { availableSlots?: unknown };
-      const slots = Array.isArray(data.availableSlots) ? data.availableSlots : [];
-      for (const s of slots) {
-        if (typeof s === "string") tallies[s] = (tallies[s] ?? 0) + 1;
-      }
+      const data = doc.data() as {
+        availableSlots?: unknown;
+        userId?: string;
+        studentId?: string;
+        guestName?: string;
+        userName?: string;
+      };
+      const slots = Array.isArray(data.availableSlots)
+        ? data.availableSlots.filter((s): s is string => typeof s === "string")
+        : [];
+      for (const s of slots) slotCounts[s] = (slotCounts[s] ?? 0) + 1;
+      responses.push({
+        availableSlots: slots,
+        userId: data.userId,
+        studentId: data.studentId,
+        guestName: data.guestName,
+        userName: data.userName,
+      });
     });
 
-    return NextResponse.json({ tallies, responderCount: snap.size });
+    // 날짜별 서로 다른 응답자 수 — candidateSlots 필터 없이(손실 없음)
+    const dateResponderCounts = countRespondersByDate(responses, periodDates);
+
+    return NextResponse.json({ slotCounts, dateResponderCounts, responderCount: snap.size });
   } catch (err) {
     console.error("[/api/networking/availability-tally]", err);
     return NextResponse.json({ error: "집계 조회에 실패했습니다." }, { status: 500 });
