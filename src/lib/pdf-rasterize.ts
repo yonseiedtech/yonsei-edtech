@@ -25,11 +25,10 @@ export async function rasterizePdf(
   const pdfjs = await import("pdfjs-dist");
 
   if (!workerConfigured) {
-    // Next(webpack/turbopack) 정적 worker 번들 — import.meta.url 상대 경로
-    pdfjs.GlobalWorkerOptions.workerSrc = new URL(
-      "pdfjs-dist/build/pdf.worker.min.mjs",
-      import.meta.url,
-    ).toString();
+    // worker 는 public/pdfjs/ 에 벤더링(scripts/copy-pdf-worker 없이 커밋) — 절대 경로 참조로
+    // 번들러의 import.meta.url 해석(Next 빌드 module-not-found) 을 우회한다.
+    // pdfjs-dist 버전 업데이트 시 public/pdfjs/pdf.worker.min.mjs 재복사 필요(현재 4.10.x).
+    pdfjs.GlobalWorkerOptions.workerSrc = "/pdfjs/pdf.worker.min.mjs";
     workerConfigured = true;
   }
 
