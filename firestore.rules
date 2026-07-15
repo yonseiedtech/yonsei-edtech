@@ -331,6 +331,38 @@ service cloud.firestore {
         && (resource.data.authorId == request.auth.uid || isStaffOrAbove());
     }
 
+    // ─── Seminar Live Console (라이브 콘솔 — 실시간 장표/강의노트/Q&A/설문) ───
+    // 라이브 세션 제어 문서(doc id = seminarId). 참가자·게스트가 onSnapshot 으로 동기화 read.
+    // write 는 세미나 발표자(presenterId) 또는 운영진만 — 슬라이드 넘김·설문 push 제어.
+    match /seminar_live_sessions/{docId} {
+      allow read: if true; // 게스트 참여 허용 (contextType seminar 공개 read 관례)
+      allow create, update: if isAuthenticated()
+        && (isStaffOrAbove()
+            || request.resource.data.presenterId == request.auth.uid);
+      allow delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // 업로드된 장표 덱 + 발표자 강의노트. 발표 자료라 공개 read, 업로더/운영진만 write.
+    match /seminar_slide_decks/{docId} {
+      allow read: if true;
+      allow create: if isAuthenticated()
+        && (isStaffOrAbove()
+            || request.resource.data.uploadedBy == request.auth.uid);
+      allow update, delete: if isAuthenticated()
+        && (isStaffOrAbove() || resource.data.uploadedBy == request.auth.uid);
+    }
+
+    // 참가자 개인 노트(비공개) — 소유자 외 접근 차단(운영진 포함).
+    // 로그인 회원 전용(ownerId = uid). 게스트 노트는 localStorage 로 로컬 보관(서버 미저장).
+    match /seminar_note_entries/{docId} {
+      allow read, list: if isAuthenticated()
+        && (resource == null || resource.data.ownerId == request.auth.uid);
+      allow create: if isAuthenticated()
+        && request.resource.data.ownerId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && resource.data.ownerId == request.auth.uid;
+    }
+
     // ─── Chat Logs & Q&A ───
     match /chat_logs/{docId} {
       allow read: if isAuthenticated() && isStaffOrAbove();

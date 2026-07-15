@@ -1,6 +1,30 @@
 {
   "indexes": [
     {
+      "collectionGroup": "seminar_slide_decks",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "seminarId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "seminar_note_entries",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "seminarId", "order": "ASCENDING" },
+        { "fieldPath": "ownerId", "order": "ASCENDING" }
+      ]
+    },
+    {
+      "collectionGroup": "polls",
+      "queryScope": "COLLECTION",
+      "fields": [
+        { "fieldPath": "seminarId", "order": "ASCENDING" },
+        { "fieldPath": "createdAt", "order": "DESCENDING" }
+      ]
+    },
+    {
       "collectionGroup": "activity_materials",
       "queryScope": "COLLECTION",
       "fields": [

@@ -65,6 +65,16 @@ service firebase.storage {
                    && request.resource.contentType.matches('image/.*');
     }
 
+    // 세미나 라이브 장표 (라이브 콘솔) — 원본 PDF + 페이지별 PNG.
+    // 참가자·게스트가 슬라이드를 봐야 하므로 공개 read, 업로드는 로그인 회원만.
+    match /seminar-slides/{seminarId}/{fileName=**} {
+      allow read: if true;
+      allow write: if request.auth != null
+                   && request.resource.size < 20 * 1024 * 1024
+                   && (request.resource.contentType.matches('image/.*')
+                       || request.resource.contentType == 'application/pdf');
+    }
+
     // Sprint 67-G: 프로필 사진 (크롭 dialog 결과 업로드)
     // 본인만 write, 모두 read (명함 노출용)
     match /profile-photos/{userId}/{fileName=**} {

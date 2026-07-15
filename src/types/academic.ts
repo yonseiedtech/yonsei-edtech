@@ -356,6 +356,10 @@ export interface Poll {
   createdBy: string;
   createdByName: string;
   voterIds: string[]; // 중복 투표 방지
+  /** 세미나 라이브 설문 연결 (라이브 콘솔) — 없으면 일반 설문/투표 */
+  seminarId?: string;
+  /** 발표자가 라이브로 띄운 시각 — set 되면 참가자 화면에 활성 노출 */
+  livePushedAt?: string;
   createdAt: string;
   updatedAt: string;
 }

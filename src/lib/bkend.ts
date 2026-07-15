@@ -1324,6 +1324,79 @@ export const pollResponsesApi = {
   create: (data: Record<string, unknown>) => dataApi.create<PollResponse>("poll_responses", data),
 };
 
+// ── 세미나 라이브 콘솔 (실시간 장표/강의노트/Q&A/설문) ──
+import type {
+  SeminarLiveSession,
+  SeminarSlideDeck,
+  SeminarNoteEntry,
+} from "@/types/seminar-live";
+
+/** 세미나 라이브 설문 — 발표자가 준비/띄우는 세미나 연동 Poll */
+export const seminarPollsApi = {
+  listBySeminar: (seminarId: string) =>
+    dataApi.list<Poll>("polls", { "filter[seminarId]": seminarId, sort: "createdAt:desc" }),
+  /** 라이브로 띄우기(활성)/내리기 — livePushedAt 토글 */
+  setLive: (id: string, live: boolean) =>
+    dataApi.update<Poll>("polls", id, { livePushedAt: live ? new Date().toISOString() : null }),
+};
+
+/** 라이브 세션 제어 문서 — doc id = seminarId (1:1). upsert 로 생성/갱신. */
+export const seminarLiveApi = {
+  get: async (seminarId: string): Promise<SeminarLiveSession | null> => {
+    try {
+      return await dataApi.get<SeminarLiveSession>("seminar_live_sessions", seminarId);
+    } catch {
+      return null;
+    }
+  },
+  upsert: (seminarId: string, data: Record<string, unknown>) =>
+    dataApi.upsert<SeminarLiveSession>("seminar_live_sessions", seminarId, data),
+  update: (seminarId: string, data: Partial<SeminarLiveSession>) =>
+    dataApi.update<SeminarLiveSession>(
+      "seminar_live_sessions",
+      seminarId,
+      data as unknown as Record<string, unknown>,
+    ),
+};
+
+/** 업로드된 장표 덱 + 발표자 강의노트 */
+export const slideDecksApi = {
+  listBySeminar: (seminarId: string) =>
+    dataApi.list<SeminarSlideDeck>("seminar_slide_decks", {
+      "filter[seminarId]": seminarId,
+      sort: "createdAt:desc",
+    }),
+  get: (id: string) => dataApi.get<SeminarSlideDeck>("seminar_slide_decks", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<SeminarSlideDeck>("seminar_slide_decks", data),
+  update: (id: string, data: Partial<SeminarSlideDeck>) =>
+    dataApi.update<SeminarSlideDeck>(
+      "seminar_slide_decks",
+      id,
+      data as unknown as Record<string, unknown>,
+    ),
+  delete: (id: string) => dataApi.delete("seminar_slide_decks", id),
+};
+
+/** 참가자 개인 노트(비공개) — 소유자 전용 */
+export const seminarNotesApi = {
+  listMine: (seminarId: string, ownerId: string) =>
+    dataApi.list<SeminarNoteEntry>("seminar_note_entries", {
+      "filter[seminarId]": seminarId,
+      "filter[ownerId]": ownerId,
+      limit: 500,
+    }),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<SeminarNoteEntry>("seminar_note_entries", data),
+  update: (id: string, data: Partial<SeminarNoteEntry>) =>
+    dataApi.update<SeminarNoteEntry>(
+      "seminar_note_entries",
+      id,
+      data as unknown as Record<string, unknown>,
+    ),
+  delete: (id: string) => dataApi.delete("seminar_note_entries", id),
+};
+
 export const albumsApi = {
   list: () => dataApi.list<PhotoAlbum>("photo_albums", { sort: "createdAt:desc" }),
   get: (id: string) => dataApi.get<PhotoAlbum>("photo_albums", id),
