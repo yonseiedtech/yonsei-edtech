@@ -88,17 +88,22 @@ export default function SlideUploader({ seminarId, onUploaded }: SlideUploaderPr
         setPhase({ kind: "rasterizing", done, total }),
       );
 
-      const folder = `seminar-slides/${seminarId}`;
+      // Firebase Storage 제품이 이 프로젝트에 미설정(firebase deploy --only storage 불가)이라
+      // 신규 seminar-slides/ 규칙을 배포할 수 없다. 대신 이미 라이브에서 동작하는 기존 규칙 경로를 재사용:
+      //  - 페이지 PNG → posters/**(공개 read + 인증 이미지 write) → 게스트 포함 슬라이드 열람 가능
+      //  - 원본 PDF → activity-materials/**(PDF 허용, 인증 read) → 회원 원본 다운로드
+      const imageFolder = `posters/seminar-slides/${seminarId}`;
+      const pdfFolder = `activity-materials/seminar-${seminarId}`;
 
       // 2. 원본 PDF 업로드
       setPhase({ kind: "uploading_pdf" });
-      const { url: sourcePdfUrl } = await uploadToStorage(file, folder);
+      const { url: sourcePdfUrl } = await uploadToStorage(file, pdfFolder);
 
       // 3. 페이지 PNG 업로드 (순서 보장)
       setPhase({ kind: "uploading_images", done: 0, total: pages.length });
       const pageImageUrls: string[] = [];
       for (let i = 0; i < pages.length; i++) {
-        const { url } = await uploadToStorage(pages[i].file, folder);
+        const { url } = await uploadToStorage(pages[i].file, imageFolder);
         pageImageUrls.push(url);
         setPhase({ kind: "uploading_images", done: i + 1, total: pages.length });
       }
