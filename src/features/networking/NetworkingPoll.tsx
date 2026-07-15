@@ -366,8 +366,14 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
     try {
       const now = new Date().toISOString();
       if (myResponse) {
-        await networkingAvailabilityApi.update(myResponse.id, { availableSlots: slots, updatedAt: now });
-      } else {
+        // 마지막 슬롯까지 해제하면 응답 문서를 삭제한다 — 빈 응답이 "응답 N명"에 잡혀
+        // "응답 2명인데 최다 1명"처럼 보이던 문제 방지.
+        if (slots.length === 0) {
+          await networkingAvailabilityApi.remove(myResponse.id);
+        } else {
+          await networkingAvailabilityApi.update(myResponse.id, { availableSlots: slots, updatedAt: now });
+        }
+      } else if (slots.length > 0) {
         await networkingAvailabilityApi.create({
           eventId: event.id,
           userId: user.id,
@@ -474,7 +480,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
           <CalendarCheck size={15} className="text-indigo-600 dark:text-indigo-400" /> 일정 조율 투표
         </h3>
         <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-          <UsersIcon size={12} /> 응답 {user ? responses.length : (guestTally?.responderCount ?? 0)}명
+          <UsersIcon size={12} /> 응답 {user ? responses.filter((r) => (r.availableSlots?.length ?? 0) > 0).length : (guestTally?.responderCount ?? 0)}명
         </span>
       </div>
 

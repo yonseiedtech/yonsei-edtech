@@ -66,8 +66,10 @@ export async function GET(req: NextRequest) {
 
     // 날짜별 서로 다른 응답자 수 — candidateSlots 필터 없이(손실 없음)
     const dateResponderCounts = countRespondersByDate(responses, periodDates);
+    // 빈 응답(슬롯 0개)은 제외 — "응답 N명" 이 실제 가능 일정을 낸 사람 수와 일치하도록
+    const responderCount = responses.filter((r) => (r.availableSlots?.length ?? 0) > 0).length;
 
-    return NextResponse.json({ slotCounts, dateResponderCounts, responderCount: snap.size });
+    return NextResponse.json({ slotCounts, dateResponderCounts, responderCount });
   } catch (err) {
     console.error("[/api/networking/availability-tally]", err);
     return NextResponse.json({ error: "집계 조회에 실패했습니다." }, { status: 500 });
