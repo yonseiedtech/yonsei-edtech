@@ -157,7 +157,29 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
     enabled: !!user,
   });
 
-  const tallies = useMemo(() => tallyAvailability(responses, candidateSlots), [responses, candidateSlots]);
+  // 게스트(비로그인) 실시간 집계 — networking_availability 는 rules 로 못 읽으므로
+  // 서버 집계 엔드포인트(슬롯별 카운트만, 개인정보 미노출)를 폴링한다.
+  // 이게 없으면 게스트에겐 "현재 최다 가능 일정"이 항상 비어 보였다(2026-07-16 리포트).
+  const { data: guestTally } = useQuery({
+    queryKey: ["networking-availability-tally", event.id],
+    queryFn: async () => {
+      const res = await fetch(`/api/networking/availability-tally?eventId=${encodeURIComponent(event.id)}`);
+      if (!res.ok) return { tallies: {} as Record<string, number>, responderCount: 0 };
+      return (await res.json()) as { tallies: Record<string, number>; responderCount: number };
+    },
+    refetchInterval: 7000,
+    enabled: !user,
+  });
+
+  const tallies = useMemo<SlotTally[]>(() => {
+    if (user) return tallyAvailability(responses, candidateSlots);
+    // 게스트: 서버 집계(카운트) 로 SlotTally 구성 — 이름은 표시하지 않는다.
+    const counts = guestTally?.tallies ?? {};
+    return candidateSlots.map((slot) => {
+      const [date, time] = slot.split("|");
+      return { slot, date, time, count: counts[slot] ?? 0, names: [] };
+    });
+  }, [user, responses, candidateSlots, guestTally]);
   const tallyBySlot = useMemo(() => {
     const m = new Map<string, SlotTally>();
     for (const t of tallies) m.set(t.slot, t);
@@ -262,6 +284,8 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
         throw new Error(j?.error ?? "저장에 실패했습니다.");
       }
       toast.success("가능 일정이 저장되었습니다.");
+      // 저장 직후 게스트 집계 갱신 — 폴링(7s) 기다리지 않고 즉시 반영
+      qc.invalidateQueries({ queryKey: ["networking-availability-tally", event.id] });
     } catch (e) {
       toast.error(e instanceof Error ? e.message : "저장에 실패했습니다.");
     }
@@ -429,7 +453,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
           <CalendarCheck size={15} className="text-indigo-600 dark:text-indigo-400" /> 일정 조율 투표
         </h3>
         <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-          <UsersIcon size={12} /> 응답 {responses.length}명
+          <UsersIcon size={12} /> 응답 {user ? responses.length : (guestTally?.responderCount ?? 0)}명
         </span>
       </div>
 
