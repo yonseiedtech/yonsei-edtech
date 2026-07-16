@@ -37,10 +37,11 @@ const eslintConfig = defineConfig([
     },
   },
   {
-    // seed·유틸 스크립트는 Node(CJS) 실행용 — require() 정당. 브라우저 앱 규칙 적용 제외.
+    // seed·유틸 스크립트는 Node(CJS) CLI 실행용 — require()·console.log 정당(진행 출력). 앱 규칙 제외.
     files: ["scripts/**/*.{js,cjs,mjs,ts}"],
     rules: {
       "@typescript-eslint/no-require-imports": "off",
+      "no-console": "off",
     },
   },
   {
