@@ -8,7 +8,6 @@ import { useSeminar, useUpdateSeminar, useToggleAttendance, useAttendee, useChec
 import { registrationsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import CommBoardSection from "@/features/comm-board/CommBoardSection";
-import SeminarLiveEntry from "@/features/seminar-live/SeminarLiveEntry";
 import { isAtLeast } from "@/lib/permissions";
 import { streamAI } from "@/lib/ai-client";
 import { Button } from "@/components/ui/button";
@@ -488,9 +487,6 @@ function SeminarDetail({ id }: { id: string }) {
 
         {/* Section 1: Hero */}
         <HeroSection seminar={seminar} isStaff={isStaff} onEditInfo={openEditInfo} />
-
-        {/* 라이브 콘솔 진입 */}
-        <SeminarLiveEntry seminarId={id} isStaff={isStaff} />
 
         {/* Section 2: Speaker */}
         <SpeakerCard seminar={seminar} isStaff={isStaff} onEdit={openEditSpeaker} />
