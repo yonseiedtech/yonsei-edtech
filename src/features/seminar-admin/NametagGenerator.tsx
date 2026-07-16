@@ -442,7 +442,7 @@ export default function NametagGenerator() {
   async function loadFromAttendees() {
     if (attendees.length === 0) { toast.error("참석자가 없습니다."); return; }
     // 신청자 데이터에서 학번 보완용 맵 구축
-    let regMap = new Map<string, string>();
+    const regMap = new Map<string, string>();
     if (selectedId) {
       try {
         const regRes = await registrationsApi.list(selectedId);

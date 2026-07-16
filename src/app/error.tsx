@@ -96,6 +96,8 @@ export default function Error({
             <RotateCcw size={16} aria-hidden />
             다시 시도
           </Button>
+          {/* 에러 바운더리 — 깨진 앱 상태에서 client 라우팅(Link)보다 하드 네비게이션이 안전(의도적). */}
+          {/* eslint-disable-next-line @next/next/no-html-link-for-pages */}
           <a
             href="/"
             className={cn(
