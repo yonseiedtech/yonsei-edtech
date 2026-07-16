@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback } from "react";
 import { getServerConfig } from "./useAgentServer";
-import type { SSEEvent } from "./agent-types";
 
 export function useAgentStream(taskId: string | null) {
   const [statusMessage, setStatusMessage] = useState("");

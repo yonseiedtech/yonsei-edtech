@@ -3,13 +3,11 @@
 import { useState, useEffect } from "react";
 import { useSeminars } from "@/features/seminar/useSeminar";
 import { useUpdateSeminar } from "@/features/seminar/useSeminar";
-import { useAuthStore } from "@/features/auth/auth-store";
 import { useSeminarAdminContext } from "./seminar-admin-store";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import { Loader2, Download, Image as ImageIcon, Save } from "lucide-react";
 import { toast } from "sonner";
-import type { Seminar } from "@/types";
 
 const SIZES = [
   { value: "instagram", label: "인스타그램 세로 (1080x1350)" },

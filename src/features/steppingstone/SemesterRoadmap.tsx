@@ -41,7 +41,6 @@ import { cn } from "@/lib/utils";
 import {
   getItemChecked,
   getOverallProgress,
-  getStageCheckedCount,
   setItemChecked,
 } from "./mastery-progress";
 

@@ -73,7 +73,6 @@ export default function ActivityFeed({
 
       {recentComments.map((c, idx) => {
         const post = postMap.get(c.postId);
-        const isLast = idx === recentComments.length - 1;
         return (
           <Link
             key={c.id}

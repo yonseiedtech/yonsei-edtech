@@ -10,7 +10,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { Wand2, LayoutTemplate, Loader2 } from "lucide-react";
+import { Wand2, LayoutTemplate } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { cn } from "@/lib/utils";
 import type {
-  ResearchModelData, ResearchModelNode, ResearchModelEdge, VariableKind,
+  ResearchModelData, ResearchModelNode, ResearchModelEdge,
 } from "@/types/research-model";
 
 function nid(prefix: string, i: number): string {

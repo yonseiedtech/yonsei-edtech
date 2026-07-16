@@ -10,7 +10,7 @@
 import Link from "next/link";
 import { useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Users, FlaskConical, GraduationCap, ArrowRight, CalendarDays, BookOpen, Gauge } from "lucide-react";
+import { Users, FlaskConical, GraduationCap, ArrowRight, CalendarDays } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDday, isoToKstYmd, todayYmdKst } from "@/lib/dday";
 import { useAuthStore } from "@/features/auth/auth-store";

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Plus, Bot, Workflow, LayoutGrid, Sparkles, ChevronRight, Server } from "lucide-react";
+import { Plus, Bot, Workflow, LayoutGrid, Sparkles, Server } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import ServerConnectionCard from "@/features/agent/ServerConnectionCard";
 import AgentCard from "@/features/agent/AgentCard";

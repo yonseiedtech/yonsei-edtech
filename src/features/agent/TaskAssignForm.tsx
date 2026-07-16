@@ -6,7 +6,6 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { useCreateTask, useAgents } from "./useAgentServer";
 import { toast } from "sonner";
-import type { Agent } from "./agent-types";
 
 const TASK_TYPES = [
   { value: "content", label: "콘텐츠" },

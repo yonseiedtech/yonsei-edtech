@@ -32,7 +32,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
-import type { Activity, ActivityProgress, ActivityProgressMode, ActivityType, User } from "@/types";
+import type { Activity, ActivityProgress, ActivityProgressMode, ActivityType } from "@/types";
 import { ACTIVITY_PROGRESS_MODE_LABELS } from "@/types";
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import StudySessionPreClassCard from "./StudySessionPreClassCard";

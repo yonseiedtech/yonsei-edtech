@@ -3,7 +3,6 @@
 import { useMemo, useState } from "react";
 import { Search, X, UserPlus } from "lucide-react";
 import { useQuery } from "@tanstack/react-query";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";

@@ -13,7 +13,6 @@ import {
   HelpCircle,
   Lightbulb,
   Loader2,
-  MessageSquare,
   Plus,
   Quote,
   Save,

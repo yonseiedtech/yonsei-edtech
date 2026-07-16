@@ -28,7 +28,7 @@ import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { parseCSVText, extractSheetId, getSheetCsvUrl } from "@/lib/parse-spreadsheet";
 import type { SeminarRegistration, SeminarAttendee, RegistrationFieldConfig, RegistrationStatus } from "@/types";
-import { DEFAULT_REGISTRATION_FIELDS, REG_STATUS_LABELS } from "@/types";
+import { DEFAULT_REGISTRATION_FIELDS } from "@/types";
 import { SeminarReport } from "./ReportTab";
 
 // 엑셀 헤더 → Registration 필드 매핑 (동의어)
@@ -989,11 +989,6 @@ export default function RegistrationsTab() {
   function toggleSelect(id: string) {
     setSelected((prev) => { const next = new Set(prev); if (next.has(id)) next.delete(id); else next.add(id); return next; });
   }
-  function toggleAll() {
-    if (selected.size === filteredRegistrations.length) setSelected(new Set());
-    else setSelected(new Set(filteredRegistrations.map((r) => r.id)));
-  }
-
   async function convertToAttendees(
     ids: string[],
     options: { markCheckedIn?: boolean; sourceRegistrations?: SeminarRegistration[] } = {},

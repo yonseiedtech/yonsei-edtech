@@ -11,7 +11,7 @@ import type { ArchiveConcept, TheoryConcept } from "@/types";
 import {
   X, ChevronLeft, ChevronRight, Save, Loader2, Sparkles, MessageSquareQuote,
   School, BookOpen, FlaskConical, ArrowRight, AlertTriangle, GraduationCap,
-  CheckCircle2, Circle, Pencil, PartyPopper, Trophy,
+  CheckCircle2, Pencil, PartyPopper,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { SEMANTIC } from "@/lib/design-tokens";
@@ -356,34 +356,6 @@ function calcLogicMap(form: FormState): LogicNode[] {
   ];
 }
 
-function NodeFillBar({ percent }: { percent: number }) {
-  const color =
-    percent >= 80 ? "bg-emerald-500" : percent >= 40 ? "bg-amber-500" : "bg-rose-400";
-  return (
-    <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted/60">
-      <div
-        className={cn("h-full transition-all", color)}
-        style={{ width: `${Math.max(2, percent)}%` }}
-      />
-    </div>
-  );
-}
-
-function BridgeArrow({ strength }: { strength: number }) {
-  const cls =
-    strength >= 80
-      ? "border-emerald-500"
-      : strength >= 40
-        ? "border-amber-500 border-dashed"
-        : "border-rose-300 border-dotted";
-  const label = strength >= 80 ? "강한 연결" : strength >= 40 ? "연결 약함" : "연결 거의 없음";
-  return (
-    <div className="flex flex-col items-center justify-center gap-0.5 px-1">
-      <div className={cn("h-0 w-10 border-t-2 sm:w-16", cls)} />
-      <span className="text-[9px] text-muted-foreground">{label}</span>
-    </div>
-  );
-}
 
 // Sprint 74: 사각형 4꼭지점 Logic Map — 한 화면에 모두 표시 + 채움 낮은 노드 클릭 시 점프
 const NODE_CHAPTERS_MAP: Record<LogicNode["id"], Chapter[]> = {

@@ -323,12 +323,10 @@ export function useCreateComment() {
       // 보상 원장 통일(2026-07-04): 댓글 1일 +1 리더보드 이중 기록
       void streakEventsApi.mirror(user.id, "comment", 1);
       // 게시글 작성자에게 댓글 알림 (본인 댓글 제외)
-      let postAuthorId: string | null = null;
       const notified = new Set<string>([user.id]);
       try {
         const post = await postsApi.get(data.postId) as unknown as Post;
         if (post && post.authorId !== user.id) {
-          postAuthorId = post.authorId;
           notified.add(post.authorId);
           notifyComment(post.authorId, user.name, post.title, data.postId);
         }

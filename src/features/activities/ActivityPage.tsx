@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/dialog";
 import Link from "next/link";
 import PageHeader from "@/components/ui/page-header";
-import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone, CalendarClock, ImageIcon, LayoutGrid, List, CalendarX2, CalendarCheck2 } from "lucide-react";
+import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone, CalendarClock, ImageIcon, LayoutGrid, List } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import { postsApi } from "@/lib/bkend";
 import { uploadImageSmart } from "@/lib/storage";

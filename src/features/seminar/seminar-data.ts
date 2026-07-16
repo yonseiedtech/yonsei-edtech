@@ -1,4 +1,4 @@
-import type { Seminar, SeminarSession } from "@/types";
+import type { Seminar } from "@/types";
 
 export const MOCK_SEMINARS: Seminar[] = [
   {

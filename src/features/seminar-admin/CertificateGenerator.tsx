@@ -12,7 +12,7 @@ import { todayYmdLocal } from "@/lib/dday";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { Download, Printer, Award, Heart, Plus, Settings, Check, UserPlus, Eye, X, AlignLeft, AlignCenter, AlignRight, AlignJustify, ZoomIn, ZoomOut, FileDown, Palette, AlignVerticalJustifyCenter, AlignHorizontalJustifyCenter, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
+import { Download, Printer, Award, Heart, Plus, Settings, UserPlus, Eye, X, AlignLeft, AlignCenter, AlignRight, AlignJustify, ZoomIn, ZoomOut, FileDown, Palette, AlignVerticalJustifyCenter, AlignHorizontalJustifyCenter, ArrowUp, ArrowDown, ArrowLeft, ArrowRight } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useQuery } from "@tanstack/react-query";
 import { cn } from "@/lib/utils";
@@ -268,11 +268,6 @@ function AppointmentSelector({ positions, onSelect, onBatchCreate }: {
       </div>
     </div>
   );
-}
-
-/** 이름 자간: "홍길동" → "홍 길 동" */
-function spacedName(name: string): string {
-  return name.split("").join("\u2002");
 }
 
 /** 현재 최대 증서번호를 조회하여 다음 번호 반환 */
@@ -815,9 +810,7 @@ export type { AreaKey, AreaStyle, CertStyle };
 
 export function CertificatePreview({
   type,
-  seminarTitle,
   seminarDate,
-  semester,
   recipientName,
   certificateNo,
   bodyText,
@@ -1674,39 +1667,6 @@ export default function CertificateGenerator() {
     toast.success(
       `${newTargets.length}명 수료증 생성 완료` + (skipped > 0 ? ` (${skipped}명 중복 스킵)` : "")
     );
-  }
-
-  // 참석자 목록에서 선택하여 수기 추가
-  async function handleAddFromAttendee(name: string) {
-    if (!seminar) return;
-
-    // 중복 확인
-    const existingRes = await certificatesApi.list(seminar.id);
-    const existingNames = new Set(
-      (existingRes.data as unknown as { recipientName: string }[]).map((c) => c.recipientName)
-    );
-    if (existingNames.has(name)) {
-      toast.error(`${name}님에게 이미 수료증이 발급되었습니다.`);
-      return;
-    }
-
-    const no = await generateCertificateNo(certType);
-    await certificatesApi.create({
-      seminarId: seminar.id,
-      seminarTitle: seminar.title,
-      recipientName: name,
-      type: certType,
-      certificateNo: no,
-      issuedAt: new Date().toISOString(),
-      issuedBy: user?.id ?? "",
-    });
-    // 해당 참석자의 userId로 알림 발송
-    const attendee = attendees.find((a) => a.userName === name);
-    if (attendee?.userId) {
-      notifyCertificateIssued(attendee.userId, seminar.title, certType);
-    }
-    setRecipientName(name);
-    toast.success(`${name}님 ${CERT_LABELS[certType].label} 생성 완료`);
   }
 
   const previewDate = (() => {

@@ -26,7 +26,6 @@ const QUESTION_TYPES: DefenseQuestionType[] = [
   "briefing", "identity", "theory", "method", "etc",
 ];
 import { toast } from "sonner";
-import { cn } from "@/lib/utils";
 
 const CATEGORIES: DefensePracticeCategory[] = [
   "proposal", "midterm", "final", "qualifying", "general",

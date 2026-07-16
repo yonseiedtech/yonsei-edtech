@@ -627,7 +627,6 @@ export default function DefensePracticeRunner({
       // 디바이스 진단 정보
       const tracks = stream.getAudioTracks();
       const labels = tracks.map((t) => `${t.label || "(이름없음)"}[${t.readyState}]`).join(", ");
-      console.log("[STT] mic tracks:", tracks);
       setSttDebug(`마이크 권한 OK · 디바이스: ${labels}`);
       const AC: typeof AudioContext =
         window.AudioContext ??
@@ -638,7 +637,6 @@ export default function DefensePracticeRunner({
       if (ctx.state === "suspended") {
         try { await ctx.resume(); } catch {/* noop */}
       }
-      console.log("[STT] AudioContext state:", ctx.state);
       const source = ctx.createMediaStreamSource(stream);
       const analyser = ctx.createAnalyser();
       analyser.fftSize = 512;
@@ -926,16 +924,13 @@ export default function DefensePracticeRunner({
     rec.interimResults = true;
     rec.maxAlternatives = 1;
     rec.onstart = () => {
-      console.log("[STT] onstart");
       setSttStatus("listening");
       setSttDebug("엔진 시작됨");
     };
     rec.onaudiostart = () => {
-      console.log("[STT] onaudiostart");
       setSttDebug("오디오 캡처 시작");
     };
     rec.onspeechstart = () => {
-      console.log("[STT] onspeechstart");
       setSttStatus("speaking");
       setSttDebug("말하는 중 감지");
       speechSeenRef.current = true;
@@ -952,7 +947,6 @@ export default function DefensePracticeRunner({
       setWaitCountdown(null);
     };
     rec.onspeechend = () => {
-      console.log("[STT] onspeechend");
       setSttStatus("processing");
       setSttDebug("말 끝남, 처리 중");
       // 따라 읽기 모드: 발화 종료 즉시 평가 트리거 (1.5s 침묵 타이머 대신 즉시)
@@ -966,15 +960,12 @@ export default function DefensePracticeRunner({
       }
     };
     rec.onaudioend = () => {
-      console.log("[STT] onaudioend");
       setSttDebug("오디오 캡처 종료");
     };
     rec.onnomatch = () => {
-      console.log("[STT] onnomatch");
       setSttDebug("매칭 결과 없음");
     };
     rec.onresult = (e) => {
-      console.log("[STT] onresult resultIndex=", e.resultIndex, "results.length=", e.results.length);
       speechSeenRef.current = true;
       setNoSpeechHint(false);
       if (noSpeechTimerRef.current) {
@@ -994,7 +985,6 @@ export default function DefensePracticeRunner({
         if (r.isFinal) finalText += t + " ";
         else interimText += t;
       }
-      console.log("[STT] final=", JSON.stringify(finalText), "interim=", JSON.stringify(interimText));
       const qid = currentQuestionIdRef.current;
       if (!qid) {
         console.warn("[STT] no current question id, dropping result");
@@ -1047,7 +1037,6 @@ export default function DefensePracticeRunner({
       setSttStatus("error");
     };
     rec.onend = () => {
-      console.log("[STT] onend, wantRecording=", wantRecordingRef.current);
       const qid = currentQuestionIdRef.current;
       if (startedAtRef.current && qid) {
         const sec = Math.round((Date.now() - startedAtRef.current) / 1000);

@@ -34,7 +34,6 @@ import type { ActivityProgress, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
-import { cn } from "@/lib/utils";
 
 interface Props {
   activityId: string;

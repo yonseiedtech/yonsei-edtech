@@ -25,7 +25,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { alumniThesesApi, archiveConceptsApi, diagnosticResultsApi, topicExplorationsApi } from "@/lib/bkend";
-import type { TopicExploration, User } from "@/types";
+import type { User } from "@/types";
 import { OCCUPATION_LABELS } from "@/types";
 import {
   TE_QUESTIONS, teNextQuestion, teActiveQuestions, teRecommend,

@@ -51,7 +51,6 @@ function formatAppliedAt(iso?: string | null): string {
 import {
   activityProgressApi,
   attendeeReviewsApi,
-  progressMeetingsApi,
   userSessionPlansApi,
   studySessionReflectionsApi,
   studyAssignmentsApi,
