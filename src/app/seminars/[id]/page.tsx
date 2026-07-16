@@ -8,6 +8,7 @@ import { useSeminar, useUpdateSeminar, useToggleAttendance, useAttendee, useChec
 import { registrationsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import CommBoardSection from "@/features/comm-board/CommBoardSection";
+import SeminarLiveEntry from "@/features/seminar-live/SeminarLiveEntry";
 import { isAtLeast } from "@/lib/permissions";
 import { streamAI } from "@/lib/ai-client";
 import { Button } from "@/components/ui/button";
@@ -261,6 +262,10 @@ function SeminarDetail({ id }: { id: string }) {
   const myAttendee = useAttendee(id, user?.id ?? "");
   const checkinStats = useCheckinStats(id);
   const [justRegistered, setJustRegistered] = useState(false);
+  // Rules of Hooks: `if (!seminar) return` 아래에 있던 useState 를 훅 블록으로 이동.
+  // 콜드 로드(캐시 미스)에서 첫 렌더는 조기 return→이 훅 미실행, 로드 후 실행되어
+  // "Rendered more hooks than previous render"(#310) 로 상세 페이지가 크래시하던 문제.
+  const [toggleBusy, setToggleBusy] = useState(false);
 
   // Registration check — 본인 것만 필터 쿼리 (전체 신청자 명단·이메일 노출 차단)
   const { data: myRegistrations } = useQuery({
@@ -437,7 +442,6 @@ function SeminarDetail({ id }: { id: string }) {
   }
 
   const myWaitlistEntry = user ? waitlist.find((w) => w.userId === user.id) : undefined;
-  const [toggleBusy, setToggleBusy] = useState(false);
 
   async function handleToggle() {
     // QA-v3 M: 더블클릭 시 attendee 중복 생성·정원 초과 — 진행 중 재진입 차단 + 완료 후 토스트
@@ -487,6 +491,9 @@ function SeminarDetail({ id }: { id: string }) {
 
         {/* Section 1: Hero */}
         <HeroSection seminar={seminar} isStaff={isStaff} onEditInfo={openEditInfo} />
+
+        {/* 라이브 콘솔 진입 */}
+        <SeminarLiveEntry seminarId={id} isStaff={isStaff} />
 
         {/* Section 2: Speaker */}
         <SpeakerCard seminar={seminar} isStaff={isStaff} onEdit={openEditSpeaker} />
