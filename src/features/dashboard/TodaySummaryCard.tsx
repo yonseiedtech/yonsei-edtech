@@ -81,7 +81,7 @@ export default function TodaySummaryCard({ variant = "card" }: { variant?: "card
       nowMin: n.getHours() * 60 + n.getMinutes(),
       sem: inferCurrentSemester(n),
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
   const term = sem.semester === "first" ? "spring" : "fall";
 

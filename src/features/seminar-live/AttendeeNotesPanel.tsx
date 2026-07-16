@@ -48,7 +48,7 @@ export default function AttendeeNotesPanel({
       clearTimeout(saveTimer.current);
       saveTimer.current = null;
     }
-  }, [currentSlide]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [currentSlide]);  
 
   // 초기 로드 시 (notes 가 처음 채워질 때) 현재 슬라이드 노트 동기화
   const initializedRef = useRef(false);

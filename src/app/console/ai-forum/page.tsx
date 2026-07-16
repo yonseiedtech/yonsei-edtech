@@ -86,7 +86,7 @@ function AdminContent() {
 
   useEffect(() => {
     void load();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+     
   }, []);
 
   const canManage = useMemo(() => isAtLeast(user, "staff"), [user]);

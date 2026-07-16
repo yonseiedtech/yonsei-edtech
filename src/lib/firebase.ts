@@ -15,7 +15,7 @@ const REQUIRED_FIREBASE_ENV = [
 ] as const;
 for (const key of REQUIRED_FIREBASE_ENV) {
   if (!process.env[key]) {
-    // eslint-disable-next-line no-console
+     
     console.error(
       `[firebase] WARNING: ${key} 환경변수가 누락되어 fallback 값을 사용합니다. Vercel 환경변수 설정을 확인하세요.`
     );

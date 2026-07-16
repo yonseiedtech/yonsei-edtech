@@ -340,7 +340,7 @@ export default function DiagnosisRunner({
               </p>
               <div
                 className="mx-auto max-w-md text-foreground/90 [&_svg]:h-auto [&_svg]:w-full"
-                // eslint-disable-next-line react/no-danger
+                 
                 dangerouslySetInnerHTML={{ __html: current.svg }}
               />
             </div>
