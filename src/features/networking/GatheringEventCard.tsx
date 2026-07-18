@@ -128,6 +128,12 @@ export default function GatheringEventCard({
               <Lock size={10} /> 비공개
             </span>
           )}
+          {/* staff 전체 조회(2026-07-19)로 미발행 이벤트도 목록에 노출 — 발행 상태 구분 배지 */}
+          {ev.published === false && (
+            <span className="rounded-full border border-dashed border-amber-400 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+              미발행
+            </span>
+          )}
           {ev.status === "cancelled" && (
             <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700">취소됨</span>
           )}

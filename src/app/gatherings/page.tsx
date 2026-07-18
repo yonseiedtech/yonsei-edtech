@@ -54,9 +54,14 @@ export default function GatheringsPage() {
     if (m?.[1]) router.replace(`/gatherings/${m[1]}`);
   }, [router]);
 
+  // 2026-07-19: 관리자(staff+)는 미발행·비공개 모임까지 전체 조회 — listPublished 만 쓰면
+  // 운영진이 비공개 전환한 모임이 본인에게도 사라지는 문제(사용자 리포트)가 생긴다.
   const { data: events = [], isLoading } = useQuery({
-    queryKey: ["networking-events"],
-    queryFn: async () => (await networkingEventsApi.listPublished()).data as NetworkingEvent[],
+    queryKey: ["networking-events", canCreate ? "all" : "published"],
+    queryFn: async () =>
+      (canCreate
+        ? (await networkingEventsApi.list()).data
+        : (await networkingEventsApi.listPublished()).data) as NetworkingEvent[],
     staleTime: 60_000,
   });
   const { data: myRsvps = [] } = useQuery({
