@@ -35,6 +35,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { flashcardsApi, streakEventsApi } from "@/lib/bkend";
+import { useUserFlashcards } from "@/components/flashcard/useUserFlashcards";
 import { nextReview, isDueToday } from "@/lib/flashcard-srs";
 import { todayYmdKst } from "@/lib/dday";
 import {
@@ -109,10 +110,10 @@ export default function FlashcardStudy() {
   const { user } = useAuthStore();
   const userId = user?.id;
 
-  const [cards, setCards] = useState<Flashcard[]>([]);
+  // M4: 목록 읽기 캐시 — Dashboard 와 동일 queryKey 로 공유(이중 읽기 제거).
+  // 학습 세션 안정성 위해 채점 후 invalidate 하지 않아 목록 스냅샷이 유지된다.
+  const { data: cards = [], isLoading: loading, isError: error } = useUserFlashcards(userId);
   const [filter, setFilter] = useState<SourceFilter>("all");
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState(false);
   const [index, setIndex] = useState(0);
   const [flipped, setFlipped] = useState(false);
   const [grading, setGrading] = useState(false);
@@ -120,30 +121,6 @@ export default function FlashcardStudy() {
   const [done, setDone] = useState(false);
   // 세션 1회 잔디 가산 가드(중복 add 방지 — refId=ymd 라 서버도 멱등이지만 호출 절약)
   const streakAddedRef = useRef(false);
-
-  useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      setError(false);
-      try {
-        const res = await flashcardsApi.listByUser(userId);
-        if (!cancelled) setCards(sortForStudy(res.data ?? []));
-      } catch (err) {
-        console.error("[flashcard] load failed", err);
-        if (!cancelled) setError(true);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
 
   // 출처별 카드 수(탭 카운트 표시용) — 전체 로드분 기준.
   const sourceCounts = useMemo(() => {
@@ -170,10 +147,11 @@ export default function FlashcardStudy() {
   }, [cards]);
 
   // 선택된 출처로 필터링한 학습 대상(복합 인덱스 회피 — 클라이언트 필터).
-  const studyCards = useMemo(
-    () => (filter === "all" ? cards : cards.filter((c) => c.source === filter)),
-    [cards, filter],
-  );
+  // 정렬은 로드 시점이 아니라 여기서 적용(캐시 원본은 미정렬로 Dashboard 와 공유).
+  const studyCards = useMemo(() => {
+    const sorted = sortForStudy(cards);
+    return filter === "all" ? sorted : sorted.filter((c) => c.source === filter);
+  }, [cards, filter]);
 
   const total = studyCards.length;
   const dueCount = useMemo(

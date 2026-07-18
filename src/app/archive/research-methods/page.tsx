@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState, Suspense } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
@@ -124,10 +125,33 @@ const QUESTION_MAPPING: {
 function ResearchMethodsLandingPageInner() {
   const { user } = useAuthStore();
   const canManage = isAtLeast(user, "staff");
+  const queryClient = useQueryClient();
+  const favoritesKey = ["archive_favorites", user?.id ?? "guest"];
 
-  const [methods, setMethods] = useState<ResearchMethod[]>([]);
-  const [favorites, setFavorites] = useState<ArchiveFavorite[]>([]);
-  const [loading, setLoading] = useState(true);
+  // M4: 목록 읽기 캐시 — 아카이브 가이드(정적 성격) 10분, 사용자 즐겨찾기 2분.
+  const { data: methods = [], isLoading: loading } = useQuery({
+    queryKey: ["research_methods", canManage],
+    queryFn: async () => {
+      // staff+ 는 draft 포함 전체, 일반 회원은 published 만 조회 (rules 와 일치)
+      const res = canManage
+        ? await researchMethodsApi.list()
+        : await researchMethodsApi.listPublished();
+      return res.data;
+    },
+    staleTime: 1000 * 60 * 10,
+  });
+
+  const { data: favorites = [] } = useQuery({
+    queryKey: favoritesKey,
+    queryFn: async () => {
+      if (!user) return [] as ArchiveFavorite[];
+      const res = await archiveFavoritesApi.listByUser(user.id);
+      return res.data;
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60 * 2,
+  });
+
   const [query, setQuery] = useState("");
   // H4: 동적 리스트와 정합화 — 정렬·즐겨찾기만·계열 칩 필터
   const [sortMode, setSortMode] = useState<"name" | "recent">("name");
@@ -139,25 +163,6 @@ function ResearchMethodsLandingPageInner() {
     const q = searchParams.get("q");
     if (q !== null) setQuery(q);
   }, [searchParams]);
-
-  useEffect(() => {
-    if (!user) {
-      setFavorites([]);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await archiveFavoritesApi.listByUser(user.id);
-        if (!cancelled) setFavorites(res.data);
-      } catch (err) {
-        console.error("[research-methods-landing] favorites load failed", err);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
 
   const favIdSet = useMemo(
     () =>
@@ -177,7 +182,9 @@ function ResearchMethodsLandingPageInner() {
     try {
       if (isFav) {
         await archiveFavoritesApi.delete(favId);
-        setFavorites((prev) => prev.filter((f) => f.id !== favId));
+        queryClient.setQueryData<ArchiveFavorite[]>(favoritesKey, (prev = []) =>
+          prev.filter((f) => f.id !== favId),
+        );
         toast.success("관심 해제");
       } else {
         const created = await archiveFavoritesApi.upsert(favId, {
@@ -186,7 +193,10 @@ function ResearchMethodsLandingPageInner() {
           itemId: m.id,
           itemName: m.name,
         });
-        setFavorites((prev) => [...prev, created]);
+        queryClient.setQueryData<ArchiveFavorite[]>(favoritesKey, (prev = []) => [
+          ...prev,
+          created,
+        ]);
         toast.success("관심 저장");
       }
     } catch (err) {
@@ -194,28 +204,6 @@ function ResearchMethodsLandingPageInner() {
       toast.error("관심 저장 실패");
     }
   };
-
-  useEffect(() => {
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        // staff+ 는 draft 포함 전체, 일반 회원은 published 만 조회 (rules 와 일치)
-        const res = canManage
-          ? await researchMethodsApi.list()
-          : await researchMethodsApi.listPublished();
-        if (cancelled) return;
-        setMethods(res.data);
-      } catch (err) {
-        console.error("[research-methods-landing] load failed", err);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [canManage]);
 
   const visibleMethods = useMemo(
     () => methods.filter((m) => canManage || m.published),

@@ -14,7 +14,7 @@
  * flashcard-srs 의 SRS_INTERVAL_STEPS / isDueToday / todayYmdKst 메타만 활용.
  */
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo } from "react";
 import {
   Layers,
   CheckCircle2,
@@ -26,7 +26,7 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useAuthStore } from "@/features/auth/auth-store";
 // 실제 복습 채점은 FlashcardStudy 러너가 담당 — 대시보드는 읽기 전용 통계만.
-import { flashcardsApi } from "@/lib/bkend";
+import { useUserFlashcards } from "@/components/flashcard/useUserFlashcards";
 import { SRS_INTERVAL_STEPS, isDueToday, addDaysYmd } from "@/lib/flashcard-srs";
 import { todayYmdKst } from "@/lib/dday";
 import { cn } from "@/lib/utils";
@@ -108,31 +108,8 @@ export default function FlashcardDashboard() {
   const { user } = useAuthStore();
   const userId = user?.id;
 
-  const [cards, setCards] = useState<Flashcard[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    if (!userId) {
-      setLoading(false);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      setLoading(true);
-      try {
-        const res = await flashcardsApi.listByUser(userId);
-        if (!cancelled) setCards(Array.isArray(res.data) ? res.data : []);
-      } catch (err) {
-        console.error("[flashcard-dashboard] load failed", err);
-        if (!cancelled) setCards([]);
-      } finally {
-        if (!cancelled) setLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [userId]);
+  // M4: 목록 읽기 캐시 — FlashcardStudy 러너와 동일 queryKey 로 공유(이중 읽기 제거).
+  const { data: cards = [], isLoading: loading } = useUserFlashcards(userId);
 
   const stats = useMemo(() => computeStats(cards), [cards]);
 

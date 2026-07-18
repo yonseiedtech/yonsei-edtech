@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -67,71 +68,45 @@ const FAVORITE_TYPE_ORDER: ArchiveFavoriteItemType[] = [
 
 export default function MyArchivePage() {
   const { user } = useAuthStore();
+  const queryClient = useQueryClient();
+  const favoritesKey = ["archive_favorites", user?.id ?? "guest"];
 
-  const [favorites, setFavorites] = useState<ArchiveFavorite[]>([]);
-  const [favLoading, setFavLoading] = useState(false);
   const [recent, setRecent] = useState<RecentArchiveView[]>([]);
-  const [weakConcepts, setWeakConcepts] = useState<{ id: string; name: string }[]>([]);
 
   // 최근 본 항목 — 로컬 저장, 비로그인에서도 동작 (마운트 시 1회 로드)
   useEffect(() => {
     setRecent(getRecentViews());
   }, []);
 
-  // 즐겨찾기 — 로그인 시에만
-  useEffect(() => {
-    if (!user) {
-      setFavorites([]);
-      return;
-    }
-    let cancelled = false;
-    setFavLoading(true);
-    (async () => {
-      try {
-        const res = await archiveFavoritesApi.listByUser(user.id);
-        if (!cancelled) setFavorites(res.data);
-      } catch (err) {
-        console.error("[archive-my] favorites load failed", err);
-      } finally {
-        if (!cancelled) setFavLoading(false);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
+  // M4: 목록 읽기 캐시 — 사용자 데이터(즐겨찾기·진단 약점) 2분. (가이드 랜딩과 즐겨찾기 캐시 공유)
+  const { data: favorites = [], isLoading: favLoading } = useQuery({
+    queryKey: favoritesKey,
+    queryFn: async () => {
+      if (!user) return [] as ArchiveFavorite[];
+      const res = await archiveFavoritesApi.listByUser(user.id);
+      return res.data;
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60 * 2,
+  });
 
   // 진단 약점 개념 — 최신 진단 결과 기준 (있을 때만)
-  useEffect(() => {
-    if (!user) {
-      setWeakConcepts([]);
-      return;
-    }
-    let cancelled = false;
-    (async () => {
-      try {
-        const res = await diagnosticResultsApi.listByUser(user.id);
-        if (cancelled) return;
-        const latest = (res.data as DiagnosticResult[])
-          .slice()
-          .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))[0];
-        if (!latest?.weakConceptIds?.length) {
-          setWeakConcepts([]);
-          return;
-        }
-        setWeakConcepts(
-          latest.weakConceptIds
-            .map((id, i) => ({ id, name: latest.weakConceptNames?.[i] ?? "" }))
-            .filter((c) => c.id && c.name),
-        );
-      } catch (err) {
-        console.error("[archive-my] diagnostics load failed", err);
-      }
-    })();
-    return () => {
-      cancelled = true;
-    };
-  }, [user]);
+  const { data: weakConcepts = [] } = useQuery({
+    queryKey: ["diagnostic_results", "weak-concepts", user?.id ?? "guest"],
+    queryFn: async () => {
+      if (!user) return [] as { id: string; name: string }[];
+      const res = await diagnosticResultsApi.listByUser(user.id);
+      const latest = (res.data as DiagnosticResult[])
+        .slice()
+        .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))[0];
+      if (!latest?.weakConceptIds?.length) return [];
+      return latest.weakConceptIds
+        .map((id, i) => ({ id, name: latest.weakConceptNames?.[i] ?? "" }))
+        .filter((c) => c.id && c.name);
+    },
+    enabled: !!user,
+    staleTime: 1000 * 60 * 2,
+  });
 
   const groupedFavorites = useMemo(() => {
     const byType = new Map<ArchiveFavoriteItemType, ArchiveFavorite[]>();
@@ -152,7 +127,9 @@ export default function MyArchivePage() {
   const handleUnfavorite = async (f: ArchiveFavorite) => {
     try {
       await archiveFavoritesApi.delete(f.id);
-      setFavorites((prev) => prev.filter((x) => x.id !== f.id));
+      queryClient.setQueryData<ArchiveFavorite[]>(favoritesKey, (prev = []) =>
+        prev.filter((x) => x.id !== f.id),
+      );
       toast.success("관심 해제");
     } catch (err) {
       console.error("[archive-my] unfavorite failed", err);
