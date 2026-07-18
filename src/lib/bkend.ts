@@ -24,6 +24,7 @@ import {
   where,
   orderBy,
   limit as firestoreLimit,
+  startAfter,
   serverTimestamp,
   Timestamp,
   FieldValue,
@@ -315,6 +316,30 @@ export const dataApi = {
     const data = snapshot.docs.map((d) => serializeDoc(d) as T);
 
     return { data, total: data.length, page: 1, limit: limitVal || data.length };
+  },
+
+  /**
+   * 커서 기반 페이지 조회 (v5-H1). `list` 시그니처는 불변, 순수 확장 메서드.
+   * `orderField`(기본 name) asc + documentId asc 이중 정렬로 동명(同名) 항목도
+   * 안정적으로 페이지네이션한다. `cursor` 는 직전 페이지 마지막 문서의 {name,id}.
+   */
+  listPage: async <T>(
+    table: string,
+    opts: { pageSize: number; cursor?: { name: string; id: string }; orderField?: string },
+  ): Promise<ListResponse<T>> => {
+    const field = opts.orderField ?? "name";
+    const constraints: QueryConstraint[] = [
+      orderBy(field, "asc"),
+      orderBy(documentId(), "asc"),
+    ];
+    if (opts.cursor) {
+      constraints.push(startAfter(opts.cursor.name, opts.cursor.id));
+    }
+    constraints.push(firestoreLimit(opts.pageSize));
+    const q = query(collection(db, table), ...constraints);
+    const snapshot = await getDocs(q);
+    const data = snapshot.docs.map((d) => serializeDoc(d) as T);
+    return { data, total: data.length, page: 1, limit: opts.pageSize };
   },
 
   get: async <T>(table: string, id: string): Promise<T> => {
@@ -2516,6 +2541,9 @@ export const gradLifePositionsApi = {
 // ── 교육공학 아카이브 ──
 export const archiveConceptsApi = {
   list: () => dataApi.list<ArchiveConcept>("archive_concepts", { limit: 500 }),
+  /** 이름순 커서 페이지 (v5-H1) — cursor 는 직전 페이지 마지막 문서의 {name,id}. */
+  listPage: (opts: { pageSize: number; cursor?: { name: string; id: string } }) =>
+    dataApi.listPage<ArchiveConcept>("archive_concepts", opts),
   get: (id: string) => dataApi.get<ArchiveConcept>("archive_concepts", id),
   create: (data: Record<string, unknown>) =>
     dataApi.create<ArchiveConcept>("archive_concepts", data),
@@ -2526,6 +2554,9 @@ export const archiveConceptsApi = {
 
 export const archiveVariablesApi = {
   list: () => dataApi.list<ArchiveVariable>("archive_variables", { limit: 500 }),
+  /** 이름순 커서 페이지 (v5-H1) — cursor 는 직전 페이지 마지막 문서의 {name,id}. */
+  listPage: (opts: { pageSize: number; cursor?: { name: string; id: string } }) =>
+    dataApi.listPage<ArchiveVariable>("archive_variables", opts),
   get: (id: string) => dataApi.get<ArchiveVariable>("archive_variables", id),
   create: (data: Record<string, unknown>) =>
     dataApi.create<ArchiveVariable>("archive_variables", data),
@@ -2536,6 +2567,9 @@ export const archiveVariablesApi = {
 
 export const archiveMeasurementsApi = {
   list: () => dataApi.list<ArchiveMeasurementTool>("archive_measurements", { limit: 500 }),
+  /** 이름순 커서 페이지 (v5-H1) — cursor 는 직전 페이지 마지막 문서의 {name,id}. */
+  listPage: (opts: { pageSize: number; cursor?: { name: string; id: string } }) =>
+    dataApi.listPage<ArchiveMeasurementTool>("archive_measurements", opts),
   get: (id: string) => dataApi.get<ArchiveMeasurementTool>("archive_measurements", id),
   create: (data: Record<string, unknown>) =>
     dataApi.create<ArchiveMeasurementTool>("archive_measurements", data),

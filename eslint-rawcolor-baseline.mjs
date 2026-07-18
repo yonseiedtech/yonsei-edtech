@@ -24,6 +24,7 @@ export default [
   "src/app/ai-forum/page.tsx",
   "src/app/alumni/thesis/\\[id\\]/page.tsx",
   "src/app/alumni/thesis/page.tsx",
+  "src/app/archive/\\[type\\]/ArchiveTypeListClient.tsx",
   "src/app/archive/\\[type\\]/\\[id\\]/page.tsx",
   "src/app/archive/\\[type\\]/page.tsx",
   "src/app/archive/citation-guide/page.tsx",

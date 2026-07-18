@@ -22,14 +22,17 @@ import {
   researchMethodsApi,
   archiveMeasurementsApi,
   statisticalMethodsApi,
+  alumniThesesApi,
 } from "@/lib/bkend";
 import { researchModelsApi } from "@/lib/research-models-api";
+import { thesesForResearchMethod } from "@/lib/alumni-thesis-crosslink";
 import type {
   User,
   ResearchMethod,
   ResearchMethodKind,
   ArchiveMeasurementTool,
   StatisticalMethod,
+  AlumniThesis,
 } from "@/types";
 import {
   designSectionStatus,
@@ -126,6 +129,12 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
     queryFn: () => researchModelsApi.get(user.id),
     staleTime: 60_000,
     enabled: !!user.id,
+  });
+  // v5-H4: 선배 논문 되먹임 — analysis 프로필의 연구방법 역집계용(1회 로드·캐시)
+  const { data: alumniTheses = [] } = useQuery({
+    queryKey: ["alumni_theses", "all"],
+    queryFn: async () => (await alumniThesesApi.list()).data as AlumniThesis[],
+    staleTime: 5 * 60_000,
   });
 
   useEffect(() => {
@@ -364,6 +373,12 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
     [methods, form.methodName],
   );
 
+  // v5-H4: 선택한 연구방법을 쓴 졸업생 선배 논문 역집계
+  const methodTheses = useMemo(
+    () => thesesForResearchMethod(alumniTheses, selectedMethod?.id),
+    [alumniTheses, selectedMethod],
+  );
+
   const isQual = form.approach === "qualitative";
   const showStatMethods = form.approach === "quantitative" || form.approach === "mixed";
 
@@ -536,6 +551,7 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
           readOnly={readOnly}
           methodOptions={methodOptions}
           selectedMethod={selectedMethod}
+          methodTheses={methodTheses}
           showAllMethods={showAllMethods}
           onShowAllMethodsChange={setShowAllMethods}
           onApproachChange={(a) => setField("approach", a)}

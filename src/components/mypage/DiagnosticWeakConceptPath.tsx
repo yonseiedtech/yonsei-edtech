@@ -29,6 +29,7 @@ import {
   THEORY_MAP_HREF,
   FLASHCARDS_HREF,
 } from "@/features/diagnosis/weak-concept-links";
+import { thesisMethodTags } from "@/lib/alumni-thesis-crosslink";
 
 const MAX_THESES = 4;
 
@@ -278,6 +279,22 @@ export default function DiagnosticWeakConceptPath({
                                       .filter(Boolean)
                                       .join(" · ")}
                                   </span>
+                                  {/* v5-H4: analysis 프로필의 연구방법·통계 태그 한 줄 보강 */}
+                                  {(() => {
+                                    const tags = thesisMethodTags(t);
+                                    return tags.length > 0 ? (
+                                      <span className="mt-1 flex flex-wrap gap-1">
+                                        {tags.map((tag) => (
+                                          <span
+                                            key={tag}
+                                            className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+                                          >
+                                            {tag}
+                                          </span>
+                                        ))}
+                                      </span>
+                                    ) : null;
+                                  })()}
                                 </Link>
                               </li>
                             ))}

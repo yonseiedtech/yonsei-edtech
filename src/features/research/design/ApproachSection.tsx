@@ -8,11 +8,13 @@ import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { ResearchMethod } from "@/types";
+import type { AlumniThesis } from "@/types/alumni";
 import {
   RESEARCH_DESIGN_APPROACH_LABELS,
   type ResearchDesignApproach,
 } from "@/types/research-design";
 import { RESEARCH_METHOD_KIND_LABELS } from "@/types/research-method";
+import { AlumniMethodReferences } from "./AlumniMethodReferences";
 import type { FormState } from "./types";
 
 export function ApproachSection({
@@ -20,6 +22,7 @@ export function ApproachSection({
   readOnly,
   methodOptions,
   selectedMethod,
+  methodTheses = [],
   showAllMethods,
   onShowAllMethodsChange,
   onApproachChange,
@@ -31,6 +34,7 @@ export function ApproachSection({
   readOnly: boolean;
   methodOptions: ResearchMethod[];
   selectedMethod: ResearchMethod | null;
+  methodTheses?: AlumniThesis[];
   showAllMethods: boolean;
   onShowAllMethodsChange: (v: boolean) => void;
   onApproachChange: (a: ResearchDesignApproach) => void;
@@ -133,6 +137,8 @@ export function ApproachSection({
                 {selectedMethod.accessibleSummary}
               </p>
             )}
+            {/* v5-H4: 같은 연구방법을 쓴 졸업생 선배 논문 되먹임 (데이터 있을 때만) */}
+            <AlumniMethodReferences theses={methodTheses} methodName={selectedMethod.name} />
           </div>
         )}
       </div>
