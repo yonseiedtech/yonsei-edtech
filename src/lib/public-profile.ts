@@ -23,6 +23,8 @@ const HARD_SECRET_FIELDS = [
   "calendarToken",
   "studentId",
   "birthDate",
+  // 잔디 "연구 쉼표" 사용 기록 — 순수 개인용, 공개 프로필에 노출 금지
+  "streakFreezes",
 ] as const;
 
 export async function getProjectedProfile(
