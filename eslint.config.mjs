@@ -1,6 +1,11 @@
 import { defineConfig, globalIgnores } from "eslint/config";
 import nextVitals from "eslint-config-next/core-web-vitals";
 import nextTs from "eslint-config-next/typescript";
+import rawColorBaseline from "./eslint-rawcolor-baseline.mjs";
+
+/** raw Tailwind 팔레트 클래스 감지 정규식 (esquery용, scripts/gen-rawcolor-baseline.mjs 와 동일 계열) */
+const RAW_COLOR_RE =
+  "(bg|text|border)-(red|orange|amber|yellow|lime|green|emerald|teal|cyan|sky|blue|indigo|violet|purple|fuchsia|pink|rose|slate|gray|zinc|neutral|stone)-[0-9]";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
@@ -42,6 +47,31 @@ const eslintConfig = defineConfig([
     rules: {
       "@typescript-eslint/no-require-imports": "off",
       "no-console": "off",
+    },
+  },
+  {
+    // ── raw 팔레트 신규 유입 차단 (2026-07-17, v4-G⑥ 후속) ──
+    // 색상 부채가 상환(마이그레이션)보다 빠르게 재생산되는 문제의 구조적 차단.
+    // 기존 부채 파일(baseline, scripts/gen-rawcolor-baseline.mjs 로 재생성)은 제외하고,
+    // "새 파일"에서 raw 팔레트(bg-red-500 등)를 쓰면 error → prebuild 게이트에서 배포 차단.
+    // 새 파일은 시맨틱 색상 토큰(muted/primary/destructive 등 + dark: 대응)을 사용할 것.
+    // 의도적 예외는 해당 줄에 eslint-disable-next-line no-restricted-syntax 주석으로 명시.
+    files: ["src/**/*.{ts,tsx}"],
+    ignores: rawColorBaseline,
+    rules: {
+      "no-restricted-syntax": [
+        "error",
+        {
+          selector: `Literal[value=/${RAW_COLOR_RE}/]`,
+          message:
+            "raw Tailwind 팔레트 대신 시맨틱 색상 토큰을 사용하세요 (기존 부채 파일 목록은 eslint-rawcolor-baseline.mjs).",
+        },
+        {
+          selector: `TemplateElement[value.raw=/${RAW_COLOR_RE}/]`,
+          message:
+            "raw Tailwind 팔레트 대신 시맨틱 색상 토큰을 사용하세요 (템플릿 문자열 포함).",
+        },
+      ],
     },
   },
   {
