@@ -69,7 +69,16 @@ export interface NetworkingEvent {
   /** 정원 (0/미설정 = 무제한) */
   capacity?: number;
   hostName?: string;
-  /** 운영 학기 "2026-1" — 전공회비 운영 맥락 (학회 회계와 분리 집계) */
+  /**
+   * 포스터 이미지 (data URL — lib/upload.ts uploadImage, Firestore 문서 인라인 저장).
+   * 상세 페이지 상단에 노출. 미설정 시 섹션 미노출.
+   */
+  posterUrl?: string;
+  /**
+   * 운영 학기 "2026-1" — 전공회비 운영 맥락 + 학기 단위 데이터 관리(목록 필터/그룹·연인원 집계).
+   * 저장 시 startAt(또는 poll 기간)으로부터 자동 산정(lib/semester.ts semesterKeyOf), 수동 override 가능.
+   * 미설정 레거시 이벤트는 표시 시점에 startAt 으로부터 유도한다(백필 불요).
+   */
   semester?: string;
   /**
    * 공개 범위 — 미지정=public(기존 데이터 호환).
@@ -128,6 +137,11 @@ export interface NetworkingRsvp {
   companions?: number;
   /** 당일 현장 체크인 시각 (ISO). set = 실참석, unset = 미체크인 — G3(2026-07-08). staff 가 콘솔에서 토글. */
   attendedAt?: string;
+  /**
+   * staff 가 상세 참석자 관리에서 수기(대리·현장) 등록한 참석자 표식 (2026-07-19).
+   * 본인 신청(RSVP)이 아니라 운영진이 /api/networking/attendee 로 추가한 회원.
+   */
+  addedByStaff?: boolean;
   /**
    * 게스트 신청 관리 토큰 (G7, 2026-07-09) — 추측 불가 uuid.
    * 게스트가 로그인 없이 본인 신청을 조회·취소할 때 사용(`/gatherings?guest_rsvp={토큰}`).

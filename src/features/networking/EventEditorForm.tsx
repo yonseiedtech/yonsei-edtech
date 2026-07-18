@@ -22,6 +22,8 @@ import {
   notifyGatheringPollStarted,
 } from "@/features/notifications/notify";
 import { formatEventDate } from "@/features/networking/networking-helpers";
+import { semesterKeyOf } from "@/lib/semester";
+import { uploadImage } from "@/lib/upload";
 import {
   NETWORKING_EVENT_TYPE_LABELS,
   NETWORKING_EVENT_STATUS_LABELS,
@@ -97,6 +99,7 @@ interface EventForm {
   capacity: string;
   hostName: string;
   semester: string;
+  posterUrl: string;
   visibility: "public" | "private";
   status: NetworkingEventStatus;
   published: boolean;
@@ -110,7 +113,7 @@ const EMPTY_FORM: EventForm = {
   pollTimeSlotsWeekday: [...DEFAULT_SLOT_SELECTION],
   pollTimeSlotsWeekend: [...DEFAULT_SLOT_SELECTION],
   pollDeadline: "", pollDecisionMode: "auto",
-  location: "", feeAmount: "0", autoDues: false, rsvpDeadline: "", capacity: "", hostName: "", semester: "", visibility: "public", status: "upcoming", published: true,
+  location: "", feeAmount: "0", autoDues: false, rsvpDeadline: "", capacity: "", hostName: "", semester: "", posterUrl: "", visibility: "public", status: "upcoming", published: true,
 };
 
 /** NetworkingEvent → EventForm (수정·복제 공통 프리필) */
@@ -132,6 +135,7 @@ function eventToForm(ev: NetworkingEvent): EventForm {
     feeAmount: String(ev.feeAmount ?? 0), autoDues: ev.autoDues ?? false, rsvpDeadline: isoToLocal(ev.rsvpDeadline),
     capacity: ev.capacity ? String(ev.capacity) : "", hostName: ev.hostName ?? "",
     semester: ev.semester ?? "",
+    posterUrl: ev.posterUrl ?? "",
     visibility: ev.visibility ?? "public",
     status: ev.status, published: ev.published,
   };
@@ -179,6 +183,7 @@ export default function EventEditorForm({
     return EMPTY_FORM;
   });
   const [busy, setBusy] = useState(false);
+  const [posterBusy, setPosterBusy] = useState(false);
   // 저장 후 private 이면 공유 링크를 폼 안에서 복사할 수 있게 노출
   const [shareLink, setShareLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
@@ -237,6 +242,19 @@ export default function EventEditorForm({
   }, [initial?.id, initial?.invitedUserIds]);
   const existingInvitedIds = loadedInviteIds ?? initial?.invitedUserIds ?? [];
   const existingInvitedMembers = allMembers.filter((m) => existingInvitedIds.includes(m.id));
+
+  async function handlePosterFile(file: File | undefined) {
+    if (!file) return;
+    setPosterBusy(true);
+    try {
+      const dataUrl = await uploadImage(file);
+      set("posterUrl", dataUrl);
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "포스터 업로드에 실패했습니다.");
+    } finally {
+      setPosterBusy(false);
+    }
+  }
 
   async function copyShareLink() {
     if (!shareLink) return;
@@ -324,7 +342,12 @@ export default function EventEditorForm({
         rsvpDeadline: form.rsvpDeadline ? localToIso(form.rsvpDeadline) : undefined,
         capacity: form.capacity ? Number(form.capacity) : undefined,
         hostName: form.hostName.trim() || undefined,
-        semester: form.semester.trim() || undefined,
+        // 학기 단위 관리(2026-07-19): 수동 입력 우선, 비우면 일시(poll 은 후보 기간 시작)로부터 자동 산정.
+        semester:
+          form.semester.trim() ||
+          (isPoll ? semesterKeyOf(form.pollPeriodStart) : semesterKeyOf(localToIso(form.startAt))) ||
+          undefined,
+        posterUrl: form.posterUrl || undefined,
         visibility: form.visibility,
         // 레거시 shareToken 필드가 남아 있으면 제거(마이그레이션) — 없으면 저장하지 않음.
         shareToken: initial?.shareToken
@@ -618,11 +641,36 @@ export default function EventEditorForm({
           <Input value={form.hostName} onChange={(e) => set("hostName", e.target.value)} className="mt-1" placeholder="총무" />
         </label>
         <label className="text-xs">운영 학기
-          <Input value={form.semester} onChange={(e) => set("semester", e.target.value)} className="mt-1" placeholder="예: 2026-1" />
+          <Input value={form.semester} onChange={(e) => set("semester", e.target.value)} className="mt-1" placeholder="비우면 일시로 자동 (예: 2026-1)" />
         </label>
         <label className="text-xs sm:col-span-2">설명
           <textarea value={form.description} onChange={(e) => set("description", e.target.value)} rows={2} className="mt-1 w-full rounded-lg border bg-background px-2 py-1.5 text-sm" />
         </label>
+        {/* 포스터 이미지 (선택) — 상세 페이지 상단에 노출. 1MB 이하 자동 리사이즈. */}
+        <div className="text-xs sm:col-span-2">
+          <span className="text-muted-foreground">포스터 (선택)</span>
+          <div className="mt-1 flex items-center gap-3">
+            {form.posterUrl && (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={form.posterUrl} alt="포스터 미리보기" className="h-20 w-20 rounded-lg border object-cover" />
+            )}
+            <div className="flex flex-col gap-1.5">
+              <input
+                type="file"
+                accept="image/*"
+                disabled={posterBusy}
+                onChange={(e) => handlePosterFile(e.target.files?.[0])}
+                className="text-[11px] file:mr-2 file:rounded-md file:border file:bg-muted file:px-2 file:py-1 file:text-[11px]"
+              />
+              {posterBusy && <span className="text-[11px] text-muted-foreground">업로드 중…</span>}
+              {form.posterUrl && !posterBusy && (
+                <button type="button" onClick={() => set("posterUrl", "")} className="self-start text-[11px] text-muted-foreground underline underline-offset-2 hover:text-destructive">
+                  포스터 제거
+                </button>
+              )}
+            </div>
+          </div>
+        </div>
         {/* 공개 범위 — 공개 / 비공개(링크 공유) */}
         <div className="text-xs sm:col-span-2">
           <span className="text-muted-foreground">공개 범위</span>

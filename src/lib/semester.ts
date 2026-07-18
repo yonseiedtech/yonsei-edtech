@@ -38,6 +38,32 @@ export function currentSemesterKey(now: Date = new Date()): string {
   return m >= 9 ? `${y}-2` : `${y - 1}-2`;
 }
 
+/**
+ * 임의 시각(ISO)의 학기 키 — "YYYY-1"(전기) | "YYYY-2"(후기).
+ * 모임·행사 저장 시 startAt 으로부터 semesterKey 를 자동 산정하거나,
+ * 레거시 이벤트를 표시 시점에 일시로부터 유도할 때 사용(백필 불요, 하위호환).
+ * 빈 문자열·파싱 불가 시 null.
+ */
+export function semesterKeyOf(iso: string | undefined | null): string | null {
+  if (!iso) return null;
+  const d = new Date(iso);
+  if (isNaN(d.getTime())) return null;
+  return currentSemesterKey(d);
+}
+
+/**
+ * 학기 키("YYYY-1" | "YYYY-2") → 표시 라벨. formatSemester 와 동일한 전기/후기 어법.
+ * 예: "2026-2" → "2026년 후기". 형식이 아니면 원문 반환.
+ */
+export function semesterLabelFromKey(key: string | undefined | null): string {
+  if (!key) return "";
+  const m = /^(\d{4})-([12])$/.exec(key.trim());
+  if (!m) return key;
+  const year = m[1];
+  const half = m[2] === "1" ? "전기" : "후기";
+  return `${year}년 ${half}`;
+}
+
 /** YYYY-MM 형식의 from/to 범위 */
 export interface SemesterRange {
   from: string;

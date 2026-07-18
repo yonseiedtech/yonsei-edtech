@@ -37,6 +37,7 @@ import {
   type Seminar,
 } from "@/types";
 import { formatEventDate, isPastEvent, formatWon } from "@/features/networking/networking-helpers";
+import { semesterKeyOf, semesterLabelFromKey } from "@/lib/semester";
 import { SEMANTIC } from "@/lib/design-tokens";
 
 type ApplicationLite = {
@@ -309,6 +310,32 @@ export default function MyActivityHub({
     return c;
   }, [items]);
 
+  // 학기별 모임 참여 이력(③) — 참석 확정(attending) 모임을 학기키로 묶어 대학원생활 이력으로 표시.
+  const gatheringsBySemester = useMemo(() => {
+    const rsvpByEvent = new Map(myRsvps.map((r) => [r.eventId, r] as const));
+    const bySem = new Map<string, { title: string; dateLabel: string; sortKey: string }[]>();
+    for (const ev of gatheringEvents) {
+      const rsvp = rsvpByEvent.get(ev.id);
+      if (!rsvp || rsvp.status !== "attending") continue;
+      const key = ev.semester || semesterKeyOf(ev.startAt || ev.pollPeriodStart);
+      if (!key) continue;
+      const list = bySem.get(key) ?? [];
+      list.push({
+        title: ev.title,
+        dateLabel: ev.startAt ? formatEventDate(ev.startAt) : "일정 미정",
+        sortKey: ev.startAt || "",
+      });
+      bySem.set(key, list);
+    }
+    return Array.from(bySem.entries())
+      .map(([key, list]) => ({
+        key,
+        label: semesterLabelFromKey(key),
+        list: list.sort((a, b) => b.sortKey.localeCompare(a.sortKey)),
+      }))
+      .sort((a, b) => b.key.localeCompare(a.key));
+  }, [gatheringEvents, myRsvps]);
+
   return (
     <div className="space-y-5">
       <div>
@@ -390,6 +417,37 @@ export default function MyActivityHub({
             </section>
           )}
         </div>
+      )}
+
+      {/* 학기별 모임 참여 이력(③) — 대학원 생활 이력 표면. 참석 확정 모임만. */}
+      {gatheringsBySemester.length > 0 && (
+        <section className="rounded-2xl border bg-card p-4">
+          <h4 className="flex items-center gap-1.5 text-sm font-bold">
+            <Users size={15} className="text-violet-600 dark:text-violet-300" /> 학기별 모임 참여
+          </h4>
+          <p className="mt-0.5 text-xs text-muted-foreground">참석 확정한 모임·행사를 학기 단위로 모았습니다.</p>
+          <div className="mt-3 space-y-3">
+            {gatheringsBySemester.map((sem) => (
+              <div key={sem.key}>
+                <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold">
+                  <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
+                    {sem.label}
+                  </span>
+                  <span className="text-muted-foreground">{sem.list.length}회</span>
+                </p>
+                <ul className="space-y-1 pl-1">
+                  {sem.list.map((g, i) => (
+                    <li key={i} className="flex items-center gap-2 text-xs">
+                      <CalendarDays size={12} className="shrink-0 text-muted-foreground" />
+                      <span className="truncate font-medium">{g.title}</span>
+                      <span className="shrink-0 text-[11px] text-muted-foreground">{g.dateLabel}</span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
       )}
     </div>
   );

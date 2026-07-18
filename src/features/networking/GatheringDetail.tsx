@@ -51,9 +51,11 @@ import {
   ddayLabel,
 } from "@/features/networking/networking-helpers";
 import { submitMemberRsvp } from "@/features/networking/networking-utils";
+import { semesterKeyOf, semesterLabelFromKey } from "@/lib/semester";
 import NetworkingProgramManager from "@/features/networking/NetworkingProgramManager";
 import NetworkingPoll from "@/features/networking/NetworkingPoll";
 import AttendeeRoster from "@/features/networking/AttendeeRoster";
+import StaffAttendeeManager from "@/features/networking/StaffAttendeeManager";
 import EventReviews from "@/features/networking/EventReviews";
 import EventEditorForm from "@/features/networking/EventEditorForm";
 
@@ -99,6 +101,8 @@ export default function GatheringDetail({
   const isPrivate = ev.visibility === "private";
   const pollClosed = !!ev.pollDeadline && new Date(ev.pollDeadline).getTime() < Date.now();
 
+  // 학기 맥락 — 저장된 semester 우선, 없으면 일시(poll 은 후보 기간)로부터 유도(레거시 하위호환).
+  const effectiveSemester = ev.semester || semesterKeyOf(ev.startAt || ev.pollPeriodStart);
   const activeStatus = myRsvp?.status && myRsvp.status !== "not_attending" ? myRsvp.status : null;
   const showMyStatus = !past && ev.status !== "cancelled" && !!activeStatus;
   const dday =
@@ -310,6 +314,11 @@ export default function GatheringDetail({
                 <Lock size={10} /> 비공개
               </span>
             )}
+            {effectiveSemester && (
+              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+                {semesterLabelFromKey(effectiveSemester)}
+              </span>
+            )}
             {ev.status === "cancelled" && (
               <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive">취소됨</span>
             )}
@@ -391,6 +400,16 @@ export default function GatheringDetail({
 
       {ev.description && (
         <p className="mt-3 whitespace-pre-wrap text-sm leading-relaxed text-foreground/80">{ev.description}</p>
+      )}
+
+      {/* 포스터 (①) — 설정된 경우에만 노출 */}
+      {ev.posterUrl && (
+        // eslint-disable-next-line @next/next/no-img-element
+        <img
+          src={ev.posterUrl}
+          alt={`${ev.title} 포스터`}
+          className="mt-3 w-full max-w-md rounded-xl border object-contain"
+        />
       )}
 
       {album && (
@@ -568,6 +587,15 @@ export default function GatheringDetail({
             <Users size={15} className="text-primary" /> 참여 대상·참석자
           </h2>
           <AttendeeRoster eventId={ev.id} myRsvp={myRsvp} onChanged={onChanged} />
+          {/* 운영진 수기 참석자 관리 (② 현장·대리 등록) */}
+          {canManage && (
+            <StaffAttendeeManager
+              eventId={ev.id}
+              eventTitle={ev.title}
+              semesterKey={effectiveSemester}
+              onChanged={onChanged}
+            />
+          )}
         </section>
       )}
 
@@ -578,9 +606,9 @@ export default function GatheringDetail({
         </section>
       )}
 
-      {/* 세부 프로그램 (회원 읽기) */}
+      {/* 세부 프로그램·타임테이블 (①) — 회원 읽기, staff 는 인라인 편집 */}
       <section className="mt-5 border-t pt-4">
-        <NetworkingProgramManager eventId={ev.id} canEdit={false} />
+        <NetworkingProgramManager eventId={ev.id} canEdit={!!canManage} />
       </section>
     </article>
   );

@@ -12,7 +12,7 @@
 import { useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, CalendarX2, Plus } from "lucide-react";
+import { Users, CalendarX2, Plus, Download } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 import PageHeader from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -20,6 +20,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { cn } from "@/lib/utils";
 import { isStaffOrAbove } from "@/lib/permissions";
 import { networkingEventsApi, networkingRsvpsApi, networkingDuesApi, albumsApi } from "@/lib/bkend";
 import {
@@ -28,7 +29,10 @@ import {
   type NetworkingDue,
   type PhotoAlbum,
 } from "@/types";
-import { isPastEvent } from "@/features/networking/networking-helpers";
+import { isPastEvent, formatEventDate } from "@/features/networking/networking-helpers";
+import { semesterKeyOf, currentSemesterKey, semesterLabelFromKey } from "@/lib/semester";
+import { exportCSV } from "@/lib/export-csv";
+import { NETWORKING_EVENT_TYPE_LABELS } from "@/types";
 import EventEditorForm from "@/features/networking/EventEditorForm";
 import GatheringEventCard from "@/features/networking/GatheringEventCard";
 import GuestRsvpBanner from "@/features/networking/GuestRsvpBanner";
@@ -91,17 +95,70 @@ export default function GatheringsPage() {
     [events, canCreate],
   );
 
+  // ── 학기 단위 관리(2026-07-19) ──
+  // 각 이벤트의 실효 학기키: 저장된 semester 우선, 없으면 일시(poll 은 후보 기간 시작)로부터 유도(하위호환).
+  const semOf = (e: NetworkingEvent) => e.semester || semesterKeyOf(e.startAt || e.pollPeriodStart);
+  const [semFilter, setSemFilter] = useState<string | null>(null);
+
+  const semesterKeys = useMemo(() => {
+    const set = new Set<string>();
+    for (const e of visibleEvents) {
+      const k = semOf(e);
+      if (k) set.add(k);
+    }
+    return Array.from(set).sort((a, b) => b.localeCompare(a)); // 최신 학기 먼저
+  }, [visibleEvents]);
+
+  const currentSem = currentSemesterKey();
+  // 기본: 현재 학기(해당 학기 이벤트가 있을 때) — 없으면 전체. 사용자가 칩으로 변경 시 그 값을 따른다.
+  const activeSemester = semFilter ?? (semesterKeys.includes(currentSem) ? currentSem : "all");
+
+  const shownEvents = useMemo(
+    () =>
+      activeSemester === "all"
+        ? visibleEvents
+        : visibleEvents.filter((e) => semOf(e) === activeSemester),
+    [visibleEvents, activeSemester],
+  );
+
   const { upcoming, past } = useMemo(() => {
     // 미확정 투표(poll, startAt 없음)는 정렬 키를 비워 항상 다가오는 모임 상단으로
     const isUnconfirmedPoll = (e: NetworkingEvent) => e.schedulingMode === "poll" && !e.startAt;
-    const sorted = [...visibleEvents].sort((a, b) => a.startAt.localeCompare(b.startAt));
+    const sorted = [...shownEvents].sort((a, b) => a.startAt.localeCompare(b.startAt));
     return {
       upcoming: sorted.filter(
         (e) => (isUnconfirmedPoll(e) || !isPastEvent(e, nowIso)) && e.status !== "cancelled",
       ),
       past: sorted.filter((e) => !isUnconfirmedPoll(e) && isPastEvent(e, nowIso)).reverse(),
     };
-  }, [visibleEvents, nowIso]);
+  }, [shownEvents, nowIso]);
+
+  // 운영진 학기 요약 — 모임 N회 · 연인원 M명(attendee-counts 재사용). CSV 는 표시 중인 학기 범위.
+  const semesterSummary = useMemo(() => {
+    const headcount = shownEvents.reduce((sum, e) => sum + (attendeeCounts[e.id] ?? 0), 0);
+    return { eventCount: shownEvents.length, headcount };
+  }, [shownEvents, attendeeCounts]);
+
+  function exportSemesterCsv() {
+    const label = activeSemester === "all" ? "전체학기" : activeSemester;
+    const rows = shownEvents
+      .slice()
+      .sort((a, b) => (a.startAt || "").localeCompare(b.startAt || ""))
+      .map((e) => [
+        semOf(e) ?? "",
+        NETWORKING_EVENT_TYPE_LABELS[e.type],
+        e.title,
+        e.startAt ? formatEventDate(e.startAt) : "일정 미정",
+        e.location ?? "",
+        e.visibility === "private" ? "비공개" : "공개",
+        attendeeCounts[e.id] ?? 0,
+      ]);
+    exportCSV(
+      `모임행사_${label}`,
+      ["학기", "유형", "제목", "일시", "장소", "공개범위", "참석인원"],
+      rows,
+    );
+  }
 
   const myRsvpByEvent = useMemo(() => {
     const m = new Map<string, NetworkingRsvp>();
@@ -174,6 +231,56 @@ export default function GatheringsPage() {
         </div>
       ) : (
         <div className="mt-6 space-y-8">
+          {/* 학기 필터 + (운영진) 학기 요약·CSV */}
+          {semesterKeys.length > 0 && (
+            <div className="space-y-2.5">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setSemFilter("all")}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                    activeSemester === "all"
+                      ? "border-primary bg-primary text-primary-foreground"
+                      : "border-border bg-background text-muted-foreground hover:border-primary/40",
+                  )}
+                >
+                  전체 학기
+                </button>
+                {semesterKeys.map((k) => (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setSemFilter(k)}
+                    className={cn(
+                      "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                      activeSemester === k
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/40",
+                    )}
+                  >
+                    {semesterLabelFromKey(k)}
+                    {k === currentSem && " (현재)"}
+                  </button>
+                ))}
+              </div>
+              {canCreate && (
+                <div className="flex flex-wrap items-center justify-between gap-2 rounded-xl border bg-muted/30 px-3 py-2">
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-semibold text-foreground">
+                      {activeSemester === "all" ? "전체 학기" : semesterLabelFromKey(activeSemester)}
+                    </span>{" "}
+                    · 모임 {semesterSummary.eventCount}회 · 연인원{" "}
+                    <span className="font-semibold text-foreground">{semesterSummary.headcount}명</span>
+                  </p>
+                  <Button size="sm" variant="outline" className="h-7 text-xs" onClick={exportSemesterCsv} disabled={shownEvents.length === 0}>
+                    <Download size={13} className="mr-1" /> 학기 CSV
+                  </Button>
+                </div>
+              )}
+            </div>
+          )}
+
           <section>
             <h2 className="mb-3 text-sm font-semibold text-muted-foreground">다가오는 모임</h2>
             {upcoming.length === 0 ? (

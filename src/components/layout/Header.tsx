@@ -130,10 +130,8 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/seminars", label: "세미나" },
       { href: "/activities/projects", label: "프로젝트" },
       { href: "/activities/studies", label: "스터디" },
-      // 사용자 요청(2026-07-19): 진도 미팅은 독립 편성 대신 스터디·프로젝트 하위로만
-      { href: "/progress-meetings", label: "└ 진도 미팅" },
       { href: "/activities/external", label: "대외 학술대회" },
-      { href: "/leaderboard", label: "학습 잔디 리더보드" },
+      // 사용자 요청(2026-07-19): 리더보드는 메인 메뉴 비노출 — 마이페이지 잔디 "순위 보기"로만 진입
     ],
   },
   {

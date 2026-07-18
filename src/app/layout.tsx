@@ -116,6 +116,11 @@ export const metadata: Metadata = {
   verification: {
     // Google Search Console 등록 후 여기에 추가
     // google: "your-verification-code",
+    // 네이버 서치어드바이저(searchadvisor.naver.com) 사이트 소유 확인 (2026-07-19):
+    // 발급받은 코드를 Vercel env NEXT_PUBLIC_NAVER_SITE_VERIFICATION 에 넣으면 자동 반영.
+    ...(process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION
+      ? { other: { "naver-site-verification": process.env.NEXT_PUBLIC_NAVER_SITE_VERIFICATION } }
+      : {}),
   },
 };
 
