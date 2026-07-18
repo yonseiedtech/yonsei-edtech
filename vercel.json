@@ -57,6 +57,10 @@
       "schedule": "0 0 * * 1"
     },
     {
+      "path": "/api/cron/adoption-snapshot",
+      "schedule": "0 1 * * 1"
+    },
+    {
       "path": "/api/cron/study-session-reminder",
       "schedule": "0 0 * * *"
     },

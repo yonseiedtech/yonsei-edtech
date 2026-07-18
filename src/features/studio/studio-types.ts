@@ -15,12 +15,39 @@ export const DESIGN_DOC_TYPE_LABELS: Record<DesignDocType, string> = {
   ppt: "발표 슬라이드",
 };
 
+export interface CanvasSize {
+  width: number;
+  height: number;
+}
+
 /** 문서 타입별 캔버스 크기 (px) */
-export const DESIGN_CANVAS_SIZES: Record<DesignDocType, { width: number; height: number }> = {
+export const DESIGN_CANVAS_SIZES: Record<DesignDocType, CanvasSize> = {
   cardnews: { width: 1080, height: 1080 },
   poster: { width: 1080, height: 1350 }, // 인스타 세로형 4:5
   ppt: { width: 1280, height: 720 },     // 16:9
 };
+
+/**
+ * 매직 리사이즈 프리셋 (2026-07-18, 벤치마크 M2 — Canva 매직 리사이즈 원리).
+ * 현재 디자인을 다른 포맷으로 복제할 때의 목표 캔버스 크기. 단순 스케일+중앙 정렬로
+ * "시작점"을 제공한다 (완벽 재배치는 목표 아님).
+ */
+export const DESIGN_RESIZE_PRESETS: { key: string; label: string; size: CanvasSize }[] = [
+  { key: "square", label: "정방 카드뉴스", size: { width: 1080, height: 1080 } },
+  { key: "og", label: "OG 이미지 (링크 미리보기)", size: { width: 1200, height: 630 } },
+  { key: "story", label: "세로 스토리", size: { width: 1080, height: 1920 } },
+];
+
+/**
+ * 문서의 실제 캔버스 크기. 매직 리사이즈로 만든 문서는 canvasSize 오버라이드를 갖고,
+ * 없으면 docType 기본 크기를 쓴다(기존 문서 하위호환).
+ */
+export function resolveCanvasSize(
+  doc: { docType: DesignDocType; canvasSize?: CanvasSize } | null | undefined,
+): CanvasSize {
+  if (doc?.canvasSize) return doc.canvasSize;
+  return doc ? DESIGN_CANVAS_SIZES[doc.docType] : { width: 1080, height: 1080 };
+}
 
 export type DesignElementType = "text" | "image" | "shape" | "icon";
 
@@ -105,6 +132,8 @@ export interface DesignDocument {
   /** denorm 작성자명 */
   authorName?: string;
   docType: DesignDocType;
+  /** 매직 리사이즈로 만든 문서의 커스텀 캔버스 크기 (없으면 docType 기본값) */
+  canvasSize?: CanvasSize;
   title: string;
   pages: DesignPage[];
   linked?: DesignLink;

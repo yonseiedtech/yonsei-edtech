@@ -38,6 +38,7 @@ import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/A
 import ArchiveMobileToc from "@/components/archive/ArchiveMobileToc";
 import PageContainer from "@/components/ui/page-container";
 import ConceptLinkedText from "@/components/archive/ConceptLinkedText";
+import ConceptMentionsInMyRecords from "@/components/archive/ConceptMentionsInMyRecords";
 import { recordRecentView } from "@/lib/archive-recent-views";
 
 export default function ArchiveDetailPage() {
@@ -818,6 +819,15 @@ export default function ArchiveDetailPage() {
             </div>
           </CardContent>
         </Card>
+      )}
+
+      {/* 벤치마크-H4: 내 기록 속 이 개념 (본인 메모·읽기 기록 역참조, 개념 상세 한정) */}
+      {type === "concept" && user && item.name && (
+        <ConceptMentionsInMyRecords
+          conceptName={item.name}
+          altNames={altNames}
+          userId={user.id}
+        />
       )}
 
       {/* 관련 졸업생 논문 */}

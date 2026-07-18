@@ -9,25 +9,10 @@
  */
 
 import { useQuery } from "@tanstack/react-query";
-import { Gauge, Users, Microscope, Bell, MessageSquare } from "lucide-react";
+import { Gauge, Users, Microscope, Bell, MessageSquare, Sparkles } from "lucide-react";
 import { auth } from "@/lib/firebase";
-
-interface Adoption {
-  at: string;
-  members: { approved: number; active7d: number; active30d: number };
-  research: {
-    papersUpdated30d: number;
-    reportsUpdated30d: number;
-    modelsTotal: number;
-    matrixFilled: number;
-    readingLogs30d: number;
-    sessions30d: number;
-  };
-  community: { posts30d: number; comments30d: number; dmTotal: number; rsvpTotal: number; checkins: number };
-  notifications: { total: number; unread: number; readRate: number | null };
-  studioDocs: number;
-  eventsByType: Record<string, number>;
-}
+import type { AdoptionMetrics } from "@/features/insights/adoption-metrics";
+import AdoptionTrendSection from "@/features/insights/AdoptionTrendSection";
 
 function Stat({ label, value, sub }: { label: string; value: string | number; sub?: string }) {
   // QA-v3 M: 집계 실패 시 서버가 -1 센티널을 반환 — 지표값으로 노출하지 않고 "—" 표시
@@ -50,7 +35,7 @@ export default function AdoptionSection() {
       if (!token) throw new Error("로그인이 필요합니다.");
       const res = await fetch("/api/console/adoption", { headers: { Authorization: `Bearer ${token}` } });
       if (!res.ok) throw new Error("집계 실패");
-      return (await res.json()) as Adoption;
+      return (await res.json()) as AdoptionMetrics;
     },
   });
 
@@ -67,6 +52,7 @@ export default function AdoptionSection() {
     (data.eventsByType["studio-edit"] ?? 0);
 
   return (
+    <>
     <section className="rounded-2xl border bg-card p-5">
       <h2 className="flex items-center gap-2 text-sm font-bold">
         <Gauge size={15} className="text-primary" />
@@ -119,6 +105,20 @@ export default function AdoptionSection() {
         <Stat label="행사 RSVP 누적" value={c.rsvpTotal} />
         <Stat label="측정 기준" value="10월 초 재판정" sub="PROPOSAL_2026-07-04_cycle-next" />
       </div>
+
+      <p className="mt-3 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
+        <Sparkles size={12} /> 신규 루프 채택 (v5+)
+      </p>
+      <div className="mt-1.5 grid grid-cols-2 gap-2 sm:grid-cols-4">
+        <Stat label="진단 완료 (30일 / 누적)" value={`${data.diagnostics.completed30d} / ${data.diagnostics.total}`} />
+        <Stat label="암기카드 활성 / 누적" value={`${data.flashcards.active} / ${data.flashcards.total}`} sub="복습 1회+" />
+        <Stat label="이번 주 목표 설정" value={data.weeklyGoals.setThisWeek} />
+        <Stat label="멘토링 질문 / 답변 / 채택" value={`${data.mentoring.questions} / ${data.mentoring.answers} / ${data.mentoring.resolved}`} />
+        <Stat label="검수 처리 / 대기" value={`${data.reviewQueue.processed} / ${data.reviewQueue.pending}`} sub="아카이브 개념" />
+      </div>
     </section>
+
+    <AdoptionTrendSection />
+    </>
   );
 }

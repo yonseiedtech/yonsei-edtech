@@ -4,6 +4,7 @@
 import type { DesignDocType, DesignPage } from "./studio-types";
 import { DESIGN_CANVAS_SIZES } from "./studio-types";
 import { makePage, makeShape, makeText, makeIcon, makeImage } from "./studio-utils";
+import { BRAND_PALETTE, BRAND_LOGOS } from "./brand-kit";
 
 export interface TemplatePrefill {
   title?: string;
@@ -14,12 +15,13 @@ export interface TemplatePrefill {
   description?: string;
 }
 
-const NAVY = "#003378";
-const GOLD = "#d4af37";
-const PAPER = "#f4f6fa";
-const INK = "#1b1f27";
+// 브랜드 킷 단일 소스 — 색·로고를 여기서 파생 (중복 상수 제거)
+const NAVY = BRAND_PALETTE.navy;
+const GOLD = BRAND_PALETTE.gold;
+const PAPER = BRAND_PALETTE.paper;
+const INK = BRAND_PALETTE.ink;
 // UX(2026-07-04 사용자 피드백): 학회 로고를 템플릿에 정식 반영
-const EMBLEM = "/yonsei-emblem.svg"; // 원형 엠블럼 — 네이비 배경용(흰 테두리)
+const EMBLEM = BRAND_LOGOS.emblem; // 원형 엠블럼 — 네이비 배경용(흰 테두리)
 
 /** 밝은 페이지 공통 푸터 — 엠블럼 + 학회명 (2·3페이지가 따로 놀던 문제의 공통 언어) */
 function lightFooter(docType: DesignDocType) {
@@ -188,6 +190,152 @@ export function buildTemplatePages(docType: DesignDocType, p: TemplatePrefill = 
     ]),
   ];
 }
+
+// ── 브랜드 템플릿 갤러리 (2026-07-18, 벤치마크 H5) ──
+// "빈 캔버스" 대신 브랜드 킷이 적용된 프리셋으로 시작. 비디자이너 운영진도 온브랜드 산출.
+// 모두 카드뉴스 규격(1080²)을 기준으로 하며, 필요한 필드는 prefill 로 채운다.
+
+/** 세미나 홍보 — 커버(네이비) + 행사 안내(밝은 배경) */
+function seminarPromoPages(p: TemplatePrefill): DesignPage[] {
+  return [coverPage("cardnews", p), highlightPage("cardnews", p)];
+}
+
+/** 카드뉴스 표지 — 임팩트 있는 단일 커버 */
+function cardnewsCoverPages(p: TemplatePrefill): DesignPage[] {
+  const { width: W, height: H } = DESIGN_CANVAS_SIZES.cardnews;
+  const cx = Math.round(W * 0.09);
+  return [
+    makePage(NAVY, [
+      makeShape("rect", { x: 0, y: 0, w: W, h: Math.round(H * 0.02), fill: GOLD, radius: 0, locked: true }),
+      makeImage(EMBLEM, { x: cx, y: Math.round(H * 0.1), w: Math.round(W * 0.1), h: Math.round(W * 0.1), fit: "contain", locked: true }),
+      makeText({
+        x: cx, y: Math.round(H * 0.34), w: Math.round(W * 0.82), h: Math.round(H * 0.34),
+        text: p.title ?? "카드뉴스 제목",
+        fontSize: Math.round(W * 0.086), fontWeight: 900, fontFamily: "display", color: "#ffffff", lineHeight: 1.2,
+      }),
+      makeShape("line", { x: cx, y: Math.round(H * 0.7), w: Math.round(W * 0.16), h: 8, fill: GOLD, locked: true }),
+      makeText({
+        x: cx, y: Math.round(H * 0.74), w: Math.round(W * 0.8), h: Math.round(H * 0.1),
+        text: p.subtitle ?? "한 줄 소개 또는 부제",
+        fontSize: Math.round(W * 0.03), fontWeight: 600, fontFamily: "sans", color: "rgba(255,255,255,0.85)",
+      }),
+      makeText({
+        x: cx, y: H - Math.round(W * 0.07), w: Math.round(W * 0.8), h: Math.round(W * 0.045),
+        text: "연세교육공학회 · Yonsei EdTech",
+        fontSize: Math.round(W * 0.018), fontWeight: 600, fontFamily: "sans", color: "rgba(255,255,255,0.6)", locked: true,
+      }),
+    ]),
+  ];
+}
+
+/** 연사 소개 — 사진 자리(원형) + 이름 + 소개 */
+function speakerIntroPages(p: TemplatePrefill): DesignPage[] {
+  const { width: W, height: H } = DESIGN_CANVAS_SIZES.cardnews;
+  const cx = Math.round(W * 0.09);
+  const photo = Math.round(W * 0.34);
+  return [
+    makePage(PAPER, [
+      makeShape("rect", { x: 0, y: 0, w: W, h: Math.round(H * 0.035), fill: NAVY, radius: 0, locked: true }),
+      makeText({
+        x: cx, y: Math.round(H * 0.09), w: Math.round(W * 0.82), h: Math.round(H * 0.08),
+        text: "연사 소개", fontSize: Math.round(W * 0.04), fontWeight: 900, fontFamily: "display", color: NAVY,
+      }),
+      makeShape("line", { x: cx, y: Math.round(H * 0.18), w: Math.round(W * 0.1), h: 6, fill: GOLD, locked: true }),
+      // 사진 자리 (원형) — 사용자가 이미지로 교체
+      makeShape("circle", { x: Math.round(W / 2 - photo / 2), y: Math.round(H * 0.24), w: photo, h: photo, fill: "#dfe5ef", locked: false }),
+      makeIcon("Mic", { x: Math.round(W / 2 - W * 0.05), y: Math.round(H * 0.33), w: Math.round(W * 0.1), h: Math.round(W * 0.1), color: NAVY }),
+      makeText({
+        x: cx, y: Math.round(H * 0.6), w: Math.round(W * 0.82), h: Math.round(H * 0.08),
+        text: p.speaker ?? "연사 이름", fontSize: Math.round(W * 0.05), fontWeight: 900, fontFamily: "display", color: INK, align: "center",
+      }),
+      makeText({
+        x: cx, y: Math.round(H * 0.69), w: Math.round(W * 0.82), h: Math.round(H * 0.06),
+        text: p.subtitle ?? "소속 · 직함", fontSize: Math.round(W * 0.026), fontWeight: 700, fontFamily: "sans", color: GOLD, align: "center",
+      }),
+      makeText({
+        x: cx, y: Math.round(H * 0.76), w: Math.round(W * 0.82), h: Math.round(H * 0.14),
+        text: p.description?.slice(0, 120) ?? "연사 소개 문구를 입력하세요.",
+        fontSize: Math.round(W * 0.024), fontWeight: 400, fontFamily: "sans", color: INK, align: "center", lineHeight: 1.6,
+      }),
+    ]),
+  ];
+}
+
+/** 수료 축하 — 골드 악센트 축하 카드 */
+function completionPages(p: TemplatePrefill): DesignPage[] {
+  const { width: W, height: H } = DESIGN_CANVAS_SIZES.cardnews;
+  const cx = Math.round(W * 0.09);
+  return [
+    makePage(NAVY, [
+      makeShape("rect", {
+        x: cx, y: Math.round(H * 0.1), w: Math.round(W * 0.82), h: Math.round(H * 0.8),
+        fill: "rgba(255,255,255,0.04)", radius: 28, strokeColor: GOLD, strokeWidth: 3, locked: true,
+      }),
+      makeIcon("Trophy", { x: Math.round(W / 2 - W * 0.08), y: Math.round(H * 0.18), w: Math.round(W * 0.16), h: Math.round(W * 0.16), color: GOLD }),
+      makeText({
+        x: cx, y: Math.round(H * 0.4), w: Math.round(W * 0.82), h: Math.round(H * 0.08),
+        text: "수료를 축하합니다", fontSize: Math.round(W * 0.03), fontWeight: 600, fontFamily: "sans", color: GOLD, align: "center",
+      }),
+      makeText({
+        x: cx, y: Math.round(H * 0.48), w: Math.round(W * 0.82), h: Math.round(H * 0.16),
+        text: p.title ?? p.speaker ?? "수료자 이름",
+        fontSize: Math.round(W * 0.072), fontWeight: 900, fontFamily: "display", color: "#ffffff", align: "center", lineHeight: 1.2,
+      }),
+      makeText({
+        x: cx, y: Math.round(H * 0.66), w: Math.round(W * 0.82), h: Math.round(H * 0.1),
+        text: p.description ?? p.subtitle ?? "과정명 · 수료 일자",
+        fontSize: Math.round(W * 0.026), fontWeight: 600, fontFamily: "sans", color: "rgba(255,255,255,0.85)", align: "center", lineHeight: 1.5,
+      }),
+      makeImage(EMBLEM, { x: Math.round(W / 2 - W * 0.045), y: Math.round(H * 0.78), w: Math.round(W * 0.09), h: Math.round(W * 0.09), fit: "contain", locked: true }),
+      makeText({
+        x: cx, y: Math.round(H * 0.885), w: Math.round(W * 0.82), h: Math.round(W * 0.04),
+        text: "연세교육공학회 · Yonsei EdTech",
+        fontSize: Math.round(W * 0.018), fontWeight: 600, fontFamily: "sans", color: "rgba(255,255,255,0.6)", align: "center", locked: true,
+      }),
+    ]),
+  ];
+}
+
+export interface BrandTemplate {
+  key: string;
+  label: string;
+  description: string;
+  /** 캔버스 규격을 결정 */
+  docType: DesignDocType;
+  build: (p: TemplatePrefill) => DesignPage[];
+}
+
+/** 브랜드 템플릿 프리셋 — "이 템플릿으로 시작" */
+export const BRAND_TEMPLATES: BrandTemplate[] = [
+  {
+    key: "seminar-promo",
+    label: "세미나 홍보",
+    description: "커버 + 행사 안내 2장 — 세미나·특강 모집",
+    docType: "cardnews",
+    build: seminarPromoPages,
+  },
+  {
+    key: "cardnews-cover",
+    label: "카드뉴스 표지",
+    description: "임팩트 있는 단일 표지 — 소식·공지 시작 장",
+    docType: "cardnews",
+    build: cardnewsCoverPages,
+  },
+  {
+    key: "speaker-intro",
+    label: "연사 소개",
+    description: "사진 + 이름 + 소개 — 연사·발표자 카드",
+    docType: "cardnews",
+    build: speakerIntroPages,
+  },
+  {
+    key: "completion",
+    label: "수료 축하",
+    description: "골드 악센트 축하 카드 — 과정 수료·시상",
+    docType: "cardnews",
+    build: completionPages,
+  },
+];
 
 /** 빈 문서 (흰 페이지 1장) */
 export function buildBlankPages(docType: DesignDocType): DesignPage[] {

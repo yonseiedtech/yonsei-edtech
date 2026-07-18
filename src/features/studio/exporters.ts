@@ -3,7 +3,7 @@
 // 여기서 노드 등장·폰트·이미지 로드를 기다린 뒤 html-to-image 로 캡처한다.
 
 import type { DesignDocument } from "./studio-types";
-import { DESIGN_CANVAS_SIZES } from "./studio-types";
+import { resolveCanvasSize } from "./studio-types";
 
 function sleep(ms: number) {
   return new Promise((r) => setTimeout(r, ms));
@@ -71,7 +71,7 @@ export async function exportDesign(
   kind: "png" | "zip" | "pdf" | "pptx",
   currentPageIdx: number,
 ): Promise<void> {
-  const size = DESIGN_CANVAS_SIZES[doc.docType];
+  const size = resolveCanvasSize(doc);
   const base = safeName(doc.title);
 
   if (kind === "png") {

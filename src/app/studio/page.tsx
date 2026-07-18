@@ -23,11 +23,12 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { designDocsApi, seminarsApi, activitiesApi } from "@/lib/bkend";
 import PageCanvas from "@/features/studio/PageCanvas";
-import { buildTemplatePages, buildBlankPages, type TemplatePrefill } from "@/features/studio/templates";
+import { buildTemplatePages, buildBlankPages, BRAND_TEMPLATES, type TemplatePrefill } from "@/features/studio/templates";
 import {
   DESIGN_CANVAS_SIZES,
   DESIGN_DOC_TYPE_LABELS,
   DESIGN_LINK_KIND_LABELS,
+  resolveCanvasSize,
   type DesignDocType,
   type DesignDocument,
   type DesignLink,
@@ -58,9 +59,12 @@ function StudioContent() {
   const [open, setOpen] = useState(false);
   const [docType, setDocType] = useState<DesignDocType>("cardnews");
   const [title, setTitle] = useState("");
-  const [useTemplate, setUseTemplate] = useState(true);
+  // 시작 템플릿: "default"(자동 구성) | "blank"(빈 캔버스) | 브랜드 템플릿 key
+  const [templateKey, setTemplateKey] = useState("default");
   const [linkKey, setLinkKey] = useState(""); // "seminar:<id>" | "study:<id>" ...
   const [creating, setCreating] = useState(false);
+
+  const brandTpl = useMemo(() => BRAND_TEMPLATES.find((t) => t.key === templateKey), [templateKey]);
 
   const { data: seminarsRes } = useQuery({
     queryKey: ["studio-seminars"],
@@ -119,12 +123,19 @@ function StudioContent() {
       const picked = linkOptions.find((o) => o.key === linkKey);
       const prefill = picked?.prefill ?? {};
       const now = new Date().toISOString();
+      // 브랜드 템플릿은 자체 docType(규격)을 사용, 그 외엔 선택한 docType
+      const effectiveDocType = brandTpl ? brandTpl.docType : docType;
+      const pages = brandTpl
+        ? brandTpl.build(prefill)
+        : templateKey === "blank"
+          ? buildBlankPages(docType)
+          : buildTemplatePages(docType, prefill);
       const created = await designDocsApi.create({
         userId: user.id,
         authorName: user.name,
-        docType,
-        title: title.trim() || picked?.link.title || `새 ${DESIGN_DOC_TYPE_LABELS[docType]}`,
-        pages: useTemplate ? buildTemplatePages(docType, prefill) : buildBlankPages(docType),
+        docType: effectiveDocType,
+        title: title.trim() || picked?.link.title || brandTpl?.label || `새 ${DESIGN_DOC_TYPE_LABELS[effectiveDocType]}`,
+        pages,
         ...(picked ? { linked: picked.link } : {}),
         published: false,
         createdAt: now,
@@ -179,7 +190,7 @@ function StudioContent() {
         ) : (
           <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {docs.map((d) => {
-              const size = DESIGN_CANVAS_SIZES[d.docType];
+              const size = resolveCanvasSize(d);
               const cover = d.pages[0];
               return (
                 <div key={d.id} className="group overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-md">
@@ -220,27 +231,73 @@ function StudioContent() {
           <DialogHeader><DialogTitle>새 디자인 만들기</DialogTitle></DialogHeader>
           <div className="space-y-4">
             <div>
-              <p className="mb-1.5 text-sm font-semibold">종류</p>
-              <div className="grid grid-cols-3 gap-2">
-                {(Object.keys(DESIGN_DOC_TYPE_LABELS) as DesignDocType[]).map((t) => {
-                  const s = DESIGN_CANVAS_SIZES[t];
-                  return (
-                    <button
-                      key={t}
-                      type="button"
-                      onClick={() => setDocType(t)}
-                      className={cn(
-                        "rounded-xl border p-3 text-center text-sm transition-colors",
-                        docType === t ? "border-primary bg-primary/5 font-semibold text-primary" : "hover:bg-muted",
-                      )}
-                    >
-                      {DESIGN_DOC_TYPE_LABELS[t]}
-                      <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">{s.width}×{s.height}</span>
-                    </button>
-                  );
-                })}
+              <p className="mb-1.5 text-sm font-semibold">시작 템플릿</p>
+              <div className="grid grid-cols-2 gap-2">
+                {([
+                  { key: "default", label: "자동 구성", desc: "브랜드 기본 레이아웃" },
+                  { key: "blank", label: "빈 캔버스", desc: "처음부터 직접" },
+                ] as const).map((o) => (
+                  <button
+                    key={o.key}
+                    type="button"
+                    onClick={() => setTemplateKey(o.key)}
+                    className={cn(
+                      "rounded-xl border p-2.5 text-left text-sm transition-colors",
+                      templateKey === o.key ? "border-primary bg-primary/5 font-semibold text-primary" : "hover:bg-muted",
+                    )}
+                  >
+                    {o.label}
+                    <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">{o.desc}</span>
+                  </button>
+                ))}
+              </div>
+              <p className="mb-1.5 mt-2 text-[11px] font-semibold text-muted-foreground">브랜드 템플릿 (온브랜드 시작)</p>
+              <div className="grid grid-cols-2 gap-2">
+                {BRAND_TEMPLATES.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setTemplateKey(t.key)}
+                    className={cn(
+                      "rounded-xl border p-2.5 text-left text-sm transition-colors",
+                      templateKey === t.key ? "border-primary bg-primary/5 font-semibold text-primary" : "hover:bg-muted",
+                    )}
+                  >
+                    {t.label}
+                    <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">{t.description}</span>
+                  </button>
+                ))}
               </div>
             </div>
+            {!brandTpl && (
+              <div>
+                <p className="mb-1.5 text-sm font-semibold">종류</p>
+                <div className="grid grid-cols-3 gap-2">
+                  {(Object.keys(DESIGN_DOC_TYPE_LABELS) as DesignDocType[]).map((t) => {
+                    const s = DESIGN_CANVAS_SIZES[t];
+                    return (
+                      <button
+                        key={t}
+                        type="button"
+                        onClick={() => setDocType(t)}
+                        className={cn(
+                          "rounded-xl border p-3 text-center text-sm transition-colors",
+                          docType === t ? "border-primary bg-primary/5 font-semibold text-primary" : "hover:bg-muted",
+                        )}
+                      >
+                        {DESIGN_DOC_TYPE_LABELS[t]}
+                        <span className="mt-0.5 block text-[11px] font-normal text-muted-foreground">{s.width}×{s.height}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
+            {brandTpl && (
+              <p className="rounded-lg bg-muted px-3 py-2 text-[11px] text-muted-foreground">
+                {brandTpl.label} · {DESIGN_DOC_TYPE_LABELS[brandTpl.docType]} 규격 {DESIGN_CANVAS_SIZES[brandTpl.docType].width}×{DESIGN_CANVAS_SIZES[brandTpl.docType].height} · 만든 뒤 매직 리사이즈로 다른 포맷 복제 가능
+              </p>
+            )}
             <div>
               <p className="mb-1.5 text-sm font-semibold">제목</p>
               <Input value={title} onChange={(e) => setTitle(e.target.value)} placeholder="예: 가을 세미나 홍보 카드뉴스" />
@@ -258,10 +315,6 @@ function StudioContent() {
                 ))}
               </select>
             </div>
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked={useTemplate} onChange={(e) => setUseTemplate(e.target.checked)} className="h-4 w-4 rounded border-input" />
-              브랜드 템플릿으로 시작 (네이비·골드 에디토리얼)
-            </label>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setOpen(false)} disabled={creating}>취소</Button>

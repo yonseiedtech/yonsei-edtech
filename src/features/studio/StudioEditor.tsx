@@ -16,6 +16,7 @@ import { toast } from "sonner";
 import {
   ArrowLeft, Type, Square, Circle, Minus, ImagePlus, Smile, Plus, Copy, Trash2,
   ChevronUp, ChevronDown, Save, Download, Loader2, Lock, Unlock, Layers, Undo2, Redo2,
+  Sparkles, Maximize2,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,8 +27,9 @@ import { designDocsApi, seminarsApi, streakEventsApi } from "@/lib/bkend";
 import { isStaffOrAbove } from "@/lib/permissions";
 import { uploadImage } from "@/lib/upload";
 import PageCanvas from "./PageCanvas";
-import { BRAND_COLORS, BRAND_ASSETS, STUDIO_ICONS, makeText, makeImage, makeShape, makeIcon, makePage, newId } from "./studio-utils";
-import { DESIGN_CANVAS_SIZES, DESIGN_DOC_TYPE_LABELS } from "./studio-types";
+import { BRAND_COLORS, BRAND_ASSETS, STUDIO_ICONS, makeText, makeImage, makeShape, makeIcon, makePage, newId, resizePages } from "./studio-utils";
+import { BRAND_PALETTE, BRAND_LOGOS } from "./brand-kit";
+import { DESIGN_DOC_TYPE_LABELS, DESIGN_RESIZE_PRESETS, resolveCanvasSize } from "./studio-types";
 import type { DesignDocument, DesignElement, DesignPage } from "./studio-types";
 
 const EDIT_SCALE_MAX_W = 560;
@@ -69,21 +71,25 @@ export default function StudioEditor({ docId }: { docId: string }) {
   const [savedAt, setSavedAt] = useState<string | null>(null);
   const [iconPickerOpen, setIconPickerOpen] = useState(false);
   const [imageMenuOpen, setImageMenuOpen] = useState(false);
+  const [brandPanelOpen, setBrandPanelOpen] = useState(false);
+  const [resizeMenuOpen, setResizeMenuOpen] = useState(false);
+  const closeAllPopovers = useCallback(() => {
+    setIconPickerOpen(false);
+    setImageMenuOpen(false);
+    setBrandPanelOpen(false);
+    setResizeMenuOpen(false);
+  }, []);
   // 팝오버 바깥 클릭/Escape 로 닫기 (Batch-3)
   useEffect(() => {
-    if (!iconPickerOpen && !imageMenuOpen) return;
+    if (!iconPickerOpen && !imageMenuOpen && !brandPanelOpen && !resizeMenuOpen) return;
     function onDown(e: PointerEvent) {
       const t = e.target as HTMLElement;
-      if (!t.closest("[data-studio-toolbar]")) {
-        setIconPickerOpen(false);
-        setImageMenuOpen(false);
+      if (!t.closest("[data-studio-toolbar]") && !t.closest("[data-studio-resize]")) {
+        closeAllPopovers();
       }
     }
     function onEsc(e: KeyboardEvent) {
-      if (e.key === "Escape") {
-        setIconPickerOpen(false);
-        setImageMenuOpen(false);
-      }
+      if (e.key === "Escape") closeAllPopovers();
     }
     window.addEventListener("pointerdown", onDown);
     window.addEventListener("keydown", onEsc);
@@ -91,7 +97,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
       window.removeEventListener("pointerdown", onDown);
       window.removeEventListener("keydown", onEsc);
     };
-  }, [iconPickerOpen, imageMenuOpen]);
+  }, [iconPickerOpen, imageMenuOpen, brandPanelOpen, resizeMenuOpen, closeAllPopovers]);
   const [exporting, setExporting] = useState<string | null>(null);
   const [editingTextId, setEditingTextId] = useState<string | null>(null);
   const dirtyRef = useRef(false);
@@ -110,7 +116,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
   const lastPushRef = useRef(0);
   const [historyTick, setHistoryTick] = useState(0); // 버튼 활성화 리렌더 트리거
 
-  const size = doc ? DESIGN_CANVAS_SIZES[doc.docType] : { width: 1080, height: 1080 };
+  const size = resolveCanvasSize(doc);
   // 컨테이너 실측 스케일 — 모바일에서 캔버스가 잘리지 않도록 (Batch-3)
   const canvasHostRef = useRef<HTMLDivElement | null>(null);
   const [hostWidth, setHostWidth] = useState<number>(EDIT_SCALE_MAX_W);
@@ -538,6 +544,38 @@ export default function StudioEditor({ docId }: { docId: string }) {
     }
   }
 
+  // ── 매직 리사이즈 (2026-07-18, 벤치마크 M2) ──
+  // 현재 디자인을 다른 포맷으로 "복제". 새 문서로 저장 후 이동 — 원본은 그대로.
+  const [resizing, setResizing] = useState(false);
+  async function magicResize(preset: (typeof DESIGN_RESIZE_PRESETS)[number]) {
+    if (!doc || !user || resizing || readOnly) return;
+    setResizeMenuOpen(false);
+    setResizing(true);
+    try {
+      await save(true);
+      const now = new Date().toISOString();
+      const created = await designDocsApi.create({
+        userId: user.id,
+        authorName: user.name,
+        docType: doc.docType,
+        canvasSize: preset.size,
+        title: `${doc.title} (${preset.label})`,
+        pages: resizePages(doc.pages, size, preset.size),
+        ...(doc.linked ? { linked: doc.linked } : {}),
+        published: false,
+        createdAt: now,
+        updatedAt: now,
+      });
+      toast.success(`${preset.label} 포맷으로 복제했습니다. 위치를 다듬어 완성하세요.`);
+      router.push(`/studio/${(created as DesignDocument).id}`);
+    } catch (err) {
+      console.error("[studio] magic resize failed", err);
+      toast.error("리사이즈에 실패했습니다.");
+    } finally {
+      setResizing(false);
+    }
+  }
+
   if (loading) {
     return <div className="flex min-h-[50vh] items-center justify-center text-sm text-muted-foreground">불러오는 중…</div>;
   }
@@ -620,8 +658,11 @@ export default function StudioEditor({ docId }: { docId: string }) {
           <Button size="sm" variant="ghost" onClick={() => addElement(makeShape("rect"))}><Square size={15} className="mr-1" />사각형</Button>
           <Button size="sm" variant="ghost" onClick={() => addElement(makeShape("circle"))}><Circle size={15} className="mr-1" />원</Button>
           <Button size="sm" variant="ghost" onClick={() => addElement(makeShape("line"))}><Minus size={15} className="mr-1" />선</Button>
-          <Button size="sm" variant="ghost" onClick={() => { setIconPickerOpen((v) => !v); setImageMenuOpen(false); }}><Smile size={15} className="mr-1" />아이콘</Button>
-          <Button size="sm" variant="ghost" onClick={() => { setImageMenuOpen((v) => !v); setIconPickerOpen(false); }}><ImagePlus size={15} className="mr-1" />이미지</Button>
+          <Button size="sm" variant="ghost" onClick={() => { const v = !iconPickerOpen; closeAllPopovers(); setIconPickerOpen(v); }}><Smile size={15} className="mr-1" />아이콘</Button>
+          <Button size="sm" variant="ghost" onClick={() => { const v = !imageMenuOpen; closeAllPopovers(); setImageMenuOpen(v); }}><ImagePlus size={15} className="mr-1" />이미지</Button>
+          <span className="mx-1 h-5 w-px bg-border" />
+          <Button size="sm" variant="ghost" onClick={() => { const v = !brandPanelOpen; closeAllPopovers(); setBrandPanelOpen(v); }}><Sparkles size={15} className="mr-1" />브랜드</Button>
+          <Button size="sm" variant="ghost" title="다른 포맷으로 복제 (매직 리사이즈)" onClick={() => { const v = !resizeMenuOpen; closeAllPopovers(); setResizeMenuOpen(v); }}><Maximize2 size={15} className="mr-1" />리사이즈</Button>
           <span className="mx-1 h-5 w-px bg-border" />
           <span className="text-xs text-muted-foreground">배경</span>
           {BRAND_COLORS.map((c) => (
@@ -678,6 +719,85 @@ export default function StudioEditor({ docId }: { docId: string }) {
                   </button>
                 ))}
               </div>
+            </div>
+          )}
+
+          {brandPanelOpen && (
+            <div className="absolute left-2 top-full z-20 mt-1 w-72 space-y-3 rounded-xl border bg-popover p-3 shadow-md">
+              <p className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+                <Sparkles size={12} />학회 브랜드 킷
+              </p>
+              <div>
+                <p className="mb-1 text-[11px] font-semibold text-muted-foreground">브랜드 배경</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {([
+                    ["네이비", BRAND_PALETTE.navy],
+                    ["골드", BRAND_PALETTE.gold],
+                    ["페이퍼", BRAND_PALETTE.paper],
+                    ["딥그린", BRAND_PALETTE.green],
+                    ["흰색", BRAND_PALETTE.white],
+                  ] as const).map(([label, c]) => (
+                    <button
+                      key={c}
+                      type="button"
+                      title={`배경 ${label}`}
+                      onClick={() => patchPage((p) => ({ ...p, background: c }))}
+                      className={cn(
+                        "flex items-center gap-1.5 rounded-lg border px-2 py-1 text-[11px] hover:bg-accent",
+                        page.background === c && "ring-2 ring-primary ring-offset-1",
+                      )}
+                    >
+                      <span className="h-3.5 w-3.5 rounded-full border" style={{ background: c }} />
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div>
+                <p className="mb-1 text-[11px] font-semibold text-muted-foreground">로고 삽입</p>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => { addElement(makeImage(BRAND_LOGOS.emblem, { fit: "contain", w: Math.round(size.width * 0.16), h: Math.round(size.width * 0.16) })); setBrandPanelOpen(false); }}
+                    className="rounded-lg border px-2 py-1 text-xs hover:bg-accent"
+                  >
+                    엠블럼
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => { addElement(makeImage(BRAND_LOGOS.textLogo, { fit: "contain", w: Math.round(size.width * 0.4), h: Math.round(size.width * 0.12) })); setBrandPanelOpen(false); }}
+                    className="rounded-lg border px-2 py-1 text-xs hover:bg-accent"
+                  >
+                    텍스트 로고
+                  </button>
+                </div>
+              </div>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                요소 색은 오른쪽 속성 패널의 브랜드 스와치로 통일하세요.
+              </p>
+            </div>
+          )}
+
+          {resizeMenuOpen && (
+            <div data-studio-resize className="absolute left-2 top-full z-20 mt-1 w-72 space-y-2 rounded-xl border bg-popover p-3 shadow-md">
+              <p className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
+                <Maximize2 size={12} />다른 포맷으로 복제 (매직 리사이즈)
+              </p>
+              <p className="text-[11px] leading-relaxed text-muted-foreground">
+                현재 디자인을 새 크기로 <b>복제</b>합니다(원본 유지). 요소는 비례 축소·중앙 정렬되니 위치를 다듬어 완성하세요.
+              </p>
+              {DESIGN_RESIZE_PRESETS.map((preset) => (
+                <button
+                  key={preset.key}
+                  type="button"
+                  disabled={resizing}
+                  onClick={() => void magicResize(preset)}
+                  className="flex w-full items-center justify-between rounded-lg border px-2.5 py-2 text-left text-xs hover:bg-accent disabled:opacity-60"
+                >
+                  <span className="font-semibold">{preset.label}</span>
+                  <span className="text-[11px] text-muted-foreground">{preset.size.width}×{preset.size.height}</span>
+                </button>
+              ))}
             </div>
           )}
         </div>

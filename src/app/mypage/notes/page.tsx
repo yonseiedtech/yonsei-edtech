@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import EmptyState from "@/components/ui/empty-state";
+import ConceptLinkedText from "@/components/archive/ConceptLinkedText";
 import { cn } from "@/lib/utils";
 import {
   USER_NOTE_CATEGORY_LABELS,
@@ -92,9 +93,11 @@ function NoteCard({
         </div>
       </div>
 
-      {/* 본문 미리보기 */}
+      {/* 본문 미리보기 — 아카이브 개념 자동 링크(열람 렌더, 편집은 별도) */}
       {note.body && (
-        <p className="line-clamp-3 text-xs text-muted-foreground">{note.body}</p>
+        <p className="line-clamp-3 text-xs text-muted-foreground">
+          <ConceptLinkedText text={note.body} />
+        </p>
       )}
 
       {/* 푸터: 카테고리 + 태그 + 날짜 */}
