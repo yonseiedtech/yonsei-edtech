@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Loader2, Send } from "lucide-react";
 import { toast } from "sonner";
 import { commQuestionsApi } from "@/lib/bkend";
-import type { CommBoard, User } from "@/types";
+import type { CommBoard, CommQuestion, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { getGuestNickname, setGuestNickname } from "./guest-name";
 
@@ -12,6 +12,8 @@ interface Props {
   board: CommBoard;
   user: User | null;
   onCreated: () => void;
+  /** 생성된 질문 객체를 전달 — 멘토 알림 등 후속 트리거용 (선택) */
+  onQuestionCreated?: (question: CommQuestion) => void;
   /** 수업 발표 보드 — 질문을 태깅할 발표자 (board.presenters 중 하나, undefined=공통) */
   presenter?: string;
   /** 입장 게이트에서 설정한 게스트 닉네임 — 변경 시 즉시 반영 (QA P1) */
@@ -19,7 +21,7 @@ interface Props {
 }
 
 /** 질문/답변 공용으로 쓰는 게스트 이름·익명 로직을 포함한 질문 작성기 */
-export default function QuestionComposer({ board, user, onCreated, presenter, guestNickname }: Props) {
+export default function QuestionComposer({ board, user, onCreated, onQuestionCreated, presenter, guestNickname }: Props) {
   const [body, setBody] = useState("");
   const [anonymous, setAnonymous] = useState(false);
   // 게스트 닉네임: 입장 게이트 prop 우선, 없으면 localStorage — 게이트 설정/변경 즉시 반영
@@ -39,7 +41,7 @@ export default function QuestionComposer({ board, user, onCreated, presenter, gu
     }
     setSaving(true);
     try {
-      await commQuestionsApi.create({
+      const created = await commQuestionsApi.create({
         boardId: board.id,
         contextId: board.contextId,
         authorId: user?.id,
@@ -54,6 +56,7 @@ export default function QuestionComposer({ board, user, onCreated, presenter, gu
       setBody("");
       setAnonymous(false);
       onCreated();
+      onQuestionCreated?.(created);
       toast.success("질문이 등록되었습니다.");
     } catch (e) {
       console.error("[comm-question/create]", e);

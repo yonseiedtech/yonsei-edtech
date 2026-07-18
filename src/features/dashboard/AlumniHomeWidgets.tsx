@@ -39,12 +39,12 @@ import {
   Settings,
   MessageCircleQuestion,
 } from "lucide-react";
-import { alumniThesesApi, activitiesApi, seminarsApi, commBoardsApi, commQuestionsApi } from "@/lib/bkend";
-import type { Activity, AlumniThesis, CommBoard, CommQuestion, Seminar } from "@/types";
+import { alumniThesesApi, activitiesApi, seminarsApi } from "@/lib/bkend";
+import type { Activity, AlumniThesis, Seminar } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
 import WidgetCard from "@/components/ui/widget-card";
 import EmptyState from "@/components/ui/empty-state";
-import { MENTORING_CONTEXT_ID, matchesMentorTopics } from "@/features/mentoring/topics";
+import { loadMentorStats } from "@/features/mentoring/mentor-stats";
 
 interface UpcomingEvent {
   id: string;
@@ -98,24 +98,17 @@ export default function AlumniHomeWidgets() {
   const mentorOpen = !!user?.mentorOpen;
   const mentorTopics = user?.mentorTopics ?? [];
 
-  // ── 멘토링 Q&A: 내 분야 미해결 질문 수 ──
-  // 멘토 오픈 졸업생에게 "내 분야에 답변 기다리는 질문 N건" 을 노출해 참여를 유도.
+  // ── 멘토링 Q&A: 내 분야 미해결 질문 수 + 응답 이력(답변·채택) ──
+  // 멘토 오픈 졸업생에게 "내 분야에 답변 기다리는 질문 N건" + 가벼운 이력을 노출해 참여를 유도.
+  // /mentoring 화면과 동일 queryKey(["mentor-stats", userId])로 캐시 공유.
   // 보드 미프로비저닝(아직 아무도 /mentoring 방문 전)이면 0건으로 우아하게 폴백.
-  const { data: myTopicOpenCount = 0 } = useQuery({
-    queryKey: ["mentoring-open-questions", user?.id ?? "anon"],
+  const { data: mentorStats } = useQuery({
+    queryKey: ["mentor-stats", user?.id ?? "anon"],
     enabled: mentorOpen,
     staleTime: 5 * 60 * 1000,
-    queryFn: async () => {
-      const boardsRes = await commBoardsApi.listByContext("mentoring", MENTORING_CONTEXT_ID);
-      const board = (boardsRes.data as CommBoard[])[0];
-      if (!board) return 0;
-      const qRes = await commQuestionsApi.listByBoard(board.id);
-      const questions = qRes.data as CommQuestion[];
-      return questions.filter(
-        (q) => !q.resolved && matchesMentorTopics(q.presenter, mentorTopics),
-      ).length;
-    },
+    queryFn: () => loadMentorStats(user!.id, mentorTopics),
   });
+  const myTopicOpenCount = mentorStats?.openInMyTopics ?? 0;
 
   // ── 1) 최근 학술활동 (status !== completed, 상위 2건) ──
   // MyAcademicActivitiesWidget 와 동일 queryKey ["activities", "all"] 공유.
@@ -368,6 +361,13 @@ export default function AlumniHomeWidgets() {
                     </span>
                   ))}
                 </div>
+              )}
+              {mentorStats && (mentorStats.answered > 0 || mentorStats.accepted > 0) && (
+                <p className="mt-2.5 text-xs text-muted-foreground">
+                  지금까지 답변 <b className="font-semibold text-foreground">{mentorStats.answered}개</b>
+                  <span className="mx-1" aria-hidden="true">·</span>
+                  채택 <b className="font-semibold text-foreground">{mentorStats.accepted}회</b>
+                </p>
               )}
               <Link
                 href="/mentoring"

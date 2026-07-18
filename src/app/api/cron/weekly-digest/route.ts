@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
+import { shouldSuppressForQuietHours, type QuietHoursConfig } from "@/lib/notify-timing";
 import { todayYmdKst } from "@/lib/dday";
 import {
   WEEKLY_GOAL_PRESETS,
@@ -9,6 +10,7 @@ import {
   judgeWeeklyGoal,
 } from "@/lib/weekly-goal";
 import type { WeeklyGoalChannel } from "@/types/weekly-goal";
+import { MENTORING_CONTEXT_ID, matchesMentorTopics } from "@/features/mentoring/topics";
 
 /**
  * 주간 다이제스트 이메일 cron — Sprint 54
@@ -206,6 +208,78 @@ async function loadUnansweredQuestions(db: FirebaseFirestore.Firestore): Promise
     .filter((q) => q._open && q.boardId)
     .sort((a, b) => b.createdAt.localeCompare(a.createdAt))
     .slice(0, 3);
+}
+
+/* ────────────────────────── 멘토 활성화 (v6-H4) ────────────────────────── */
+
+/**
+ * 멘토 오픈 졸업생 수신자별 "답을 기다리는(3일+ 미답변) 멘토링 질문 수".
+ * 학습 제안/개인화 블록과 독립된 별도 함수 — 멘토 분야(mentorTopics) 교집합 + 분야 무관 질문 합산.
+ * 읽기 전용. 보드 미프로비저닝·조회 실패 시 빈 Map(줄 생략).
+ *
+ * @param usersById mentorOpen·mentorTopics 를 포함한 회원 doc 맵
+ */
+async function loadMentorPendingByUser(
+  db: FirebaseFirestore.Firestore,
+  userIds: string[],
+  usersById: Map<string, { mentorOpen?: boolean; mentorTopics?: string[] }>,
+): Promise<Map<string, number>> {
+  const out = new Map<string, number>();
+  const mentorIds = userIds.filter((id) => usersById.get(id)?.mentorOpen === true);
+  if (mentorIds.length === 0) return out;
+
+  // 멘토링 보드 (단일 전역) — contextId 단일 필터(복합 인덱스 회피)
+  let boardId = "";
+  try {
+    const bs = await db
+      .collection("comm_boards")
+      .where("contextId", "==", MENTORING_CONTEXT_ID)
+      .limit(1)
+      .get();
+    boardId = bs.docs[0]?.id ?? "";
+  } catch {
+    return out;
+  }
+  if (!boardId) return out;
+
+  // 3일+ 경과·답변 0건·미해결 질문
+  const cutoffIso = new Date(Date.now() - 3 * 86_400_000).toISOString();
+  const pending: { topic: string }[] = [];
+  try {
+    const snap = await db.collection("comm_questions").where("boardId", "==", boardId).get();
+    for (const doc of snap.docs) {
+      const d = doc.data() as { presenter?: string; answerCount?: number; resolved?: boolean; createdAt?: string };
+      if ((d.answerCount ?? 0) > 0 || d.resolved === true) continue;
+      if (!d.createdAt || d.createdAt > cutoffIso) continue; // 3일 미만 제외
+      pending.push({ topic: (d.presenter ?? "").trim() });
+    }
+  } catch {
+    return out;
+  }
+  if (pending.length === 0) return out;
+
+  for (const uid of mentorIds) {
+    const topics = usersById.get(uid)?.mentorTopics ?? [];
+    let count = 0;
+    for (const p of pending) {
+      // 분야 무관 질문은 모든 멘토에게, 분야 태그는 교집합 멘토에게만
+      if (!p.topic || matchesMentorTopics(p.topic, topics)) count++;
+    }
+    if (count > 0) out.set(uid, count);
+  }
+  return out;
+}
+
+/** 멘토 수신자용 "답을 기다리는 질문" 한 줄 블록 (없으면 빈 문자열) */
+function buildMentorHtml(pendingCount: number): string {
+  if (pendingCount <= 0) return "";
+  const base = "https://yonsei-edtech.vercel.app";
+  return `
+      <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">🤝 멘토 알림</h3>
+      <ul style="line-height: 1.9; padding-left: 20px;">
+        <li>회원님 멘토 분야에 답을 기다리는 후배 질문 <b>${pendingCount}건</b> <a href="${base}/mentoring" style="color:#003876;text-decoration:none;font-size:13px">답변하러 가기 →</a></li>
+      </ul>
+`;
 }
 
 /* ────────────────────────── 개인화 집계 (R2 — 나의 한 주) ────────────────────────── */
@@ -681,7 +755,7 @@ function buildSuggestionHtml(s: LearningSuggestion): string {
 `;
 }
 
-function buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest; suggestion?: LearningSuggestion; peersHtml?: string }): string {
+function buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest; suggestion?: LearningSuggestion; peersHtml?: string; mentorHtml?: string }): string {
   const base = "https://yonsei-edtech.vercel.app";
   const seminarHtml = seminars.length === 0
     ? "<li style=\"color:#888\">예정된 세미나가 없습니다.</li>"
@@ -700,6 +774,7 @@ function buildHtml({ seminars, posts, activities, questions, personal, suggestio
       <p style="color: #666; margin: 0 0 24px;">이번 주 학회 활동을 한눈에 확인하세요.</p>
 ${personal ? buildPersonalHtml(personal) : ""}
 ${suggestion ? buildSuggestionHtml(suggestion) : ""}
+${mentorHtml ?? ""}
 ${peersHtml ?? ""}
       <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">📅 다가오는 세미나</h3>
       <ul style="line-height: 1.9; padding-left: 20px;">${seminarHtml}</ul>
@@ -748,20 +823,24 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   const userIds: string[] = [];
   const usersById = new Map<
     string,
-    { bio?: string; researchInterests?: string[]; interestKeywords?: string[]; name?: string; showInLeaderboard?: boolean }
+    { bio?: string; researchInterests?: string[]; interestKeywords?: string[]; name?: string; showInLeaderboard?: boolean; mentorOpen?: boolean; mentorTopics?: string[] }
   >();
   for (const u of usersSnap.docs) {
     const d = u.data() as {
       email?: string;
       contactEmail?: string;
-      notificationPrefs?: { weeklyDigest?: boolean };
+      notificationPrefs?: { weeklyDigest?: boolean; quietHours?: QuietHoursConfig };
       bio?: string;
       researchInterests?: string[];
       interestKeywords?: string[];
       name?: string;
       showInLeaderboard?: boolean;
+      mentorOpen?: boolean;
+      mentorTopics?: string[];
     };
     if (d.notificationPrefs?.weeklyDigest === false) continue;
+    // H6: 조용한 시간 구간이면 이메일 발송 스킵 (기본 22–08 KST 는 09:00 발송과 무겹침 → 무회귀)
+    if (shouldSuppressForQuietHours(d.notificationPrefs?.quietHours)) continue;
     userIds.push(u.id);
     usersById.set(u.id, {
       bio: d.bio,
@@ -769,6 +848,8 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
       interestKeywords: d.interestKeywords,
       name: d.name,
       showInLeaderboard: d.showInLeaderboard,
+      mentorOpen: d.mentorOpen,
+      mentorTopics: d.mentorTopics,
     });
     const email = d.email || d.contactEmail;
     if (email) recipients.push({ id: u.id, email });
@@ -811,6 +892,14 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     console.error("[email] weekly-digest goal-result merge error:", e);
   }
 
+  // v6-H4: 멘토 오픈 졸업생 — 답을 기다리는 질문 수 (별도 함수·실패 비차단)
+  let mentorPendingById = new Map<string, number>();
+  try {
+    mentorPendingById = await loadMentorPendingByUser(db, recipients.map((r) => r.id), usersById);
+  } catch (e) {
+    console.error("[email] weekly-digest mentor-pending error:", e);
+  }
+
   const resend = new Resend(key);
   const subject = `[연세교육공학회] 주간 다이제스트 (${weekKey})`;
 
@@ -819,7 +908,11 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   const isPersonal = (id: string) => {
     const p = personalById.get(id);
     const s = suggestionById.get(id);
-    return (p ? hasPersonalContent(p) : false) || (s ? hasSuggestionContent(s) : false);
+    return (
+      (p ? hasPersonalContent(p) : false) ||
+      (s ? hasSuggestionContent(s) : false) ||
+      (mentorPendingById.get(id) ?? 0) > 0
+    );
   };
   const personalRecipients = recipients.filter((r) => isPersonal(r.id));
   const genericEmails = recipients.filter((r) => !isPersonal(r.id)).map((r) => r.email);
@@ -849,7 +942,8 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   for (const r of personalRecipients) {
     const personal = personalById.get(r.id);
     const suggestion = suggestionById.get(r.id);
-    const html = buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml });
+    const mentorHtml = buildMentorHtml(mentorPendingById.get(r.id) ?? 0);
+    const html = buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml });
     try {
       await resend.emails.send({
         from: "연세교육공학회 <noreply@yonsei-edtech.vercel.app>",

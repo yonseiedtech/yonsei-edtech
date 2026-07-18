@@ -72,6 +72,7 @@ export type NotificationType =
   | "networking_reminder"   // 모임·행사 D-1/당일·RSVP 마감 리마인더 (cron, Phase 2)
   | "mention"               // @멘션 — 게시글·댓글에서 이름 호출 (Phase 3)
   | "direct_message"        // 쪽지 수신 (리텐션 재감사 2026-07-04)
+  | "mentoring_question"    // 멘토 분야에 새 멘토링 Q&A 질문 도착 (v6-H4)
   | "collab_invite"         // 공동 연구 초대 수신
   | "reaction"              // 내 글에 이모지 공감
   | "profile_like";         // 내 프로필 좋아요

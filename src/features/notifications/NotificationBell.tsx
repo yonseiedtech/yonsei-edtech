@@ -26,6 +26,7 @@ const TYPE_ICONS: Record<AppNotification["type"], string> = {
   networking_reminder: "🎉",
   mention: "🙋",
   direct_message: "✉️",
+  mentoring_question: "🤝",
   collab_invite: "🤝",
   reaction: "❤️",
   profile_like: "👍",

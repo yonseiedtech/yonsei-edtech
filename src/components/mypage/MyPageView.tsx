@@ -14,6 +14,7 @@ import { certificatesApi, activitiesApi, profilesApi, reviewsApi, diagnosticResu
 import { auth } from "@/lib/firebase";
 import { enrichCertificates } from "@/lib/denorm-sync";
 import { todayYmdLocal, todayYmdKst } from "@/lib/dday";
+import { DEFAULT_QUIET_HOURS } from "@/lib/notify-timing";
 import { useResearchPapers } from "@/features/research/useResearchPapers";
 import { useMyInterviewResponses } from "@/features/board/interview-store";
 import type { Certificate, Activity, User, SeminarReview } from "@/types";
@@ -1300,6 +1301,8 @@ function NotificationSettingsCard({ user }: { user: User }) {
     pushCommBoard?: boolean;
     /** opt-in: undefined/false → 꺼짐. 명시 true 일 때만 켜짐 */
     pushFlashcardReview?: boolean;
+    /** H6: 조용한 시간 */
+    quietHours?: { enabled?: boolean; start?: string; end?: string };
   };
   const prefs = (user as User & { notificationPrefs?: PrefShape }).notificationPrefs;
   const [digest, setDigest] = useState<boolean>(prefs?.weeklyDigest !== false);
@@ -1322,6 +1325,10 @@ function NotificationSettingsCard({ user }: { user: User }) {
   // QA-v3 H7: 서버 정책은 보유자 한정 opt-out(미설정=발송) — UI 도 동일 의미로 표시해야
   // "꺼짐으로 보이는데 발송되는" 역전이 없다. 명시 false 일 때만 꺼짐.
   const [pushFlashcardReview, setPushFlashcardReview] = useState<boolean>(prefs?.pushFlashcardReview !== false);
+  // H6: 조용한 시간 (기본 22:00~08:00 KST, enabled=false 로 명시될 때만 비활성)
+  const [quietEnabled, setQuietEnabled] = useState<boolean>(prefs?.quietHours?.enabled !== false);
+  const [quietStart, setQuietStart] = useState<string>(prefs?.quietHours?.start ?? DEFAULT_QUIET_HOURS.start);
+  const [quietEnd, setQuietEnd] = useState<string>(prefs?.quietHours?.end ?? DEFAULT_QUIET_HOURS.end);
   const [busyKey, setBusyKey] = useState<string | null>(null);
 
   async function updateLeaderboardPref(next: boolean) {
@@ -1363,6 +1370,31 @@ function NotificationSettingsCard({ user }: { user: User }) {
     } catch (e) {
       setter(!next);
       prefOverridesRef.current[key] = !next;
+      const { toast } = await import("sonner");
+      toast.error(`설정 변경 실패: ${(e as Error).message}`);
+    } finally {
+      setBusyKey(null);
+    }
+  }
+
+  // H6: 조용한 시간 저장 — 중첩 객체(quietHours)를 기존 prefs + 세션 누적 flat 변경분과 병합.
+  async function persistQuietHours(next: { enabled: boolean; start: string; end: string }) {
+    setBusyKey("quietHours");
+    try {
+      await profilesApi.update(user.id, {
+        notificationPrefs: {
+          ...((user as User & { notificationPrefs?: Record<string, unknown> }).notificationPrefs ?? {}),
+          ...prefOverridesRef.current,
+          quietHours: next,
+        },
+      });
+      const { toast } = await import("sonner");
+      toast.success(
+        next.enabled
+          ? `조용한 시간을 ${next.start}~${next.end} 로 설정했습니다.`
+          : "조용한 시간을 껐습니다.",
+      );
+    } catch (e) {
       const { toast } = await import("sonner");
       toast.error(`설정 변경 실패: ${(e as Error).message}`);
     } finally {
@@ -1459,6 +1491,70 @@ function NotificationSettingsCard({ user }: { user: User }) {
           onToggle={() => void updateLeaderboardPref(!leaderboard)}
           ariaLabel="학습 잔디 순위 노출 토글"
         />
+        {/* H6: 조용한 시간 (Duolingo — 스팸화 방지) */}
+        <div className="py-3">
+          <div className="flex items-start justify-between gap-3">
+            <div className="min-w-0 flex-1">
+              <p className="text-sm font-medium">조용한 시간</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                이 시간대에는 push·이메일 알림을 보내지 않습니다 (알림함에는 그대로 쌓입니다). 기본 22:00~08:00.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                const next = !quietEnabled;
+                setQuietEnabled(next);
+                void persistQuietHours({ enabled: next, start: quietStart, end: quietEnd });
+              }}
+              disabled={busyKey === "quietHours"}
+              role="switch"
+              aria-checked={quietEnabled}
+              aria-label="조용한 시간 사용 토글"
+              className={cn(
+                "relative inline-flex h-7 w-12 shrink-0 items-center rounded-full transition-colors",
+                quietEnabled ? "bg-primary" : "bg-muted",
+                busyKey === "quietHours" && "opacity-50",
+              )}
+            >
+              <span
+                className={cn(
+                  "inline-block h-5 w-5 transform rounded-full bg-card shadow transition-transform",
+                  quietEnabled ? "translate-x-6" : "translate-x-1",
+                )}
+              />
+            </button>
+          </div>
+          {quietEnabled && (
+            <div className="mt-3 flex items-center gap-2">
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span>시작</span>
+                <input
+                  type="time"
+                  value={quietStart}
+                  onChange={(e) => setQuietStart(e.target.value)}
+                  onBlur={() => void persistQuietHours({ enabled: quietEnabled, start: quietStart, end: quietEnd })}
+                  disabled={busyKey === "quietHours"}
+                  aria-label="조용한 시간 시작"
+                  className="rounded-lg border bg-card px-2 py-1 text-sm outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                />
+              </label>
+              <span className="text-muted-foreground">~</span>
+              <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                <span>종료</span>
+                <input
+                  type="time"
+                  value={quietEnd}
+                  onChange={(e) => setQuietEnd(e.target.value)}
+                  onBlur={() => void persistQuietHours({ enabled: quietEnabled, start: quietStart, end: quietEnd })}
+                  disabled={busyKey === "quietHours"}
+                  aria-label="조용한 시간 종료"
+                  className="rounded-lg border bg-card px-2 py-1 text-sm outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+                />
+              </label>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Notif-Pref Sprint: Push 알림 5종 */}

@@ -7,6 +7,7 @@
  */
 
 import { getAdminDb, getAdminMessaging } from "./firebase-admin";
+import { shouldSuppressForQuietHours, type QuietHoursConfig } from "./notify-timing";
 
 export interface PushPayload {
   title: string;
@@ -100,7 +101,12 @@ export async function filterRecipientsByPreference(
     const seen = new Set<string>();
     for (const d of snap.docs) {
       seen.add(d.id);
-      const data = d.data() as { notificationPrefs?: Record<string, boolean | undefined> };
+      const data = d.data() as {
+        notificationPrefs?: Record<string, boolean | undefined> & { quietHours?: QuietHoursConfig };
+      };
+      // H6: 조용한 시간(quiet hours) 구간이면 push 스킵 (인앱 알림은 별도로 영향 없음).
+      // 기본 22–08 KST 는 현재 cron 발송 시각(09:00 KST)과 겹치지 않아 무회귀.
+      if (shouldSuppressForQuietHours(data.notificationPrefs?.quietHours)) continue;
       const v = data.notificationPrefs?.[field];
       if (optIn) {
         // opt-in: 명시 true 일 때만 발송

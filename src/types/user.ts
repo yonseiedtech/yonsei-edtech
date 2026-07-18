@@ -174,6 +174,19 @@ export interface NotificationPrefs {
   pushAdminNudge?: boolean;
   /** 신규 알림 도착 시 화면 내 toast 표시 여부 — false 로 명시될 때만 옵트아웃 (기본 true) */
   toastEnabled?: boolean;
+  /**
+   * 조용한 시간(quiet hours) — 벤치마크 H6 (Duolingo 스팸화 방지).
+   * 이 구간에 발송 시각이 들어가면 push/이메일을 스킵한다(인앱 알림은 영향 없음).
+   * 기본 22:00~08:00 KST. enabled=false 로 명시될 때만 비활성.
+   * 판정은 순수 함수 lib/notify-timing.ts 참조.
+   */
+  quietHours?: {
+    enabled?: boolean;
+    /** "HH:MM" KST (기본 22:00) */
+    start?: string;
+    /** "HH:MM" KST (기본 08:00) */
+    end?: string;
+  };
 }
 
 /** kind → notificationPrefs 필드 매핑 — 서버 cron / 클라이언트 UI 공용 */
