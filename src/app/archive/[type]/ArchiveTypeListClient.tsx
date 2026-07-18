@@ -483,7 +483,9 @@ function ArchiveTypeListClientInner({ type, initialItems, initialTotal, prefetch
 
       {/* 리스트 */}
       <div className="mt-4 grid grid-cols-1 gap-3 md:grid-cols-2">
-        {initialLoading || (loadingFull && !fullyLoaded) ? (
+        {/* 견고성(2026-07-19): 전량 로드 승격이 pending 이어도 프리패치분으로 계산된
+            filtered 가 있으면 즉시 렌더 — 스켈레톤은 "보여줄 것이 없을 때"만. */}
+        {filtered.length === 0 && (initialLoading || (loadingFull && !fullyLoaded)) ? (
           Array.from({ length: 4 }).map((_, i) => (
             <Skeleton key={i} className="h-32 w-full" />
           ))
