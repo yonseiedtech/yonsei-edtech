@@ -1,3 +1,4 @@
+import { Suspense } from "react";
 import { notFound } from "next/navigation";
 import { loadSeries } from "@/features/card-news/loader";
 import CardNewsEditor from "@/features/card-news/CardNewsEditor";
@@ -49,5 +50,9 @@ export default async function CardNewsEditPage({ params }: PageProps) {
     initial = loaded;
   }
 
-  return <CardNewsEditor initial={initial} isNew={isNew} />;
+  return (
+    <Suspense fallback={null}>
+      <CardNewsEditor initial={initial} isNew={isNew} />
+    </Suspense>
+  );
 }

@@ -50,7 +50,8 @@ import type {
 import type { Flashcard } from "@/types/flashcard";
 import { SEMESTER_TERM_LABELS } from "@/types";
 import { cn } from "@/lib/utils";
-import { GROUP_ORDER, visibleRoutes } from "./command-routes";
+import { GROUP_ORDER, visibleRoutes, visibleActions } from "./command-routes";
+import CommandPaletteCoach from "./CommandPaletteCoach";
 
 interface SearchItem {
   key: string;
@@ -61,6 +62,8 @@ interface SearchItem {
   icon: LucideIcon;
   /** 검색 매칭 대상 (label 외 별칭·저자 등) */
   haystack: string;
+  /** 우측 표기 단축키(빠른 필터 프리픽스, 예 ">진단") — 빠른 실행 명령에만 존재 */
+  shortcut?: string;
 }
 
 const ACTIVITY_ROUTE: Record<Activity["type"], string> = {
@@ -73,6 +76,9 @@ const PER_GROUP_LIMIT = 5;
 
 const RECENT_KEY = "global-search.recent";
 const RECENT_LIMIT = 5;
+
+/** 커맨드 팔레트 1회 코치마크 — 로그인 회원 최초 1회만 노출 (벤치마크 H1) */
+const COACH_KEY = "global-search.coach-dismissed";
 
 function loadRecentKeys(): string[] {
   try {
@@ -116,15 +122,59 @@ export default function GlobalSearch() {
 
   const [recentKeys, setRecentKeys] = useState<string[]>([]);
 
+  // 1회 코치마크: 로그인 회원이며 아직 닫지 않았을 때만 노출
+  const [showCoach, setShowCoach] = useState(false);
+  useEffect(() => {
+    if (!user) {
+      setShowCoach(false);
+      return;
+    }
+    try {
+      setShowCoach(!window.localStorage.getItem(COACH_KEY));
+    } catch {
+      setShowCoach(false);
+    }
+  }, [user]);
+
+  function dismissCoach() {
+    setShowCoach(false);
+    try {
+      window.localStorage.setItem(COACH_KEY, "1");
+    } catch {
+      /* localStorage 불가 환경 무시 */
+    }
+  }
+
   useEffect(() => {
     if (open) {
       setQuery("");
       setActiveIdx(0);
       setRecentKeys(loadRecentKeys());
+      // 팔레트를 한 번 열면 코치마크 임무 완료 → 닫고 플래그 저장
+      setShowCoach(false);
+      try {
+        window.localStorage.setItem(COACH_KEY, "1");
+      } catch {
+        /* 무시 */
+      }
       // Dialog 마운트 직후 포커스
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [open]);
+
+  // 빠른 실행 명령(최상단) — 라우트 이동을 넘어 대표 도구를 즉시 실행
+  const actionItems: SearchItem[] = useMemo(() => {
+    return visibleActions(user?.role).map((r) => ({
+      key: r.key,
+      group: r.group,
+      label: r.label,
+      sub: r.sub,
+      href: r.href,
+      icon: r.icon,
+      shortcut: r.shortcut,
+      haystack: `${r.label} ${r.sub ?? ""} ${r.keywords}`,
+    }));
+  }, [user?.role]);
 
   // 정적 라우트 — 역할 기반 필터(즉시 사용 가능, 네트워크 무관)
   const routeItems: SearchItem[] = useMemo(() => {
@@ -265,18 +315,21 @@ export default function GlobalSearch() {
     return items;
   }, [sources]);
 
-  // 정적 라우트(우선) + 동적 콘텐츠(보조)
+  // 빠른 실행(최상단) + 정적 라우트(우선) + 동적 콘텐츠(보조)
   const allItems: SearchItem[] = useMemo(
-    () => [...routeItems, ...dynamicItems],
-    [routeItems, dynamicItems],
+    () => [...actionItems, ...routeItems, ...dynamicItems],
+    [actionItems, routeItems, dynamicItems],
   );
 
   const results: SearchItem[] = useMemo(() => {
-    const q = query.trim().toLowerCase();
+    const raw = query.trim().toLowerCase();
+    // '>' 프리픽스 = 빠른 필터: "빠른 실행" 명령만 좁혀 보기 (Linear/Arc 팔레트 관례)
+    const actionOnly = raw.startsWith(">");
+    const q = actionOnly ? raw.slice(1).trim() : raw;
     const out: SearchItem[] = [];
     const usedKeys = new Set<string>();
     // 빈 쿼리: 최근 선택을 선두 그룹으로 (stale 키는 매칭 실패로 자동 무시)
-    if (!q && recentKeys.length > 0) {
+    if (!actionOnly && !q && recentKeys.length > 0) {
       const byKey = new Map(allItems.map((i) => [i.key, i] as const));
       for (const k of recentKeys) {
         const item = byKey.get(k);
@@ -288,6 +341,7 @@ export default function GlobalSearch() {
     const byGroup = new Map<string, SearchItem[]>();
     for (const item of allItems) {
       if (usedKeys.has(item.key)) continue;
+      if (actionOnly && item.group !== "빠른 실행") continue;
       if (q && !item.haystack.toLowerCase().includes(q)) continue;
       const list = byGroup.get(item.group) ?? [];
       if (list.length >= PER_GROUP_LIMIT) continue;
@@ -342,18 +396,21 @@ export default function GlobalSearch() {
       >
         <Search size={18} />
       </button>
-      <button
-        type="button"
-        onClick={() => setOpen(true)}
-        aria-label="전역 검색 (Ctrl+K)"
-        className="hidden h-9 items-center gap-2 rounded-full border bg-muted/40 px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring md:inline-flex"
-      >
-        <Search size={14} />
-        검색
-        <kbd className="rounded border bg-background px-1.5 py-0.5 font-mono text-[10px] leading-none">
-          Ctrl K
-        </kbd>
-      </button>
+      <div className="relative hidden md:block">
+        <button
+          type="button"
+          onClick={() => setOpen(true)}
+          aria-label="전역 검색 (Ctrl+K)"
+          className="inline-flex h-9 items-center gap-2 rounded-full border bg-muted/40 px-3 text-xs text-muted-foreground transition-colors hover:bg-muted hover:text-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+        >
+          <Search size={14} />
+          검색
+          <kbd className="rounded border bg-background px-1.5 py-0.5 font-mono text-[10px] leading-none">
+            Ctrl K
+          </kbd>
+        </button>
+        <CommandPaletteCoach show={showCoach} onDismiss={dismissCoach} />
+      </div>
 
       <Dialog open={open} onOpenChange={setOpen}>
         <DialogContent className="top-[20%] max-w-lg translate-y-0 gap-0 p-0">
@@ -418,7 +475,12 @@ export default function GlobalSearch() {
                       <Icon size={14} className="shrink-0 text-muted-foreground" />
                       <span className="min-w-0 flex-1 truncate">{item.label}</span>
                       {item.sub && (
-                        <span className="shrink-0 text-[10px] text-muted-foreground">{item.sub}</span>
+                        <span className="hidden shrink-0 text-[10px] text-muted-foreground sm:inline">{item.sub}</span>
+                      )}
+                      {item.shortcut && (
+                        <kbd className="shrink-0 rounded border bg-background px-1.5 py-0.5 font-mono text-[10px] leading-none text-muted-foreground">
+                          {item.shortcut}
+                        </kbd>
                       )}
                       <ArrowRight size={11} className="shrink-0 text-muted-foreground/50" />
                     </button>
@@ -432,10 +494,14 @@ export default function GlobalSearch() {
               </p>
             )}
           </div>
-          <div className="flex items-center gap-3 border-t px-4 py-2 text-[10px] text-muted-foreground">
+          <div className="flex flex-wrap items-center gap-x-3 gap-y-1 border-t px-4 py-2 text-[10px] text-muted-foreground">
             <span>↑↓ 이동</span>
             <span>Enter 열기</span>
             <span>Esc 닫기</span>
+            <span className="inline-flex items-center gap-1">
+              <kbd className="rounded border bg-background px-1 py-0.5 font-mono">&gt;</kbd>
+              빠른 실행만 보기
+            </span>
           </div>
         </DialogContent>
       </Dialog>

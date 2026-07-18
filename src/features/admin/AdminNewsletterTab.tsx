@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
+import { useState, useEffect, useRef } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
 import {
   useNewsletters,
   useCreateNewsletter,
@@ -49,6 +49,7 @@ import { notifyNewsletterPublished } from "@/features/notifications/notify";
 import { useAuthStore } from "@/features/auth/auth-store";
 import SeminarDraftPicker from "@/features/content-draft/SeminarDraftPicker";
 import { buildNewsletterSectionsDraft } from "@/features/content-draft/draft-templates";
+import { getDraft } from "@/features/content-draft/content-draft-store";
 import { Sparkles } from "lucide-react";
 import type { Seminar } from "@/types";
 
@@ -84,6 +85,9 @@ function enrollmentOptions(): string[] {
 
 export default function AdminNewsletterTab() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const draftParam = searchParams.get("draft");
+  const appliedDraftRef = useRef(false);
   const { issues, isLoading: issuesLoading } = useNewsletters({ includeDrafts: true });
   const createMutation = useCreateNewsletter();
   const updateMutation = useUpdateNewsletter();
@@ -148,6 +152,29 @@ export default function AdminNewsletterTab() {
   const [editors, setEditors] = useState<string[]>([]);
   const [sections, setSections] = useState<NewsletterSection[]>([]);
   const [sectionSaving, setSectionSaving] = useState<string | null>(null);
+
+  // 콘텐츠 초안함에서 넘어온 경우(?draft=): content_drafts의 학회보 섹션 초안을 새 학회보 폼에 프리필.
+  // editingId는 null 유지(신규) — status는 draft, 운영진이 검토 후 초안 저장/발행한다.
+  useEffect(() => {
+    if (!draftParam || appliedDraftRef.current) return;
+    appliedDraftRef.current = true;
+    let cancelled = false;
+    (async () => {
+      const draft = await getDraft(draftParam);
+      if (cancelled) return;
+      if (draft?.kind === "newsletter" && draft.sections && draft.sections.length > 0) {
+        setEditingId(null);
+        setSubtitle(draft.seminarTitle);
+        setSections(draft.sections.map((s) => ({ ...s })));
+        toast.success("자동 초안을 불러왔습니다. 검토·편집 후 초안 저장 또는 발행하세요.");
+      } else {
+        toast.error("초안을 불러오지 못했습니다.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [draftParam]);
 
   // 기존 학회보 편집 모드 진입
   function startEdit(issue: NewsletterIssue) {

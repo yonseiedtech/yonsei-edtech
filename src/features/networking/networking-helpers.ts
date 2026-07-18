@@ -72,3 +72,21 @@ export function formatEventDate(iso: string): string {
 export function formatWon(amount: number): string {
   return amount === 0 ? "무료" : `${amount.toLocaleString()}원`;
 }
+
+/**
+ * 마감까지 남은 일수 라벨 (D-day). 참여 마찰 축소용 — 절대 날짜만으로는 긴박감·가시성이 낮다.
+ * 자정(날짜) 기준으로 계산하고, 이미 지난 마감은 null(별도 '마감' 배지가 처리).
+ * @returns "오늘 마감" | "내일 마감" | "D-3" | null
+ */
+export function ddayLabel(deadlineIso: string | undefined, nowIso: string): string | null {
+  if (!deadlineIso) return null;
+  const deadline = new Date(deadlineIso);
+  const now = new Date(nowIso);
+  if (isNaN(deadline.getTime()) || isNaN(now.getTime())) return null;
+  if (deadline.getTime() < now.getTime()) return null; // 이미 마감
+  const startOfDay = (d: Date) => new Date(d.getFullYear(), d.getMonth(), d.getDate()).getTime();
+  const days = Math.round((startOfDay(deadline) - startOfDay(now)) / 86_400_000);
+  if (days <= 0) return "오늘 마감";
+  if (days === 1) return "내일 마감";
+  return `D-${days}`;
+}

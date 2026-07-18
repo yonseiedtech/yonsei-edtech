@@ -35,6 +35,24 @@ const EVENT_TYPES = Object.keys(NETWORKING_EVENT_TYPE_LABELS) as NetworkingEvent
 const EVENT_STATUSES = Object.keys(NETWORKING_EVENT_STATUS_LABELS) as NetworkingEventStatus[];
 
 /**
+ * 자주 쓰는 모임 프리셋 (2026-07-18 생성 간편화) — 유형·제목을 1클릭 프리필한다.
+ * schedulingMode 가 지정된 프리셋은 일정 결정 방식까지 세팅(예: 가능일 투표로 시작).
+ */
+const EVENT_PRESETS: {
+  label: string;
+  type: NetworkingEventType;
+  title: string;
+  schedulingMode?: "fixed" | "poll";
+}[] = [
+  { label: "개강총회", type: "opening", title: "개강총회" },
+  { label: "종강총회", type: "closing", title: "종강총회" },
+  { label: "정기모임", type: "regular", title: "정기모임" },
+  { label: "식사·뒤풀이", type: "casual", title: "식사 모임" },
+  { label: "MT", type: "mt", title: "MT" },
+  { label: "가능일 투표로 시작", type: "regular", title: "", schedulingMode: "poll" },
+];
+
+/**
  * 시간대 프리셋 (작업 2026-07-14 · 칩 선택) — 09:00~22:00 을 일관되게 30분 간격으로 생성.
  * 프리셋 외 시각(범위 밖·비 30분 단위)은 커스텀 입력(HH:MM)으로 추가할 수 있다.
  */
@@ -454,6 +472,31 @@ export default function EventEditorForm({
         <h2 className="text-sm font-semibold">{initial ? "행사 수정" : duplicateFrom ? "행사 복제" : "새 행사 등록"}</h2>
         <button type="button" onClick={onClose} className="text-muted-foreground hover:text-foreground"><X size={16} /></button>
       </div>
+      {/* 2026-07-18 생성 간편화: 신규 등록 시 자주 쓰는 모임을 1클릭 프리필 */}
+      {!initial && !duplicateFrom && (
+        <div className="mb-3 rounded-xl border border-dashed bg-muted/30 p-3">
+          <p className="mb-1.5 text-[11px] font-medium text-muted-foreground">빠른 시작 — 자주 쓰는 모임</p>
+          <div className="flex flex-wrap gap-1.5">
+            {EVENT_PRESETS.map((p) => (
+              <button
+                key={p.label}
+                type="button"
+                onClick={() =>
+                  setForm((prev) => ({
+                    ...prev,
+                    type: p.type,
+                    title: p.title,
+                    schedulingMode: p.schedulingMode ?? prev.schedulingMode,
+                  }))
+                }
+                className="rounded-full border border-border bg-background px-2.5 py-1 text-[11px] font-medium text-muted-foreground transition-colors hover:border-primary/50 hover:text-foreground"
+              >
+                {p.label}
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
       <div className="grid gap-3 sm:grid-cols-2">
         <label className="text-xs">유형
           <select value={form.type} onChange={(e) => set("type", e.target.value as NetworkingEventType)} className="mt-1 w-full rounded-lg border bg-background px-2 py-1.5 text-sm">

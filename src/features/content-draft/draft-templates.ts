@@ -61,6 +61,35 @@ function dateTimeLine(seminar: Seminar): string {
 
 const SIGNATURE = "연세교육공학회 드림";
 
+// ── 초안 보강 자료 (세미나 종료 후 집계·후기) ──
+// cron이 세미나 completed 전환 시 seminar_reviews·attendeeIds에서 계산해 전달한다.
+// 값이 없으면(수동 사전 초안 등) 기존 결정적 초안과 동일하게 동작한다(하위호환).
+export interface DraftExtras {
+  stats?: {
+    attendeeCount?: number;
+    reviewCount?: number;
+    avgRating?: number;
+  };
+  /** 참석자 후기 인용문 (짧게 정제된 발췌). 최대 3개 사용. */
+  reviewQuotes?: string[];
+}
+
+/** "12명 참석 · 후기 5건 · 평점 4.6" 형태의 통계 요약 라인 (자료 없으면 빈 문자열) */
+export function formatStatsLine(extras?: DraftExtras): string {
+  const s = extras?.stats;
+  if (!s) return "";
+  const parts: string[] = [];
+  if (typeof s.attendeeCount === "number" && s.attendeeCount > 0) parts.push(`${s.attendeeCount}명 참석`);
+  if (typeof s.reviewCount === "number" && s.reviewCount > 0) parts.push(`후기 ${s.reviewCount}건`);
+  if (typeof s.avgRating === "number" && s.avgRating > 0) parts.push(`평점 ${s.avgRating.toFixed(1)}`);
+  return parts.join(" · ");
+}
+
+function cleanQuote(text: string, max = 90): string {
+  const oneLine = text.replace(/\s+/g, " ").trim();
+  return oneLine.length > max ? `${oneLine.slice(0, max - 1)}…` : oneLine;
+}
+
 // ── 1. 세미나 안내문 초안 ──
 
 /** 세미나 데이터 → 사전 안내문 초안 텍스트. 운영진이 편집 후 발행. */
@@ -162,30 +191,34 @@ function takeBullets(text: string | undefined, max = 3): string[] {
  * 표지 → 인트로(개요) → 연사 소개(연사가 있으면) → 신청 안내 CTA.
  * 반환된 카드의 id는 호출부에서 시리즈 내 고유성을 보장해야 한다.
  */
-export function buildCardNewsDraft(seminar: Seminar): CardSpec[] {
+export function buildCardNewsDraft(seminar: Seminar, extras?: DraftExtras): CardSpec[] {
   const speakers = resolveSpeakers(seminar);
+  const isCompleted = seminar.status === "completed";
+  const statsLine = formatStatsLine(extras);
+  const quotes = (extras?.reviewQuotes ?? []).map((q) => cleanQuote(q)).filter(Boolean).slice(0, 3);
   const cards: CardSpec[] = [];
 
-  // 표지
+  // 표지 — 종료 세미나면 "현장 스케치" 톤
   cards.push({
     id: "draft-01-cover",
     kind: "cover",
     title: seminar.title,
-    badge: formatKoreanDate(seminar.date),
+    badge: isCompleted ? `${formatKoreanDate(seminar.date)} 현장 스케치` : formatKoreanDate(seminar.date),
     body: dateTimeLine(seminar),
     english: "Yonsei Educational Technology Seminar",
   });
 
-  // 인트로 (개요 불릿)
+  // 인트로 (개요 불릿) — 종료 세미나면 참석/후기 통계 슬롯 추가
   const introBullets = [
     `일시 · ${dateTimeLine(seminar)}`,
     `장소 · ${formatLocation(seminar)}`,
   ];
   if (speakers.length > 0) introBullets.push(`연사 · ${formatSpeakerLine(speakers)}`);
+  if (statsLine) introBullets.push(`성과 · ${statsLine}`);
   cards.push({
     id: "draft-02-intro",
     kind: "intro",
-    title: "세미나 개요",
+    title: isCompleted ? "세미나 돌아보기" : "세미나 개요",
     badge: "About",
     body: seminar.description?.trim() || "연세교육공학회가 준비한 학술 세미나입니다.",
     bullets: introBullets,
@@ -208,14 +241,28 @@ export function buildCardNewsDraft(seminar: Seminar): CardSpec[] {
     });
   }
 
-  // 마무리 CTA
+  // 참석자 후기 카드 (후기 인용이 있을 때만) — 종료 세미나 자동 초안의 핵심 보강
+  if (quotes.length > 0) {
+    cards.push({
+      id: "draft-04-reviews",
+      kind: "feature",
+      title: "참석자 후기",
+      subtitle: "Voices",
+      badge: "후기",
+      bullets: quotes.map((q) => `“${q}”`),
+    });
+  }
+
+  // 마무리 CTA — 종료 세미나면 다음 세미나 안내 톤
   cards.push({
-    id: "draft-04-cta",
+    id: "draft-05-cta",
     kind: "cta",
-    title: "지금\n신청하세요.",
-    badge: "Join us",
+    title: isCompleted ? "다음 세미나에서\n만나요.": "지금\n신청하세요.",
+    badge: isCompleted ? "See you" : "Join us",
     body: seminar.registrationUrl || `yonsei-edtech.vercel.app/seminars/${seminar.id}`,
-    english: "학회 홈페이지에서 간편하게 신청할 수 있습니다.",
+    english: isCompleted
+      ? "학회 홈페이지에서 지난 세미나 자료와 다음 일정을 확인하세요."
+      : "학회 홈페이지에서 간편하게 신청할 수 있습니다.",
   });
 
   return cards;
@@ -230,17 +277,22 @@ export function buildCardNewsDraft(seminar: Seminar): CardSpec[] {
 export function buildNewsletterSectionsDraft(
   seminar: Seminar,
   baseOrder = 1,
+  extras?: DraftExtras,
 ): NewsletterSection[] {
   const speakers = resolveSpeakers(seminar);
+  const statsLine = formatStatsLine(extras);
+  const quotes = (extras?.reviewQuotes ?? []).map((q) => cleanQuote(q, 140)).filter(Boolean).slice(0, 3);
   const stamp = Date.now();
   const sections: NewsletterSection[] = [];
+  let order = baseOrder;
 
-  // 소식 섹션: 세미나 개요
+  // 소식 섹션: 세미나 개요 (+ 종료 시 성과 요약)
   const newsLines = [
     `일시: ${dateTimeLine(seminar)}`,
     `장소: ${formatLocation(seminar)}`,
   ];
   if (speakers.length > 0) newsLines.push(`연사: ${formatSpeakerLine(speakers)}`);
+  if (statsLine) newsLines.push(`성과: ${statsLine}`);
   if (seminar.description && seminar.description.trim()) {
     newsLines.push("", seminar.description.trim());
   }
@@ -253,7 +305,7 @@ export function buildNewsletterSectionsDraft(
     authorType: "staff",
     authorEnrollment: "",
     type: "news",
-    order: baseOrder,
+    order: order++,
   });
 
   // 특집 섹션: 후기 초안 (편집용 시드)
@@ -266,8 +318,24 @@ export function buildNewsletterSectionsDraft(
     authorType: "staff",
     authorEnrollment: "",
     type: "feature",
-    order: baseOrder + 1,
+    order: order++,
   });
+
+  // 리뷰 섹션: 실제 참석자 후기 인용 (있을 때만) — 자동 초안의 핵심 보강
+  if (quotes.length > 0) {
+    const quoteBlock = quotes.map((q) => `“${q}”`).join("\n\n");
+    sections.push({
+      id: `draft-${stamp}-voices`,
+      postId: undefined as unknown as string,
+      title: "참석자 한마디",
+      content: `${quoteBlock}\n\n(참석자 후기에서 발췌 — 게재 전 동의·표기를 확인하세요.)`,
+      authorName: "편집팀",
+      authorType: "staff",
+      authorEnrollment: "",
+      type: "review",
+      order: order++,
+    });
+  }
 
   return sections;
 }

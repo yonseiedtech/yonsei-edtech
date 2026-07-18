@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
@@ -25,6 +25,8 @@ import { CardArtFit } from "./CardArtFit";
 import { cardNewsApi } from "@/lib/bkend";
 import SeminarDraftPicker from "@/features/content-draft/SeminarDraftPicker";
 import { buildCardNewsDraft } from "@/features/content-draft/draft-templates";
+import { getDraft } from "@/features/content-draft/content-draft-store";
+import { toast } from "sonner";
 import type { Seminar } from "@/types";
 import type { CardKind, CardNewsSeries, CardSpec } from "./types";
 
@@ -53,6 +55,9 @@ function uniqCardId(existing: string[], base: string) {
 
 export default function CardNewsEditor({ initial, isNew }: Props) {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const draftParam = searchParams.get("draft");
+  const appliedDraftRef = useRef(false);
   const [series, setSeries] = useState<CardNewsSeries>(() => ({
     ...initial,
     cards: initial.cards.map((c) => ({ ...c })),
@@ -196,6 +201,31 @@ export default function CardNewsEditor({ initial, isNew }: Props) {
       setSaving(false);
     }
   }
+
+  // 콘텐츠 초안함에서 넘어온 경우(?draft=): content_drafts의 카드뉴스 초안을 프리필.
+  // 신규 시리즈일 때만 적용하며, 저장 전까지 card_news_series에 기록되지 않는다(공개 노출 없음).
+  useEffect(() => {
+    if (!draftParam || !isNew || appliedDraftRef.current) return;
+    appliedDraftRef.current = true;
+    let cancelled = false;
+    (async () => {
+      const draft = await getDraft(draftParam);
+      if (cancelled) return;
+      if (draft?.kind === "card-news" && draft.cardSeries) {
+        setSeries({
+          ...draft.cardSeries,
+          cards: draft.cardSeries.cards.map((c) => ({ ...c })),
+        });
+        setActiveIdx(0);
+        toast.success("자동 초안을 불러왔습니다. 검토·편집 후 저장하세요.");
+      } else {
+        toast.error("초안을 불러오지 못했습니다.");
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [draftParam, isNew]);
 
   // dirty 추적: series가 초기 스냅샷과 달라지면 dirty=true
   useEffect(() => {

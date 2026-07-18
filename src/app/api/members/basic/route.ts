@@ -17,7 +17,8 @@ import { ROLE_HIERARCHY } from "@/lib/permissions";
  *    (연락처는 contactVisibility 를 서버 강제하는 /api/members/directory 사용)
  */
 
-const HARD_SECRET = ["securityQuestion", "securityAnswerHash", "calendarToken"] as const;
+// streakFreezes: 잔디 "연구 쉼표" 사용 기록 — 순수 개인용(공개 랭킹·타 회원 노출 금지). 본인은 users 문서 직접 조회로 읽음.
+const HARD_SECRET = ["securityQuestion", "securityAnswerHash", "calendarToken", "streakFreezes"] as const;
 const CONTACT_FIELDS = ["email", "contactEmail", "phone", "studentId", "birthDate"] as const;
 
 function serialize(value: unknown): unknown {

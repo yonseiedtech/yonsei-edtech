@@ -23,7 +23,7 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Flame, Trophy, Sprout, ChevronLeft, ChevronRight } from "lucide-react";
+import { Flame, Trophy, Sprout, ChevronLeft, ChevronRight, Snowflake } from "lucide-react";
 import { toast } from "sonner";
 import {
   attendeesApi,
@@ -34,8 +34,17 @@ import {
   paperReadingLogsApi,
   diagnosticResultsApi,
   streakEventsApi,
+  profilesApi,
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
+import {
+  parseFreezes,
+  frozenWeekSet,
+  remainingThisMonth,
+  weekStartYmd,
+  STREAK_FREEZE_MONTHLY_LIMIT,
+  type StreakFreeze,
+} from "@/lib/streak-freeze";
 import GradActivityDashboard from "./GradActivityDashboard";
 import type {
   SeminarAttendee,
@@ -138,6 +147,19 @@ interface Stats {
   thisMonthCount: number;
   cells: DayCell[];
   weeklyActive: boolean[]; // length 53
+  // ── 연구 쉼표(freeze) / 복구 넛지 (벤치마크 H2) ──
+  /** 오늘이 속한 주의 그리드 컬럼 인덱스 */
+  todayWeekIndex: number;
+  /** 오늘이 속한 주의 시작일(일요일) ymd — freeze 저장 키 */
+  currentWeekStartYmd: string;
+  /** 현재 주가 이미 얼려져 있는지 */
+  currentWeekFrozen: boolean;
+  /** 현재 주에 이미 활동이 있는지 */
+  currentWeekActive: boolean;
+  /** 스트릭이 막 끊긴 상태(지난주 활동 0·그 전 2주+ 연속) — 복구 넛지 트리거 */
+  justBroke: boolean;
+  /** 끊기기 직전까지의 연속 주 수 (복구 넛지 문구용) */
+  priorStreak: number;
 }
 
 // ─── Sprint 64: 학기 기반 그리드 + 연도 스크롤 ─────────────────────────────
@@ -176,7 +198,11 @@ function semesterLabel(s: Semester): string {
   return `${s.year}년 ${s.half === 1 ? "전기 (3월~)" : "후기 (9월~)"}`;
 }
 
-function computeStats(scoresByDay: Map<string, number>, semester: Semester): Stats {
+function computeStats(
+  scoresByDay: Map<string, number>,
+  semester: Semester,
+  frozenWeeks: Set<string> = new Set(),
+): Stats {
   const cells: DayCell[] = [];
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -225,18 +251,62 @@ function computeStats(scoresByDay: Map<string, number>, semester: Semester): Sta
 
   // 주 단위 streak (오늘이 속한 주부터 과거로 — 그리드가 현재 학기일 때만 의미)
   const weeklyActive: boolean[] = new Array(WEEKS).fill(false);
+  // 각 주 컬럼의 시작일(일요일) ymd — freeze 판정 키
+  const weekStartYmds: string[] = new Array(WEEKS).fill("");
   for (const c of cells) {
+    if (c.weekday === 0) weekStartYmds[c.weekIndex] = c.ymd;
     if (c.score > 0 && c.ymd <= todayYmd) {
       weeklyActive[c.weekIndex] = true;
     }
   }
-  let weekStreak = 0;
-  for (let w = WEEKS - 1; w >= 0; w--) {
-    if (weeklyActive[w]) weekStreak++;
-    else break;
+
+  // 오늘이 속한 주 컬럼 인덱스 (그리드 시작 일요일 기준)
+  const daysSinceStart = Math.floor((today.getTime() - start.getTime()) / 86_400_000);
+  const todayWeekIndex = Math.min(WEEKS - 1, Math.max(0, Math.floor(daysSinceStart / 7)));
+
+  const isFrozen = (w: number): boolean =>
+    w >= 0 && w < WEEKS && frozenWeeks.has(weekStartYmds[w]);
+
+  // end(포함)에서 과거로 연속 활동 주 수 — 얼린 주는 단절로 보지 않으나 가산도 하지 않음(bridge)
+  function streakEndingAt(end: number): number {
+    let count = 0;
+    for (let w = end; w >= 0; w--) {
+      if (weeklyActive[w]) count++;
+      else if (isFrozen(w)) continue; // 연구 쉼표: 단절 아님, 미가산
+      else break;
+    }
+    return count;
   }
 
-  return { totalScore, activeDays, weekStreak, thisMonthCount, cells, weeklyActive };
+  const currentWeekActive = weeklyActive[todayWeekIndex] ?? false;
+  const currentWeekFrozen = isFrozen(todayWeekIndex);
+  // 현재 주는 진행 중 — 비어 있어도 단절로 보지 않고 직전 주까지로 판정.
+  const weekStreak =
+    currentWeekActive || currentWeekFrozen
+      ? streakEndingAt(todayWeekIndex)
+      : streakEndingAt(todayWeekIndex - 1);
+
+  // 복구 넛지: 현재 주 미활동·미얼림 && 지난주 진짜 공백 && 그 전 2주+ 연속
+  const lastIdx = todayWeekIndex - 1;
+  const lastWeekEmpty = lastIdx >= 0 && !weeklyActive[lastIdx] && !isFrozen(lastIdx);
+  const priorStreak = streakEndingAt(todayWeekIndex - 2);
+  const justBroke =
+    !currentWeekActive && !currentWeekFrozen && lastWeekEmpty && priorStreak >= 2;
+
+  return {
+    totalScore,
+    activeDays,
+    weekStreak,
+    thisMonthCount,
+    cells,
+    weeklyActive,
+    todayWeekIndex,
+    currentWeekStartYmd: weekStartYmds[todayWeekIndex] ?? weekStartYmd(today),
+    currentWeekFrozen,
+    currentWeekActive,
+    justBroke,
+    priorStreak,
+  };
 }
 
 interface Milestone {
@@ -471,8 +541,17 @@ function StreakMonthlyView({
 }
 
 export default function LearningStreak({ compact = false }: { compact?: boolean }) {
-  const { user } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const userId = user?.id;
+
+  // ── 연구 쉼표(freeze) 상태 — 본인 users 문서의 streakFreezes 옵션 필드 ──
+  const freezes = useMemo(
+    () => parseFreezes((user as { streakFreezes?: unknown } | null)?.streakFreezes),
+    [user],
+  );
+  const frozenWeeks = useMemo(() => frozenWeekSet(freezes), [freezes]);
+  const freezeRemaining = useMemo(() => remainingThisMonth(freezes), [freezes]);
+  const [freezeBusy, setFreezeBusy] = useState(false);
 
   // Sprint 64: 학기 기반 그리드 + 좌·우 스크롤 + 입학시점 가드
   const cur = useMemo(() => currentSemester(), []);
@@ -702,9 +781,38 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
   ]);
 
   const stats = useMemo<Stats>(
-    () => computeStats(scoresByDay, semester),
-    [scoresByDay, semester],
+    () => computeStats(scoresByDay, semester, frozenWeeks),
+    [scoresByDay, semester, frozenWeeks],
   );
+
+  // 이번 주 얼리기/해제 — 낙관적 갱신(setUser) 후 본인 문서 저장. 순수 개인용.
+  async function toggleFreezeThisWeek(freeze: boolean) {
+    if (!userId || freezeBusy) return;
+    const weekKey = weekStartYmd(new Date());
+    const next: StreakFreeze[] = freeze
+      ? [...freezes, { week: weekKey, usedAt: new Date().toISOString() }]
+      : freezes.filter((f) => f.week !== weekKey);
+    if (freeze && freezeRemaining <= 0) {
+      toast.error("이번 달 연구 쉼표를 모두 사용했어요.");
+      return;
+    }
+    setFreezeBusy(true);
+    const prev = user;
+    setUser({ ...(user as NonNullable<typeof user>), streakFreezes: next });
+    try {
+      await profilesApi.update(userId, { streakFreezes: next });
+      toast.success(
+        freeze
+          ? "이번 주 잔디를 얼렸어요. 바쁜 한 주도 연속이 지켜집니다."
+          : "이번 주 얼리기를 해제했어요.",
+      );
+    } catch (e) {
+      setUser(prev); // 롤백
+      toast.error(`쉼표 변경 실패: ${(e as Error).message}`);
+    } finally {
+      setFreezeBusy(false);
+    }
+  }
 
   const achievedMilestones = useMemo(
     () => MILESTONES.filter((m) => m.achieved(stats)),
@@ -770,6 +878,58 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
           )}
         </span>
       </div>
+
+      {/* 복구 넛지 (벤치마크 H2) — 막 끊긴 스트릭 인라인 한 줄. 새 카드 추가 없이 헤더 아래. */}
+      {isCurrentSem && stats.justBroke && (
+        <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+          <Flame size={13} className="shrink-0 text-amber-500" aria-hidden="true" />
+          <span>
+            이번 주에 하나만 기록하면 <strong>{stats.priorStreak}주</strong> 연속이 다시 이어져요.
+          </span>
+        </p>
+      )}
+
+      {/* 연구 쉼표(freeze) — 시험·마감 주간을 위한 자비 장치. 순수 개인용(공개 랭킹 무관). */}
+      {isCurrentSem && (
+        <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
+          {stats.currentWeekFrozen ? (
+            <>
+              <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-1 font-semibold text-sky-700 ring-1 ring-sky-200 dark:bg-sky-950/30 dark:text-sky-300 dark:ring-sky-800">
+                <Snowflake size={12} aria-hidden="true" />
+                이번 주 얼림
+              </span>
+              <button
+                type="button"
+                onClick={() => toggleFreezeThisWeek(false)}
+                disabled={freezeBusy}
+                className="text-muted-foreground underline-offset-2 hover:underline disabled:opacity-50"
+              >
+                해제
+              </button>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => toggleFreezeThisWeek(true)}
+              disabled={freezeBusy || freezeRemaining <= 0}
+              className={cn(
+                "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-semibold transition-colors",
+                freezeRemaining > 0
+                  ? "border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300"
+                  : "cursor-not-allowed border-border bg-muted/40 text-muted-foreground",
+              )}
+              title="바쁘거나 아픈 주에 이번 주 잔디를 얼려 연속을 지켜요"
+            >
+              <Snowflake size={12} aria-hidden="true" />
+              이번 주 잔디 얼리기
+            </button>
+          )}
+          <span className="text-muted-foreground">
+            연구 쉼표 {STREAK_FREEZE_MONTHLY_LIMIT - freezeRemaining}/{STREAK_FREEZE_MONTHLY_LIMIT}
+            <span className="ml-1 text-muted-foreground/70">· 시험·마감 주간을 위한 자비 장치</span>
+          </span>
+        </div>
+      )}
 
       {/* Sprint 64: 학기 네비게이션 (compact 에선 숨김) */}
       <div className={cn("mt-3 flex items-center justify-between gap-2", compact && "hidden")}>

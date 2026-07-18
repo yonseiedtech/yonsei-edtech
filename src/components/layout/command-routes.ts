@@ -36,7 +36,28 @@ export interface CommandRoute {
   /** 검색 매칭 키워드 — label 외 별칭·영문·동의어 */
   keywords: string;
   visibility?: RouteVisibility;
+  /**
+   * 대표 단축키 표기 (선택). 새 전역 키바인딩을 남발하지 않기 위해
+   * 팔레트 내부 "빠른 필터 프리픽스"(예: ">진단")를 그대로 표기·동작시킨다.
+   * '>' 로 시작하는 쿼리는 "빠른 실행" 그룹만 좁혀 보여주며, 뒤 키워드가 keywords 와 매칭된다.
+   */
+  shortcut?: string;
 }
+
+/**
+ * 빠른 실행 명령 — 라우트 "이동"을 넘어 대표 도구를 즉시 "실행"하는 진입점.
+ * 모두 기존 라우트/딥링크로만 동작한다(새 mutation 로직 없음). ux-gap 최상위 갭
+ * "핵심 도구 매몰"(진단·암기카드·공동연구·진행미팅 등)을 팔레트 최상단으로 끌어올린다.
+ */
+export const COMMAND_ACTIONS: CommandRoute[] = [
+  { key: "a:diagnosis", group: "빠른 실행", label: "진단 시작하기", sub: "연구 준비도 진단평가", href: "/diagnosis", icon: ClipboardCheck, shortcut: ">진단", keywords: "진단 시작 시작하기 준비도 평가 테스트 진단평가 시작 diagnosis start 실행", visibility: "auth" },
+  { key: "a:flashcards-review", group: "빠른 실행", label: "암기카드 복습하기", sub: "간격반복 복습 시작", href: "/flashcards", icon: BookMarked, shortcut: ">복습", keywords: "암기카드 복습 복습하기 플래시카드 간격반복 srs 시작 review flashcard 실행", visibility: "auth" },
+  { key: "a:research-design", group: "빠른 실행", label: "연구 설계 열기", sub: "모형·대상·방법·도구 계획", href: "/mypage/research?tab=design", icon: DraftingCompass, shortcut: ">설계", keywords: "연구 설계 열기 설계 에디터 연구모형 연구대상 연구방법 측정도구 분석 design 실행", visibility: "auth" },
+  { key: "a:weekly-goal", group: "빠른 실행", label: "이번 주 목표 설정", sub: "주간 학습 목표", href: "/dashboard", icon: Target, shortcut: ">목표", keywords: "이번 주 목표 설정 주간 목표 weekly goal 대시보드 목표 세우기 실행", visibility: "auth" },
+  { key: "a:collab", group: "빠른 실행", label: "공동연구자 찾기", sub: "관심사 기반 매칭", href: "/collab", icon: Handshake, shortcut: ">공동", keywords: "공동 연구자 찾기 협업 매칭 collaborator collab 실행", visibility: "auth" },
+  { key: "a:progress-meeting", group: "빠른 실행", label: "진도 미팅 잡기", sub: "지도·면담 기록", href: "/progress-meetings", icon: Target, shortcut: ">미팅", keywords: "진도 미팅 잡기 면담 지도 progress meeting 실행", visibility: "auth" },
+  { key: "a:archive", group: "빠른 실행", label: "아카이브 열기", sub: "개념·변인·측정도구", href: "/archive", icon: Library, shortcut: ">아카이브", keywords: "아카이브 열기 개념 변인 측정도구 이론 archive 실행", visibility: "both" },
+];
 
 /**
  * 정적 라우트·기능 레지스트리.
@@ -150,6 +171,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
 /** 결과 그룹 표시 순서 (정적 라우트 우선 → 동적 콘텐츠 후순위) */
 export const GROUP_ORDER = [
   "최근",
+  "빠른 실행",
   "내 공간",
   "대학원 생활",
   "학술 활동",
@@ -168,16 +190,26 @@ export const GROUP_ORDER = [
   "암기카드",
 ];
 
+/** 주어진 역할에 항목 하나가 보이는지 판정 */
+function isVisibleFor(vis: RouteVisibility, isAuthed: boolean, isStaff: boolean): boolean {
+  if (vis === "both") return true;
+  if (vis === "auth") return isAuthed;
+  if (vis === "staff") return isStaff;
+  return true;
+}
+
 /** 사용자 역할에 맞는 정적 라우트만 필터 */
 export function visibleRoutes(role: string | undefined | null): CommandRoute[] {
   const isAuthed = !!role && role !== "guest";
   const isStaff =
     role === "staff" || role === "president" || role === "admin" || role === "sysadmin";
-  return COMMAND_ROUTES.filter((r) => {
-    const vis = r.visibility ?? "both";
-    if (vis === "both") return true;
-    if (vis === "auth") return isAuthed;
-    if (vis === "staff") return isStaff;
-    return true;
-  });
+  return COMMAND_ROUTES.filter((r) => isVisibleFor(r.visibility ?? "both", isAuthed, isStaff));
+}
+
+/** 사용자 역할에 맞는 빠른 실행 명령만 필터 (팔레트 최상단 노출용) */
+export function visibleActions(role: string | undefined | null): CommandRoute[] {
+  const isAuthed = !!role && role !== "guest";
+  const isStaff =
+    role === "staff" || role === "president" || role === "admin" || role === "sysadmin";
+  return COMMAND_ACTIONS.filter((a) => isVisibleFor(a.visibility ?? "both", isAuthed, isStaff));
 }

@@ -31,6 +31,7 @@ import { isPastEvent } from "@/features/networking/networking-helpers";
 import EventEditorForm from "@/features/networking/EventEditorForm";
 import GatheringEventCard from "@/features/networking/GatheringEventCard";
 import GuestRsvpBanner from "@/features/networking/GuestRsvpBanner";
+import MyGatheringsStrip from "@/features/networking/MyGatheringsStrip";
 
 export default function GatheringsPage() {
   const { user } = useAuthStore();
@@ -121,6 +122,11 @@ export default function GatheringsPage() {
       {/* G7: 게스트 신청 확인·취소 (guest_rsvp 토큰으로 접근 시 자동 노출) */}
       <GuestRsvpBanner />
 
+      {/* 내 참여 현황 스트립 (2026-07-18) — 로그인 회원에게 참여 중인 모임·투표 중 모임을 상단 요약 */}
+      {user && !isLoading && (
+        <MyGatheringsStrip upcoming={upcoming} myRsvpByEvent={myRsvpByEvent} />
+      )}
+
       {canCreate && (
         <Dialog open={createOpen} onOpenChange={setCreateOpen}>
           <DialogContent showCloseButton={false} className="sm:max-w-2xl">
@@ -153,9 +159,15 @@ export default function GatheringsPage() {
               <EmptyState
                 icon={CalendarX2}
                 title="예정된 모임이 없습니다"
-                description="아직 다가오는 모임이 등록되지 않았어요. 다른 활동을 둘러보거나 지난 모임을 확인해보세요."
+                description={
+                  canCreate
+                    ? "아직 다가오는 모임이 없어요. 새 모임을 만들어 회원들의 참석을 받아보세요."
+                    : "아직 다가오는 모임이 등록되지 않았어요. 다른 활동을 둘러보거나 지난 모임을 확인해보세요."
+                }
                 actions={[
-                  { label: "세미나 둘러보기", href: "/seminars", variant: "default" },
+                  ...(canCreate
+                    ? [{ label: "모임 만들기", onClick: () => setCreateOpen(true), variant: "default" as const }]
+                    : [{ label: "세미나 둘러보기", href: "/seminars", variant: "default" as const }]),
                   { label: "학술활동 둘러보기", href: "/activities/studies", variant: "outline" },
                   ...(past.length > 0
                     ? [{ label: "지난 모임 보기", href: "#past-gatherings", variant: "outline" as const }]

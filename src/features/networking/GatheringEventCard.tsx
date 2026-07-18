@@ -32,6 +32,7 @@ import {
   isRsvpClosed,
   formatEventDate,
   formatWon,
+  ddayLabel,
 } from "@/features/networking/networking-helpers";
 import NetworkingProgramManager from "@/features/networking/NetworkingProgramManager";
 import NetworkingPoll from "@/features/networking/NetworkingPoll";
@@ -86,6 +87,21 @@ export default function GatheringEventCard({
   const isPrivate = ev.visibility === "private";
   // 작업 2(2026-07-14): 투표 마감 여부 — 마감 지나면 게스트 투표 공유 버튼 숨김
   const pollClosed = !!ev.pollDeadline && new Date(ev.pollDeadline).getTime() < Date.now();
+
+  // 2026-07-18 사용성: 카드 헤더에 내 상태·마감 D-day 를 노출(상세 진입/본문 확인 없이 스캔 가능).
+  const activeStatus = myRsvp?.status && myRsvp.status !== "not_attending" ? myRsvp.status : null;
+  const showMyStatus = !past && ev.status !== "cancelled" && !!activeStatus;
+  const dday =
+    past || ev.status === "cancelled"
+      ? null
+      : isPollPending
+        ? pollClosed
+          ? null
+          : ddayLabel(ev.pollDeadline, nowIso)
+        : closed
+          ? null
+          : ddayLabel(ev.rsvpDeadline, nowIso);
+  const ddayPrefix = isPollPending ? "투표 " : "신청 ";
 
   // High-1(2026-07-08): 공유 토큰은 networking_event_tokens 매핑에서 조회(staff 만 list 가능).
   // 레거시 이벤트 문서의 shareToken 필드가 있으면 폴백.
@@ -316,8 +332,20 @@ export default function GatheringEventCard({
             {ev.status === "cancelled" && (
               <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700">취소됨</span>
             )}
-            {!past && ev.status !== "cancelled" && closed && (
+            {!past && ev.status !== "cancelled" && closed && !isPollPending && (
               <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">신청 마감</span>
+            )}
+            {/* 2026-07-18: 내 참석 상태 배지 — 목록에서 내가 신청했는지 즉시 확인 */}
+            {showMyStatus && activeStatus && (
+              <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
+                <Check size={10} /> 내 신청: {RSVP_STATUS_LABELS[activeStatus]}
+              </span>
+            )}
+            {/* 2026-07-18: 마감 D-day — 절대 날짜만으로는 낮던 긴박감·가시성 보완 */}
+            {dday && (
+              <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                {ddayPrefix}{dday}
+              </span>
             )}
           </div>
           <h3 className="mt-1.5 text-base font-bold leading-snug">{ev.title}</h3>

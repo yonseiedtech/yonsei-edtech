@@ -23,8 +23,9 @@ import {
   BarChart3 as BarChart3Icon, PenLine,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
   ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote, Images, ClipboardCheck, Workflow, LayoutGrid,
-  UserPlus, ListChecks, AlertTriangle, Archive, Map, Bot,
+  UserPlus, ListChecks, AlertTriangle, Archive, Map, Bot, Sparkles,
 } from "lucide-react";
+import { fetchPendingDrafts } from "@/features/content-draft/content-draft-store";
 import { useState } from "react";
 
 interface NavItem {
@@ -198,11 +199,20 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
     (ftData?.data ?? []).filter((i) => !i.published).length +
     (wtData?.data ?? []).filter((i) => !i.published).length;
 
+  // 콘텐츠 자동 초안 검토 대기 (content_drafts status=pending)
+  const { data: contentDraftData } = useQuery({
+    queryKey: ["admin", "content-drafts-pending"],
+    queryFn: fetchPendingDrafts,
+    retry: false,
+  });
+  const contentDraftCount = contentDraftData?.length ?? 0;
+
   const reviewItems: ReviewItem[] = [
     { label: "회원 승인 대기", count: pendingCount, href: "/console/members" },
     { label: "미답변 문의", count: unansweredCount, href: "/console/inquiries" },
     { label: "피드백 미확인", count: feedbackNewCount, href: "/console/feedback" },
     { label: "아카이브 미검수", count: archiveDraftCount, href: "/console/archive/research-methods" },
+    { label: "콘텐츠 초안 대기", count: contentDraftCount, href: "/console/content-drafts" },
   ];
 
   const NAV_GROUPS: NavGroup[] = [
@@ -238,6 +248,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/newsletter", label: "학회보", icon: Newspaper },
         { href: "/console/journal", label: "학회지 운영", icon: BookOpen },
         { href: "/console/card-news", label: "카드뉴스", icon: Images },
+        { href: "/console/content-drafts", label: "콘텐츠 초안함", icon: Sparkles, badge: contentDraftCount },
         { href: "/console/popups", label: "팝업 공지", icon: Megaphone },
       ],
     },
