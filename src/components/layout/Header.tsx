@@ -131,6 +131,7 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/activities/projects", label: "프로젝트" },
       { href: "/activities/studies", label: "스터디" },
       { href: "/activities/external", label: "대외 학술대회" },
+      { href: "/leaderboard", label: "학습 잔디 리더보드" },
     ],
   },
   {
@@ -144,6 +145,7 @@ const PUBLIC_NAV: NavGroup[] = [
           { href: "/mypage/research", label: "내 연구활동 · 논문 여정" },
           { href: "/diagnosis", label: "연구 준비도 진단평가" },
           { href: "/collab", label: "공동 연구" },
+          { href: "/progress-meetings", label: "연구 진도 미팅" },
         ],
       },
       {

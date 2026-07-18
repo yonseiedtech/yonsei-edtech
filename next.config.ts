@@ -39,14 +39,20 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/seminar-admin",
-        destination: "/academic-admin/seminars",
+        destination: "/console/academic/seminars",
         permanent: true,
       },
       {
         source: "/seminar-admin/:path*",
-        destination: "/academic-admin/seminars/:path*",
+        destination: "/console/academic/seminars/:path*",
         permanent: true,
       },
+      // /academic-admin/* → /console/academic/* (콘솔 단일 경로로 통합)
+      // 모든 하위 경로가 /console/academic/* 에 1:1 대응 → 와일드카드로 딥링크·쿼리까지 정확 보존.
+      // console 재export 페이지들은 academic-admin 페이지 모듈을 빌드타임에 직접 import 하므로
+      // 본 요청-URL 리다이렉트의 영향을 받지 않는다(모듈 무손상 → 콘솔 렌더 정상).
+      { source: "/academic-admin", destination: "/console/academic", permanent: false },
+      { source: "/academic-admin/:path*", destination: "/console/academic/:path*", permanent: false },
       // board-community-v2: press → promotion 통합
       { source: "/board/press", destination: "/board/promotion", permanent: true },
       { source: "/board/press/:path*", destination: "/board/promotion/:path*", permanent: true },

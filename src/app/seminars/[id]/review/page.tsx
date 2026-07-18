@@ -15,7 +15,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, ShieldCheck, Pencil, UserPlus, NotebookPen } from "lucide-react";
+import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, ShieldCheck, Pencil, UserPlus, NotebookPen, Newspaper } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import PageContainer from "@/components/ui/page-container";
@@ -449,6 +449,22 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
                 )}
               </div>
             )}
+
+            {/* 저방문 콘텐츠 맥락 재노출: 세미나 소식 → 카드뉴스·학회보 */}
+            <div className="flex flex-wrap items-center gap-1.5 px-1 text-xs text-muted-foreground">
+              <Newspaper size={13} className="shrink-0" />
+              <span>
+                이 세미나 소식이{" "}
+                <Link href="/card-news" className="font-medium text-primary underline underline-offset-2">
+                  카드뉴스
+                </Link>
+                ·
+                <Link href="/newsletter" className="font-medium text-primary underline underline-offset-2">
+                  학회보
+                </Link>
+                로 만들어져요 — 지난 콘텐츠 보기
+              </span>
+            </div>
 
             <Link href={`/seminars/${seminarId}`}>
               <Button variant="outline" className="w-full">세미나 페이지로 돌아가기</Button>
