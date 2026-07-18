@@ -18,19 +18,29 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/page-header";
 import InlineNotification from "@/components/ui/inline-notification";
+import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
-import { researchMethodsApi } from "@/lib/bkend";
+import { researchMethodsApi, archiveFavoritesApi } from "@/lib/bkend";
 import {
   RESEARCH_METHOD_KIND_COLORS,
   RESEARCH_METHOD_KIND_LABELS,
   type ResearchMethod,
   type ResearchMethodKind,
+  type ArchiveFavorite,
 } from "@/types";
 import { cn } from "@/lib/utils";
-import ArchiveSearchBar from "@/components/archive/ArchiveSearchBar";
+import ArchiveListToolbar, {
+  type ArchiveListSortOption,
+} from "@/components/archive/ArchiveListToolbar";
+import ArchiveFavoriteStar from "@/components/archive/ArchiveFavoriteStar";
 import { matchesArchiveSearch } from "@/lib/archive-search";
 import PageContainer from "@/components/ui/page-container";
+
+const GUIDE_SORT_OPTIONS: ArchiveListSortOption[] = [
+  { value: "name", label: "이름순 (가나다)" },
+  { value: "recent", label: "최신 추가순" },
+];
 
 const RESEARCH_METHOD_SEARCH_FIELDS: (keyof ResearchMethod)[] = [
   "name",
@@ -116,14 +126,74 @@ function ResearchMethodsLandingPageInner() {
   const canManage = isAtLeast(user, "staff");
 
   const [methods, setMethods] = useState<ResearchMethod[]>([]);
+  const [favorites, setFavorites] = useState<ArchiveFavorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  // H4: 동적 리스트와 정합화 — 정렬·즐겨찾기만·계열 칩 필터
+  const [sortMode, setSortMode] = useState<"name" | "recent">("name");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [kindFilter, setKindFilter] = useState<ResearchMethodKind | "all">("all");
   // UX(2026-07-04): soft navigation(뒤로가기·칩 재클릭)에도 ?q= 를 반영
   const searchParams = useSearchParams();
   useEffect(() => {
     const q = searchParams.get("q");
     if (q !== null) setQuery(q);
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!user) {
+      setFavorites([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await archiveFavoritesApi.listByUser(user.id);
+        if (!cancelled) setFavorites(res.data);
+      } catch (err) {
+        console.error("[research-methods-landing] favorites load failed", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const favIdSet = useMemo(
+    () =>
+      new Set(
+        favorites.filter((f) => f.itemType === "research-method").map((f) => f.itemId),
+      ),
+    [favorites],
+  );
+
+  const handleToggleFav = async (m: ResearchMethod) => {
+    if (!user) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+    const favId = archiveFavoritesApi.makeId(user.id, "research-method", m.id);
+    const isFav = favIdSet.has(m.id);
+    try {
+      if (isFav) {
+        await archiveFavoritesApi.delete(favId);
+        setFavorites((prev) => prev.filter((f) => f.id !== favId));
+        toast.success("관심 해제");
+      } else {
+        const created = await archiveFavoritesApi.upsert(favId, {
+          userId: user.id,
+          itemType: "research-method",
+          itemId: m.id,
+          itemName: m.name,
+        });
+        setFavorites((prev) => [...prev, created]);
+        toast.success("관심 저장");
+      }
+    } catch (err) {
+      console.error("[research-methods-landing] favorite toggle failed", err);
+      toast.error("관심 저장 실패");
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -154,10 +224,13 @@ function ResearchMethodsLandingPageInner() {
 
   const filteredMethods = useMemo(
     () =>
-      visibleMethods.filter((m) =>
-        matchesArchiveSearch(m, query, RESEARCH_METHOD_SEARCH_FIELDS),
-      ),
-    [visibleMethods, query],
+      visibleMethods.filter((m) => {
+        if (!matchesArchiveSearch(m, query, RESEARCH_METHOD_SEARCH_FIELDS)) return false;
+        if (favoritesOnly && !favIdSet.has(m.id)) return false;
+        if (kindFilter !== "all" && m.kind !== kindFilter) return false;
+        return true;
+      }),
+    [visibleMethods, query, favoritesOnly, favIdSet, kindFilter],
   );
 
   const grouped = useMemo(() => {
@@ -169,12 +242,15 @@ function ResearchMethodsLandingPageInner() {
     for (const m of filteredMethods) {
       byKind[m.kind]?.push(m);
     }
-    // 이름 가나다 정렬
     (Object.keys(byKind) as ResearchMethodKind[]).forEach((k) => {
-      byKind[k].sort((a, b) => a.name.localeCompare(b.name, "ko"));
+      byKind[k].sort((a, b) =>
+        sortMode === "recent"
+          ? (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+          : a.name.localeCompare(b.name, "ko"),
+      );
     });
     return byKind;
-  }, [filteredMethods]);
+  }, [filteredMethods, sortMode]);
 
   return (
     <PageContainer width="default">
@@ -245,13 +321,45 @@ function ResearchMethodsLandingPageInner() {
         </Card>
 
         <div className="mt-6">
-          <ArchiveSearchBar
-            value={query}
-            onChange={setQuery}
+          <ArchiveListToolbar
+            query={query}
+            onQueryChange={setQuery}
             placeholder="연구방법 이름·요약·교육공학 예시로 검색"
             resultCount={filteredMethods.length}
             totalCount={visibleMethods.length}
-          />
+            sortMode={sortMode}
+            onSortChange={(v) => setSortMode(v as typeof sortMode)}
+            sortOptions={GUIDE_SORT_OPTIONS}
+            showFavoritesToggle={!!user}
+            favoritesOnly={favoritesOnly}
+            onFavoritesToggle={() => setFavoritesOnly((v) => !v)}
+          >
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-[11px] font-semibold text-muted-foreground">
+                연구 계열
+              </span>
+              {(["all", "quantitative", "qualitative", "mixed"] as const).map((k) => {
+                const selected = kindFilter === k;
+                const label = k === "all" ? "전체" : RESEARCH_METHOD_KIND_LABELS[k];
+                return (
+                  <button
+                    key={k}
+                    type="button"
+                    onClick={() => setKindFilter(k)}
+                    aria-pressed={selected}
+                    className={cn(
+                      "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                      selected
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/40",
+                    )}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+            </div>
+          </ArchiveListToolbar>
         </div>
 
         {!loading && query.trim() && filteredMethods.length === 0 && (
@@ -263,8 +371,12 @@ function ResearchMethodsLandingPageInner() {
         )}
 
         {KIND_GUIDES.map((guide) => {
+          if (kindFilter !== "all" && kindFilter !== guide.kind) return null;
           const list = grouped[guide.kind];
           const Icon = guide.icon;
+          // 필터 활성 시 빈 계열은 오해 방지 위해 숨김
+          const filterActive = !!query.trim() || favoritesOnly || kindFilter !== "all";
+          if (!loading && list.length === 0 && filterActive) return null;
           return (
             <section key={guide.kind} className="mt-8">
               <div className="mb-3 flex items-center gap-3">
@@ -328,6 +440,12 @@ function ResearchMethodsLandingPageInner() {
                             >
                               {RESEARCH_METHOD_KIND_LABELS[m.kind]}
                             </Badge>
+                            {user && (
+                              <ArchiveFavoriteStar
+                                isFav={favIdSet.has(m.id)}
+                                onToggle={() => handleToggleFav(m)}
+                              />
+                            )}
                           </div>
                         </div>
                         <p className="mt-2 text-sm leading-relaxed text-muted-foreground">

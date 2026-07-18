@@ -1,13 +1,17 @@
 "use client";
 
 /**
- * ArchiveGlobalSearch — 아카이브 통합 검색 (사이클 118, 사용자 요청)
+ * ArchiveGlobalSearch — 아카이브 통합 검색 (사이클 118, 사용자 요청 · M7 고도화 2026-07-18)
  * 개념·변인·측정도구·연구방법·통계방법·기초용어·글쓰기를 한 번에 검색해 유형별로 묶어 표시.
  * "타당도" 처럼 연구방법 절차에 묻힌 항목도 바로 찾게 한다.
+ *
+ * M7 고도화: 그룹별 "N개 모두 보기" 리스트 딥링크(?q=), ↑↓/Enter 키보드 내비게이션,
+ * 매칭어 <mark> 하이라이트, aria-live 결과 수 안내.
  */
 
-import { useMemo, useState } from "react";
+import { useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { Search, X, ArrowRight } from "lucide-react";
 import {
@@ -20,6 +24,7 @@ import {
   writingTipsApi,
 } from "@/lib/bkend";
 import { matchesArchiveSearch } from "@/lib/archive-search";
+import { cn } from "@/lib/utils";
 
 /** 빈 검색 결과 시 제안할 인기/대표 키워드 — 클릭하면 해당 검색어로 즉시 재검색 */
 const POPULAR_QUERIES = ["자기효능감", "타당도", "실험연구", "학습몰입", "신뢰도"] as const;
@@ -34,10 +39,33 @@ interface ResultGroup {
   label: string;
   color: string;
   items: ResultItem[];
+  /** 매칭 총 개수(6개 캡 이전) */
+  total: number;
+  /** 해당 리스트의 ?q= 딥링크 (없으면 "모두 보기" 미노출) */
+  listHref?: string;
+}
+
+/** 검색어를 텍스트에서 찾아 <mark> 로 강조 (대소문자 무시, 최초 1회). 없으면 원문 그대로. */
+function highlight(text: string, q: string): ReactNode {
+  const query = q.trim();
+  if (!query) return text;
+  const idx = text.toLowerCase().indexOf(query.toLowerCase());
+  if (idx === -1) return text;
+  return (
+    <>
+      {text.slice(0, idx)}
+      <mark className="rounded bg-amber-200/70 px-0.5 text-inherit dark:bg-amber-500/30">
+        {text.slice(idx, idx + query.length)}
+      </mark>
+      {text.slice(idx + query.length)}
+    </>
+  );
 }
 
 export default function ArchiveGlobalSearch() {
+  const router = useRouter();
   const [q, setQ] = useState("");
+  const [activeIndex, setActiveIndex] = useState(-1);
   const enabled = q.trim().length >= 1;
   const opt = { enabled, staleTime: 5 * 60_000 } as const;
 
@@ -57,50 +85,59 @@ export default function ArchiveGlobalSearch() {
   const groups = useMemo<ResultGroup[]>(() => {
     if (!enabled) return [];
     const out: ResultGroup[] = [];
+    const qs = q.trim();
     const push = (
       label: string,
       color: string,
       data: unknown[] | undefined,
       fields: string[],
       map: (x: Record<string, unknown>) => ResultItem,
+      listHref?: string,
     ) => {
-      const matched = (data ?? [])
+      const all = (data ?? [])
         .filter((x) => matchesArchiveSearch(x as Record<string, unknown>, q, fields as never))
-        .slice(0, 6)
         .map((x) => map(x as Record<string, unknown>));
-      if (matched.length) out.push({ label, color, items: matched });
+      if (all.length) {
+        out.push({
+          label,
+          color,
+          items: all.slice(0, 6),
+          total: all.length,
+          listHref: listHref ? `${listHref}?q=${encodeURIComponent(qs)}` : undefined,
+        });
+      }
     };
 
     push("개념", "text-violet-600", concepts.data?.data, ["name", "description", "altNames", "tags"], (x) => ({
       id: x.id as string,
       name: x.name as string,
       href: `/archive/concept/${x.id}`,
-    }));
+    }), "/archive/concept");
     push("변인", "text-blue-600", variables.data?.data, ["name", "description", "altNames", "tags"], (x) => ({
       id: x.id as string,
       name: x.name as string,
       href: `/archive/variable/${x.id}`,
-    }));
+    }), "/archive/variable");
     push("측정도구", "text-emerald-600", measurements.data?.data, ["name", "originalName", "author", "description"], (x) => ({
       id: x.id as string,
       name: x.name as string,
       href: `/archive/measurement/${x.id}`,
-    }));
+    }), "/archive/measurement");
     push("연구방법", "text-indigo-600", research.data?.data, ["name", "summary", "accessibleSummary"], (x) => ({
       id: x.id as string,
       name: x.name as string,
       href: `/archive/research-methods/${x.id}`,
-    }));
+    }), "/archive/research-methods");
     push("통계방법", "text-cyan-600", statistical.data?.data, ["name", "summary", "accessibleSummary"], (x) => ({
       id: x.id as string,
       name: x.name as string,
       href: `/archive/statistical-methods/${x.id}`,
-    }));
+    }), "/archive/statistical-methods");
     push("기초용어", "text-sky-600", foundation.data?.data, ["name", "definition", "summary", "accessibleSummary"], (x) => ({
       id: x.id as string,
       name: x.name as string,
       href: `/archive/foundation-terms/${x.id}`,
-    }));
+    }), "/archive/foundation-terms");
     push("글쓰기", "text-rose-600", writing.data?.data, ["title", "explanation", "wrongExample", "correctExample"], (x) => ({
       id: x.id as string,
       name: (x.title as string) ?? "글쓰기 팁",
@@ -121,6 +158,27 @@ export default function ArchiveGlobalSearch() {
   ]);
 
   const total = groups.reduce((s, g) => s + g.items.length, 0);
+  // 키보드 내비게이션용 평면 목록 (표시 순서대로)
+  const flatItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (!enabled || flatItems.length === 0) return;
+    if (e.key === "ArrowDown") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.min(i + 1, flatItems.length - 1));
+    } else if (e.key === "ArrowUp") {
+      e.preventDefault();
+      setActiveIndex((i) => Math.max(i - 1, 0));
+    } else if (e.key === "Enter") {
+      if (activeIndex >= 0 && activeIndex < flatItems.length) {
+        e.preventDefault();
+        router.push(flatItems[activeIndex].href);
+      }
+    } else if (e.key === "Escape") {
+      setQ("");
+      setActiveIndex(-1);
+    }
+  };
 
   return (
     <div className="relative">
@@ -129,15 +187,25 @@ export default function ArchiveGlobalSearch() {
         <input
           type="text"
           value={q}
-          onChange={(e) => setQ(e.target.value)}
+          onChange={(e) => {
+            setQ(e.target.value);
+            setActiveIndex(-1);
+          }}
+          onKeyDown={handleKeyDown}
           placeholder="아카이브 전체 검색 — 예: 타당도, 자기효능감, 실험연구"
           className="w-full rounded-xl border bg-card py-2.5 pl-10 pr-9 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/40"
           aria-label="아카이브 통합 검색"
+          role="combobox"
+          aria-expanded={enabled}
+          aria-controls="archive-search-results"
         />
         {q && (
           <button
             type="button"
-            onClick={() => setQ("")}
+            onClick={() => {
+              setQ("");
+              setActiveIndex(-1);
+            }}
             className="absolute right-2.5 top-1/2 -translate-y-1/2 rounded-md p-1 text-muted-foreground hover:bg-muted"
             aria-label="검색어 지우기"
           >
@@ -147,7 +215,18 @@ export default function ArchiveGlobalSearch() {
       </div>
 
       {enabled && (
-        <div className="mt-2 rounded-2xl border bg-card p-3 shadow-sm">
+        <div
+          id="archive-search-results"
+          className="mt-2 rounded-2xl border bg-card p-3 shadow-sm"
+        >
+          {/* 결과 수 스크린리더 안내 */}
+          <p className="sr-only" aria-live="polite">
+            {loading
+              ? "검색 중입니다."
+              : total === 0
+                ? `${q} 검색 결과가 없습니다.`
+                : `${total}개 결과를 찾았습니다. 위아래 화살표로 이동하고 엔터로 여세요.`}
+          </p>
           {loading ? (
             <p className="px-1 py-3 text-center text-sm text-muted-foreground">검색 중…</p>
           ) : total === 0 ? (
@@ -163,7 +242,10 @@ export default function ArchiveGlobalSearch() {
                     <button
                       key={pq}
                       type="button"
-                      onClick={() => setQ(pq)}
+                      onClick={() => {
+                        setQ(pq);
+                        setActiveIndex(-1);
+                      }}
                       className="rounded-full border bg-muted/40 px-2.5 py-1 text-xs text-foreground transition-colors hover:bg-muted"
                     >
                       {pq}
@@ -173,26 +255,49 @@ export default function ArchiveGlobalSearch() {
               </div>
             </div>
           ) : (
-            <div className="space-y-3">
-              {groups.map((g) => (
-                <div key={g.label}>
-                  <p className={`mb-1 text-[11px] font-bold ${g.color}`}>{g.label}</p>
-                  <ul className="space-y-0.5">
-                    {g.items.map((it) => (
-                      <li key={`${g.label}-${it.id}`}>
+            <ul className="space-y-3" role="listbox" aria-label="검색 결과">
+              {(() => {
+                let cursor = -1;
+                return groups.map((g) => (
+                  <li key={g.label}>
+                    <div className="mb-1 flex items-center justify-between gap-2">
+                      <p className={`text-[11px] font-bold ${g.color}`}>
+                        {g.label} <span className="text-muted-foreground">({g.total})</span>
+                      </p>
+                      {g.listHref && g.total > g.items.length && (
                         <Link
-                          href={it.href}
-                          className="flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-muted/50"
+                          href={g.listHref}
+                          className="inline-flex items-center gap-0.5 text-[11px] font-medium text-primary hover:underline"
                         >
-                          <span className="truncate font-medium">{it.name}</span>
-                          <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                          {g.total}개 모두 보기
+                          <ArrowRight className="h-3 w-3" aria-hidden />
                         </Link>
-                      </li>
-                    ))}
-                  </ul>
-                </div>
-              ))}
-            </div>
+                      )}
+                    </div>
+                    <ul className="space-y-0.5">
+                      {g.items.map((it) => {
+                        cursor += 1;
+                        const isActive = cursor === activeIndex;
+                        return (
+                          <li key={`${g.label}-${it.id}`} role="option" aria-selected={isActive}>
+                            <Link
+                              href={it.href}
+                              className={cn(
+                                "flex items-center justify-between gap-2 rounded-lg px-2 py-1.5 text-sm transition-colors hover:bg-muted/50",
+                                isActive && "bg-primary/10 ring-1 ring-primary/30",
+                              )}
+                            >
+                              <span className="truncate font-medium">{highlight(it.name, q)}</span>
+                              <ArrowRight className="h-3.5 w-3.5 shrink-0 text-muted-foreground" />
+                            </Link>
+                          </li>
+                        );
+                      })}
+                    </ul>
+                  </li>
+                ));
+              })()}
+            </ul>
           )}
         </div>
       )}

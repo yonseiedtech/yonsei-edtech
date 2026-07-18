@@ -217,6 +217,23 @@ export default function ArchiveGraphPage() {
     setShowLabels(graph.nodes.length < AUTO_HIDE_LABEL_THRESHOLD);
   }, [graph.nodes.length, loading, labelsManual]);
 
+  // ── L15: ?focus={nodeId} 수신 — 상세 페이지에서 넘어온 노드를 초기 포커스.
+  //   focus 는 "{type}:{rawId}" 합성 id 또는 rawId. 로드 완료 후 1회만 적용한다.
+  //   검색어를 노드명으로 세팅해 노란 테두리 강조 + 선택 상태로 인접 노드 focus.
+  const focusAppliedRef = useRef(false);
+  useEffect(() => {
+    if (loading || graph.nodes.length === 0 || focusAppliedRef.current) return;
+    if (typeof window === "undefined") return;
+    const focus = new URLSearchParams(window.location.search).get("focus");
+    if (!focus) return;
+    const node = graph.nodes.find((n) => n.id === focus || n.rawId === focus);
+    if (node) {
+      setSelectedId(node.id);
+      setQuery(node.label);
+    }
+    focusAppliedRef.current = true;
+  }, [loading, graph.nodes]);
+
   // ── 5. SVG refs ──
   const svgRef = useRef<SVGSVGElement | null>(null);
   const rootGroupRef = useRef<SVGGElement | null>(null); // 줌·팬용 transform 컨테이너

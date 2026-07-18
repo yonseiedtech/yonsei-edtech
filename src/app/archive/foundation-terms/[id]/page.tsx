@@ -18,6 +18,7 @@ import {
   PenLine,
   Star,
   Layers,
+  Network,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -45,7 +46,9 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
+import ArchiveMobileToc from "@/components/archive/ArchiveMobileToc";
 import PageContainer from "@/components/ui/page-container";
+import { recordRecentView } from "@/lib/archive-recent-views";
 
 export default function FoundationTermDetailPage() {
   const params = useParams<{ id: string }>();
@@ -154,6 +157,17 @@ export default function FoundationTermDetailPage() {
       cancelled = true;
     };
   }, [params?.id, canManage]);
+
+  // 최근 본 항목 기록 (스프린트1 H3)
+  useEffect(() => {
+    if (loading || !term?.term) return;
+    recordRecentView({
+      type: "foundation-term",
+      id: term.id,
+      title: term.term,
+      href: `/archive/foundation-terms/${term.id}`,
+    });
+  }, [loading, term?.id, term?.term]);
 
   async function togglePublish() {
     if (!term || !canManage) return;
@@ -311,6 +325,8 @@ export default function FoundationTermDetailPage() {
 
         <div className="lg:grid lg:grid-cols-[1fr_200px] lg:gap-6">
           <div className="min-w-0 lg:max-w-4xl">
+
+        <ArchiveMobileToc sections={tocSections} className="mt-3" />
 
         <div id="overview" className="mt-3 flex flex-wrap items-start justify-between gap-3 scroll-mt-24">
           <div className="min-w-0 flex-1">
@@ -662,6 +678,17 @@ export default function FoundationTermDetailPage() {
             </ul>
           </section>
         )}
+
+        {/* 관계 그래프 딥링크 (L15) */}
+        <div className="mt-8">
+          <Link
+            href={`/archive/graph?focus=${encodeURIComponent(`foundation-term:${term.id}`)}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+          >
+            <Network className="h-4 w-4" aria-hidden />
+            관계 그래프에서 보기
+          </Link>
+        </div>
 
         {/* 학술 책임 고지 */}
         <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">

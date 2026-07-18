@@ -19,6 +19,8 @@ import {
   BarChart3,
   Lightbulb,
   Star,
+  Network,
+  Layers,
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -34,6 +36,8 @@ import {
   alumniThesesApi,
   statisticalMethodsApi,
   archiveFavoritesApi,
+  archiveConceptsApi,
+  archiveVariablesApi,
 } from "@/lib/bkend";
 import {
   findStatMethodsLinkingToResearch,
@@ -52,7 +56,9 @@ import {
 import { cn } from "@/lib/utils";
 import { toast } from "sonner";
 import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
+import ArchiveMobileToc from "@/components/archive/ArchiveMobileToc";
 import PageContainer from "@/components/ui/page-container";
+import { recordRecentView } from "@/lib/archive-recent-views";
 
 export default function ResearchMethodDetailPage() {
   const params = useParams<{ id: string }>();
@@ -63,6 +69,9 @@ export default function ResearchMethodDetailPage() {
   const [method, setMethod] = useState<ResearchMethod | null>(null);
   const [theses, setTheses] = useState<AlumniThesis[]>([]);
   const [statisticalMethods, setStatisticalMethods] = useState<StatisticalMethod[]>([]);
+  // H2 역링크: 이 방법을 쓴 논문의 주요 개념·변인 (관련 논문 데이터 역집계, 상위 6개)
+  const [thesisConcepts, setThesisConcepts] = useState<{ id: string; name: string }[]>([]);
+  const [thesisVariables, setThesisVariables] = useState<{ id: string; name: string }[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isFav, setIsFav] = useState(false);
@@ -137,6 +146,62 @@ export default function ResearchMethodDetailPage() {
       cancelled = true;
     };
   }, [params?.id, canManage]);
+
+  // H2 역링크: 이미 로드된 theses 데이터에서 개념·변인 id 를 역집계해 상위 항목을 칩으로 노출.
+  useEffect(() => {
+    if (theses.length === 0) {
+      setThesisConcepts([]);
+      setThesisVariables([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const cCount = new Map<string, number>();
+      const vCount = new Map<string, number>();
+      for (const t of theses) {
+        new Set(t.conceptIds ?? []).forEach((x) => cCount.set(x, (cCount.get(x) ?? 0) + 1));
+        new Set(t.variableIds ?? []).forEach((x) => vCount.set(x, (vCount.get(x) ?? 0) + 1));
+      }
+      const topC = [...cCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map((e) => e[0]);
+      const topV = [...vCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 6).map((e) => e[0]);
+      if (topC.length === 0 && topV.length === 0) {
+        if (!cancelled) {
+          setThesisConcepts([]);
+          setThesisVariables([]);
+        }
+        return;
+      }
+      try {
+        const [cRes, vRes] = await Promise.all([
+          Promise.allSettled(topC.map((cid) => archiveConceptsApi.get(cid))),
+          Promise.allSettled(topV.map((vid) => archiveVariablesApi.get(vid))),
+        ]);
+        if (cancelled) return;
+        const concepts: { id: string; name: string }[] = [];
+        for (const r of cRes) if (r.status === "fulfilled") concepts.push({ id: r.value.id, name: r.value.name });
+        const variables: { id: string; name: string }[] = [];
+        for (const r of vRes) if (r.status === "fulfilled") variables.push({ id: r.value.id, name: r.value.name });
+        setThesisConcepts(concepts);
+        setThesisVariables(variables);
+      } catch (err) {
+        console.error("[research-method-detail] thesis topic aggregate failed", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [theses]);
+
+  // 최근 본 항목 기록 (스프린트1 H3)
+  useEffect(() => {
+    if (loading || !method?.name) return;
+    recordRecentView({
+      type: "research-method",
+      id: method.id,
+      title: method.name,
+      href: `/archive/research-methods/${method.id}`,
+    });
+  }, [loading, method?.id, method?.name]);
 
   async function togglePublish() {
     if (!method || !canManage) return;
@@ -249,6 +314,9 @@ export default function ResearchMethodDetailPage() {
     ...(method.statisticalMethodIds && method.statisticalMethodIds.length > 0
       ? [{ id: "related-statistical-methods", label: "관련 통계기법" }]
       : []),
+    ...(thesisConcepts.length > 0 || thesisVariables.length > 0
+      ? [{ id: "thesis-topics", label: "주요 개념·변인" }]
+      : []),
     ...(method.educationalTechExamples && method.educationalTechExamples.length > 0
       ? [{ id: "examples", label: "활용 예" }]
       : []),
@@ -269,6 +337,8 @@ export default function ResearchMethodDetailPage() {
 
         <div className="lg:grid lg:grid-cols-[1fr_200px] lg:gap-6">
           <div className="min-w-0 lg:max-w-4xl">
+
+        <ArchiveMobileToc sections={tocSections} className="mt-3" />
 
         <div id="overview" className="mt-3 flex flex-wrap items-start justify-between gap-3 scroll-mt-24">
           <div id="summary" className="min-w-0 flex-1 scroll-mt-24">
@@ -649,6 +719,53 @@ export default function ResearchMethodDetailPage() {
           </section>
         )}
 
+        {/* H2 역링크: 이 방법을 쓴 논문의 주요 개념·변인 */}
+        {(thesisConcepts.length > 0 || thesisVariables.length > 0) && (
+          <section id="thesis-topics" className="mt-10 scroll-mt-24">
+            <h2 className="mb-2 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
+              <Layers className="h-4 w-4" aria-hidden />
+              이 방법을 쓴 논문의 주요 개념·변인
+            </h2>
+            <p className="mb-3 text-xs text-muted-foreground">
+              이 연구방법을 사용한 졸업 논문들이 다룬 개념·변인입니다. 방법과 함께 무엇을 연구했는지 살펴보세요.
+            </p>
+            {thesisConcepts.length > 0 && (
+              <div className="mb-3">
+                <p className="mb-1.5 text-xs font-medium text-muted-foreground">개념</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {thesisConcepts.map((c) => (
+                    <Link key={c.id} href={`/archive/concept/${c.id}`}>
+                      <Badge
+                        variant="outline"
+                        className="cursor-pointer border-violet-200 bg-violet-50 text-violet-800 transition-shadow hover:shadow-sm dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300"
+                      >
+                        {c.name}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+            {thesisVariables.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-xs font-medium text-muted-foreground">변인</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {thesisVariables.map((v) => (
+                    <Link key={v.id} href={`/archive/variable/${v.id}`}>
+                      <Badge
+                        variant="outline"
+                        className="cursor-pointer border-blue-200 bg-blue-50 text-blue-800 transition-shadow hover:shadow-sm dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
+                      >
+                        {v.name}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </section>
+        )}
+
         {/* 졸업생 학위논문 연계 */}
         <section className="mt-10">
           <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
@@ -695,6 +812,17 @@ export default function ResearchMethodDetailPage() {
             </div>
           )}
         </section>
+
+        {/* 관계 그래프 딥링크 (L15) */}
+        <div className="mt-8">
+          <Link
+            href={`/archive/graph?focus=${encodeURIComponent(`research-method:${method.id}`)}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+          >
+            <Network className="h-4 w-4" aria-hidden />
+            관계 그래프에서 보기
+          </Link>
+        </div>
 
         {/* 학술 책임 고지 */}
         <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">

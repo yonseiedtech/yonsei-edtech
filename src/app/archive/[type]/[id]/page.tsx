@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck, Compass, Layers, Check, ArrowRight, GitFork } from "lucide-react";
+import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck, Compass, Layers, Check, ArrowRight, GitFork, BarChart3, BookMarked, ClipboardCheck } from "lucide-react";
 import { JOURNEY_STAGES } from "@/features/research/ThesisJourney";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -19,6 +19,8 @@ import {
   alumniThesesApi,
   profilesApi,
   flashcardsApi,
+  researchMethodsApi,
+  statisticalMethodsApi,
 } from "@/lib/bkend";
 import {
   ARCHIVE_ITEM_TYPE_COLORS,
@@ -33,8 +35,10 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
+import ArchiveMobileToc from "@/components/archive/ArchiveMobileToc";
 import PageContainer from "@/components/ui/page-container";
 import ConceptLinkedText from "@/components/archive/ConceptLinkedText";
+import { recordRecentView } from "@/lib/archive-recent-views";
 
 export default function ArchiveDetailPage() {
   const params = useParams<{ type: string; id: string }>();
@@ -48,6 +52,11 @@ export default function ArchiveDetailPage() {
   const [concepts, setConcepts] = useState<ArchiveConcept[]>([]);
   const [relatedTheses, setRelatedTheses] = useState<AlumniThesis[]>([]);
   const [relatedConcepts, setRelatedConcepts] = useState<ArchiveConcept[]>([]);
+  // H2 크로스링크: 관련 졸업논문이 자주 쓴 연구방법·통계기법 역집계 (상위 4개, 이름 해석)
+  const [crossMethods, setCrossMethods] = useState<{
+    research: { id: string; name: string }[];
+    statistical: { id: string; name: string }[];
+  }>({ research: [], statistical: [] });
   const [loading, setLoading] = useState(true);
   const [isFav, setIsFav] = useState(false);
   const [readingPending, setReadingPending] = useState<string | null>(null);
@@ -195,6 +204,69 @@ export default function ArchiveDetailPage() {
     };
   }, [type, id]);
 
+  // H2: 관련 졸업논문들이 사용한 연구방법·통계기법을 역집계해 상위 4개를 링크 칩으로 노출.
+  // 이미 로드된 relatedTheses 데이터를 재사용하고, 이름 해석에 필요한 최소한의 get 만 수행.
+  useEffect(() => {
+    if (relatedTheses.length === 0) {
+      setCrossMethods({ research: [], statistical: [] });
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      const rCount = new Map<string, number>();
+      const sCount = new Map<string, number>();
+      for (const t of relatedTheses) {
+        const rIds = new Set<string>([
+          ...(t.researchMethodIds ?? []),
+          ...(t.researchMethods ?? []),
+        ]);
+        const sIds = new Set<string>([
+          ...(t.statMethodIds ?? []),
+          ...(t.statisticalMethods ?? []),
+        ]);
+        rIds.forEach((x) => rCount.set(x, (rCount.get(x) ?? 0) + 1));
+        sIds.forEach((x) => sCount.set(x, (sCount.get(x) ?? 0) + 1));
+      }
+      const topR = [...rCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map((e) => e[0]);
+      const topS = [...sCount.entries()].sort((a, b) => b[1] - a[1]).slice(0, 4).map((e) => e[0]);
+      if (topR.length === 0 && topS.length === 0) {
+        if (!cancelled) setCrossMethods({ research: [], statistical: [] });
+        return;
+      }
+      try {
+        const [rRes, sRes] = await Promise.all([
+          Promise.allSettled(topR.map((mid) => researchMethodsApi.get(mid))),
+          Promise.allSettled(topS.map((mid) => statisticalMethodsApi.get(mid))),
+        ]);
+        if (cancelled) return;
+        const research: { id: string; name: string }[] = [];
+        for (const r of rRes) {
+          if (r.status === "fulfilled" && r.value.published) {
+            research.push({ id: r.value.id, name: r.value.name });
+          }
+        }
+        const statistical: { id: string; name: string }[] = [];
+        for (const r of sRes) {
+          if (r.status === "fulfilled" && r.value.published) {
+            statistical.push({ id: r.value.id, name: r.value.name });
+          }
+        }
+        setCrossMethods({ research, statistical });
+      } catch (err) {
+        console.error("[archive-detail] cross-method aggregate failed", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [relatedTheses]);
+
+  // 최근 본 항목 기록 (스프린트1 H3) — 데이터 로드 완료·title 확정 시점에 기록.
+  useEffect(() => {
+    if (loading || !item?.name) return;
+    recordRecentView({ type, id, title: item.name, href: `/archive/${type}/${id}` });
+  }, [loading, item?.name, type, id]);
+
   const handleToggleReading = async (thesisId: string) => {
     if (!user) {
       toast.error("로그인이 필요합니다");
@@ -338,6 +410,8 @@ export default function ArchiveDetailPage() {
       base.push({ id: "measurements", label: "연결된 변인·개념" });
     }
     base.push({ id: "related-theses", label: "관련 졸업생 논문" });
+    if (crossMethods.research.length > 0 || crossMethods.statistical.length > 0)
+      base.push({ id: "cross-methods", label: "자주 쓴 방법" });
     if (keyScholars.length > 0 || seminalWorks.length > 0)
       base.push({ id: "seminal-works", label: "대표 학자·원전" });
     if (references.length > 0) base.push({ id: "references", label: "참고문헌" });
@@ -356,6 +430,9 @@ export default function ArchiveDetailPage() {
 
       <div className="lg:grid lg:grid-cols-[1fr_200px] lg:gap-6">
         <div className="min-w-0 lg:max-w-4xl">
+
+      {/* 모바일 목차 (M6) */}
+      <ArchiveMobileToc sections={tocSections} />
 
       {/* Header */}
       <Card id="overview" className="border-l-4 scroll-mt-24" style={{
@@ -485,7 +562,7 @@ export default function ArchiveDetailPage() {
           )}
 
           {type === "measurement" && (
-            <div className="grid grid-cols-2 gap-3 text-sm">
+            <div className="grid grid-cols-1 gap-3 text-sm sm:grid-cols-2">
               {(item as ArchiveMeasurementTool).originalName && (
                 <div>
                   <span className="text-muted-foreground">원어명: </span>
@@ -801,6 +878,86 @@ export default function ArchiveDetailPage() {
           )}
         </CardContent>
       </Card>
+
+      {/* H2: 관련 연구가 자주 쓴 연구방법·통계기법 */}
+      {(crossMethods.research.length > 0 || crossMethods.statistical.length > 0) && (
+        <Card id="cross-methods" className="mt-6 scroll-mt-24">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <BarChart3 className="h-4 w-4 text-muted-foreground" />
+              이 {ARCHIVE_ITEM_TYPE_LABELS[type]}을(를) 다룬 연구가 자주 쓴 방법
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="space-y-3">
+            <p className="text-sm text-muted-foreground">
+              관련 졸업 논문들이 사용한 연구방법·통계기법입니다. 논문 설계 시 방법·분석 선택에 참고하세요.
+            </p>
+            {crossMethods.research.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-xs font-medium text-muted-foreground">연구방법</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {crossMethods.research.map((m) => (
+                    <Link key={m.id} href={`/archive/research-methods/${m.id}`}>
+                      <Badge
+                        variant="outline"
+                        className="cursor-pointer border-rose-200 bg-rose-50 text-rose-800 transition-shadow hover:shadow-sm dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
+                      >
+                        {m.name}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+            {crossMethods.statistical.length > 0 && (
+              <div>
+                <p className="mb-1.5 text-xs font-medium text-muted-foreground">통계기법</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {crossMethods.statistical.map((m) => (
+                    <Link key={m.id} href={`/archive/statistical-methods/${m.id}`}>
+                      <Badge
+                        variant="outline"
+                        className="cursor-pointer border-orange-200 bg-orange-50 text-orange-800 transition-shadow hover:shadow-sm dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300"
+                      >
+                        {m.name}
+                      </Badge>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* 이어서 탐색 — 관계 그래프 · AECT 표준 용어 · 진단 (H2·M10·L15) */}
+      <div className="mt-6 flex flex-wrap gap-2">
+        <Link
+          href={`/archive/graph?focus=${encodeURIComponent(`${type}:${id}`)}`}
+          className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+        >
+          <Network className="h-4 w-4" aria-hidden />
+          관계 그래프에서 보기
+        </Link>
+        {type === "concept" && aectTermRaw && (
+          <Link
+            href={`/archive/terminology?q=${encodeURIComponent(aectTermRaw)}`}
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+          >
+            <BookMarked className="h-4 w-4" aria-hidden />
+            AECT 표준 용어에서 보기
+          </Link>
+        )}
+        {type === "concept" && (
+          <Link
+            href="/diagnosis"
+            className="inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-sm text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+          >
+            <ClipboardCheck className="h-4 w-4" aria-hidden />
+            이 개념으로 진단 문항 풀기
+          </Link>
+        )}
+      </div>
 
         </div>
         <ArchiveStickyToc sections={tocSections} />

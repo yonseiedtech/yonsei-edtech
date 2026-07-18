@@ -15,9 +15,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/page-header";
 import InlineNotification from "@/components/ui/inline-notification";
+import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
-import { foundationTermsApi } from "@/lib/bkend";
+import { foundationTermsApi, archiveFavoritesApi } from "@/lib/bkend";
 import {
   FOUNDATION_TERM_CATEGORY_COLORS,
   FOUNDATION_TERM_CATEGORY_LABELS,
@@ -25,12 +26,21 @@ import {
   FOUNDATION_TERM_SUBCATEGORY_ORDER,
   type FoundationTerm,
   type FoundationTermCategory,
+  type ArchiveFavorite,
 } from "@/types";
 import { cn } from "@/lib/utils";
-import ArchiveSearchBar from "@/components/archive/ArchiveSearchBar";
+import ArchiveListToolbar, {
+  type ArchiveListSortOption,
+} from "@/components/archive/ArchiveListToolbar";
+import ArchiveFavoriteStar from "@/components/archive/ArchiveFavoriteStar";
 import { matchesArchiveSearch } from "@/lib/archive-search";
 import { leadSentence } from "@/lib/archive-text";
 import PageContainer from "@/components/ui/page-container";
+
+const GUIDE_SORT_OPTIONS: ArchiveListSortOption[] = [
+  { value: "name", label: "이름순 (가나다)" },
+  { value: "recent", label: "최신 추가순" },
+];
 
 const FOUNDATION_TERM_SEARCH_FIELDS: (keyof FoundationTerm)[] = [
   "term",
@@ -128,14 +138,74 @@ function FoundationTermsLandingPageInner() {
   const canManage = isAtLeast(user, "staff");
 
   const [terms, setTerms] = useState<FoundationTerm[]>([]);
+  const [favorites, setFavorites] = useState<ArchiveFavorite[]>([]);
   const [loading, setLoading] = useState(true);
   const [query, setQuery] = useState("");
+  // H4: 동적 리스트와 정합화 — 정렬·즐겨찾기만·카테고리 칩 필터
+  const [sortMode, setSortMode] = useState<"name" | "recent">("name");
+  const [favoritesOnly, setFavoritesOnly] = useState(false);
+  const [categoryFilter, setCategoryFilter] = useState<FoundationTermCategory | "all">("all");
   // UX(2026-07-04): soft navigation(뒤로가기·칩 재클릭)에도 ?q= 를 반영
   const searchParams = useSearchParams();
   useEffect(() => {
     const q = searchParams.get("q");
     if (q !== null) setQuery(q);
   }, [searchParams]);
+
+  useEffect(() => {
+    if (!user) {
+      setFavorites([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await archiveFavoritesApi.listByUser(user.id);
+        if (!cancelled) setFavorites(res.data);
+      } catch (err) {
+        console.error("[foundation-terms-landing] favorites load failed", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [user]);
+
+  const favIdSet = useMemo(
+    () =>
+      new Set(
+        favorites.filter((f) => f.itemType === "foundation-term").map((f) => f.itemId),
+      ),
+    [favorites],
+  );
+
+  const handleToggleFav = async (t: FoundationTerm) => {
+    if (!user) {
+      toast.error("로그인이 필요합니다");
+      return;
+    }
+    const favId = archiveFavoritesApi.makeId(user.id, "foundation-term", t.id);
+    const isFav = favIdSet.has(t.id);
+    try {
+      if (isFav) {
+        await archiveFavoritesApi.delete(favId);
+        setFavorites((prev) => prev.filter((f) => f.id !== favId));
+        toast.success("관심 해제");
+      } else {
+        const created = await archiveFavoritesApi.upsert(favId, {
+          userId: user.id,
+          itemType: "foundation-term",
+          itemId: t.id,
+          itemName: t.term,
+        });
+        setFavorites((prev) => [...prev, created]);
+        toast.success("관심 저장");
+      }
+    } catch (err) {
+      console.error("[foundation-terms-landing] favorite toggle failed", err);
+      toast.error("관심 저장 실패");
+    }
+  };
 
   useEffect(() => {
     let cancelled = false;
@@ -166,10 +236,13 @@ function FoundationTermsLandingPageInner() {
 
   const filteredTerms = useMemo(
     () =>
-      visibleTerms.filter((t) =>
-        matchesArchiveSearch(t, query, FOUNDATION_TERM_SEARCH_FIELDS),
-      ),
-    [visibleTerms, query],
+      visibleTerms.filter((t) => {
+        if (!matchesArchiveSearch(t, query, FOUNDATION_TERM_SEARCH_FIELDS)) return false;
+        if (favoritesOnly && !favIdSet.has(t.id)) return false;
+        if (categoryFilter !== "all" && t.category !== categoryFilter) return false;
+        return true;
+      }),
+    [visibleTerms, query, favoritesOnly, favIdSet, categoryFilter],
   );
 
   const grouped = useMemo(() => {
@@ -185,10 +258,23 @@ function FoundationTermsLandingPageInner() {
       byCategory[t.category]?.push(t);
     }
     (Object.keys(byCategory) as FoundationTermCategory[]).forEach((k) => {
-      byCategory[k].sort((a, b) => a.term.localeCompare(b.term, "ko"));
+      byCategory[k].sort((a, b) =>
+        sortMode === "recent"
+          ? (b.createdAt ?? "").localeCompare(a.createdAt ?? "")
+          : a.term.localeCompare(b.term, "ko"),
+      );
     });
     return byCategory;
-  }, [filteredTerms]);
+  }, [filteredTerms, sortMode]);
+
+  // 칩 라벨용 카테고리별 건수 — 현재 필터와 무관하게 전체 기준(칩이 사라지지 않도록)
+  const categoryCounts = useMemo(() => {
+    const counts = {} as Record<FoundationTermCategory, number>;
+    for (const t of visibleTerms) {
+      counts[t.category] = (counts[t.category] ?? 0) + 1;
+    }
+    return counts;
+  }, [visibleTerms]);
 
   return (
     <PageContainer width="default">
@@ -222,34 +308,62 @@ function FoundationTermsLandingPageInner() {
         </div>
 
         <div className="mt-6">
-          <ArchiveSearchBar
-            value={query}
-            onChange={setQuery}
+          <ArchiveListToolbar
+            query={query}
+            onQueryChange={setQuery}
             placeholder="용어·영문·약어·정의로 검색"
             resultCount={filteredTerms.length}
             totalCount={visibleTerms.length}
-          />
+            sortMode={sortMode}
+            onSortChange={(v) => setSortMode(v as typeof sortMode)}
+            sortOptions={GUIDE_SORT_OPTIONS}
+            showFavoritesToggle={!!user}
+            favoritesOnly={favoritesOnly}
+            onFavoritesToggle={() => setFavoritesOnly((v) => !v)}
+          >
+            {/* 카테고리 칩 필터 — 용어 45종+ 좁히기 (기존 점프 내비를 필터로 통합) */}
+            <div className="flex flex-wrap items-center gap-1.5">
+              <span className="mr-1 text-[11px] font-semibold text-muted-foreground">
+                분야
+              </span>
+              <button
+                type="button"
+                onClick={() => setCategoryFilter("all")}
+                aria-pressed={categoryFilter === "all"}
+                className={cn(
+                  "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                  categoryFilter === "all"
+                    ? "border-primary bg-primary text-primary-foreground"
+                    : "border-border bg-background text-muted-foreground hover:border-primary/40",
+                )}
+              >
+                전체
+              </button>
+              {CATEGORY_GUIDES.map((guide) => {
+                const count = categoryCounts[guide.category] ?? 0;
+                if (count === 0) return null;
+                const selected = categoryFilter === guide.category;
+                return (
+                  <button
+                    key={guide.category}
+                    type="button"
+                    onClick={() => setCategoryFilter(guide.category)}
+                    aria-pressed={selected}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                      selected
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border bg-background text-muted-foreground hover:border-primary/40",
+                    )}
+                  >
+                    {guide.title}
+                    <span className="tabular-nums opacity-70">({count})</span>
+                  </button>
+                );
+              })}
+            </div>
+          </ArchiveListToolbar>
         </div>
-
-        {/* 카테고리 점프 네비 — 용어 45종+ 세로 나열 보완 (사이클 64) */}
-        {!loading && (
-          <nav aria-label="카테고리 바로가기" className="mt-3 flex flex-wrap gap-1.5">
-            {CATEGORY_GUIDES.map((guide) => {
-              const count = grouped[guide.category].length;
-              if (count === 0) return null;
-              return (
-                <a
-                  key={guide.category}
-                  href={`#${guide.category}`}
-                  className="inline-flex items-center gap-1 rounded-full border bg-card px-2.5 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-                >
-                  {guide.title}
-                  <span className="tabular-nums">({count})</span>
-                </a>
-              );
-            })}
-          </nav>
-        )}
 
         {!loading && query.trim() && filteredTerms.length === 0 && (
           <Card className="mt-6 rounded-2xl border-dashed">
@@ -260,7 +374,12 @@ function FoundationTermsLandingPageInner() {
         )}
 
         {CATEGORY_GUIDES.map((guide) => {
+          if (categoryFilter !== "all" && categoryFilter !== guide.category) return null;
           const list = grouped[guide.category];
+          // 필터 활성 시 빈 분야는 오해 방지 위해 숨김
+          const filterActive =
+            !!query.trim() || favoritesOnly || categoryFilter !== "all";
+          if (!loading && list.length === 0 && filterActive) return null;
           return (
             <section key={guide.category} id={guide.category} className="mt-8 scroll-mt-24">
               <div className="mb-3 flex items-center gap-3">
@@ -357,6 +476,12 @@ function FoundationTermsLandingPageInner() {
                             >
                               {FOUNDATION_TERM_CATEGORY_LABELS[t.category]}
                             </Badge>
+                            {user && (
+                              <ArchiveFavoriteStar
+                                isFav={favIdSet.has(t.id)}
+                                onToggle={() => handleToggleFav(t)}
+                              />
+                            )}
                           </div>
                         </div>
                         {(() => {

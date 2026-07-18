@@ -5,9 +5,6 @@ import { notFound, useParams, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import {
   ArrowLeft,
-  ArrowRight,
-  Search,
-  Star,
   Lightbulb,
   Variable as VariableIcon,
   Ruler,
@@ -17,10 +14,13 @@ import {
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
-import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import PageContainer from "@/components/ui/page-container";
+import ArchiveListToolbar, {
+  type ArchiveListSortOption,
+} from "@/components/archive/ArchiveListToolbar";
+import ArchiveFavoriteStar from "@/components/archive/ArchiveFavoriteStar";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import {
@@ -45,6 +45,12 @@ import { cn } from "@/lib/utils";
 import { leadSentence } from "@/lib/archive-text";
 
 type ArchiveItem = ArchiveConcept | ArchiveVariable | ArchiveMeasurementTool;
+
+const SORT_OPTIONS: ArchiveListSortOption[] = [
+  { value: "name", label: "이름순 (가나다)" },
+  { value: "recent", label: "최신 추가순" },
+  { value: "alt", label: "별칭 많은 순" },
+];
 
 const TYPE_META: Record<
   ArchiveItemType,
@@ -298,138 +304,110 @@ function ArchiveTypeListPageInner() {
         })}
       </div>
 
-      {/* 검색 + 정렬 + 새로 추가 */}
-      <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <div className="relative max-w-md flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-          <Input
-            placeholder={`${meta.title} 이름·설명·태그로 검색`}
-            value={query}
-            onChange={(e) => setQuery(e.target.value)}
-            className="pl-9"
-          />
-        </div>
-        <div className="flex items-center gap-2">
-          <select
-            value={sortMode}
-            onChange={(e) => setSortMode(e.target.value as typeof sortMode)}
-            className="h-9 rounded-md border bg-background px-2 text-xs"
-            aria-label="정렬 방식"
-          >
-            <option value="name">이름순 (가나다)</option>
-            <option value="recent">최신 추가순</option>
-            <option value="alt">별칭 많은 순</option>
-          </select>
-          {user && (
-            <Button
-              type="button"
-              size="sm"
-              variant={favoritesOnly ? "default" : "outline"}
-              onClick={() => setFavoritesOnly((v) => !v)}
-              aria-pressed={favoritesOnly}
-              className="h-9 gap-1 text-xs"
-            >
-              ★ 즐겨찾기만
-            </Button>
+      {/* 검색 + 정렬 + 즐겨찾기만 + 새로 추가 (공용 툴바 — H4) */}
+      <div className="mt-6">
+        <ArchiveListToolbar
+          query={query}
+          onQueryChange={setQuery}
+          placeholder={`${meta.title} 이름·설명·태그로 검색`}
+          resultCount={filtered.length}
+          totalCount={items.length}
+          sortMode={sortMode}
+          onSortChange={(v) => setSortMode(v as typeof sortMode)}
+          sortOptions={SORT_OPTIONS}
+          showFavoritesToggle={!!user}
+          favoritesOnly={favoritesOnly}
+          onFavoritesToggle={() => setFavoritesOnly((v) => !v)}
+          actions={
+            canManage ? (
+              <Link href={`/archive/${type}/new`}>
+                <Button type="button" size="sm" className="h-9">
+                  <Plus className="mr-1 h-4 w-4" />새로 추가
+                </Button>
+              </Link>
+            ) : undefined
+          }
+        >
+          {/* 사이클 60: 변인 구인 영역 필터 — "이 연구에서 사람의 무엇을 보고자 하는가" */}
+          {type === "variable" && (
+            <div className="rounded-lg border bg-card p-3">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="mr-1 text-[11px] font-semibold text-muted-foreground">
+                  사람의 무엇을 보나요?
+                </span>
+                {(["all", "cognitive", "affective", "behavioral", "environmental", "demographic"] as const).map((d) => {
+                  const selected = domainFilter === d;
+                  const label = d === "all" ? "전체" : VARIABLE_TYPE_LABELS[d];
+                  return (
+                    <button
+                      key={d}
+                      type="button"
+                      onClick={() => setDomainFilter(d)}
+                      aria-pressed={selected}
+                      className={cn(
+                        "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                        selected
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/40",
+                      )}
+                    >
+                      {label}
+                    </button>
+                  );
+                })}
+              </div>
+              <p className="mt-1.5 text-[10px] text-muted-foreground">
+                인지적(지식·사고) · 정의적(마음가짐) · 행동적(실제 행동) — 처치가 겨냥한 영역과 측정 변인의 영역이
+                일치하는지가 변인 선정의 첫 점검입니다.
+              </p>
+            </div>
           )}
-          {canManage && (
-            <Link href={`/archive/${type}/new`}>
-              <Button type="button" size="sm" className="h-9">
-                <Plus className="mr-1 h-4 w-4" />새로 추가
-              </Button>
-            </Link>
+
+          {/* Archive-UX: 태그 chip 다중 선택 필터 */}
+          {allTags.length > 0 && (
+            <div className="rounded-lg border bg-card p-3">
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="mr-1 text-[11px] font-semibold text-muted-foreground">
+                  태그 필터 (AND)
+                </span>
+                {allTags.slice(0, 30).map(({ tag, count }) => {
+                  const selected = selectedTags.includes(tag);
+                  return (
+                    <button
+                      key={tag}
+                      type="button"
+                      onClick={() => toggleTag(tag)}
+                      aria-pressed={selected}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
+                        selected
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border bg-background text-muted-foreground hover:border-primary/40",
+                      )}
+                    >
+                      {tag}
+                      <span className="text-[9px] opacity-70">{count}</span>
+                    </button>
+                  );
+                })}
+                {selectedTags.length > 0 && (
+                  <button
+                    type="button"
+                    onClick={() => setSelectedTags([])}
+                    className="ml-1 inline-flex items-center gap-0.5 rounded-full border border-dashed border-rose-300 px-2 py-0.5 text-[11px] text-rose-700 hover:bg-rose-50"
+                  >
+                    초기화 ({selectedTags.length})
+                  </button>
+                )}
+                {allTags.length > 30 && (
+                  <span className="text-[10px] text-muted-foreground">
+                    +{allTags.length - 30}개 더 (검색 사용)
+                  </span>
+                )}
+              </div>
+            </div>
           )}
-        </div>
-      </div>
-
-      {/* 사이클 60: 변인 구인 영역 필터 — "이 연구에서 사람의 무엇을 보고자 하는가" */}
-      {type === "variable" && (
-        <div className="mt-3 rounded-lg border bg-card p-3">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-[11px] font-semibold text-muted-foreground">
-              사람의 무엇을 보나요?
-            </span>
-            {(["all", "cognitive", "affective", "behavioral", "environmental", "demographic"] as const).map((d) => {
-              const selected = domainFilter === d;
-              const label = d === "all" ? "전체" : VARIABLE_TYPE_LABELS[d];
-              return (
-                <button
-                  key={d}
-                  type="button"
-                  onClick={() => setDomainFilter(d)}
-                  aria-pressed={selected}
-                  className={cn(
-                    "inline-flex items-center rounded-full border px-2 py-0.5 text-[11px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
-                    selected
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background text-muted-foreground hover:border-primary/40",
-                  )}
-                >
-                  {label}
-                </button>
-              );
-            })}
-          </div>
-          <p className="mt-1.5 text-[10px] text-muted-foreground">
-            인지적(지식·사고) · 정의적(마음가짐) · 행동적(실제 행동) — 처치가 겨냥한 영역과 측정 변인의 영역이
-            일치하는지가 변인 선정의 첫 점검입니다.
-          </p>
-        </div>
-      )}
-
-      {/* Archive-UX: 태그 chip 다중 선택 필터 */}
-      {allTags.length > 0 && (
-        <div className="mt-3 rounded-lg border bg-card p-3">
-          <div className="flex flex-wrap items-center gap-1.5">
-            <span className="mr-1 text-[11px] font-semibold text-muted-foreground">
-              태그 필터 (AND)
-            </span>
-            {allTags.slice(0, 30).map(({ tag, count }) => {
-              const selected = selectedTags.includes(tag);
-              return (
-                <button
-                  key={tag}
-                  type="button"
-                  onClick={() => toggleTag(tag)}
-                  aria-pressed={selected}
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px] transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
-                    selected
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border bg-background text-muted-foreground hover:border-primary/40",
-                  )}
-                >
-                  {tag}
-                  <span className="text-[9px] opacity-70">{count}</span>
-                </button>
-              );
-            })}
-            {selectedTags.length > 0 && (
-              <button
-                type="button"
-                onClick={() => setSelectedTags([])}
-                className="ml-1 inline-flex items-center gap-0.5 rounded-full border border-dashed border-rose-300 px-2 py-0.5 text-[11px] text-rose-700 hover:bg-rose-50"
-              >
-                초기화 ({selectedTags.length})
-              </button>
-            )}
-            {allTags.length > 30 && (
-              <span className="text-[10px] text-muted-foreground">
-                +{allTags.length - 30}개 더 (검색 사용)
-              </span>
-            )}
-          </div>
-        </div>
-      )}
-
-      <div className="mt-2 text-xs text-muted-foreground">
-        {loading
-          ? "불러오는 중..."
-          : `총 ${filtered.length}개${
-              query || selectedTags.length > 0 || favoritesOnly
-                ? ` (전체 ${items.length})`
-                : ""
-            }`}
+        </ArchiveListToolbar>
       </div>
 
       {/* 리스트 */}
@@ -501,8 +479,13 @@ function ArchiveCard({
     <Card className={cn("border-l-4 transition-shadow hover:shadow-md", borderClass)}>
       <CardHeader className="pb-2">
         <div className="flex items-start justify-between gap-2">
-          <div className="min-w-0 flex-1">
-            <CardTitle className="text-base truncate">{item.name}</CardTitle>
+          <Link
+            href={`/archive/${type}/${item.id}`}
+            className="group min-w-0 flex-1 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 rounded-md"
+          >
+            <CardTitle className="text-base truncate group-hover:text-primary">
+              {item.name}
+            </CardTitle>
             {(purifiedName || aectTerm) && (
               <span className="mt-1 flex flex-wrap items-center gap-1">
                 {purifiedName && (
@@ -527,7 +510,7 @@ function ArchiveCard({
                 {meta.join(" · ")}
               </p>
             )}
-          </div>
+          </Link>
           <div className="flex items-center gap-1">
             {canEdit && (
               <Link
@@ -538,38 +521,21 @@ function ArchiveCard({
                 <Pencil className="h-4 w-4" />
               </Link>
             )}
-            {canFav && (
-              <button
-                type="button"
-                onClick={onToggleFav}
-                className={cn(
-                  "rounded-md p-1 transition-colors",
-                  isFav
-                    ? "text-amber-500 hover:bg-amber-50"
-                    : "text-muted-foreground hover:bg-muted hover:text-amber-500",
-                )}
-                aria-label={isFav ? "관심 해제" : "관심 저장"}
-              >
-                <Star className={cn("h-4 w-4", isFav && "fill-current")} />
-              </button>
-            )}
+            {canFav && <ArchiveFavoriteStar isFav={isFav} onToggle={onToggleFav} />}
           </div>
         </div>
       </CardHeader>
       <CardContent className="pt-0">
-        {item.description && (() => {
-          const { lead, truncated } = leadSentence(item.description);
-          return (
+        {item.description && (
+          <Link
+            href={`/archive/${type}/${item.id}`}
+            className="block focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2 rounded-md"
+          >
             <p className="text-xs text-muted-foreground line-clamp-3 leading-relaxed">
-              {lead}
-              {truncated && (
-                <span className="ml-1 whitespace-nowrap font-medium text-primary">
-                  … 더보기
-                </span>
-              )}
+              {leadSentence(item.description).lead}
             </p>
-          );
-        })()}
+          </Link>
+        )}
         {tags.length > 0 && (
           <div className="mt-2 flex flex-wrap gap-1">
             {tags.slice(0, 4).map((t) => (
@@ -582,13 +548,6 @@ function ArchiveCard({
             )}
           </div>
         )}
-        <Link
-          href={`/archive/${type}/${item.id}`}
-          className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
-        >
-          연결 보기
-          <ArrowRight className="h-3 w-3" />
-        </Link>
       </CardContent>
     </Card>
   );
