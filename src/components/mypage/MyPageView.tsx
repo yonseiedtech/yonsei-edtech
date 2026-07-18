@@ -1,6 +1,6 @@
 "use client";
 
-import { useRef, useEffect, useState, startTransition } from "react";
+import { useRef, useEffect, useState, startTransition, type ReactNode, type ComponentType } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import dynamic from "next/dynamic";
@@ -53,6 +53,7 @@ import {
   PackageOpen,
   ClipboardCheck,
   Layers,
+  Search,
 } from "lucide-react";
 
 // react-easy-crop(39KB gzipped) — 명함 탭 클릭 시에만 chunk 로드
@@ -1159,101 +1160,242 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
           )}
 
           {activeTab === "settings" && (
-            <div className="space-y-6">
-              {/* 프로필 수정 */}
-              <div className="rounded-2xl border bg-card p-6">
-                <h3 className="mb-4 text-base font-bold">프로필 수정</h3>
-                {readOnly ? (
-                  <div className="space-y-2 text-sm">
-                    <p><span className="font-medium">이름:</span> {user.name}</p>
-                    <p><span className="font-medium">이메일:</span> {user.email}</p>
-                    <p><span className="font-medium">학번:</span> {user.studentId || "-"}</p>
-                    <p className="text-xs text-muted-foreground pt-2">읽기 전용 모드에서는 프로필을 수정할 수 없습니다.</p>
-                  </div>
-                ) : (
-                  <ProfileEditor user={user} />
-                )}
-              </div>
-
-              {/* 비밀번호 변경 */}
-              <div className="rounded-2xl border bg-card p-6">
-                <h3 className="mb-4 text-base font-bold">비밀번호 변경</h3>
-                {readOnly ? (
-                  <p className="text-sm text-muted-foreground">읽기 전용 모드에서는 비밀번호를 변경할 수 없습니다.</p>
-                ) : (
-                  <PasswordChangeForm />
-                )}
-              </div>
-
-              {/* 알림센터 안내 카드 */}
-              {!readOnly && (
-                <Link
-                  href="/mypage/notifications"
-                  className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <Bell size={20} />
-                    </div>
-                    <div>
-                      <p className="font-semibold">알림센터</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">수신한 모든 알림 목록</p>
-                    </div>
-                  </div>
-                  <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
-                </Link>
-              )}
-
-              {/* 캘린더 Sync 안내 카드 */}
-              {!readOnly && (
-                <Link
-                  href="/mypage/calendar-sync"
-                  className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <CalendarDays size={20} />
-                    </div>
-                    <div>
-                      <p className="font-semibold">캘린더 Sync</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">Google · Apple 캘린더에 학회 일정 구독</p>
-                    </div>
-                  </div>
-                  <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
-                </Link>
-              )}
-
-              {/* 내 데이터 다운로드 */}
-              {!readOnly && (
-                <Link
-                  href="/mypage/data-export"
-                  className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
-                >
-                  <div className="flex items-center gap-3">
-                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                      <PackageOpen size={20} />
-                    </div>
-                    <div>
-                      <p className="font-semibold">내 데이터 다운로드</p>
-                      <p className="mt-0.5 text-xs text-muted-foreground">활동·연구·수료증 등 본인 데이터를 JSON으로 저장</p>
-                    </div>
-                  </div>
-                  <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
-                </Link>
-              )}
-
-              {/* 알림 / 피드 설정 */}
-              {!readOnly && <NotificationSettingsCard user={user} />}
-
-              {/* 읽기 타이머 부엉이 표시 설정 */}
-              {!readOnly && <ReadingOwlSettingsCard />}
-
-              {/* 회원 탈퇴 */}
-              {!readOnly && <SelfDeleteSection user={user} onDeleted={() => { logout(); router.push("/"); }} />}
-            </div>
+            <SettingsTabContent
+              user={user}
+              readOnly={readOnly}
+              onDeleted={() => { logout(); router.push("/"); }}
+            />
           )}
         </div>
     </PageContainer>
+  );
+}
+
+/** 설정 그룹 아코디언 — 헤더(아이콘·제목·1줄 설명)를 눌러 펼치는 접이식 섹션.
+ *  expandAll(검색 중)이면 항상 펼침. danger 이면 위험 액션용 파괴적 색상 위계. */
+function SettingsSection({
+  icon: Icon,
+  title,
+  description,
+  danger = false,
+  defaultOpen = false,
+  expandAll = false,
+  children,
+}: {
+  icon: ComponentType<{ size?: number; className?: string }>;
+  title: string;
+  description: string;
+  danger?: boolean;
+  defaultOpen?: boolean;
+  expandAll?: boolean;
+  children: ReactNode;
+}) {
+  const [open, setOpen] = useState(defaultOpen);
+  const expanded = expandAll || open;
+  return (
+    <section>
+      <button
+        type="button"
+        onClick={() => setOpen((v) => !v)}
+        aria-expanded={expanded}
+        className={cn(
+          "flex w-full items-center gap-3 rounded-xl border px-4 py-3 text-left transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
+          danger
+            ? "border-destructive/30 bg-destructive/[0.03] hover:bg-destructive/[0.06]"
+            : "bg-muted/40 hover:bg-muted/70",
+        )}
+      >
+        <div
+          className={cn(
+            "flex h-9 w-9 shrink-0 items-center justify-center rounded-lg",
+            danger ? "bg-destructive/10 text-destructive" : "bg-primary/10 text-primary",
+          )}
+        >
+          <Icon size={18} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className={cn("text-sm font-semibold", danger && "text-destructive")}>{title}</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">{description}</p>
+        </div>
+        <ChevronRight
+          size={16}
+          className={cn("shrink-0 text-muted-foreground transition-transform", expanded && "rotate-90")}
+        />
+      </button>
+      {expanded && <div className="mt-3 space-y-4">{children}</div>}
+    </section>
+  );
+}
+
+/** 설정 탭 — 항목을 4개 그룹(① 프로필·계정 ② 알림·공개 범위 ③ 연동·표시·데이터 ④ 계정 관리)으로
+ *  아코디언 재편. 위험 액션(탈퇴)은 최하단 danger 그룹으로 격리. 각 설정의 저장 로직은 기존 컴포넌트를
+ *  그대로 재사용하며 배치·그룹핑만 재편한다. 상단 검색으로 그룹을 필터·자동 확장. */
+function SettingsTabContent({
+  user,
+  readOnly = false,
+  onDeleted,
+}: {
+  user: User;
+  readOnly?: boolean;
+  onDeleted: () => void;
+}) {
+  const [query, setQuery] = useState("");
+  const q = query.trim().toLowerCase();
+  const filtering = q.length > 0;
+  const matches = (keywords: string) => !filtering || keywords.toLowerCase().includes(q);
+
+  const kw = {
+    profile: "프로필 계정 정보 이름 소개 학번 이메일 비밀번호 password 기본",
+    notify:
+      "알림 공개 범위 노출 메일 주간 다이제스트 push 푸시 피드 네트워킹 map 순위 leaderboard 조용한 시간 세미나 스터디 과제 수업 대외 학술대회 공동 연구 연구지 암기카드 소통 보드 알림센터",
+    data: "연동 표시 데이터 캘린더 sync 구글 애플 구독 내보내기 다운로드 json 읽기 타이머 부엉이",
+    account: "계정 관리 회원 탈퇴 삭제 위험",
+  };
+
+  const anyMatch =
+    matches(kw.profile) ||
+    (!readOnly && (matches(kw.notify) || matches(kw.data) || matches(kw.account)));
+
+  return (
+    <div className="space-y-4">
+      {!readOnly && (
+        <div className="relative">
+          <Search
+            size={15}
+            className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
+          />
+          <input
+            type="search"
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="설정 검색 (예: 알림, 캘린더, 탈퇴)"
+            aria-label="설정 검색"
+            className="w-full rounded-xl border bg-card py-2.5 pl-9 pr-3 text-sm outline-none focus:border-primary/50 focus:ring-1 focus:ring-primary/30"
+          />
+        </div>
+      )}
+
+      {filtering && !anyMatch && (
+        <p className="rounded-xl border bg-card px-4 py-6 text-center text-sm text-muted-foreground">
+          &lsquo;{query}&rsquo; 에 해당하는 설정이 없습니다.
+        </p>
+      )}
+
+      {/* ① 프로필 · 계정 정보 */}
+      {matches(kw.profile) && (
+        <SettingsSection
+          icon={UserIcon}
+          title="프로필 · 계정 정보"
+          description="이름·소개 등 프로필과 비밀번호를 관리합니다."
+          defaultOpen
+          expandAll={filtering}
+        >
+          <div className="rounded-2xl border bg-card p-6">
+            <h4 className="mb-4 text-sm font-bold">프로필 수정</h4>
+            {readOnly ? (
+              <div className="space-y-2 text-sm">
+                <p><span className="font-medium">이름:</span> {user.name}</p>
+                <p><span className="font-medium">이메일:</span> {user.email}</p>
+                <p><span className="font-medium">학번:</span> {user.studentId || "-"}</p>
+                <p className="pt-2 text-xs text-muted-foreground">읽기 전용 모드에서는 프로필을 수정할 수 없습니다.</p>
+              </div>
+            ) : (
+              <ProfileEditor user={user} />
+            )}
+          </div>
+          <div className="rounded-2xl border bg-card p-6">
+            <h4 className="mb-4 text-sm font-bold">비밀번호 변경</h4>
+            {readOnly ? (
+              <p className="text-sm text-muted-foreground">읽기 전용 모드에서는 비밀번호를 변경할 수 없습니다.</p>
+            ) : (
+              <PasswordChangeForm />
+            )}
+          </div>
+        </SettingsSection>
+      )}
+
+      {/* ② 알림 · 공개 범위 */}
+      {!readOnly && matches(kw.notify) && (
+        <SettingsSection
+          icon={Bell}
+          title="알림 · 공개 범위"
+          description="메일·push 알림과 다른 회원에게 보이는 활동·순위 노출을 설정합니다."
+          expandAll={filtering}
+        >
+          <Link
+            href="/mypage/notifications"
+            className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Bell size={20} />
+              </div>
+              <div>
+                <p className="font-semibold">알림센터</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">수신한 모든 알림 목록</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
+          </Link>
+          <NotificationSettingsCard user={user} />
+        </SettingsSection>
+      )}
+
+      {/* ③ 연동 · 표시 · 데이터 */}
+      {!readOnly && matches(kw.data) && (
+        <SettingsSection
+          icon={Layers}
+          title="연동 · 표시 · 데이터"
+          description="캘린더 구독, 화면 표시, 내 데이터 내보내기를 관리합니다."
+          expandAll={filtering}
+        >
+          <Link
+            href="/mypage/calendar-sync"
+            className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <CalendarDays size={20} />
+              </div>
+              <div>
+                <p className="font-semibold">캘린더 Sync</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">Google · Apple 캘린더에 학회 일정 구독</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
+          </Link>
+          <ReadingOwlSettingsCard />
+          <Link
+            href="/mypage/data-export"
+            className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
+          >
+            <div className="flex items-center gap-3">
+              <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <PackageOpen size={20} />
+              </div>
+              <div>
+                <p className="font-semibold">내 데이터 다운로드</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">활동·연구·수료증 등 본인 데이터를 JSON으로 저장</p>
+              </div>
+            </div>
+            <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
+          </Link>
+        </SettingsSection>
+      )}
+
+      {/* ④ 계정 관리 (위험 액션 격리) */}
+      {!readOnly && matches(kw.account) && (
+        <SettingsSection
+          icon={AlertCircle}
+          title="계정 관리"
+          description="탈퇴 등 되돌릴 수 없는 작업입니다."
+          danger
+          expandAll={filtering}
+        >
+          <SelfDeleteSection user={user} onDeleted={onDeleted} />
+        </SettingsSection>
+      )}
+    </div>
   );
 }
 
@@ -1448,7 +1590,7 @@ function NotificationSettingsCard({ user }: { user: User }) {
   }
 
   return (
-    <div className="mt-6 rounded-2xl border bg-card p-6">
+    <div className="rounded-2xl border bg-card p-6">
       <h3 className="flex items-center gap-2 text-base font-semibold">
         <Bell size={18} /> 알림 / 피드 설정
       </h3>
@@ -1725,7 +1867,7 @@ function ReadingOwlSettingsCard() {
   }
 
   return (
-    <div className="mt-6 rounded-2xl border bg-card p-6">
+    <div className="rounded-2xl border bg-card p-6">
       <h3 className="flex items-center gap-2 text-base font-semibold">
         <BookOpen size={18} /> 읽기 타이머
       </h3>
@@ -1788,7 +1930,7 @@ function SelfDeleteSection({ user, onDeleted }: { user: User; onDeleted: () => v
 
   if (!open) {
     return (
-      <div className="mt-6 rounded-2xl border border-destructive/30 bg-destructive/[0.02] p-6">
+      <div className="rounded-2xl border border-destructive/30 bg-destructive/[0.02] p-6">
         <h3 className="flex items-center gap-2 text-base font-semibold text-destructive">
           <AlertCircle size={18} /> 회원 탈퇴
         </h3>
@@ -1807,7 +1949,7 @@ function SelfDeleteSection({ user, onDeleted }: { user: User; onDeleted: () => v
   }
 
   return (
-    <div className="mt-6 rounded-2xl border-2 border-destructive bg-destructive/[0.04] p-6">
+    <div className="rounded-2xl border-2 border-destructive bg-destructive/[0.04] p-6">
       <h3 className="flex items-center gap-2 text-base font-semibold text-destructive">
         <AlertCircle size={18} /> 회원 탈퇴 확인
       </h3>

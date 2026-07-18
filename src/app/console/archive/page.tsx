@@ -22,6 +22,7 @@ import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
+import { normalizeStringItems } from "@/lib/archive-normalize";
 import {
   archiveConceptsApi,
   archiveVariablesApi,
@@ -201,11 +202,14 @@ export default function ConsoleArchivePage() {
         foundationTermsApi.list(),
         writingTipsApi.list(),
       ]);
+      // v5-H2 후속(2026-07-19): 보류(held)는 대기 카운트에서 제외 — 통합 큐 보류 탭에서 관리.
+      const pending = (x: { published?: boolean; reviewStatus?: string }) =>
+        !x.published && x.reviewStatus !== "held";
       setReviewQueue({
-        "research-methods": rm.data.filter((x) => !x.published).length,
-        "statistical-methods": sm.data.filter((x) => !x.published).length,
-        "foundation-terms": ft.data.filter((x) => !x.published).length,
-        "writing-tips": wt.data.filter((x) => !x.published).length,
+        "research-methods": rm.data.filter(pending).length,
+        "statistical-methods": sm.data.filter(pending).length,
+        "foundation-terms": ft.data.filter(pending).length,
+        "writing-tips": wt.data.filter(pending).length,
       });
     } catch (err) {
       console.error("[console-archive] review queue load failed", err);
@@ -576,8 +580,9 @@ function EditDialog({
     (item as ArchiveMeasurementTool)?.reliability ?? "",
   );
   const [validity, setValidity] = useState((item as ArchiveMeasurementTool)?.validity ?? "");
+  // #31 방어(2026-07-19): {text,id} 맵 혼재 문서 정규화 후 표시 (오염 저장 방지)
   const [sampleItems, setSampleItems] = useState(
-    csv((item as ArchiveMeasurementTool)?.sampleItems),
+    csv(normalizeStringItems((item as ArchiveMeasurementTool)?.sampleItems)),
   );
   const [resourceUrl, setResourceUrl] = useState(
     (item as ArchiveMeasurementTool)?.resourceUrl ?? "",

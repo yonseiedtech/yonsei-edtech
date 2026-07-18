@@ -21,6 +21,8 @@ export interface OrgPosition {
   team?: string;
   /** 학회장 직속 보조역 플래그 (role === "direct_aide"와 동등, UI 편의용) */
   isDirectAide?: boolean;
+  /** 담당 업무 설명 (이 직책이 맡는 일 — 조직 설정·직책 상세에 노출, 공개 조직도엔 비노출) */
+  duty?: string;
   /** 인수인계 메모 (Markdown) - 차기 임원에게 전달할 업무 노하우 */
   handover?: string;
   /** 독립 사이드 브랜치 (부모 카드 우측에 점선으로 표시, 예: 외부 자문위원) */

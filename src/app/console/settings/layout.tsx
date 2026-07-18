@@ -20,7 +20,7 @@ const SETTINGS_GROUPS = [
     label: "구성원",
     tabs: [
       { href: "/console/settings/professor", label: "주임교수" },
-      { href: "/console/settings/org-chart", label: "운영진 조직도" },
+      { href: "/console/settings/org-chart", label: "운영진 설정" },
       { href: "/console/settings/presidents", label: "역대 회장" },
     ],
   },
@@ -28,6 +28,12 @@ const SETTINGS_GROUPS = [
     label: "학술활동",
     tabs: [
       { href: "/console/settings/activities", label: "활동 소개" },
+    ],
+  },
+  {
+    label: "학사",
+    tabs: [
+      { href: "/console/settings/academic-status", label: "학사정보 최신화" },
     ],
   },
   {

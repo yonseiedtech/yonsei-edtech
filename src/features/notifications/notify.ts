@@ -243,6 +243,25 @@ export function notifyGatheringPostponed(userId: string, eventTitle: string, new
   );
 }
 
+/**
+ * 세미나 운영 타임라인 담당자 지정 알림 — 항목에 운영진을 담당자로 지정한 시점 발송.
+ * 운영진 대상 인앱 알림이므로 admin_nudge 타입(📣)을 재사용하고, 링크는 타임라인 콘솔로 연결한다.
+ * 스팸 방지: 호출부에서 항목당 동일 담당자 1회만 발송하도록 제어한다.
+ */
+export function notifyTimelineAssigned(
+  userId: string,
+  seminarTitle: string,
+  itemLabel: string,
+) {
+  return create(
+    userId,
+    "admin_nudge",
+    "세미나 준비 담당으로 지정되었습니다",
+    `「${seminarTitle}」 준비 항목 "${itemLabel}" 담당자로 지정되었습니다.`,
+    "/console/academic/seminars/timeline",
+  );
+}
+
 export function notifySeminarReminder(
   userId: string,
   seminarTitle: string,

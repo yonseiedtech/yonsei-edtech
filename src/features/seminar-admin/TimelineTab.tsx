@@ -3,8 +3,12 @@
 import { useState, useRef, useCallback, useEffect } from "react";
 import { useSeminars, useUpdateSeminar, useStaffMembers } from "@/features/seminar/useSeminar";
 import { useSeminarAdminContext } from "./seminar-admin-store";
-import { createTimeline, OFFLINE_TIMELINE, ONLINE_TIMELINE } from "./timeline-template";
+import { createTimeline } from "./timeline-template";
+import { useTimelineTemplate } from "./useTimelineTemplate";
 import { resolveDate, isOverdue, formatDDay } from "./timeline-utils";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { notifyTimelineAssigned } from "@/features/notifications/notify";
+import { todayYmdLocal } from "@/lib/dday";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
@@ -30,7 +34,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { formatKST } from "@/lib/seminar-utils";
-import type { Seminar, TimelinePhase } from "@/types";
+import type { Seminar, TimelinePhase, TimelineStatus } from "@/types";
 
 function saveTimeline(
   updateSeminar: ReturnType<typeof useUpdateSeminar>["updateSeminar"],
@@ -49,10 +53,27 @@ function saveTimeline(
       description: p.description ?? "",
     };
     if (p.doneAt) item.doneAt = p.doneAt;
+    if (p.assigneeId) item.assigneeId = p.assigneeId;
+    if (p.notifiedAssigneeId) item.notifiedAssigneeId = p.notifiedAssigneeId;
+    if (p.status) item.status = p.status;
+    if (p.doneBy) item.doneBy = p.doneBy;
     return item;
   });
   updateSeminar({ id: seminarId, data: { timeline: cleaned } as unknown as Partial<Seminar> });
 }
+
+/** 진행 상태 유도 — status 미지정 레거시 항목은 done 으로부터 계산 */
+function getStatus(p: TimelinePhase): TimelineStatus {
+  if (p.status) return p.status;
+  return p.done ? "done" : "todo";
+}
+
+const STATUS_OPTIONS: { value: TimelineStatus; label: string }[] = [
+  { value: "todo", label: "예정" },
+  { value: "doing", label: "진행" },
+  { value: "done", label: "완료" },
+  { value: "skipped", label: "건너뜀" },
+];
 
 type ViewMode = "timeline" | "template";
 
@@ -61,6 +82,8 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
   const { seminars } = useSeminars();
   const { updateSeminar } = useUpdateSeminar();
   const { staffMembers } = useStaffMembers();
+  const currentUser = useAuthStore((s) => s.user);
+  const { template, saveTemplate, isSaving } = useTimelineTemplate();
   const activeSeminarId = useSeminarAdminContext((s) => s.activeSeminarId);
   const setActiveSeminarId = useSeminarAdminContext((s) => s.setActiveSeminarId);
   const selectedId = propSeminarId ?? activeSeminarId;
@@ -96,16 +119,20 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
   const timeline: TimelinePhase[] = seminar?.timeline ?? [];
   const isOnline = seminar?.isOnline ?? false;
 
-  // 템플릿 로드
+  // 템플릿 로드 (저장된 기본 템플릿 우선, 없으면 하드코딩 폴백)
   function loadTemplate(type: "offline" | "online") {
     setTemplateType(type);
-    const source = type === "online" ? ONLINE_TIMELINE : OFFLINE_TIMELINE;
+    const source = type === "online" ? template.online : template.offline;
     setTemplateItems([...source]);
   }
 
   function handleInit() {
     if (!seminar) return;
-    const tl = createTimeline(isOnline);
+    // 저장된 기본 템플릿 우선(없으면 하드코딩 폴백) — createTimeline 이 fallback 을 담당
+    const source = isOnline ? template.online : template.offline;
+    const tl: TimelinePhase[] = source.length
+      ? source.map((item) => ({ ...item, done: false, status: "todo" as TimelineStatus }))
+      : createTimeline(isOnline);
     saveTimeline(updateSeminar, seminar.id, tl);
     toast.success(
       isOnline
@@ -116,12 +143,63 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
 
   function handleToggle(phaseId: string) {
     if (!seminar) return;
+    const now = new Date().toISOString();
     const updated = timeline.map((p) =>
       p.id === phaseId
-        ? { ...p, done: !p.done, doneAt: !p.done ? new Date().toISOString() : undefined }
+        ? {
+            ...p,
+            done: !p.done,
+            status: (!p.done ? "done" : "todo") as TimelineStatus,
+            doneAt: !p.done ? now : undefined,
+            doneBy: !p.done ? (p.doneBy || currentUser?.name) : undefined,
+          }
         : p,
     );
     saveTimeline(updateSeminar, seminar.id, updated);
+  }
+
+  /** 진행 상태 변경 — done 및 완료 처리자/시각을 status 에 맞춰 동기화 */
+  function handleStatusChange(phaseId: string, status: TimelineStatus) {
+    if (!seminar) return;
+    const now = new Date().toISOString();
+    const updated = timeline.map((p) => {
+      if (p.id !== phaseId) return p;
+      const done = status === "done";
+      return {
+        ...p,
+        status,
+        done,
+        doneAt: done ? (p.doneAt || now) : undefined,
+        doneBy: done ? (p.doneBy || currentUser?.name) : undefined,
+      };
+    });
+    saveTimeline(updateSeminar, seminar.id, updated);
+  }
+
+  /**
+   * 담당자 지정 — 이름→userId 매핑 후 지정 시점 인앱 알림 1회 발송.
+   * notifiedAssigneeId 로 항목당 동일 담당자 중복 알림을 방지한다. 본인 지정 시 알림 생략.
+   */
+  function handleAssigneeChange(phase: TimelinePhase, name: string) {
+    if (!seminar) return;
+    const staff = staffMembers.find((s) => s.name === name);
+    const assigneeId = staff?.id;
+    const shouldNotify = !!assigneeId && phase.notifiedAssigneeId !== assigneeId && assigneeId !== currentUser?.id;
+    const updated = timeline.map((p) =>
+      p.id === phase.id
+        ? {
+            ...p,
+            assignee: name || undefined,
+            assigneeId: assigneeId || undefined,
+            notifiedAssigneeId: shouldNotify ? assigneeId : (assigneeId ? p.notifiedAssigneeId : undefined),
+          }
+        : p,
+    );
+    saveTimeline(updateSeminar, seminar.id, updated);
+    if (shouldNotify && assigneeId) {
+      notifyTimelineAssigned(assigneeId, seminar.title, phase.label);
+      toast.success(`${name}님께 담당 지정 알림을 보냈습니다.`);
+    }
   }
 
   const memoTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -164,28 +242,51 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
   function handleSaveItem() {
     if (!seminar || !editItem || !editItem.label.trim()) return;
     const dDay = parseInt(editItem.dDay) || 0;
+    const name = editItem.assignee;
+    const staff = staffMembers.find((s) => s.name === name);
+    const assigneeId = staff?.id;
 
     if (editItem.mode === "add") {
       const newId = `custom_${Date.now()}`;
+      const notify = !!assigneeId && assigneeId !== currentUser?.id;
       const newPhase: TimelinePhase = {
         id: newId,
         label: editItem.label,
         dDay,
         done: false,
+        status: "todo",
         memo: "",
-        assignee: editItem.assignee || undefined,
+        assignee: name || undefined,
+        assigneeId: assigneeId || undefined,
+        notifiedAssigneeId: notify ? assigneeId : undefined,
         description: editItem.description || undefined,
       };
       const updated = [...timeline, newPhase];
       saveTimeline(updateSeminar, seminar.id, updated);
+      if (notify && assigneeId) {
+        notifyTimelineAssigned(assigneeId, seminar.title, editItem.label);
+      }
       toast.success("항목이 추가되었습니다.");
     } else {
+      const prev = timeline.find((p) => p.id === editItem.id);
+      const notify = !!assigneeId && prev?.notifiedAssigneeId !== assigneeId && assigneeId !== currentUser?.id;
       const updated = timeline.map((p) =>
         p.id === editItem.id
-          ? { ...p, label: editItem.label, dDay, assignee: editItem.assignee || undefined, description: editItem.description || undefined }
+          ? {
+              ...p,
+              label: editItem.label,
+              dDay,
+              assignee: name || undefined,
+              assigneeId: assigneeId || undefined,
+              notifiedAssigneeId: notify ? assigneeId : (assigneeId ? p.notifiedAssigneeId : undefined),
+              description: editItem.description || undefined,
+            }
           : p,
       );
       saveTimeline(updateSeminar, seminar.id, updated);
+      if (notify && assigneeId) {
+        notifyTimelineAssigned(assigneeId, seminar.title, editItem.label);
+      }
       toast.success("항목이 수정되었습니다.");
     }
     setEditItem(null);
@@ -217,20 +318,96 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
     setEditTemplateItem(null);
   }
 
-  // 템플릿 적용
+  // 템플릿 적용 (기존 항목 유지·병합 — id 중복 항목은 건너뛴다)
   function applyTemplate() {
     if (!seminar) return;
-    const tl = templateItems.map((item) => ({
-      ...item,
-      done: false,
-    })) as TimelinePhase[];
-    saveTimeline(updateSeminar, seminar.id, tl);
-    toast.success("템플릿이 적용되었습니다.");
+    const existingIds = new Set(timeline.map((p) => p.id));
+    const additions = templateItems
+      .filter((item) => !existingIds.has(item.id))
+      .map((item) => ({ ...item, done: false, status: "todo" as TimelineStatus })) as TimelinePhase[];
+    const merged = [...timeline, ...additions];
+    saveTimeline(updateSeminar, seminar.id, merged);
+    toast.success(
+      additions.length > 0
+        ? `${additions.length}개 항목이 추가되었습니다.`
+        : "이미 모든 템플릿 항목이 포함되어 있습니다.",
+    );
     setViewMode("timeline");
   }
 
+  // 기본 템플릿으로 저장 (이후 새 세미나에 적용) — rules 상 운영진 관리자(president/admin) 전용
+  async function handleSaveTemplate() {
+    try {
+      await saveTemplate({ type: templateType, items: templateItems });
+      toast.success("기본 템플릿이 저장되었습니다.");
+    } catch {
+      toast.error("템플릿 저장 권한이 없습니다. (학회장/관리자 전용)");
+    }
+  }
+
+  // 내 담당 임박(D-3 이내·기한 초과) 항목 — 전체 세미나 대상, cron 없이 열람 시 계산
+  const todayStr = todayYmdLocal();
+  const todayTime = new Date(todayStr + "T00:00:00").getTime();
+  const myImminent = currentUser
+    ? seminars
+        // 이미 지난(7일 초과) 세미나의 준비 항목은 노이즈이므로 제외 — D+1 마무리 항목은 포함되도록 여유
+        .filter((s) => new Date(s.date + "T00:00:00").getTime() >= todayTime - 7 * 86400000)
+        .flatMap((s) =>
+          (s.timeline ?? [])
+            .filter((p) => {
+              const mine = p.assigneeId
+                ? p.assigneeId === currentUser.id
+                : !!p.assignee && p.assignee === currentUser.name;
+              return mine && !p.done && getStatus(p) !== "skipped";
+            })
+            .map((p) => {
+              const target = resolveDate(s.date, p.dDay);
+              const diffDays = Math.round((new Date(target + "T00:00:00").getTime() - todayTime) / 86400000);
+              return { seminar: s, phase: p, target, diffDays };
+            }),
+        )
+        .filter((x) => x.diffDays <= 3)
+        .sort((a, b) => a.diffDays - b.diffDays)
+    : [];
+
   return (
     <div className="space-y-6">
+      {/* 내 담당 임박 (전체 세미나, D-3 이내·기한 초과) */}
+      {myImminent.length > 0 && (
+        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
+          <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-amber-800">
+            <AlertTriangle size={15} />
+            내 담당 임박 ({myImminent.length})
+          </div>
+          <div className="space-y-1.5">
+            {myImminent.map(({ seminar: s, phase: p, target, diffDays }) => (
+              <button
+                key={`${s.id}_${p.id}`}
+                onClick={() => {
+                  setSelectedId(s.id);
+                  setViewMode("timeline");
+                }}
+                className="flex w-full items-center gap-2 rounded-lg bg-card/80 px-3 py-2 text-left text-sm hover:bg-card"
+              >
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    "w-14 shrink-0 justify-center text-xs",
+                    diffDays < 0 && "bg-red-100 text-red-700",
+                  )}
+                >
+                  {diffDays < 0 ? `지연 ${Math.abs(diffDays)}일` : diffDays === 0 ? "오늘" : `D-${diffDays}`}
+                </Badge>
+                <span className="min-w-0 flex-1 truncate">
+                  <span className="font-medium">{p.label}</span>
+                  <span className="ml-1.5 text-xs text-muted-foreground">{s.title} · {target}</span>
+                </span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+
       {/* 세미나 선택 */}
       <div className="flex flex-col gap-4 sm:flex-row sm:items-end">
         <div className="flex-1">
@@ -308,10 +485,13 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                     onClick={() => {
                       if (!seminar) return;
                       if (!confirm("모든 타임라인 항목을 완료 처리하시겠습니까?")) return;
+                      const now = new Date().toISOString();
                       const updated = timeline.map((p) => ({
                         ...p,
                         done: true,
-                        doneAt: p.doneAt || new Date().toISOString(),
+                        status: "done" as TimelineStatus,
+                        doneAt: p.doneAt || now,
+                        doneBy: p.doneBy || currentUser?.name,
                       }));
                       saveTimeline(updateSeminar, seminar.id, updated);
                       toast.success("모든 항목이 완료 처리되었습니다.");
@@ -331,6 +511,31 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                 </Button>
               </div>
             </div>
+
+            {/* 진행률 요약 바 */}
+            {(() => {
+              const total = timeline.length;
+              const doneCount = timeline.filter((p) => p.done).length;
+              const doingCount = timeline.filter((p) => getStatus(p) === "doing").length;
+              const skippedCount = timeline.filter((p) => getStatus(p) === "skipped").length;
+              const pct = total > 0 ? Math.round((doneCount / total) * 100) : 0;
+              return (
+                <div className="mt-3 flex items-center gap-3">
+                  <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
+                    <div
+                      className={cn("h-full rounded-full transition-all", pct === 100 ? "bg-green-500" : "bg-primary")}
+                      style={{ width: `${pct}%` }}
+                    />
+                  </div>
+                  <span className="shrink-0 text-xs text-muted-foreground">
+                    완료 {doneCount}
+                    {doingCount > 0 && ` · 진행 ${doingCount}`}
+                    {skippedCount > 0 && ` · 건너뜀 ${skippedCount}`}
+                    {" · "}{pct}%
+                  </span>
+                </div>
+              );
+            })()}
           </div>
 
           <div className="divide-y">
@@ -407,15 +612,26 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                         </span>
                       )}
 
+                      {/* 진행 상태 */}
+                      <select
+                        value={getStatus(phase)}
+                        onChange={(e) => handleStatusChange(phase.id, e.target.value as TimelineStatus)}
+                        className={cn(
+                          "shrink-0 rounded border px-1.5 py-1 text-xs",
+                          getStatus(phase) === "doing" && "text-blue-600",
+                          getStatus(phase) === "skipped" && "text-muted-foreground",
+                        )}
+                        title="진행 상태"
+                      >
+                        {STATUS_OPTIONS.map((o) => (
+                          <option key={o.value} value={o.value}>{o.label}</option>
+                        ))}
+                      </select>
+
                       {/* 담당자 */}
                       <select
                         value={phase.assignee ?? ""}
-                        onChange={(e) => {
-                          const updated = timeline.map((p) =>
-                            p.id === phase.id ? { ...p, assignee: e.target.value || undefined } : p,
-                          );
-                          saveTimeline(updateSeminar, seminar.id, updated);
-                        }}
+                        onChange={(e) => handleAssigneeChange(phase, e.target.value)}
                         className="w-full shrink-0 rounded border px-1.5 py-1 text-xs sm:w-24"
                       >
                         <option value="">미정</option>
@@ -424,10 +640,13 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                         ))}
                       </select>
 
-                      {/* 완료 시점 KST */}
+                      {/* 완료 시점 KST + 처리자 */}
                       {phase.done && phase.doneAt && (
-                        <span className="shrink-0 text-[11px] text-green-600">
-                          {formatKST(phase.doneAt)}
+                        <span
+                          className="shrink-0 text-[11px] text-green-600"
+                          title={phase.doneBy ? `처리자: ${phase.doneBy}` : undefined}
+                        >
+                          {formatKST(phase.doneAt)}{phase.doneBy ? ` · ${phase.doneBy}` : ""}
                         </span>
                       )}
 
@@ -523,11 +742,17 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                   <Plus size={14} className="mr-1" />
                   항목 추가
                 </Button>
+                <Button variant="outline" size="sm" onClick={handleSaveTemplate} disabled={isSaving}>
+                  {isSaving ? "저장 중…" : "기본 템플릿 저장"}
+                </Button>
                 <Button size="sm" onClick={applyTemplate}>
-                  이 템플릿 적용
+                  이 세미나에 적용
                 </Button>
               </div>
             </div>
+            <p className="mt-2 text-xs text-muted-foreground">
+              편집 후 <strong>기본 템플릿 저장</strong>을 누르면 이후 모든 세미나의 기본 준비 항목으로 사용됩니다. <strong>이 세미나에 적용</strong>은 현재 세미나 타임라인에 항목을 병합합니다(기존 항목 유지).
+            </p>
           </div>
 
           <div className="divide-y">

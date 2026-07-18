@@ -1,5 +1,6 @@
 "use client";
 
+import Link from "next/link";
 import { useOrgChart, buildOrgTree, type OrgTreeNode, type OrgRole } from "@/features/admin/settings/useOrgChart";
 
 const ROLE_LABELS: Record<OrgRole, string> = {
@@ -75,27 +76,42 @@ function OrgNode({ node, isRoot, isIndependent }: { node: OrgTreeNode; isRoot?: 
       ? "border-dashed border-teal-400/60 bg-teal-50/40"
       : style.card || (isRoot ? "border-primary/30 bg-primary/5" : "");
 
+  const cardInner = (
+    <>
+      <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${style.avatar}`}>
+        {node.userName ? node.userName[0] : "?"}
+      </div>
+      <p className="mt-1.5 text-xs font-semibold">{node.title}</p>
+      <p className="text-[11px] text-muted-foreground">{node.userName ?? "공석"}</p>
+      {node.department && (
+        <p className="text-[10px] text-muted-foreground/70">{node.department}</p>
+      )}
+      <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1">
+        {node.role && (
+          <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium ${style.badge}`}>
+            {ROLE_LABELS[node.role]}
+          </span>
+        )}
+      </div>
+    </>
+  );
+  const cardBase = `flex flex-col items-center rounded-2xl border bg-card px-4 py-3 shadow-sm ${cardClass}`;
+
   return (
     <div className="flex flex-col items-center">
       {/* 부모 카드 + 우측 독립 사이드카. absolute로 부모의 수평 중심축 보존 */}
       <div className="relative">
-        <div className={`flex flex-col items-center rounded-2xl border bg-card px-4 py-3 shadow-sm ${cardClass}`}>
-          <div className={`flex h-10 w-10 items-center justify-center rounded-full text-sm font-bold ${style.avatar}`}>
-            {node.userName ? node.userName[0] : "?"}
-          </div>
-          <p className="mt-1.5 text-xs font-semibold">{node.title}</p>
-          <p className="text-[11px] text-muted-foreground">{node.userName ?? "공석"}</p>
-          {node.department && (
-            <p className="text-[10px] text-muted-foreground/70">{node.department}</p>
-          )}
-          <div className="mt-1.5 flex flex-wrap items-center justify-center gap-1">
-            {node.role && (
-              <span className={`rounded-full px-1.5 py-0.5 text-[9px] font-medium ${style.badge}`}>
-                {ROLE_LABELS[node.role]}
-              </span>
-            )}
-          </div>
-        </div>
+        {node.userId ? (
+          <Link
+            href={`/profile/${node.userId}`}
+            className={`${cardBase} transition-colors hover:border-primary/50 hover:bg-primary/5`}
+            title={`${node.userName ?? node.title} 프로필 보기`}
+          >
+            {cardInner}
+          </Link>
+        ) : (
+          <div className={cardBase}>{cardInner}</div>
+        )}
 
         {/* 우측 사이드카: 독립기관 (예: 외부 자문위원) */}
         {independents.length > 0 && (
@@ -183,31 +199,39 @@ function MobileOrgList({ nodes, depth = 0 }: { nodes: OrgTreeNode[]; depth?: num
         }
         const node = g.node;
         const style = getRoleStyle(node.role, !!node.userName);
+        const rowInner = (
+          <>
+            <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${style.avatar}`}>
+              {node.userName ? node.userName[0] : "?"}
+            </div>
+            <div className="min-w-0 flex flex-wrap items-center gap-1.5">
+              <span className="text-sm font-medium">{node.title}</span>
+              {node.role && (
+                <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${style.badge}`}>
+                  {ROLE_LABELS[node.role]}
+                </span>
+              )}
+              {node.isIndependent && (
+                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">독립</span>
+              )}
+              <span className="text-xs text-muted-foreground">{node.userName ?? "공석"}</span>
+              {node.department && (
+                <span className="text-xs text-muted-foreground/70">· {node.department}</span>
+              )}
+            </div>
+          </>
+        );
+        const rowClass = "flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted/50";
+        const rowStyle = { paddingLeft: `${depth * 1.25 + 0.75}rem` };
         return (
           <div key={node.id}>
-            <div
-              className="flex items-center gap-2 rounded-lg px-3 py-2 hover:bg-muted/50"
-              style={{ paddingLeft: `${depth * 1.25 + 0.75}rem` }}
-            >
-              <div className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-xs font-bold ${style.avatar}`}>
-                {node.userName ? node.userName[0] : "?"}
-              </div>
-              <div className="min-w-0 flex flex-wrap items-center gap-1.5">
-                <span className="text-sm font-medium">{node.title}</span>
-                {node.role && (
-                  <span className={`rounded px-1.5 py-0.5 text-[10px] font-medium ${style.badge}`}>
-                    {ROLE_LABELS[node.role]}
-                  </span>
-                )}
-                {node.isIndependent && (
-                  <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">독립</span>
-                )}
-                <span className="text-xs text-muted-foreground">{node.userName ?? "공석"}</span>
-                {node.department && (
-                  <span className="text-xs text-muted-foreground/70">· {node.department}</span>
-                )}
-              </div>
-            </div>
+            {node.userId ? (
+              <Link href={`/profile/${node.userId}`} className={rowClass} style={rowStyle} title={`${node.userName ?? node.title} 프로필 보기`}>
+                {rowInner}
+              </Link>
+            ) : (
+              <div className={rowClass} style={rowStyle}>{rowInner}</div>
+            )}
             {node.children.length > 0 && (
               <MobileOrgList nodes={node.children} depth={depth + 1} />
             )}

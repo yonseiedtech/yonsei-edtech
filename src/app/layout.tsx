@@ -14,6 +14,7 @@ import AuthProvider from "@/features/auth/AuthProvider";
 import ImpersonationBanner from "@/components/layout/ImpersonationBanner";
 import ConsentGate from "@/components/auth/ConsentGate";
 import UndergradInfoPrompt from "@/components/auth/UndergradInfoPrompt";
+import AcademicStatusCampaignGate from "@/components/academic-status/AcademicStatusCampaignGate";
 import SitePopupGate from "@/components/popup/SitePopupGate";
 import InstallPromptBanner from "@/components/pwa/InstallPromptBanner";
 import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
@@ -164,6 +165,7 @@ export default function RootLayout({
             <FloatingReadingTimer />
             <ConsentGate />
             <UndergradInfoPrompt />
+            <AcademicStatusCampaignGate />
             <SitePopupGate />
             <InstallPromptBanner />
             <ServiceWorkerRegister />

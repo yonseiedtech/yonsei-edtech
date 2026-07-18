@@ -256,7 +256,8 @@ export default function FloatingReadingTimer() {
 
   return (
     <>
-      <div className="fixed z-40 transition-all duration-300 ease-out print:hidden" style={posStyle}>
+      {/* 사용자 요청(2026-07-19): 모바일에서는 플로팅 타이머 비노출 (좁은 화면 가림 방지) */}
+      <div className="fixed z-40 hidden md:block transition-all duration-300 ease-out print:hidden" style={posStyle}>
         <div className="relative flex flex-col items-center">
           {/* 말풍선 */}
           <div className="relative mb-1 max-w-[200px] rounded-2xl border bg-card px-3 py-1.5 pr-7 text-center shadow-lg">

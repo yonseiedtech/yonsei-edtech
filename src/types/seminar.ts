@@ -122,6 +122,8 @@ export const DEFAULT_REGISTRATION_FIELDS: RegistrationFieldConfig[] = [
 ];
 
 // ── 세미나 운영 타임라인 ──
+export type TimelineStatus = "todo" | "doing" | "done" | "skipped";
+
 export interface TimelinePhase {
   id: string;
   label: string;
@@ -129,7 +131,11 @@ export interface TimelinePhase {
   done: boolean;
   doneAt?: string;
   memo?: string;
-  assignee?: string;
+  assignee?: string; // 담당 운영진 이름 (표시용, 하위호환)
+  assigneeId?: string; // 담당 운영진 userId (알림 대상)
+  notifiedAssigneeId?: string; // 마지막으로 지정 알림을 보낸 담당자 id (중복 알림 방지)
+  status?: TimelineStatus; // 진행 상태 (미지정 시 done 으로부터 유도)
+  doneBy?: string; // 완료 처리자 이름
   description?: string; // 항목 설명
 }
 

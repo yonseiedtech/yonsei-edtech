@@ -15,6 +15,7 @@ import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
 import { Download, Share2, Users, CreditCard, History, Camera, BookUser } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import BusinessCard from "@/features/card/BusinessCard";
+import PrintCardSection from "@/features/card/PrintCardSection";
 import ReceivedCardsSection from "@/features/card/ReceivedCardsSection";
 import Cropper from "react-easy-crop";
 import type { Area } from "react-easy-crop";
@@ -74,6 +75,7 @@ function parseDocs(snap: Awaited<ReturnType<typeof getDocs>>): BusinessCardExcha
 function CardTab({
   user,
   qrUrl,
+  profileUrl,
   cardRef,
   handleShare,
   handleSavePng,
@@ -84,6 +86,7 @@ function CardTab({
 }: {
   user: ReturnType<typeof useAuthStore.getState>["user"];
   qrUrl: string;
+  profileUrl: string;
   cardRef: React.RefObject<HTMLDivElement | null>;
   handleShare: () => void;
   handleSavePng: () => void;
@@ -177,6 +180,9 @@ function CardTab({
           <li>상대가 내 QR을 스캔하면 교환 기록 탭에 남아요</li>
         </ul>
       </div>
+
+      {/* 인쇄소 제출용 명함 (추가 기능 — 화면용 모바일 명함과 별개) */}
+      <PrintCardSection user={user} profileUrl={profileUrl} />
     </div>
   );
 }
@@ -294,6 +300,8 @@ export default function CardSection() {
       ? window.location.origin
       : "https://yonsei-edtech.vercel.app";
   const qrUrl = `${siteOrigin}/profile/${user.id}?via=qr`;
+  // 인쇄 명함 QR·뒷면 URL 은 영구 링크라 via 트래킹 파라미터 없이 깔끔한 공개 프로필 주소 사용.
+  const profileUrl = `${siteOrigin}/profile/${user.id}`;
 
   async function handleShare() {
     if (!user) return;
@@ -426,6 +434,7 @@ export default function CardSection() {
           <CardTab
             user={user}
             qrUrl={qrUrl}
+            profileUrl={profileUrl}
             cardRef={cardRef}
             handleShare={handleShare}
             handleSavePng={handleSavePng}

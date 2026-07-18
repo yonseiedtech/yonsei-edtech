@@ -1,7 +1,47 @@
 // ── 일정 조율(poll) 집계 유틸 (사이클 124) ──
 // 후보 기간/시간대 → 슬롯 목록, 응답 → 슬롯별 집계, 최다 가능일 추천.
 
-import type { NetworkingAvailability, SlotTally } from "@/types";
+import type { NetworkingAvailability, RsvpStatus, SlotTally } from "@/types";
+
+/**
+ * 회원 RSVP 제출 공용 헬퍼 (2026-07-19 목록/상세 분리) — 목록 카드의 원탭 참여와 상세 페이지가 공유.
+ * 서버 검증 라우트(/api/networking/rsvp)를 경유해 정원·마감을 강제한다(클라 직접 create 금지).
+ * 토스트·상태 표시는 호출부가 결과로 처리한다(로직 복제 방지). firebase 는 동적 import(서버/cron 안전).
+ * status="withdraw" 는 신청 완전 철회(문서 삭제 + 대기자 승격).
+ */
+export interface MemberRsvpResult {
+  ok: boolean;
+  waitlisted?: boolean;
+  waitlistPosition?: number | null;
+  error?: string;
+}
+
+export async function submitMemberRsvp(
+  eventId: string,
+  status: RsvpStatus | "withdraw",
+  companions = 0,
+): Promise<MemberRsvpResult> {
+  try {
+    const { auth } = await import("@/lib/firebase");
+    const token = await auth.currentUser?.getIdToken();
+    if (!token) return { ok: false, error: "로그인이 필요합니다." };
+    // 참석일 때만 동반인 수 전송(그 외 상태는 서버가 0 으로 강제)
+    const companionsToSend = status === "attending" ? companions : 0;
+    const res = await fetch("/api/networking/rsvp", {
+      method: "POST",
+      headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+      body: JSON.stringify({ eventId, status, companions: companionsToSend }),
+    });
+    if (!res.ok) {
+      const body = (await res.json().catch(() => ({}))) as { error?: string };
+      return { ok: false, error: body.error ?? "신청에 실패했습니다." };
+    }
+    const data = (await res.json().catch(() => ({}))) as { waitlisted?: boolean; waitlistPosition?: number | null };
+    return { ok: true, waitlisted: data.waitlisted, waitlistPosition: data.waitlistPosition ?? null };
+  } catch (e) {
+    return { ok: false, error: e instanceof Error ? e.message : "신청에 실패했습니다." };
+  }
+}
 
 const pad2 = (n: number) => String(n).padStart(2, "0");
 

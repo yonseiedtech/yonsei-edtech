@@ -48,6 +48,34 @@ export const ENROLLMENT_STATUS_LABELS: Record<EnrollmentStatus, string> = {
   graduated: "졸업",
 };
 
+/**
+ * 학기별 학사 상태 최신화(academic-status 캠페인) 용 세분 상태.
+ * 진단용 EnrollmentStatus(재학/휴학/졸업)보다 세분화되어 졸업예정·수료를 포함한다.
+ */
+export type AcademicSemesterStatus =
+  | "enrolled"
+  | "on_leave"
+  | "expected_graduation"
+  | "graduated"
+  | "completed";
+
+export const ACADEMIC_SEMESTER_STATUS_LABELS: Record<AcademicSemesterStatus, string> = {
+  enrolled: "재학",
+  on_leave: "휴학",
+  expected_graduation: "졸업예정",
+  graduated: "졸업",
+  completed: "수료",
+};
+
+/** 학기 키("2026-2") 기준 회원별 학사 상태 이력 항목 */
+export interface AcademicStatusEntry {
+  /** 학기 키 — currentSemesterKey 포맷 "YYYY-1"(전기) | "YYYY-2"(후기) */
+  semester: string;
+  status: AcademicSemesterStatus;
+  /** 마지막 갱신 시각(ISO) */
+  updatedAt: string;
+}
+
 export type ContactVisibility = "public" | "members" | "staff" | "private";
 
 export const VISIBILITY_LABELS: Record<ContactVisibility, string> = {
@@ -352,6 +380,8 @@ export interface User { [key: string]: unknown;
   enrollmentYear?: number;
   enrollmentHalf?: number; // 1=전반기, 2=후반기
   enrollmentStatus?: EnrollmentStatus;
+  /** 학기별 학사 상태 최신화 이력 (academic-status 캠페인) — 학기 키 오름/내림차순 무관, 학기당 1건 */
+  academicStatusHistory?: AcademicStatusEntry[];
   /** 휴학 정보 */
   leaveStartYear?: number;
   leaveStartHalf?: number;   // 1|2

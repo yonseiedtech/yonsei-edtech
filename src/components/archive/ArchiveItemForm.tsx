@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import ThesisLinker from "@/components/archive/ThesisLinker";
+import { normalizeStringItems } from "@/lib/archive-normalize";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   archiveConceptsApi,
@@ -104,7 +105,11 @@ export default function ArchiveItemForm({
   const [scaleType, setScaleType] = useState(m0?.scaleType ?? "");
   const [reliability, setReliability] = useState(m0?.reliability ?? "");
   const [validity, setValidity] = useState(m0?.validity ?? "");
-  const [sampleItems, setSampleItems] = useState((m0?.sampleItems ?? []).join("\n"));
+  // #31 방어(2026-07-19): LIVE 일부 문서의 sampleItems 가 {text,id} 맵 — 정규화 후 join
+  // (정규화 없이 join 하면 "[object Object]" 로 오염 저장될 수 있음)
+  const [sampleItems, setSampleItems] = useState(
+    normalizeStringItems(m0?.sampleItems).join("\n"),
+  );
   const [resourceUrl, setResourceUrl] = useState(m0?.resourceUrl ?? "");
 
   // 학위논문 연결

@@ -11,8 +11,9 @@
  *
  *   modal slot (배타적 — 동시에 1개만):
  *     undergrad-info   priority 1  (최우선 — 회원 가입 직후 학부 정보 미입력 안내)
- *     site-popup       priority 2  (사이트 운영 팝업 — 공지 등)
- *     today-todos      priority 3  (오늘의 할 일 자동 팝업)
+ *     academic-status  priority 2  (학사정보 최신화 캠페인 안내)
+ *     site-popup       priority 3  (사이트 운영 팝업 — 공지 등)
+ *     today-todos      priority 4  (오늘의 할 일 자동 팝업)
  *
  *   banner slot:
  *     push-permission  priority 100 (modal 이 활성화된 상태에서는 노출 안 함)
@@ -20,19 +21,25 @@
  * 분석 근거: docs/03-analysis/dashboard-uiux-synthesis.md §3 ★J
  */
 
-export type ModalNotificationKey = "undergrad-info" | "site-popup" | "today-todos";
+export type ModalNotificationKey =
+  | "undergrad-info"
+  | "academic-status"
+  | "site-popup"
+  | "today-todos";
 export type BannerNotificationKey = "push-permission";
 export type NotificationKey = ModalNotificationKey | BannerNotificationKey;
 
 const PRIORITY: Record<NotificationKey, number> = {
   "undergrad-info": 1,
-  "site-popup": 2,
-  "today-todos": 3,
+  "academic-status": 2,
+  "site-popup": 3,
+  "today-todos": 4,
   "push-permission": 100,
 };
 
 const MODAL_KEYS: readonly ModalNotificationKey[] = [
   "undergrad-info",
+  "academic-status",
   "site-popup",
   "today-todos",
 ];

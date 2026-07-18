@@ -108,7 +108,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
   { key: "r:diagnosis", group: "연구 · 아카이브", label: "연구 준비도 진단평가", href: "/diagnosis", icon: ClipboardCheck, keywords: "진단 진단평가 diagnosis 준비도 테스트 평가", visibility: "auth" },
   { key: "r:flashcards", group: "연구 · 아카이브", label: "암기카드", href: "/flashcards", icon: BookMarked, keywords: "암기카드 플래시카드 flashcard 복습 srs 카드", visibility: "auth" },
   { key: "r:collab", group: "연구 · 아카이브", label: "공동 연구", href: "/collab", icon: Handshake, keywords: "공동 연구 협업 collab 공동연구자 추천", visibility: "auth" },
-  { key: "r:progress-meetings", group: "연구 · 아카이브", label: "진도 미팅", href: "/progress-meetings", icon: Target, keywords: "진도 미팅 progress meeting 면담 지도", visibility: "auth" },
+  { key: "r:progress-meetings", group: "학술 활동", label: "진도 미팅", sub: "스터디·프로젝트 진도", href: "/progress-meetings", icon: Target, keywords: "진도 미팅 progress meeting 면담 지도 스터디 프로젝트", visibility: "auth" },
   { key: "r:research", group: "연구 · 아카이브", label: "연세교육공학 연구 분석", href: "/research", icon: Microscope, keywords: "연구 분석 키워드 계보 트렌드 research analysis", visibility: "both" },
   { key: "r:alumni-thesis", group: "연구 · 아카이브", label: "졸업생 학위논문", href: "/alumni/thesis", icon: GraduationCap, keywords: "졸업생 학위논문 alumni thesis 선배 논문", visibility: "both" },
   { key: "r:archive", group: "연구 · 아카이브", label: "교육공학 아카이브", href: "/archive", icon: Library, keywords: "아카이브 개념 변인 측정도구 archive 이론", visibility: "both" },

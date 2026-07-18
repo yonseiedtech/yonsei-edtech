@@ -1,9 +1,11 @@
 "use client";
 
-import { useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dataApi } from "@/lib/bkend";
+import { useOrgChart } from "@/features/admin/settings/useOrgChart";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,6 +28,7 @@ import type { HandoverDocument } from "@/types";
 import { HANDOVER_CATEGORY_LABELS } from "@/types";
 import { HandoverMarkdown } from "@/lib/markdown-handover";
 
+// 기본 직책 (조직 설정에 직책이 없을 때의 하위호환 폴백)
 const STAFF_ROLES = ["회장", "부회장", "총무", "학술부장", "홍보부장", "대외협력부장", "편집부장"];
 const CURRENT_TERM = `${new Date().getFullYear()}-${new Date().getMonth() < 6 ? 1 : 2}`;
 
@@ -39,17 +42,44 @@ const PRIORITY_LABELS = { high: "높음", medium: "보통", low: "낮음" };
 export default function HandoverSection() {
   const queryClient = useQueryClient();
   const { user } = useAuthStore();
-  const [selectedRole, setSelectedRole] = useState<string>("all");
+  const searchParams = useSearchParams();
+  const roleParam = searchParams.get("role");
+  const composeParam = searchParams.get("compose");
+  const { positions } = useOrgChart();
+
+  // 업무노트 직책 목록 = 운영진 설정(조직도)의 직책명 ∪ 기본 직책(하위호환)
+  const roleOptions = useMemo(() => {
+    const fromOrg = positions.map((p) => p.title).filter(Boolean);
+    return Array.from(new Set([...fromOrg, ...STAFF_ROLES]));
+  }, [positions]);
+
+  const [selectedRole, setSelectedRole] = useState<string>(roleParam ?? "all");
   const [showDocDialog, setShowDocDialog] = useState(false);
   const [editingDoc, setEditingDoc] = useState<HandoverDocument | null>(null);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
   const [docForm, setDocForm] = useState({
-    role: STAFF_ROLES[0],
+    role: roleParam ?? STAFF_ROLES[0],
     title: "",
     content: "",
     category: "routine" as HandoverDocument["category"],
     priority: "medium" as HandoverDocument["priority"],
   });
+
+  // 조직 설정 딥링크(?role=)로 진입 시 해당 직책으로 필터 동기화
+  useEffect(() => {
+    if (roleParam) setSelectedRole(roleParam);
+  }, [roleParam]);
+
+  // ?compose=1 딥링크 시 해당 직책으로 새 문서 작성 다이얼로그 자동 오픈 (1회)
+  const composedRef = useRef(false);
+  useEffect(() => {
+    if (composeParam === "1" && roleParam && !composedRef.current) {
+      composedRef.current = true;
+      setEditingDoc(null);
+      setDocForm({ role: roleParam, title: "", content: "", category: "routine", priority: "medium" });
+      setShowDocDialog(true);
+    }
+  }, [composeParam, roleParam]);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const [previewMode, setPreviewMode] = useState<"edit" | "split" | "preview">("edit");
 
@@ -142,7 +172,8 @@ export default function HandoverSection() {
       setDocForm({ role: doc.role, title: doc.title, content: doc.content, category: doc.category, priority: doc.priority });
     } else {
       setEditingDoc(null);
-      setDocForm({ role: STAFF_ROLES[0], title: "", content: "", category: "routine", priority: "medium" });
+      const defaultRole = selectedRole !== "all" ? selectedRole : (roleOptions[0] ?? STAFF_ROLES[0]);
+      setDocForm({ role: defaultRole, title: "", content: "", category: "routine", priority: "medium" });
     }
     setShowDocDialog(true);
   }
@@ -157,7 +188,7 @@ export default function HandoverSection() {
           >
             전체
           </button>
-          {STAFF_ROLES.map((r) => (
+          {roleOptions.map((r) => (
             <button
               key={r}
               onClick={() => setSelectedRole(r)}
@@ -238,7 +269,7 @@ export default function HandoverSection() {
               <div>
                 <label className="mb-1 block text-sm font-medium">직책</label>
                 <select value={docForm.role} onChange={(e) => setDocForm((f) => ({ ...f, role: e.target.value }))} className="w-full rounded-lg border px-3 py-2 text-sm">
-                  {STAFF_ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
+                  {Array.from(new Set([docForm.role, ...roleOptions])).map((r) => <option key={r} value={r}>{r}</option>)}
                 </select>
               </div>
               <div>

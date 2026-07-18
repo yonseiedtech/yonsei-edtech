@@ -193,11 +193,16 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
     retry: false,
     enabled: isAdmin,
   });
+  // v5-H2 후속(2026-07-19): 보류(held)는 "검수 대기"가 아니므로 배지에서 제외 —
+  // 보류분은 통합 검수 큐의 보류 탭에서 별도 관리된다. (published=false 전체를 세면
+  // 전부 보류 처리한 뒤에도 배지가 남아 "볼 게 없는데 N건" 불일치가 생긴다.)
+  const isPendingReview = (i: { published?: boolean; reviewStatus?: string }) =>
+    !i.published && i.reviewStatus !== "held";
   const archiveDraftCount =
-    (rmData?.data ?? []).filter((i) => !i.published).length +
-    (smData?.data ?? []).filter((i) => !i.published).length +
-    (ftData?.data ?? []).filter((i) => !i.published).length +
-    (wtData?.data ?? []).filter((i) => !i.published).length;
+    (rmData?.data ?? []).filter(isPendingReview).length +
+    (smData?.data ?? []).filter(isPendingReview).length +
+    (ftData?.data ?? []).filter(isPendingReview).length +
+    (wtData?.data ?? []).filter(isPendingReview).length;
 
   // 콘텐츠 자동 초안 검토 대기 (content_drafts status=pending)
   const { data: contentDraftData } = useQuery({
@@ -285,6 +290,8 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
     {
       label: "아카이브",
       items: [
+        // 사용자 요청(2026-07-19): 아카이브 홈을 그룹 맨 위로 — 진입 허브 우선
+        { href: "/console/archive", label: "아카이브 홈", icon: Archive },
         { href: "/console/archive/research-methods", label: "연구방법 가이드", icon: FlaskConical },
         { href: "/console/archive/statistical-methods", label: "통계방법 가이드", icon: BarChart3Icon },
         { href: "/console/archive/foundation-terms", label: "기초 용어 가이드", icon: BookOpen },
@@ -292,7 +299,6 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/archive/concepts", label: "핵심 개념", icon: Archive },
         { href: "/console/archive/variables", label: "연구 변인", icon: Archive },
         { href: "/console/archive/measurements", label: "측정 도구", icon: Archive },
-        { href: "/console/archive", label: "아카이브 홈", icon: Archive },
       ],
     },
     // ── 온보딩 ──────────────────────────────────────────────────

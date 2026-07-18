@@ -7,6 +7,7 @@
  * 데이터는 목록 페이지가 이미 가진 값(upcoming, 내 RSVP 맵)만 사용 — 추가 조회 없음.
  */
 
+import { useRouter } from "next/navigation";
 import { CalendarCheck, CalendarClock } from "lucide-react";
 import { RSVP_STATUS_LABELS, type NetworkingEvent, type NetworkingRsvp } from "@/types";
 import { cn } from "@/lib/utils";
@@ -22,6 +23,7 @@ interface Props {
 const MY_ACTIVE_STATUSES = new Set(["attending", "undecided", "waitlisted"]);
 
 export default function MyGatheringsStrip({ upcoming, myRsvpByEvent }: Props) {
+  const router = useRouter();
   const isPollPending = (e: NetworkingEvent) =>
     e.schedulingMode === "poll" && !e.startAt && e.status !== "cancelled";
 
@@ -34,9 +36,9 @@ export default function MyGatheringsStrip({ upcoming, myRsvpByEvent }: Props) {
 
   if (myEvents.length === 0 && pollEvents.length === 0) return null;
 
-  function scrollToEvent(id: string) {
-    const el = document.getElementById(`event-${id}`);
-    if (el) el.scrollIntoView({ behavior: "smooth", block: "start" });
+  // 목록/상세 분리(2026-07-19): 카드가 더 이상 본문을 임베드하지 않으므로 상세 페이지로 이동한다.
+  function goToEvent(id: string) {
+    router.push(`/gatherings/${id}`);
   }
 
   return (
@@ -57,7 +59,7 @@ export default function MyGatheringsStrip({ upcoming, myRsvpByEvent }: Props) {
                 <button
                   key={e.id}
                   type="button"
-                  onClick={() => scrollToEvent(e.id)}
+                  onClick={() => goToEvent(e.id)}
                   className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-primary/30 bg-background px-3 py-1 text-xs font-medium transition-colors hover:border-primary/60"
                 >
                   <span className="truncate">{e.title}</span>
@@ -90,7 +92,7 @@ export default function MyGatheringsStrip({ upcoming, myRsvpByEvent }: Props) {
               <button
                 key={e.id}
                 type="button"
-                onClick={() => scrollToEvent(e.id)}
+                onClick={() => goToEvent(e.id)}
                 className="inline-flex max-w-full items-center gap-1.5 rounded-full border border-primary/30 bg-background px-3 py-1 text-xs font-medium transition-colors hover:border-primary/60"
               >
                 <span className="truncate">{e.title}</span>

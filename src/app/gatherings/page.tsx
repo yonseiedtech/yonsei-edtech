@@ -9,7 +9,8 @@
  * 본 페이지는 행사·회비 중심으로, "네트워킹" 용어 중첩을 제거함.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Users, CalendarX2, Plus } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
@@ -36,9 +37,18 @@ import MyGatheringsStrip from "@/features/networking/MyGatheringsStrip";
 export default function GatheringsPage() {
   const { user } = useAuthStore();
   const qc = useQueryClient();
+  const router = useRouter();
   const nowIso = new Date().toISOString();
   const canCreate = isStaffOrAbove(user);
   const [createOpen, setCreateOpen] = useState(false);
+
+  // 하위 호환(2026-07-19 목록/상세 분리): 기존에 공유된 `#event-{id}` 앵커 링크는 상세 페이지로 리다이렉트.
+  // (구 카드 임베드 앵커 → 신규 /gatherings/[id]. 이미 유포된 투표 공유 링크 보존.)
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const m = /^#event-(.+)$/.exec(window.location.hash);
+    if (m?.[1]) router.replace(`/gatherings/${m[1]}`);
+  }, [router]);
 
   const { data: events = [], isLoading } = useQuery({
     queryKey: ["networking-events"],
@@ -62,6 +72,17 @@ export default function GatheringsPage() {
     queryKey: ["albums-for-gatherings"],
     queryFn: async () => (await albumsApi.list()).data as unknown as PhotoAlbum[],
     staleTime: 5 * 60_000,
+  });
+  // 목록 카드 "참여 N명" — RSVP 원본은 프라이버시상 클라 집계 불가라 서버 집계 API 경유(PII 없음).
+  const { data: attendeeCounts = {} } = useQuery({
+    queryKey: ["networking-attendee-counts"],
+    queryFn: async () => {
+      const res = await fetch("/api/networking/attendee-counts");
+      if (!res.ok) return {} as Record<string, number>;
+      const body = (await res.json()) as { counts?: Record<string, number> };
+      return body.counts ?? {};
+    },
+    staleTime: 60_000,
   });
 
   // 비공개(private) 모임은 공개 목록에서 제외 — 단 staff 이상에게는 배지와 함께 노출
@@ -187,6 +208,7 @@ export default function GatheringsPage() {
                     album={albumByEvent.get(ev.id)}
                     onChanged={refresh}
                     canManage={canCreate}
+                    attendeeCount={attendeeCounts[ev.id]}
                   />
                 ))}
               </div>
@@ -208,6 +230,7 @@ export default function GatheringsPage() {
                     album={albumByEvent.get(ev.id)}
                     onChanged={refresh}
                     canManage={canCreate}
+                    attendeeCount={attendeeCounts[ev.id]}
                     past
                   />
                 ))}

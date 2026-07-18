@@ -1,52 +1,45 @@
 "use client";
 
 /**
- * 비공개 모임 공유 링크 페이지 — /gatherings/p/[token]
- * shareToken 으로 이벤트를 조회해 상세 + RSVP 를 제공한다. (공개 목록엔 노출되지 않음)
- * 카드 렌더는 /gatherings 목록과 동일한 GatheringEventCard 를 재사용한다.
+ * 모임·행사 상세 페이지 — /gatherings/[id] (목록/상세 분리 개편 2026-07-19).
+ * 목록(/gatherings)의 카드를 클릭하면 이 페이지로 진입한다. 모임 정보·주최자·참여 대상/참석자·
+ * 일정 조율 투표·RSVP 를 단일 컬럼 상세로 보여준다. 렌더는 GatheringDetail 을 재사용한다.
+ * (비공개 공유 링크 /gatherings/p/[token] 과 동일 컴포넌트 — 로직 복제 없음.)
  */
 
 import { useMemo } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, Link2Off, ArrowLeft } from "lucide-react";
+import { CalendarX2, ArrowLeft } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
-import PageHeader from "@/components/ui/page-header";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
-import { networkingEventsApi, eventTokensApi, networkingRsvpsApi, networkingDuesApi, albumsApi } from "@/lib/bkend";
+import { networkingEventsApi, networkingRsvpsApi, networkingDuesApi, albumsApi } from "@/lib/bkend";
 import type { NetworkingEvent, NetworkingRsvp, NetworkingDue, PhotoAlbum } from "@/types";
 import { isPastEvent } from "@/features/networking/networking-helpers";
 import GatheringDetail from "@/features/networking/GatheringDetail";
 
-export default function PrivateGatheringPage() {
-  const params = useParams<{ token: string }>();
-  const token = Array.isArray(params.token) ? params.token[0] : params.token;
+export default function GatheringDetailPage() {
+  const params = useParams<{ id: string }>();
+  const id = Array.isArray(params.id) ? params.id[0] : params.id;
   const { user } = useAuthStore();
   const qc = useQueryClient();
   const nowIso = new Date().toISOString();
   const canManage = isStaffOrAbove(user);
 
   const { data: event, isLoading } = useQuery({
-    queryKey: ["networking-event-by-token", token],
+    queryKey: ["networking-event", id],
     queryFn: async () => {
-      // High-1(2026-07-08): 신규 경로 — 토큰 매핑(networking_event_tokens) → eventId → 이벤트.
-      const mapping = await eventTokensApi.get(token);
-      if (mapping?.eventId) {
-        try {
-          return await networkingEventsApi.get(mapping.eventId);
-        } catch {
-          /* 이벤트가 삭제됐으면 아래 레거시 폴백으로 */
-        }
+      try {
+        return await networkingEventsApi.get(id);
+      } catch {
+        return null;
       }
-      // 레거시 폴백 — 이벤트 문서의 shareToken 필드로 조회(마이그레이션 전 데이터).
-      const res = await networkingEventsApi.getByToken(token);
-      return (res.data as NetworkingEvent[])[0] ?? null;
     },
-    enabled: !!token,
+    enabled: !!id,
     staleTime: 60_000,
   });
 
@@ -81,7 +74,7 @@ export default function PrivateGatheringPage() {
     [albums, event],
   );
   const past = useMemo(
-    () => (event ? isPastEvent(event, nowIso) : false),
+    () => (event ? isPastEvent(event as NetworkingEvent, nowIso) : false),
     [event, nowIso],
   );
 
@@ -98,36 +91,28 @@ export default function PrivateGatheringPage() {
         <ArrowLeft size={15} /> 모임·행사로 돌아가기
       </Link>
 
-      <PageHeader
-        icon={Users}
-        title="비공개 모임"
-        description="공유 링크로 접근한 비공개 모임입니다. 참석 신청과 세부 정보를 확인하세요."
-      />
-
-      <div className="mt-6">
-        {isLoading ? (
-          <Skeleton className="h-52 w-full rounded-2xl" />
-        ) : !event ? (
-          <EmptyState
-            icon={Link2Off}
-            title="존재하지 않거나 만료된 링크입니다"
-            description="링크가 올바른지 확인하거나, 모임 주최자에게 새 링크를 요청해주세요."
-            actions={[{ label: "모임·행사 둘러보기", href: "/gatherings", variant: "outline" }]}
-          />
-        ) : (
-          <GatheringDetail
-            ev={event}
-            nowIso={nowIso}
-            isMember={!!user}
-            myRsvp={myRsvp}
-            myDue={myDue}
-            album={album}
-            onChanged={refresh}
-            canManage={canManage}
-            past={past}
-          />
-        )}
-      </div>
+      {isLoading ? (
+        <Skeleton className="h-52 w-full rounded-2xl" />
+      ) : !event ? (
+        <EmptyState
+          icon={CalendarX2}
+          title="존재하지 않거나 삭제된 모임입니다"
+          description="링크가 올바른지 확인하거나, 모임·행사 목록에서 다시 찾아보세요."
+          actions={[{ label: "모임·행사 목록", href: "/gatherings", variant: "outline" }]}
+        />
+      ) : (
+        <GatheringDetail
+          ev={event as NetworkingEvent}
+          nowIso={nowIso}
+          isMember={!!user}
+          myRsvp={myRsvp}
+          myDue={myDue}
+          album={album}
+          onChanged={refresh}
+          canManage={canManage}
+          past={past}
+        />
+      )}
     </PageContainer>
   );
 }

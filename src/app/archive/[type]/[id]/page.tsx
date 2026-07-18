@@ -40,6 +40,7 @@ import PageContainer from "@/components/ui/page-container";
 import ConceptLinkedText from "@/components/archive/ConceptLinkedText";
 import ConceptMentionsInMyRecords from "@/components/archive/ConceptMentionsInMyRecords";
 import { recordRecentView } from "@/lib/archive-recent-views";
+import { normalizeStringItems } from "@/lib/archive-normalize";
 
 export default function ArchiveDetailPage() {
   const params = useParams<{ type: string; id: string }>();
@@ -626,7 +627,8 @@ export default function ArchiveDetailPage() {
             <div id="items" className="scroll-mt-24">
               <p className="font-medium text-sm mb-1">문항 예시</p>
               <ul className="list-disc list-inside text-sm text-muted-foreground space-y-0.5">
-                {(item as ArchiveMeasurementTool).sampleItems!.map((s, i) => (
+                {/* #31 방어(2026-07-19): LIVE 일부 문서의 sampleItems 가 {text,id} 맵 — 문자열 정규화 */}
+                {normalizeStringItems((item as ArchiveMeasurementTool).sampleItems).map((s, i) => (
                   <li key={i}>{s}</li>
                 ))}
               </ul>
