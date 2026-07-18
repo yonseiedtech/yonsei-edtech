@@ -73,8 +73,8 @@ export interface SeedMeasurement {
  * ⚠️ 저작권: 표제어·역어(사실 정보)와 출처 표기만 사용. 해설 본문은 전재하지 않고
  * 각 개념 설명은 자체 재서술(패러프레이즈)로만 작성한다.
  */
-const AECT_REF = (page: number): string =>
-  `Richey, R. C. (Ed.). (2013). Encyclopedia of terminology for educational communications and technology. Springer. [이현우, 임규연, 정재삼, 허희옥 공역 (2020). 교육공학 용어해설 (p. ${page}). 학지사]`;
+const AECT_REF = (page?: number): string =>
+  `Richey, R. C. (Ed.). (2013). Encyclopedia of terminology for educational communications and technology. Springer. [이현우, 임규연, 정재삼, 허희옥 공역 (2020). 교육공학 용어해설${page != null ? ` (p. ${page})` : ""}. 학지사]`;
 
 /**
  * 『교수학습공학: 이론적 기초와 동향』(이명근, 2025) 참고문헌 문자열.
@@ -1263,6 +1263,1288 @@ export const SEED_CONCEPTS: SeedConcept[] = [
       "van Merriënboer, J. J. G. (1997). Training complex cognitive skills: A four-component instructional design model. Educational Technology Publications.",
       AECT_REF(281),
     ],
+  },
+  // ── AECT 용어해설 표제어 보강 123종 (2026-07-19, 자체 패러프레이즈·웹 검증) ──
+  {
+    seedKey: "concept:audiovisual-instruction",
+    name: "시청각 교수법",
+    aectTerm: "시청각 교수법",
+    altNames: ["Audiovisual Instruction", "시청각 교육"],
+    description:
+      "20세기 초·중반 교육공학의 형성기에 등장한 접근으로, 사진·슬라이드·영화·라디오·녹음 등 시각과 청각 매체를 활용해 학습 경험을 구체화하고 언어 중심 수업의 추상성을 보완하려는 교수 방식이다. Dale의 경험의 원추로 대표되며, 이후 커뮤니케이션 이론·체제적 교수설계와 결합하면서 교육공학 분야의 직접적 뿌리가 되었다.",
+    tags: ["기반", "매체", "교육공학사"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:communication",
+    name: "커뮤니케이션",
+    aectTerm: "커뮤니케이션",
+    altNames: ["Communication", "의사소통"],
+    description:
+      "송신자가 기호로 부호화한 메시지를 채널을 통해 수신자에게 전달하고 의미를 공유하는 과정이다. 교육공학에서는 Shannon과 Weaver, Berlo 등의 커뮤니케이션 모형이 교수 메시지 설계와 매체 선택의 이론적 기반이 되었으며, 교수 활동 자체를 의도된 학습 목표를 향한 커뮤니케이션 과정으로 해석하는 관점을 제공한다.",
+    tags: ["기반", "커뮤니케이션", "메시지 설계"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:curriculum",
+    name: "교육과정",
+    aectTerm: "교육과정",
+    altNames: ["Curriculum"],
+    description:
+      "학습자가 도달해야 할 목표와 그에 이르기 위해 선정·조직된 학습 경험의 총체를 의미한다. 교과 내용의 범위(scope)와 계열(sequence)을 포함하며, 교수설계가 특정 수업 단위의 미시적 설계에 초점을 둔다면 교육과정은 학습 경험의 거시적 구조와 편성을 다룬다.",
+    tags: ["기반", "교육과정", "설계"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:development",
+    name: "개발",
+    aectTerm: "개발",
+    altNames: ["Development"],
+    description:
+      "교수설계 명세를 실제 학습 자료·매체·프로그램의 형태로 구현하는 활동을 의미한다. AECT의 교육공학 정의에서 개발은 설계 결과를 물리적 산출물로 전환하는 영역으로, 인쇄·시청각·컴퓨터 기반·통합 매체 기술을 활용한 제작 과정을 포괄한다.",
+    tags: ["기반", "개발", "ISD"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:educational-media",
+    name: "교육매체",
+    aectTerm: "교육매체",
+    altNames: ["Educational Media", "교육미디어"],
+    description:
+      "교수·학습 목적으로 메시지를 담아 전달하는 물리적 수단과 자원을 의미한다. 인쇄물·슬라이드·영상·오디오에서 컴퓨터·네트워크 기반 디지털 매체에 이르며, 단순한 전달 도구를 넘어 학습자의 정보 처리와 인지 과정에 영향을 주는 요소로 연구되어 왔다.",
+    tags: ["기반", "매체", "교육공학"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:information-and-communications-technology",
+    name: "정보통신공학",
+    aectTerm: "정보통신공학",
+    altNames: ["Information and Communications Technology", "ICT", "정보통신기술"],
+    description:
+      "정보를 생성·저장·처리·전달하는 컴퓨터, 네트워크, 통신 장비와 소프트웨어를 아우르는 기술의 총칭이다. 교육 맥락에서는 학습 자원 접근, 상호작용, 협력을 매개하는 기반 인프라로 기능하며, 디지털 리터러시와 정보 격차 논의의 전제가 된다.",
+    tags: ["기반", "ICT", "에듀테크"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:instruction",
+    name: "교수",
+    aectTerm: "교수",
+    altNames: ["Instruction", "수업"],
+    description:
+      "학습을 촉진하기 위해 의도적으로 계획되고 배열된 외적 사건과 활동의 총체를 의미한다. 학습이 학습자 내부에서 일어나는 변화라면 교수는 그 변화를 유발하도록 환경과 경험을 조직하는 활동으로, Gagné는 이를 학습의 내적 과정을 지원하는 아홉 가지 수업사태로 구체화하였다.",
+    tags: ["기반", "교수", "수업설계"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:learning",
+    name: "학습",
+    aectTerm: "학습",
+    altNames: ["Learning"],
+    description:
+      "경험의 결과로 지식·기능·태도에 나타나는 비교적 지속적인 변화를 의미한다. 행동주의는 자극-반응 결합의 변화로, 인지주의는 정보의 처리와 인지 구조의 재구성으로, 구성주의는 학습자가 능동적으로 의미를 구성하는 과정으로 학습을 각각 다르게 규정한다.",
+    tags: ["기반", "학습이론", "교육심리"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:pedagogy",
+    name: "교육학",
+    aectTerm: "교육학",
+    altNames: ["Pedagogy", "교수법"],
+    description:
+      "가르침의 이론과 실천을 다루는 학문이자 교수 방법의 총체를 의미한다. 어원상 아동을 가르치는 기술을 뜻하며 성인학습을 강조하는 안드라고지(andragogy)와 대비되기도 한다. 교육공학에서는 내용·테크놀로지와 결합하는 교수 지식(TPACK 등)의 한 축으로 다뤄진다.",
+    tags: ["기반", "교육학", "교수법"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:project-management",
+    name: "프로젝트 관리",
+    aectTerm: "프로젝트 관리",
+    altNames: ["Project Management"],
+    description:
+      "한정된 자원·기간·범위 안에서 목표를 달성하기 위해 활동을 계획·조직·통제하는 과정을 의미한다. 교수설계·개발 프로젝트에서는 일정, 예산, 인력, 품질을 관리하고 이해관계자를 조율하는 역량으로, 교육공학 전문가의 핵심 실무 능력 중 하나로 강조된다.",
+    tags: ["기반", "관리", "ISD"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:semiotics",
+    name: "기호학",
+    aectTerm: "기호학",
+    altNames: ["Semiotics"],
+    description:
+      "기호와 그것이 의미를 생성·전달하는 방식을 연구하는 학문이다. Saussure의 기표-기의 구분과 Peirce의 기호 삼항 관계가 대표적 틀이며, 교육공학에서는 텍스트·이미지·영상 등 교수 메시지가 어떻게 해석되는지를 분석하고 시각적 메시지 설계를 이론적으로 뒷받침한다.",
+    tags: ["기반", "기호학", "메시지 설계"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:technology",
+    name: "테크놀로지",
+    aectTerm: "테크놀로지",
+    altNames: ["Technology", "공학"],
+    description:
+      "실제적 문제를 해결하기 위해 과학적·조직적 지식을 체계적으로 적용하는 과정과 그 산출물을 의미한다. 교육공학에서 테크놀로지는 단순한 기계·장치에 국한되지 않고, 학습 문제를 해결하기 위한 절차·방법·지식의 체계적 적용이라는 넓은 의미로 이해된다.",
+    tags: ["기반", "테크놀로지", "교육공학"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:accessibility",
+    name: "접근성",
+    aectTerm: "접근성",
+    altNames: ["Accessibility", "웹 접근성"],
+    description:
+      "장애 유무나 이용 환경의 제약과 무관하게 모든 사용자가 정보·서비스·학습 자원을 동등하게 이용할 수 있도록 보장하는 속성을 의미한다. 웹 콘텐츠 접근성 지침(WCAG)과 보편적 학습설계(UDL)가 대표적 기준이며, 대체 텍스트·자막·키보드 조작 등 구체적 설계 요건으로 구현된다.",
+    tags: ["정책", "접근성", "보편적 설계"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:childrens-internet-protection-act",
+    name: "아동의 인터넷 보호법",
+    aectTerm: "아동의 인터넷 보호법",
+    altNames: ["Children's Internet Protection Act", "CIPA"],
+    description:
+      "2000년 미국 의회가 제정한 연방법으로, 아동이 음란물이나 유해 콘텐츠에 접근하지 못하도록 규제한다. 연방 통신비 할인(E-rate) 등 지원을 받는 학교와 도서관은 유해 이미지를 차단·필터링하는 기술적 보호 조치를 포함한 인터넷 안전 정책을 갖추었음을 인증해야 지원을 받을 수 있으며, 성인 이용자의 정당한 연구 목적을 위해서는 필터를 해제할 수 있도록 규정한다.",
+    tags: ["정책", "법규", "아동보호"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:childrens-online-privacy-protection-act",
+    name: "아동의 온라인 개인정보 보호법",
+    aectTerm: "아동의 온라인 개인정보 보호법",
+    altNames: ["Children's Online Privacy Protection Act", "COPPA"],
+    description:
+      "1998년 제정되어 2000년 발효된 미국 연방법으로, 만 13세 미만 아동의 온라인 개인정보 수집을 규제한다. 웹사이트와 온라인 서비스 운영자가 아동의 정보를 수집·이용하기 전에 검증 가능한 부모의 동의를 얻도록 의무화하고, 개인정보 처리방침의 고지와 정보 보호 책임을 규정함으로써 부모가 자녀의 정보 제공을 통제할 수 있게 한다.",
+    tags: ["정책", "법규", "개인정보"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:competency",
+    name: "역량",
+    aectTerm: "역량",
+    altNames: ["Competency", "컴피턴시"],
+    description:
+      "특정 직무나 과제를 성공적으로 수행하는 데 요구되는 지식·기능·태도의 통합된 능력을 의미한다. 단편적 지식의 보유가 아니라 실제 수행에서 발휘되는 종합적 능력을 강조하며, 전문직 표준과 자격 체계, 교육과정 설계의 준거로 활용된다.",
+    tags: ["정책", "역량", "전문성"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:ethics",
+    name: "윤리",
+    aectTerm: "윤리",
+    altNames: ["Ethics"],
+    description:
+      "옳고 그름에 대한 판단 기준과 그에 따른 행동 규범을 의미한다. 교육공학에서는 저작권과 지적 재산 존중, 학습자 정보 보호, 공정한 접근 보장, 전문가로서의 책무 등을 규율하며, AECT는 회원의 실천을 안내하는 윤리 강령을 제정해 운영한다.",
+    tags: ["정책", "윤리", "전문직"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:intellectual-property",
+    name: "지적 재산",
+    aectTerm: "지적 재산",
+    altNames: ["Intellectual Property", "지식재산"],
+    description:
+      "인간의 지적 창작물에 대해 법적으로 인정되는 배타적 권리를 의미하며 저작권·특허·상표 등을 포함한다. 교육공학에서는 교수 자료의 제작·공유·재사용 과정에서 저작권 준수, 공정 이용(fair use), 크리에이티브 커먼즈 라이선스 활용 등이 핵심 쟁점이 된다.",
+    tags: ["정책", "저작권", "지적재산"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:professional-standards",
+    name: "전문직 표준",
+    aectTerm: "전문직 표준",
+    altNames: ["Professional Standards"],
+    description:
+      "특정 전문 분야 종사자가 갖추어야 할 지식·기능·윤리적 실천의 기준을 규정한 체계를 의미한다. 교육공학 분야에서는 AECT와 국제교수설계자격원(IBSTPI) 등이 교수설계자·수행공학자의 역량 표준을 제시하며, 이는 전문가 양성과 자격 인증의 준거로 활용된다.",
+    tags: ["정책", "표준", "전문성"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:competency-modeling-and-development",
+    name: "역량 모델링과 개발",
+    aectTerm: "역량 모델링과 개발",
+    altNames: ["Competency Modeling and Development", "역량모형 개발"],
+    description:
+      "특정 직무나 역할의 성공적 수행에 필요한 역량을 규명·구조화하여 역량 모형을 도출하고, 이를 바탕으로 교육·훈련 체계를 설계하는 과정을 의미한다. 직무 분석과 우수 수행자 특성 분석을 통해 역량을 도출하며, 인적자원개발과 수행공학에서 교육 요구를 진단하는 기반이 된다.",
+    tags: ["교수설계", "역량", "HRD"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:culture-neutral-design",
+    name: "문화 중립적 설계",
+    aectTerm: "문화 중립적 설계",
+    altNames: ["Culture-Neutral Design"],
+    description:
+      "특정 문화에 치우친 요소를 배제하여 다양한 문화적 배경의 학습자가 공통으로 이용할 수 있도록 교수 자료를 설계하는 접근이다. 문화 특수적 참조·관용 표현·상징을 최소화해 오해나 소외를 줄이려 하며, 국제적·다문화 학습 환경을 위한 콘텐츠 개발에서 하나의 전략으로 논의된다.",
+    tags: ["교수설계", "문화", "다문화"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:culture-specific-design",
+    name: "문화 특수적 설계",
+    aectTerm: "문화 특수적 설계",
+    altNames: ["Culture-Specific Design"],
+    description:
+      "특정 문화 집단의 가치·언어·관습·학습 양식을 적극 반영하여 해당 학습자에게 최적화된 교수 자료를 설계하는 접근이다. 문화적 맥락과 친숙한 사례를 활용해 학습의 관련성과 몰입을 높이려 하며, 문화 중립적 설계와 대비되는 전략으로 제시된다.",
+    tags: ["교수설계", "문화", "맥락화"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:elaboration-sequencing",
+    name: "정교화 계열",
+    aectTerm: "정교화 계열",
+    altNames: ["Elaboration Sequencing", "정교화 계열화"],
+    description:
+      "Reigeluth의 정교화 이론에 근거해 교수 내용을 가장 단순하고 대표적인 개관(epitome)에서 출발하여 점진적으로 정교하고 복잡한 수준으로 배열하는 계열화 방식이다. 전체에서 부분으로, 단순한 것에서 복잡한 것으로 내용을 조직해 학습자가 안정적인 인지 구조를 형성하도록 돕는다.",
+    tags: ["교수설계", "계열화", "정교화이론"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:learning-hierarchy",
+    name: "학습위계",
+    aectTerm: "학습위계",
+    altNames: ["Learning Hierarchy", "학습 위계"],
+    description:
+      "Gagné가 제안한 개념으로, 상위의 지적 기능 학습이 그보다 하위의 선수 기능 습득을 전제로 한다는 위계적 관계를 의미한다. 목표 과제를 정점에 두고 이를 수행하는 데 필요한 하위 기능을 위계적으로 분석하여 교수의 순서를 정하고 선수 학습을 진단하는 근거가 된다.",
+    tags: ["교수설계", "과제분석", "Gagné"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:message-design",
+    name: "메시지 설계",
+    aectTerm: "메시지 설계",
+    altNames: ["Message Design", "메시지 디자인"],
+    description:
+      "학습을 촉진하도록 교수 메시지의 물리적 형태, 즉 언어·기호·이미지의 조직과 표현 방식을 계획하는 활동을 의미한다. 지각·주의·기억에 관한 심리학 원리를 적용해 메시지가 효과적으로 전달·처리되도록 하며, 시각·청각 자료 설계의 이론적 기반이 된다.",
+    tags: ["교수설계", "메시지 설계", "지각"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:rapid-prototyping",
+    name: "래피드 프로토타이핑",
+    aectTerm: "래피드 프로토타이핑",
+    altNames: ["Rapid Prototyping", "신속 프로토타이핑"],
+    description:
+      "완성된 산출물을 만들기 전에 핵심 기능을 담은 시제품을 신속히 제작하여 사용자 반응을 확인하고 반복적으로 개선하는 개발 방식이다. 선형적 ISD의 대안으로, 설계와 개발·평가를 병행해 요구를 조기에 반영하고 개발 위험을 줄이는 데 활용된다.",
+    tags: ["교수설계", "프로토타이핑", "반복설계"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:visual-message-design",
+    name: "시각적 메시지 설계",
+    aectTerm: "시각적 메시지 설계",
+    altNames: ["Visual Message Design"],
+    description:
+      "시각 자료를 통해 교수 메시지를 효과적으로 전달하도록 이미지·도표·색·배치·타이포그래피 등을 계획하는 활동이다. 게슈탈트 원리와 시지각 이론에 근거해 주의를 유도하고 정보의 구조를 드러내며, 인지부하를 관리하는 방향으로 화면과 그래픽을 조직한다.",
+    tags: ["교수설계", "시각 설계", "메시지 설계"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:context",
+    name: "맥락",
+    aectTerm: "맥락",
+    altNames: ["Context"],
+    description:
+      "학습이 일어나는 물리적·사회적·문화적·시간적 상황과 조건의 총체를 의미한다. 상황인지와 실제적 학습 관점에서 지식은 그것이 사용되는 맥락과 분리되지 않는다고 보며, 교수설계에서는 학습 환경과 활용 맥락을 분석하는 것이 요구 분석의 중요한 부분이 된다.",
+    tags: ["교수설계", "맥락", "상황인지"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:learning-types",
+    name: "학습유형",
+    aectTerm: "학습유형",
+    altNames: ["Learning Types", "학습 성과 유형"],
+    description:
+      "학습 결과의 성격에 따라 구분되는 범주를 의미하며, 서로 다른 학습 유형은 서로 다른 교수 조건을 요구한다. Gagné는 언어 정보·지적 기능·인지 전략·태도·운동 기능의 다섯 가지 학습 성과로 구분하였고, Bloom의 인지·정의·심동 영역 분류도 널리 활용된다.",
+    tags: ["교수설계", "학습성과", "Gagné"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:problem",
+    name: "문제",
+    aectTerm: "문제",
+    altNames: ["Problem"],
+    description:
+      "현재 상태와 목표 상태 사이에 존재하는 간극이자 그 간극을 해소할 방법이 즉각적으로 주어지지 않은 상황을 의미한다. 잘 구조화된 문제와 비구조화된 문제로 구분되며, 문제 기반 학습과 문제해결 교수에서 학습을 촉발하는 핵심 출발점으로 활용된다.",
+    tags: ["교수설계", "문제해결", "PBL"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:constructivist-approach",
+    name: "구성주의적 접근",
+    aectTerm: "구성주의적 접근",
+    altNames: ["Constructivist Approach", "구성주의 접근"],
+    description:
+      "지식은 외부에서 전달되는 것이 아니라 학습자가 기존 경험과 상호작용을 통해 능동적으로 구성한다고 보는 관점이다. 실제적 과제, 사회적 협력, 성찰, 다양한 관점을 강조하며, 문제 기반 학습·상황학습·인지적 도제 등 학습자 중심 교수설계의 이론적 토대가 된다.",
+    tags: ["교수설계", "구성주의", "학습이론"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:differentiated-instruction",
+    name: "수준별 수업",
+    aectTerm: "수준별 수업",
+    altNames: ["Differentiated Instruction", "차별화 수업"],
+    description:
+      "학습자의 준비도·흥미·학습 양식의 차이를 고려하여 내용·과정·결과물·학습 환경을 다양화하는 교수 접근이다. Tomlinson이 체계화하였으며, 동일한 목표를 향하되 학습자마다 다른 경로와 지원을 제공함으로써 개별 요구에 대응하는 것을 지향한다.",
+    tags: ["교수설계", "개별화", "맞춤형 학습"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:discovery-expository-learning-continuum",
+    name: "발견식-설명식 학습연속성",
+    aectTerm: "발견식-설명식 학습연속성",
+    altNames: ["Discovery-Expository Learning Continuum"],
+    description:
+      "교수 방식을 학습자가 스스로 원리를 찾아내는 발견식과 교사가 내용을 조직해 직접 제시하는 설명식의 양극단에 놓고 그 사이를 하나의 연속선으로 파악하는 관점이다. 안내된 발견처럼 두 방식이 혼합될 수 있음을 보여 주며, 학습 목표와 학습자 특성에 따라 적절한 지점을 선택하도록 안내한다.",
+    tags: ["교수설계", "발견학습", "교수전략"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:learning-by-doing",
+    name: "행함으로써 배움",
+    aectTerm: "행함으로써 배움",
+    altNames: ["Learning by Doing", "행함을 통한 학습"],
+    description:
+      "학습자가 직접 활동과 경험에 참여함으로써 지식과 기능을 습득한다고 보는 원리이다. Dewey의 경험 중심 교육 철학에 뿌리를 두며, 실습·프로젝트·시뮬레이션처럼 실제 수행을 통해 학습하는 체험적·능동적 교수 전략의 근거가 된다.",
+    tags: ["교수설계", "경험학습", "Dewey"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:open-education",
+    name: "공개교육",
+    aectTerm: "공개교육",
+    altNames: ["Open Education", "개방교육"],
+    description:
+      "학습 자원과 기회에 대한 접근 장벽을 낮추어 누구나 배울 수 있도록 지향하는 교육 이념과 실천을 의미한다. 공개교육자료(OER), 개방형 온라인 강좌(MOOC), 유연한 학습 경로를 포괄하며, 지식의 공유와 교육 형평성 제고를 핵심 가치로 삼는다.",
+    tags: ["교수설계", "공개교육", "OER"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:simplifying-conditions-methods",
+    name: "단순화 조건법",
+    aectTerm: "단순화 조건법",
+    altNames: ["Simplifying Conditions Methods", "SCM", "단순화 조건 방법"],
+    description:
+      "Reigeluth의 정교화 이론에 속하는 과제 분석·계열화 방법으로, 복잡한 과제를 가르치는 순서를 정하는 지침이다. 전체 과제를 대표하면서도 가장 단순한 형태(에피톰)를 먼저 가르친 뒤 조건을 점차 추가해 더 복잡한 형태로 확장(정교화)하는 두 원리에 기초하여 단순한 것에서 복잡한 것으로 진행한다.",
+    tags: ["교수설계", "계열화", "정교화이론"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:analogy",
+    name: "비유",
+    aectTerm: "비유",
+    altNames: ["Analogy", "유추"],
+    description:
+      "학습자에게 익숙한 대상(기저)의 구조를 새롭고 낯선 대상(표적)에 대응시켜 이해를 돕는 교수 전략이다. 두 영역 사이의 관계적 유사성을 연결함으로써 추상적 개념을 구체화하고 선행 지식과 새로운 지식을 이어 주며, 잘못된 대응이 오개념을 낳을 수 있어 한계 설정이 함께 요구된다.",
+    tags: ["교수설계", "미시전략", "개념학습"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:authentic-activity",
+    name: "실제적 활동",
+    aectTerm: "실제적 활동",
+    altNames: ["Authentic Activity", "실제적 과제"],
+    description:
+      "실제 세계에서 전문가나 실천가가 지식을 사용하는 방식과 유사한 맥락·과제로 구성된 학습 활동을 의미한다. 상황인지와 구성주의 관점에 근거해 학습의 전이와 관련성을 높이며, 복잡하고 실제적인 문제를 다루도록 함으로써 단편적 연습과 구분된다.",
+    tags: ["교수설계", "실제성", "상황학습"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:comparison-and-contrast",
+    name: "비교와 대조",
+    aectTerm: "비교와 대조",
+    altNames: ["Comparison and Contrast"],
+    description:
+      "둘 이상의 대상이 지닌 공통점과 차이점을 나란히 제시하여 개념의 속성과 경계를 명확히 하는 교수 전략이다. 유사 개념 간의 변별을 촉진하고 각 개념의 결정적 특성을 부각함으로써 학습자가 개념을 혼동하지 않고 정확히 분류하도록 돕는다.",
+    tags: ["교수설계", "미시전략", "개념학습"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:elaboration-types-of",
+    name: "정교화 유형",
+    aectTerm: "정교화 유형",
+    altNames: ["Elaboration, Types of", "정교화의 유형"],
+    description:
+      "새로운 정보를 기존 지식과 연결하여 의미 있게 처리하는 정교화가 나타나는 여러 방식을 구분한 것이다. 사례 추가, 부연 설명, 유추, 심상 형성, 질문 생성 등 다양한 정교화 활동을 포함하며, 정보를 더 깊이 부호화하여 이해와 파지를 높이는 인지 전략으로 활용된다.",
+    tags: ["교수설계", "정교화", "인지전략"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:examples-and-non-examples",
+    name: "사례와 비사례",
+    aectTerm: "사례와 비사례",
+    altNames: ["Examples and Non-examples", "예와 비예"],
+    description:
+      "개념 교수에서 해당 개념에 속하는 사례와 속하지 않는 비사례를 함께 제시하여 개념의 결정적 속성과 경계를 분명히 하는 전략이다. 사례는 개념의 범위를 일반화하도록, 비사례는 유사하지만 다른 대상과 변별하도록 도와 과잉일반화와 과소일반화를 예방한다.",
+    tags: ["교수설계", "미시전략", "개념학습"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:generality",
+    name: "일반성",
+    aectTerm: "일반성",
+    altNames: ["Generality"],
+    description:
+      "Merrill의 내용요소제시이론(Component Display Theory)에서 규칙·개념·절차의 정의를 추상적이고 일반적인 진술 형태로 제시하는 내용 요소를 의미한다. 구체적 사례(instance)와 짝을 이루어, 일반성은 규칙 자체를 진술하고 사례는 그 규칙이 적용된 구체적 상황을 보여 준다. 완전한 수업은 일반성 제시와 사례 제시, 그리고 각각에 대한 연습이 결합될 때 효과적이라고 본다.",
+    tags: ["교수전략", "내용요소제시이론", "미시적 교수설계"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:generative-and-supplantive-instructional-strategies",
+    name: "생성적-주입식 교수전략",
+    aectTerm: "생성적-주입식 교수전략",
+    altNames: ["Generative and Supplantive Instructional Strategies"],
+    description:
+      "Smith와 Ragan이 인지 처리의 통제 소재(locus of processing control)를 기준으로 구분한 교수전략의 두 축을 의미한다. 생성적 전략은 학습자가 스스로 정보를 조직하고 정교화하도록 처리 책임을 학습자에게 두며, 주입식 전략은 교수 자료가 구조·안내·비계를 제공해 처리 부담을 대신 떠맡는다. 학습 과제의 성격, 학습자의 선행지식과 인지전략 보유 정도, 가용 시간에 따라 두 전략의 배합을 조정한다.",
+    tags: ["교수전략", "비계", "인지처리"],
+    references: [
+      "Smith, P. L., & Ragan, T. J. (2005). Instructional design (3rd ed.). Wiley.",
+      AECT_REF(),
+    ],
+  },
+  {
+    seedKey: "concept:prompting",
+    name: "암시",
+    aectTerm: "암시",
+    altNames: ["Prompting", "촉구"],
+    description:
+      "학습자가 목표 반응을 산출하도록 단서나 힌트를 제공해 정반응 가능성을 높이는 교수 기법을 의미한다. 행동주의 학습 원리에 뿌리를 두며, 학습이 진전됨에 따라 단서를 점진적으로 줄여 나가는 용암(fading)과 결합해 독립적 수행으로의 전이를 유도한다.",
+    tags: ["교수전략", "행동주의", "단서"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:reinforcement",
+    name: "강화",
+    aectTerm: "강화",
+    altNames: ["Reinforcement"],
+    description:
+      "Skinner의 조작적 조건화에서 특정 행동 뒤에 자극을 제시하거나 제거해 그 행동의 발생 빈도를 높이는 절차를 의미한다. 바람직한 자극을 더해 행동을 늘리는 정적 강화와 혐오 자극을 없애 행동을 늘리는 부적 강화로 구분되며, 강화의 시점과 계획(schedule)이 학습의 유지와 소거 저항에 영향을 미친다.",
+    tags: ["교수전략", "행동주의", "동기"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:repetition",
+    name: "반복",
+    aectTerm: "반복",
+    altNames: ["Repetition"],
+    description:
+      "학습 내용이나 반응을 되풀이해 제시하고 수행함으로써 파지와 자동화를 촉진하는 교수 기법을 의미한다. 단순 반복보다 시간 간격을 둔 분산 반복(spaced repetition)과 인출을 동반한 반복이 장기기억 형성에 더 효과적인 것으로 알려져 있다.",
+    tags: ["교수전략", "기억", "연습"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:digital-divide",
+    name: "정보격차",
+    aectTerm: "정보격차",
+    altNames: ["Digital Divide", "디지털 격차"],
+    description:
+      "소득·지역·세대·교육 수준 등에 따라 정보통신기술에 대한 접근과 활용에서 나타나는 격차를 의미한다. 초기에는 기기와 인터넷 보유 여부인 접근 격차에 초점을 두었으나, 점차 활용 역량과 그로 인한 성과의 격차로 논의가 확장되었다. 교육공학에서는 테크놀로지 기반 학습의 형평성 문제와 직결된다.",
+    tags: ["학습자 특성", "형평성", "디지털 리터러시"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:digital-natives-and-immigrants",
+    name: "디지털 원주민과 이민자",
+    aectTerm: "디지털 원주민과 이민자",
+    altNames: ["Digital Natives and Immigrants", "디지털 네이티브"],
+    description:
+      "Prensky(2001)가 제안한 개념으로, 디지털 기술이 일상화된 환경에서 성장해 그 언어와 사고방식에 익숙한 세대를 디지털 원주민, 성인이 되어 뒤늦게 디지털 환경에 적응한 세대를 디지털 이민자로 비유한 구분이다. 세대 간 매체 사용 방식의 차이를 부각했으나, 연령만으로 역량을 단정한다는 실증적 비판도 함께 제기되었다.",
+    tags: ["학습자 특성", "세대", "디지털 리터러시"],
+    references: [
+      "Prensky, M. (2001). Digital natives, digital immigrants. On the Horizon, 9(5), 1-6.",
+      AECT_REF(),
+    ],
+  },
+  {
+    seedKey: "concept:expertise",
+    name: "전문성",
+    aectTerm: "전문성",
+    altNames: ["Expertise"],
+    description:
+      "특정 영역에서 오랜 의도적 연습을 통해 축적된, 문제를 정확하고 효율적으로 해결하는 고도의 지식·기능 체계를 의미한다. 전문가는 영역 지식을 의미 있는 덩어리(chunk)로 조직하고 문제 유형을 신속히 인식하며, 초보자와 구별되는 표상과 문제해결 전략을 보인다. 교수설계에서는 전문가와 초보자의 차이가 과제 분석과 비계 설계의 근거가 된다.",
+    tags: ["학습자 특성", "인지", "문제해결"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:learner-characteristics-and-traits",
+    name: "학습자 특성 및 성향",
+    aectTerm: "학습자 특성 및 성향",
+    altNames: ["Learner Characteristics and Traits"],
+    description:
+      "학습 성과에 영향을 미치는 학습자의 안정적이거나 가변적인 속성의 총칭으로, 선행지식·적성·인지양식 같은 인지적 특성과 동기·태도·불안 같은 정의적 특성을 포함한다. 교수설계의 학습자 분석 단계에서 이러한 특성을 파악해 교수전략과 매체 선택을 조정한다.",
+    tags: ["학습자 특성", "학습자 분석", "교수설계"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:literacy",
+    name: "리터러시",
+    aectTerm: "리터러시",
+    altNames: ["Literacy", "문해력"],
+    description:
+      "전통적으로는 문자를 읽고 쓰는 능력을 뜻했으나, 오늘날에는 다양한 매체와 상징 체계로부터 정보를 해석·평가·생산·소통하는 능력으로 그 외연이 확장되었다. 교육공학에서는 미디어 리터러시, 디지털 리터러시, 정보 리터러시 등 매체 환경에 대응하는 복수의 리터러시 개념으로 분화되어 논의된다.",
+    tags: ["학습자 특성", "미디어 리터러시", "역량"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:motivation",
+    name: "동기",
+    aectTerm: "동기",
+    altNames: ["Motivation"],
+    description:
+      "행동을 유발하고 방향 지으며 지속하게 하는 내적 상태와 과정을 의미한다. 자기결정성 이론은 동기를 내재적·외재적 차원으로 구분하고 자율성·유능감·관계성 욕구의 충족을 강조하며, 교수설계 영역에서는 Keller의 ARCS 모형(주의·관련성·자신감·만족감)이 동기 설계의 대표 틀로 활용된다.",
+    tags: ["학습자 특성", "동기", "ARCS"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:prerequisite-skills",
+    name: "선수 기능",
+    aectTerm: "선수 기능",
+    altNames: ["Prerequisite Skills", "선수학습 기능"],
+    description:
+      "목표 학습을 성취하기 위해 학습자가 미리 갖추고 있어야 하는 하위 지식과 기능을 의미한다. Gagné의 학습위계 분석에서 상위 과제를 지탱하는 하위 능력을 위계적으로 규명하는 데 핵심 개념으로 쓰이며, 교수 설계 시 진입 행동(entry behavior) 점검과 내용 계열화의 근거가 된다.",
+    tags: ["학습자 특성", "학습위계", "과제분석"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:self-regulation",
+    name: "자기조절",
+    aectTerm: "자기조절",
+    altNames: ["Self-Regulation", "자기조절학습"],
+    description:
+      "학습자가 자신의 목표 달성을 위해 인지·정서·행동을 스스로 계획하고 점검하며 조절하는 과정을 의미한다. Zimmerman은 이를 예견·수행·자기성찰의 순환 국면으로 모형화했으며, 목표 설정과 전략 사용, 자기점검, 자기평가가 핵심 구성 요소로 다뤄진다. 자기조절학습(SRL)은 테크놀로지 기반의 자기주도적 학습 환경에서 특히 중요하게 강조된다.",
+    tags: ["학습자 특성", "자기조절학습", "메타인지"],
+    references: [
+      "Zimmerman, B. J. (2002). Becoming a self-regulated learner: An overview. Theory Into Practice, 41(2), 64-70.",
+      AECT_REF(),
+    ],
+  },
+  {
+    seedKey: "concept:visual-competency",
+    name: "시각 역량",
+    aectTerm: "시각 역량",
+    altNames: ["Visual Competency", "시각적 역량"],
+    description:
+      "시각 정보를 읽고 해석하며 시각적 형태로 의미를 구성하고 전달하는 능력을 의미한다. 시각 리터러시(visual literacy) 논의와 맞닿아 있으며, 이미지·도표·기호가 지배적인 매체 환경에서 학습자와 설계자 모두에게 요구되는 역량으로 강조된다.",
+    tags: ["학습자 특성", "시각 리터러시", "역량"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:animation",
+    name: "애니메이션",
+    aectTerm: "애니메이션",
+    altNames: ["Animation"],
+    description:
+      "정지 이미지를 연속적으로 제시해 움직임의 착시를 만들어 내는 동적 시각 표상 기법을 의미한다. 시간의 흐름, 절차의 변화, 추상적 과정을 가시화하는 데 유용하나, 과도한 정보 제시나 화면의 일시성으로 인한 인지부하가 학습을 방해할 수 있어 학습자 통제와 신호(signaling) 설계가 함께 고려된다.",
+    tags: ["교육매체", "시각화", "멀티미디어"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:avatar",
+    name: "아바타",
+    aectTerm: "아바타",
+    altNames: ["Avatar"],
+    description:
+      "가상 환경에서 사용자를 대신해 상호작용하는 그래픽 캐릭터나 형상을 의미한다. 학습자의 자기표현과 몰입, 사회적 실재감을 높이는 매개로 활용되며, 가상세계·게임 기반 학습·온라인 협력 환경에서 정체성 구성과 참여를 촉진하는 요소로 다뤄진다.",
+    tags: ["교육매체", "가상세계", "실재감"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:digital-mapping",
+    name: "디지털 매핑",
+    aectTerm: "디지털 매핑",
+    altNames: ["Digital Mapping"],
+    description:
+      "지리·공간 정보를 디지털 방식으로 수집·표현·조작해 상호작용 가능한 지도로 구성하는 기법을 의미한다. 지리정보시스템(GIS)과 위치 기반 데이터를 활용해 학습자가 공간 정보를 탐색하고 자료를 계층적으로 시각화하도록 지원하며, 탐구 학습과 데이터 리터러시 교육의 매체로 쓰인다.",
+    tags: ["교육매체", "시각화", "탐구 학습"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:digital-storytelling",
+    name: "디지털 스토리텔링",
+    aectTerm: "디지털 스토리텔링",
+    altNames: ["Digital Storytelling"],
+    description:
+      "이미지·음성·영상·음악 등 디지털 매체를 결합해 개인적이거나 주제 중심의 이야기를 구성하고 전달하는 표현 활동을 의미한다. 학습자가 콘텐츠를 직접 기획하고 제작하는 과정에서 서사 구성력과 매체 리터러시, 의미 구성을 함께 촉진하며, 성찰과 정서적 몰입을 이끄는 학습 방법으로 활용된다.",
+    tags: ["교육매체", "콘텐츠 제작", "미디어 리터러시"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:graphics",
+    name: "그래픽",
+    aectTerm: "그래픽",
+    altNames: ["Graphics"],
+    description:
+      "정보를 전달하거나 개념을 표현하기 위해 사용하는 도형·도표·삽화 등 시각적 이미지의 총칭이다. 장식적 기능뿐 아니라 표상적·조직적·해석적·변형적 기능을 통해 이해를 돕는 교수 자료로 활용되며, 텍스트와의 관계 및 시각 설계 원리에 따라 학습 효과가 달라진다.",
+    tags: ["교육매체", "시각 메시지 설계", "시각화"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:production",
+    name: "제작",
+    aectTerm: "제작",
+    altNames: ["Production"],
+    description:
+      "교수·학습에 사용할 매체나 자료를 실제로 만들어 내는 과정을 의미한다. 교수설계 모형의 개발(development) 단계에 해당하며, 기획·스토리보드·촬영·편집·저작 등의 활동을 통해 설계 명세를 구체적인 산출물로 구현한다.",
+    tags: ["교육매체", "개발", "매체 제작"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:user-generated-content",
+    name: "사용자 제작 콘텐츠",
+    aectTerm: "사용자 제작 콘텐츠",
+    altNames: ["User-Generated Content", "UGC"],
+    description:
+      "전문 제작자가 아닌 일반 사용자가 직접 생산해 온라인으로 공유하는 텍스트·이미지·영상 등의 콘텐츠를 의미한다. 웹 2.0 환경의 참여와 개방 문화를 배경으로 하며, 학습자가 지식의 소비자에서 생산자로 전환하는 참여적 학습과 집단지성 형성의 기반이 된다.",
+    tags: ["교육매체", "웹2.0", "참여 학습"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:mobile-devices-and-functions",
+    name: "모바일 기기와 기능",
+    aectTerm: "모바일 기기와 기능",
+    altNames: ["Mobile Devices and Functions"],
+    description:
+      "스마트폰·태블릿 등 휴대 가능한 컴퓨팅 기기와 그 안에서 학습을 지원하는 기능들을 의미한다. 이동성, 위치 인식, 카메라·센서, 상시 연결성 같은 기능이 시공간 제약을 넘어선 맥락 기반의 적시 학습을 가능하게 하며, 모바일 학습(m-learning)의 물리적 토대를 이룬다.",
+    tags: ["교육매체", "모바일 학습", "이러닝"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:online-behavior",
+    name: "온라인 행동",
+    aectTerm: "온라인 행동",
+    altNames: ["Online Behavior"],
+    description:
+      "학습자가 온라인 환경에서 보이는 접속·탐색·참여·상호작용 등의 행동 양상을 의미한다. 학습관리시스템에 축적되는 로그와 상호작용 데이터는 학습분석(learning analytics)의 근거가 되며, 온라인 예절(네티켓)과 디지털 시민성 같은 규범적 측면도 함께 다뤄진다.",
+    tags: ["이러닝", "학습분석", "온라인 학습"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:game-design",
+    name: "게임 설계",
+    aectTerm: "게임 설계",
+    altNames: ["Game Design"],
+    description:
+      "목표·규칙·도전·피드백·보상 등의 요소를 조직해 참여자의 몰입과 상호작용을 이끌어 내는 게임을 구성하는 과정을 의미한다. 교육 맥락에서는 학습 목표를 게임 메커닉과 정합적으로 결합하는 것이 관건이며, 도전 수준과 역량의 균형을 통한 몰입(flow) 경험 설계가 강조된다.",
+    tags: ["게임 기반 학습", "설계", "몰입"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:virtual-worlds",
+    name: "가상세계",
+    aectTerm: "가상세계",
+    altNames: ["Virtual Worlds"],
+    description:
+      "다수의 사용자가 아바타를 통해 동시에 접속해 상호작용하는 3차원 몰입형 컴퓨터 생성 공간을 의미한다. 현실에서 재현하기 어려운 상황을 체험적으로 제공하고 사회적 실재감과 협력 학습을 지원하며, 상황학습과 역할 기반 시뮬레이션의 무대로 활용된다.",
+    tags: ["가상세계", "몰입", "시뮬레이션"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:blog",
+    name: "블로그",
+    aectTerm: "블로그",
+    altNames: ["Blog", "웹로그"],
+    description:
+      "개인이나 집단이 시간 역순으로 글을 게시하고 댓글로 소통하는 웹 기반 저작·공유 매체를 의미한다. 손쉬운 저작 도구를 통해 학습자의 성찰적 글쓰기, 학습 포트폴리오 축적, 상호 피드백과 공동체 형성을 지원하는 도구로 활용된다.",
+    tags: ["테크놀로지 기반 커뮤니케이션", "웹2.0", "성찰"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:communication-mapping",
+    name: "커뮤니케이션 매핑",
+    aectTerm: "커뮤니케이션 매핑",
+    altNames: ["Communication Mapping"],
+    description:
+      "집단이나 조직 내부에서 오가는 정보 흐름과 상호작용 관계를 시각적으로 도식화하고 분석하는 기법을 의미한다. 사회연결망 분석의 관점에서 구성원 간 연결 구조와 소통 경로를 소시오그램 형태로 드러내어, 협력과 지식 공유의 병목을 진단하고 개선하는 데 활용된다.",
+    tags: ["테크놀로지 기반 커뮤니케이션", "사회연결망분석", "협력"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:multimedia-representations-of-research-teaching-and-learning",
+    name: "연구, 교수, 학습의 멀티미디어 표상",
+    aectTerm: "연구, 교수, 학습의 멀티미디어 표상",
+    altNames: ["Multimedia Representations of Research, Teaching and Learning"],
+    description:
+      "연구의 과정과 결과, 그리고 교수·학습 실천을 텍스트 중심 서술을 넘어 이미지·영상·음향·상호작용 매체를 결합해 표현하는 방식을 의미한다. 복합 양식(multimodal) 표상은 추상적 과정을 가시화하고 다양한 청중과 소통하는 대안적 학술 표현 양식으로 주목받는다.",
+    tags: ["테크놀로지 기반 커뮤니케이션", "멀티미디어", "학술 소통"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:social-computing",
+    name: "소셜 컴퓨팅",
+    aectTerm: "소셜 컴퓨팅",
+    altNames: ["Social Computing"],
+    description:
+      "사람들 사이의 사회적 상호작용과 협력을 매개하고 촉진하도록 설계된 컴퓨팅 기술과 그 활용을 의미한다. 위키·태깅·소셜 네트워크·협업 도구 등을 포괄하며, 집단지성과 사용자 참여를 기반으로 지식이 공동으로 구성되는 학습 환경의 기술적 토대를 이룬다.",
+    tags: ["테크놀로지 기반 커뮤니케이션", "협력", "집단지성"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:social-media",
+    name: "소셜 미디어",
+    aectTerm: "소셜 미디어",
+    altNames: ["Social Media"],
+    description:
+      "사용자가 콘텐츠를 생산하고 공유하며 관계망을 통해 상호작용하는 웹 기반 서비스와 플랫폼을 의미한다. 개방성·참여·연결을 특징으로 하며, 비형식 학습과 실천공동체 형성, 학습자 네트워크 확장의 매개로 교육에 활용되는 한편 정보 신뢰성과 프라이버시 쟁점도 수반한다.",
+    tags: ["테크놀로지 기반 커뮤니케이션", "웹2.0", "비형식 학습"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:technological-communication",
+    name: "테크놀로지 활용 커뮤니케이션",
+    aectTerm: "테크놀로지 활용 커뮤니케이션",
+    altNames: ["Technological Communication"],
+    description:
+      "디지털 기술을 매개로 이루어지는 인간 간 정보 교환과 상호작용을 의미한다. 동시적·비동시적 소통 도구를 통해 시공간 제약을 넘어선 교수자와 학습자, 학습자 간 상호작용을 가능하게 하며, 매체의 특성이 소통의 질과 사회적 실재감에 영향을 미친다.",
+    tags: ["테크놀로지 기반 커뮤니케이션", "상호작용", "원격교육"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:computer-based-training",
+    name: "컴퓨터 기반 훈련",
+    aectTerm: "컴퓨터 기반 훈련",
+    altNames: ["Computer-Based Training", "CBT"],
+    description:
+      "컴퓨터를 매개로 학습 내용을 제시하고 연습과 평가를 제공하는 개별화된 교육·훈련 방식을 의미한다. 자기 진도 학습, 즉각적 피드백, 반복 연습을 지원하며, 주로 기업·군·직무 훈련 맥락에서 표준화된 역량 습득을 위해 활용되었고 이후 웹 기반 학습으로 확장되었다.",
+    tags: ["테크놀로지 기반 학습", "이러닝", "개별화"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:e-portfolio",
+    name: "e-포트폴리오",
+    aectTerm: "e-포트폴리오",
+    altNames: ["e-Portfolio", "전자 포트폴리오"],
+    description:
+      "학습자가 학습 과정과 성취의 증거를 디지털 형태로 수집·조직·공유하는 축적물을 의미한다. 산출물과 함께 성찰을 담아 성장 과정을 드러내며, 형성적 학습 도구이자 역량 기반 평가와 진로·경력 증빙의 수단으로 활용된다.",
+    tags: ["테크놀로지 기반 학습", "평가", "성찰"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:information-rich-environments",
+    name: "정보가 풍부한 환경",
+    aectTerm: "정보가 풍부한 환경",
+    altNames: ["Information-Rich Environments"],
+    description:
+      "다양한 형식의 정보 자원과 도구가 풍부하게 제공되어 학습자가 능동적으로 탐색하고 활용하며 지식을 구성하도록 지원하는 학습 환경을 의미한다. 구성주의 학습관에 기반해 자원 기반 학습과 자기주도적 탐구를 촉진하며, 정보를 선별·평가·통합하는 리터러시가 함께 요구된다.",
+    tags: ["테크놀로지 기반 학습", "구성주의", "자원 기반 학습"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:multi-channel-instruction",
+    name: "다중채널 교수",
+    aectTerm: "다중채널 교수",
+    altNames: ["Multi-Channel Instruction"],
+    description:
+      "시각과 청각 등 둘 이상의 감각 채널을 통해 정보를 동시에 제시하는 교수 방식을 의미한다. 이중부호화 이론과 멀티미디어 학습 원리에 근거해 상호 보완적 채널이 이해를 도울 수 있으나, 채널 간 정보가 중복되거나 경합하면 오히려 인지부하를 높일 수 있어 정합적 설계가 요구된다.",
+    tags: ["테크놀로지 기반 학습", "멀티미디어", "인지부하"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:multimedia-learning",
+    name: "멀티미디어 학습",
+    aectTerm: "멀티미디어 학습",
+    altNames: ["Multimedia Learning"],
+    description:
+      "글과 그림처럼 언어적 표상과 시각적 표상을 함께 활용해 학습하는 것을 의미한다. Mayer의 멀티미디어 학습 인지이론은 이중경로 처리와 제한된 작업기억 용량, 능동적 처리를 전제로, 근접성·양식·잉여·일관성 등의 설계 원리를 통해 인지부하를 관리하고 유의미한 학습을 촉진한다고 본다.",
+    tags: ["테크놀로지 기반 학습", "인지이론", "멀티미디어"],
+    references: [
+      "Mayer, R. E. (2009). Multimedia learning (2nd ed.). Cambridge University Press.",
+      AECT_REF(),
+    ],
+  },
+  {
+    seedKey: "concept:technology-enabled-learning",
+    name: "테크놀로지 활용 학습",
+    aectTerm: "테크놀로지 활용 학습",
+    altNames: ["Technology-Enabled Learning"],
+    description:
+      "디지털 기술을 도구로 활용해 학습 활동을 지원하고 확장하는 학습을 의미한다. 기술 자체가 목적이 아니라 학습 목표 달성을 매개하는 수단이라는 관점을 담으며, 접근성·유연성·상호작용을 높여 다양한 형태의 형식·비형식 학습을 가능하게 한다.",
+    tags: ["테크놀로지 기반 학습", "이러닝", "학습 환경"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:technology-enhanced-learning-environment",
+    name: "테크놀로지 기반 학습 환경",
+    aectTerm: "테크놀로지 기반 학습 환경",
+    altNames: ["Technology-Enhanced Learning Environment", "TELE"],
+    description:
+      "학습을 촉진하도록 디지털 기술이 통합적으로 설계된 학습 공간과 그 총체적 조건을 의미한다. 도구·자원·상호작용·과제가 교수학습 원리에 따라 조직되며, 물리적 요소와 가상적 요소를 결합해 탐구·협력·성찰을 지원하는 생태적 환경으로 개념화된다.",
+    tags: ["테크놀로지 기반 학습", "학습 환경", "학습 설계"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:usability",
+    name: "사용성",
+    aectTerm: "사용성",
+    altNames: ["Usability"],
+    description:
+      "사용자가 특정 도구나 시스템을 목표 달성을 위해 얼마나 효과적이고 효율적으로, 그리고 만족스럽게 사용할 수 있는지를 나타내는 품질 속성을 의미한다. 학습성·기억성·오류·효율·만족과 같은 지표로 평가되며, 교육용 소프트웨어나 이러닝 인터페이스 설계에서 학습 경험의 질을 좌우하는 요소로 다뤄진다.",
+    tags: ["테크놀로지 기반 학습", "사용자 경험", "인터페이스 설계"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:cloud-computing",
+    name: "클라우드 컴퓨팅",
+    aectTerm: "클라우드 컴퓨팅",
+    altNames: ["Cloud Computing"],
+    description:
+      "인터넷을 통해 서버·저장소·소프트웨어 등 컴퓨팅 자원을 필요에 따라 원격으로 제공받아 사용하는 방식을 의미한다. 자원의 확장성과 접근성, 협업 편의를 높여 언제 어디서나 자료에 접근하고 공동으로 작업하는 학습을 지원하며, 학습 도구와 데이터의 인프라 기반이 된다.",
+    tags: ["테크놀로지 유형", "인프라", "협업"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:expert-system",
+    name: "전문가 시스템",
+    aectTerm: "전문가 시스템",
+    altNames: ["Expert System"],
+    description:
+      "특정 영역 전문가의 지식과 추론 규칙을 지식베이스와 추론 엔진으로 구현해 전문가 수준의 판단과 조언을 제공하는 인공지능 시스템을 의미한다. 규칙 기반 추론을 통해 문제를 진단하고 해결안을 제시하며, 지능형 교수 시스템과 수행 지원 도구의 초기 기반 기술로 활용되었다.",
+    tags: ["테크놀로지 유형", "인공지능", "지능형 튜터링"],
+    references: [AECT_REF()],
+  },
+  {
+    seedKey: "concept:integrated-technologies",
+    name: "통합공학",
+    aectTerm: "통합공학",
+    altNames: ["Integrated Technologies"],
+    description:
+      "여러 매체·도구·시스템을 단일 학습환경 안에서 유기적으로 결합해 활용하는 기술 통합 접근을 의미한다. 텍스트·영상·시뮬레이션·통신 기능 등이 상호 연동되어 하나의 학습 경험으로 제공되며, 멀티미디어·하이퍼미디어·네트워크 기술의 수렴을 배경으로 한다.",
+    tags: ["교육매체", "멀티미디어", "학습환경"],
+    references: [AECT_REF(231)],
+  },
+  {
+    seedKey: "concept:media",
+    name: "매체",
+    aectTerm: "매체",
+    altNames: ["Media", "교수매체"],
+    description:
+      "교수·학습 과정에서 메시지를 전달하고 학습자와 내용을 매개하는 물리적·상징적 수단의 총칭이다. 인쇄·시청각·디지털 매체를 포괄하며, 매체 자체의 속성이 학습에 미치는 영향(매체 논쟁)과 교수방법과의 관계가 오랫동안 교육공학의 핵심 쟁점이었다.",
+    tags: ["교육매체", "메시지 전달", "교수설계"],
+    references: [AECT_REF(283)],
+  },
+  {
+    seedKey: "concept:really-simple-syndication",
+    name: "RSS 피드",
+    aectTerm: "RSS 피드",
+    altNames: ["Really Simple Syndication", "RSS"],
+    description:
+      "웹 콘텐츠의 갱신 정보를 표준화된 형식으로 배포해 이용자가 여러 사이트의 새 글을 한곳에서 구독·수신하도록 하는 웹 피드 기술이다. 블로그·뉴스·팟캐스트 등의 최신 항목을 자동으로 모아 주므로, 정보가 풍부한 웹 환경에서 자료를 선별·추적하는 학습 도구로 활용된다.",
+    tags: ["웹 2.0", "정보 구독", "에듀테크"],
+    references: [AECT_REF(342)],
+  },
+  {
+    seedKey: "concept:rich-media",
+    name: "리치 미디어",
+    aectTerm: "리치 미디어",
+    altNames: ["Rich Media"],
+    description:
+      "정적 텍스트·이미지에 그치지 않고 애니메이션·비디오·오디오·상호작용 요소를 결합한 역동적·다감각적 매체 형식을 의미한다. 높은 표현력과 상호작용성으로 학습자의 주의와 참여를 끌어낼 수 있으나, 과도한 자극은 외재적 인지부하를 높일 수 있어 설계상 균형이 요구된다.",
+    tags: ["멀티미디어", "상호작용", "교육매체"],
+    references: [AECT_REF(348)],
+  },
+  {
+    seedKey: "concept:web-2-0",
+    name: "웹 2.0",
+    aectTerm: "웹 2.0",
+    altNames: ["Web 2.0"],
+    description:
+      "이용자가 콘텐츠를 소비할 뿐 아니라 직접 생산·공유·협업하는 참여적 웹 환경을 가리키는 개념이다. 블로그·위키·소셜 미디어·태깅 등이 대표적이며, 사용자 제작 콘텐츠와 집단지성을 기반으로 개방적 학습·협력학습의 기술적 토대를 제공한다.",
+    tags: ["웹 2.0", "참여형 웹", "소셜 미디어"],
+    references: [
+      "O'Reilly, T. (2005). What is Web 2.0: Design patterns and business models for the next generation of software. O'Reilly Media.",
+      AECT_REF(422),
+    ],
+  },
+  {
+    seedKey: "concept:analysis",
+    name: "분석",
+    aectTerm: "분석",
+    altNames: ["Analysis"],
+    description:
+      "교수설계의 출발 단계로, 학습 문제와 요구·학습자·과제·맥락을 체계적으로 조사해 설계 결정의 근거를 마련하는 활동을 의미한다. ADDIE 모형의 첫 국면에 해당하며, 요구분석·과제분석·학습자분석 등을 포함해 무엇을 왜 가르쳐야 하는지를 규명한다.",
+    tags: ["교수설계", "ADDIE", "요구분석"],
+    references: [AECT_REF(34)],
+  },
+  {
+    seedKey: "concept:assessment",
+    name: "사정",
+    aectTerm: "사정",
+    altNames: ["Assessment"],
+    description:
+      "학습자의 지식·기능·태도에 관한 증거를 수집·해석하는 과정으로, 학습의 현재 상태를 파악하고 교수적 의사결정을 지원한다. AECT 용어 체계에서는 개별 학습자의 성취 측정에 초점을 둔 '사정'을 프로그램 전반의 가치를 판단하는 '평가(evaluation)'와 구분한다.",
+    tags: ["측정", "학습평가", "교수설계"],
+    references: [AECT_REF(44)],
+  },
+  {
+    seedKey: "concept:criterion-referenced-measurement",
+    name: "준거 참조 측정",
+    aectTerm: "준거 참조 측정",
+    altNames: ["Criterion-Referenced Measurement", "준거지향 측정"],
+    description:
+      "학습자의 성취를 사전에 설정된 절대적 준거(목표 도달 여부)에 비추어 해석하는 측정 방식으로, 다른 학습자와의 상대적 비교에 의존하는 규준참조 측정과 대비된다. Glaser(1963)가 개념을 정식화했으며, 목표 지향 수업·완전학습·역량 기반 평가의 측정 논리로 기능한다.",
+    tags: ["측정", "평가", "목표 지향"],
+    references: [
+      "Glaser, R. (1963). Instructional technology and the measurement of learning outcomes: Some questions. American Psychologist, 18(8), 519-521.",
+      AECT_REF(112),
+    ],
+  },
+  {
+    seedKey: "concept:evaluation",
+    name: "평가",
+    aectTerm: "평가",
+    altNames: ["Evaluation"],
+    description:
+      "프로그램·교수 자료·수업의 가치·효과·효율을 판단하기 위해 자료를 수집·분석하는 체계적 과정이다. 개발 과정을 개선하기 위한 형성평가와 최종 성과를 판정하는 총괄평가로 구분되며, 교수설계 순환의 질 관리 기제로 작동한다.",
+    tags: ["평가", "교수설계", "형성·총괄평가"],
+    references: [AECT_REF(170)],
+  },
+  {
+    seedKey: "concept:evaluation-models",
+    name: "평가 모형",
+    aectTerm: "평가 모형",
+    altNames: ["Evaluation Models"],
+    description:
+      "평가의 목적·대상·절차를 체계화한 개념적 틀로, 무엇을 어떤 준거로 어떻게 판단할지를 안내한다. Kirkpatrick의 4수준 모형, Stufflebeam의 CIPP 모형, Scriven의 목표 배제 평가 등이 대표적이며, 교육·훈련 프로그램의 효과 검증에 널리 사용된다.",
+    tags: ["평가", "CIPP", "프로그램 평가"],
+    references: [AECT_REF(172)],
+  },
+  {
+    seedKey: "concept:need",
+    name: "요구",
+    aectTerm: "요구",
+    altNames: ["Need"],
+    description:
+      "학습자나 조직의 현재 상태와 바람직한 목표 상태 사이의 간극을 의미하며, 교육적 개입의 필요성을 규명하는 기준이 된다. 요구는 요구사정(needs assessment)을 통해 확인·우선순위화되어 설계의 방향과 목표 설정을 이끈다.",
+    tags: ["요구분석", "교수설계", "수행공학"],
+    references: [AECT_REF(297)],
+  },
+  {
+    seedKey: "concept:change",
+    name: "변화",
+    aectTerm: "변화",
+    altNames: ["Change"],
+    description:
+      "개인·집단·조직이 새로운 실천·기술·구조를 채택하면서 기존 상태에서 벗어나는 과정을 의미한다. 교육공학에서는 혁신의 확산과 수용, 조직 개선의 맥락에서 다뤄지며, 변화의 계획·촉진·정착을 지원하는 것이 수행공학의 주요 관심사다.",
+    tags: ["변화관리", "혁신", "조직"],
+    references: [AECT_REF(78)],
+  },
+  {
+    seedKey: "concept:change-models",
+    name: "변화 모형",
+    aectTerm: "변화 모형",
+    altNames: ["Change Models"],
+    description:
+      "변화가 일어나는 단계와 이를 촉진하는 조건을 체계화한 개념적 틀이다. Lewin의 해빙-변화-재동결 3단계, Hall과 Hord의 관심 기반 채택 모형(CBAM) 등이 대표적이며, 교육 현장에 혁신을 도입·정착시키는 전략의 이론적 근거를 제공한다.",
+    tags: ["변화관리", "CBAM", "혁신 확산"],
+    references: [AECT_REF(79)],
+  },
+  {
+    seedKey: "concept:innovation",
+    name: "혁신",
+    aectTerm: "혁신",
+    altNames: ["Innovation"],
+    description:
+      "개인이나 조직이 새롭다고 지각하는 아이디어·실천·사물을 의미하며, 그 채택과 확산 과정이 교육 변화의 핵심 동력이 된다. Rogers(2003)의 혁신확산이론은 상대적 이점·적합성·복잡성·시험가능성·관찰가능성 등 채택 속도에 영향을 주는 속성을 제시한다.",
+    tags: ["혁신 확산", "변화관리", "채택"],
+    references: [
+      "Rogers, E. M. (2003). Diffusion of innovations (5th ed.). Free Press.",
+      AECT_REF(221),
+    ],
+  },
+  {
+    seedKey: "concept:organizational-change",
+    name: "조직 변화",
+    aectTerm: "조직 변화",
+    altNames: ["Organizational Change"],
+    description:
+      "조직이 목표·구조·문화·기술·업무 방식을 의도적으로 전환해 성과를 개선하는 과정을 의미한다. 교육공학·수행공학에서는 교수적 개입이 개인 수준을 넘어 조직 시스템의 변화와 맞물려야 지속 가능하다는 관점에서 다뤄진다.",
+    tags: ["조직 변화", "수행공학", "변화관리"],
+    references: [AECT_REF(306)],
+  },
+  {
+    seedKey: "concept:job-aid",
+    name: "직무보조",
+    aectTerm: "직무보조",
+    altNames: ["Job Aid", "직무 보조도구"],
+    description:
+      "직무 수행 시점에 필요한 정보·절차·지침을 즉시 제공해 기억 부담을 줄이고 수행을 지원하는 외부 자원을 의미한다. 체크리스트·순서도·매뉴얼·의사결정표 등이 해당하며, 훈련을 대체하거나 보완하는 비용 효율적 수행 지원 전략으로 활용된다.",
+    tags: ["수행공학", "수행 지원", "직무"],
+    references: [AECT_REF(250)],
+  },
+  {
+    seedKey: "concept:management-systems",
+    name: "관리 시스템",
+    aectTerm: "관리 시스템",
+    altNames: ["Management Systems"],
+    description:
+      "교육·훈련의 자원·일정·기록·학습 과정을 계획하고 통제하기 위한 조직적 체계를 의미한다. 학습관리시스템(LMS)·교수관리시스템 등이 포함되며, 학습자 등록·진도 추적·성취 기록·자원 배분 등을 통합적으로 지원한다.",
+    tags: ["관리 시스템", "LMS", "교육 운영"],
+    references: [AECT_REF(279)],
+  },
+  {
+    seedKey: "concept:information-access",
+    name: "정보 접근",
+    aectTerm: "정보 접근",
+    altNames: ["Information Access"],
+    description:
+      "이용자가 필요한 정보 자원을 찾아 이용할 수 있는 가능성과 그 조건을 의미한다. 물리적·기술적·경제적 장벽의 제거와 검색·열람 권한이 관건이며, 정보 격차와 정보 형평성 논의의 핵심 축을 이룬다.",
+    tags: ["정보 접근", "정보 격차", "정보관리"],
+    references: [AECT_REF(215)],
+  },
+  {
+    seedKey: "concept:information-classification",
+    name: "정보 분류",
+    aectTerm: "정보 분류",
+    altNames: ["Information Classification"],
+    description:
+      "정보 자원을 공통 속성에 따라 범주로 조직해 검색·관리·활용을 용이하게 하는 체계화 활동을 의미한다. 분류표·시소러스·메타데이터·태그 체계 등이 사용되며, 방대한 정보를 구조화해 접근성을 높이는 정보관리의 기초가 된다.",
+    tags: ["정보 분류", "정보관리", "메타데이터"],
+    references: [AECT_REF(216)],
+  },
+  {
+    seedKey: "concept:information-gatekeeper",
+    name: "정보 게이트키퍼",
+    aectTerm: "정보 게이트키퍼",
+    altNames: ["Information Gatekeeper", "게이트키퍼"],
+    description:
+      "정보의 흐름에서 어떤 내용을 통과시키고 어떤 내용을 걸러낼지를 결정하는 개인·기관·기제를 의미한다. 편집자·큐레이터·검색 알고리즘 등이 그 역할을 하며, 이용자가 접하는 정보의 범위와 방향에 영향을 미친다.",
+    tags: ["정보관리", "커뮤니케이션", "정보 흐름"],
+    references: [AECT_REF(216)],
+  },
+  {
+    seedKey: "concept:information-resources",
+    name: "정보자원",
+    aectTerm: "정보자원",
+    altNames: ["Information Resources"],
+    description:
+      "학습과 문제해결에 활용할 수 있는 지식·자료·매체·인적 자원의 총체를 의미한다. 인쇄물·데이터베이스·전문가·온라인 콘텐츠 등을 포괄하며, 정보가 풍부한 환경에서 이를 선별·평가·조직하는 역량이 학습의 질을 좌우한다.",
+    tags: ["정보자원", "정보관리", "학습 자원"],
+    references: [AECT_REF(217)],
+  },
+  {
+    seedKey: "concept:information-retrieval",
+    name: "정보 검색",
+    aectTerm: "정보 검색",
+    altNames: ["Information Retrieval"],
+    description:
+      "저장된 정보 집합에서 이용자의 요구에 부합하는 자료를 찾아내는 과정과 기술을 의미한다. 색인·질의·매칭 알고리즘을 기반으로 하며, 검색의 적합성(정확률)과 포괄성(재현율)이 성능 판단의 핵심 지표가 된다.",
+    tags: ["정보 검색", "정보관리", "데이터베이스"],
+    references: [AECT_REF(218)],
+  },
+  {
+    seedKey: "concept:information-storage",
+    name: "정보 저장",
+    aectTerm: "정보 저장",
+    altNames: ["Information Storage"],
+    description:
+      "정보를 이후에 검색·활용할 수 있도록 물리적·디지털 매체에 조직해 보존하는 과정을 의미한다. 저장 구조와 색인 방식은 이후 정보 검색의 효율을 결정하며, 인간 기억의 부호화·저장 과정에 대한 정보처리적 비유로도 사용된다.",
+    tags: ["정보 저장", "정보관리", "정보처리"],
+    references: [AECT_REF(219)],
+  },
+  {
+    seedKey: "concept:integrated-learning-systems",
+    name: "통합학습체제",
+    aectTerm: "통합학습체제",
+    altNames: ["Integrated Learning Systems", "ILS"],
+    description:
+      "교수 콘텐츠·평가·학습 관리 기능을 하나의 플랫폼으로 결합해 개별 학습자의 진도에 따라 맞춤형 수업을 제공하는 종합적 컴퓨터 기반 학습 시스템을 의미한다. 진단·처방·기록·보고를 자동화해 개별화 학습을 지원하며, 컴퓨터보조수업(CAI)의 발전된 형태로 자리매김했다.",
+    tags: ["통합학습체제", "CAI", "개별화 학습"],
+    references: [AECT_REF(230)],
+  },
+  {
+    seedKey: "concept:cognitive-dissonance-theory",
+    name: "인지부조화이론",
+    aectTerm: "인지부조화이론",
+    altNames: ["Cognitive Dissonance Theory"],
+    description:
+      "Festinger(1957)가 제안한 이론으로, 개인이 서로 모순되는 신념·태도·행동을 동시에 지닐 때 겪는 심리적 불편(부조화)을 줄이기 위해 인지나 행동을 바꾸려 한다고 설명한다. 학습 상황에서는 기존 개념과 새로운 정보의 충돌이 개념 변화와 동기를 유발하는 기제로 해석된다.",
+    tags: ["동기", "태도 변화", "인지"],
+    references: [
+      "Festinger, L. (1957). A theory of cognitive dissonance. Stanford University Press.",
+      AECT_REF(90),
+    ],
+  },
+  {
+    seedKey: "concept:communication-theory-and-models",
+    name: "커뮤니케이션 이론과 모형",
+    aectTerm: "커뮤니케이션 이론과 모형",
+    altNames: ["Communication Theory and Models"],
+    description:
+      "송신자가 메시지를 부호화해 매체를 통해 수신자에게 전달하고 해석되는 과정을 설명하는 이론과 그 도식적 표현을 의미한다. Shannon과 Weaver(1949)의 선형 모형에서 출발해 피드백·잡음·맥락을 포함한 상호작용적 모형으로 발전했으며, 교수매체와 메시지 설계의 이론적 토대가 된다.",
+    tags: ["커뮤니케이션", "메시지 설계", "이론·모형"],
+    references: [
+      "Shannon, C. E., & Weaver, W. (1949). The mathematical theory of communication. University of Illinois Press.",
+      AECT_REF(96),
+    ],
+  },
+  {
+    seedKey: "concept:information-theory",
+    name: "정보이론",
+    aectTerm: "정보이론",
+    altNames: ["Information Theory"],
+    description:
+      "Shannon(1948)이 정립한 이론으로, 정보를 불확실성의 감소로 규정하고 메시지의 양을 확률적으로 정량화하며 통신 과정의 부호화·전송·잡음을 수학적으로 다룬다. 커뮤니케이션 모형과 인간의 정보처리 이론에 개념적 기초를 제공해 교육공학 초기 이론 형성에 영향을 미쳤다.",
+    tags: ["정보이론", "커뮤니케이션", "정보처리"],
+    references: [
+      "Shannon, C. E. (1948). A mathematical theory of communication. Bell System Technical Journal, 27(3), 379-423.",
+      AECT_REF(220),
+    ],
+  },
+  {
+    seedKey: "concept:mathematical-model-of-communication",
+    name: "수학적 커뮤니케이션 모형",
+    aectTerm: "수학적 커뮤니케이션 모형",
+    altNames: ["Mathematical Model of Communication", "Shannon-Weaver Model"],
+    description:
+      "Shannon과 Weaver(1949)가 제시한 선형적 커뮤니케이션 모형으로, 정보원-송신기-채널-수신기-목적지의 흐름과 이를 교란하는 잡음(noise) 개념을 통해 메시지 전달 과정을 설명한다. 이후 커뮤니케이션 모형과 교수 메시지 설계의 원형이 되었으나, 일방향적이라는 한계로 상호작용 모형으로 보완되었다.",
+    tags: ["커뮤니케이션", "이론·모형", "메시지 설계"],
+    references: [
+      "Shannon, C. E., & Weaver, W. (1949). The mathematical theory of communication. University of Illinois Press.",
+      AECT_REF(282),
+    ],
+  },
+  {
+    seedKey: "concept:taxonomy",
+    name: "분류체계",
+    aectTerm: "분류체계",
+    altNames: ["Taxonomy", "교육목표분류학"],
+    description:
+      "학습 목표나 지식·능력을 위계적·범주적으로 조직한 분류 틀을 의미한다. Bloom(1956)의 교육목표분류학이 인지·정의·심동 영역을 체계화한 대표 사례이며, 목표 진술·평가 설계·수업 계열화의 공통 언어를 제공한다.",
+    tags: ["교육목표", "분류체계", "인지 영역"],
+    references: [
+      "Bloom, B. S. (Ed.). (1956). Taxonomy of educational objectives: The classification of educational goals. Handbook I: Cognitive domain. David McKay.",
+      AECT_REF(390),
+    ],
+  },
+  {
+    seedKey: "concept:design-and-development-research",
+    name: "설계 개발 연구",
+    aectTerm: "설계 개발 연구",
+    altNames: ["Design and Development Research", "DDR", "설계·개발 연구"],
+    description:
+      "Richey와 Klein(2007)이 체계화한 연구 유형으로, 교수·비교수 산출물과 도구, 그리고 이를 개발하는 모형을 설계·개발·평가하는 과정을 경험적으로 탐구해 설계 실천의 근거를 마련한다. 산출물·도구 연구와 모형 연구로 구분되며, 실제 설계 맥락에서 도출된 지식을 축적하는 데 목적을 둔다.",
+    tags: ["연구방법", "교수설계", "설계연구"],
+    references: [
+      "Richey, R. C., & Klein, J. D. (2007). Design and development research: Methods, strategies, and issues. Lawrence Erlbaum Associates.",
+      AECT_REF(132),
+    ],
+  },
+  {
+    seedKey: "concept:design-based-research",
+    name: "설계 기반 연구",
+    aectTerm: "설계 기반 연구",
+    altNames: ["Design-Based Research", "DBR", "설계기반연구"],
+    description:
+      "실제 교육 현장에서 교수적 개입을 설계·실행하고 반복적으로 개선하면서 학습에 관한 이론을 정련하는 연구 방법이다. 설계와 이론 개발을 동시에 추구하는 순환적·협력적 특성을 지니며, 맥락에 뿌리내린 실천적·이론적 지식을 함께 산출한다.",
+    tags: ["연구방법", "설계연구", "학습과학"],
+    references: [
+      "Design-Based Research Collective. (2003). Design-based research: An emerging paradigm for educational inquiry. Educational Researcher, 32(1), 5-8.",
+      AECT_REF(133),
+    ],
+  },
+  {
+    seedKey: "concept:designer-decision-making-research",
+    name: "설계자 의사결정 연구",
+    aectTerm: "설계자 의사결정 연구",
+    altNames: ["Designer Decision-Making Research"],
+    description:
+      "교수설계자가 설계 과정에서 실제로 어떤 판단과 선택을 하는지를 탐구하는 연구로, 규범적 설계 모형과 실제 설계 실천 사이의 간극을 규명한다. 전문가와 초보 설계자의 사고 과정·전략 차이를 분석해 설계 전문성의 본질과 설계자 양성에 대한 시사점을 제공한다.",
+    tags: ["연구방법", "교수설계", "설계 전문성"],
+    references: [
+      "Richey, R. C., & Klein, J. D. (2007). Design and development research: Methods, strategies, and issues. Lawrence Erlbaum Associates.",
+      AECT_REF(134),
+    ],
+  },
+  {
+    seedKey: "concept:cognitive-processes",
+    name: "인지과정",
+    aectTerm: "인지과정",
+    altNames: ["Cognitive Processes"],
+    description:
+      "정보를 지각·주의·부호화·저장·인출하고 사고·문제해결에 활용하는 정신적 작용의 총칭이다. 정보처리이론은 이를 작업기억·장기기억 간의 처리 흐름으로 모형화하며, 교수설계는 이러한 인지과정을 지원하도록 정보를 조직하고 제시한다.",
+    tags: ["인지", "정보처리", "학습이론"],
+    references: [AECT_REF(92)],
+  },
+  {
+    seedKey: "concept:complex-learning",
+    name: "복잡한 학습",
+    aectTerm: "복잡한 학습",
+    altNames: ["Complex Learning"],
+    description:
+      "지식·기능·태도를 통합해 실제적이고 총체적인 과제를 수행하는 학습을 의미하며, 개별 요소의 단순 누적을 넘어 이를 조정·전이하는 능력을 강조한다. van Merriënboer와 Kirschner(2007)의 4C/ID 모형은 학습 과제·지원 정보·절차적 정보·부분 과제 연습의 네 요소로 복잡한 학습을 설계한다.",
+    tags: ["교수설계", "4C/ID", "전이"],
+    references: [
+      "van Merriënboer, J. J. G., & Kirschner, P. A. (2007). Ten steps to complex learning: A systematic approach to four-component instructional design. Lawrence Erlbaum Associates.",
+      AECT_REF(98),
+    ],
+  },
+  {
+    seedKey: "concept:field-dependence-and-independence",
+    name: "장의존과 장독립",
+    aectTerm: "장의존과 장독립",
+    altNames: ["Field Dependence and Independence", "장독립-장의존"],
+    description:
+      "Witkin이 제안한 인지양식 차원으로, 정보를 지각·처리할 때 주변 맥락(장)에 의존하는 정도의 개인차를 가리킨다. 장독립적 학습자는 자료를 배경에서 분리해 분석적으로 다루는 경향이, 장의존적 학습자는 전체 맥락과 사회적 단서에 민감한 경향이 있어 교수 방식 선택에 시사점을 준다.",
+    tags: ["인지양식", "학습자 특성", "개인차"],
+    references: [
+      "Witkin, H. A., Moore, C. A., Goodenough, D. R., & Cox, P. W. (1977). Field-dependent and field-independent cognitive styles and their educational implications. Review of Educational Research, 47(1), 1-64.",
+      AECT_REF(188),
+    ],
+  },
+  {
+    seedKey: "concept:learning-path",
+    name: "학습경로",
+    aectTerm: "학습경로",
+    altNames: ["Learning Path"],
+    description:
+      "학습자가 목표에 도달하기까지 거치는 학습 활동·콘텐츠의 순서와 경로를 의미한다. 선수 관계와 학습 위계에 따라 설계되며, 적응형 학습 환경에서는 학습자의 수준·진도·선호에 맞추어 개별화된 경로가 동적으로 제공된다.",
+    tags: ["학습경로", "적응형 학습", "개별화"],
+    references: [AECT_REF(263)],
+  },
+  {
+    seedKey: "concept:learning-with-information",
+    name: "정보를 활용한 학습",
+    aectTerm: "정보를 활용한 학습",
+    altNames: ["Learning with Information"],
+    description:
+      "학습자가 다양한 정보 자원을 탐색·선별·해석·통합해 지식을 구성하는 학습 방식을 의미한다. 단순한 정보 전달의 수용을 넘어 정보 리터러시와 비판적 사고를 요구하며, 정보가 풍부한 디지털 환경에서 자기주도적 탐구 학습으로 구현된다.",
+    tags: ["정보 리터러시", "자기주도학습", "탐구"],
+    references: [AECT_REF(265)],
+  },
+  {
+    seedKey: "concept:memory",
+    name: "기억",
+    aectTerm: "기억",
+    altNames: ["Memory"],
+    description:
+      "정보를 부호화·저장·인출하는 인지 체계로, 감각기억·작업기억·장기기억의 다중 저장 구조로 설명된다. 작업기억의 용량 제한과 장기기억의 지식 구조(스키마)는 교수설계와 인지부하 관리의 핵심 근거가 되며, 학습은 곧 장기기억의 변화로 규정되기도 한다.",
+    tags: ["기억", "정보처리", "인지"],
+    references: [AECT_REF(284)],
+  },
+  {
+    seedKey: "concept:perceptual-modality",
+    name: "지각 양식",
+    aectTerm: "지각 양식",
+    altNames: ["Perceptual Modality"],
+    description:
+      "학습자가 정보를 받아들이는 데 선호하거나 강점을 보이는 감각 통로(시각·청각·촉각·운동감각 등)를 의미한다. 학습양식 논의에서 자주 언급되지만, 지각 양식에 수업을 맞추면 학습이 향상된다는 '학습양식 부합' 가설은 경험적 지지가 약하다는 비판을 받는다.",
+    tags: ["학습양식", "지각", "개인차"],
+    references: [AECT_REF(318)],
+  },
+  {
+    seedKey: "concept:problem-solving-strategies",
+    name: "문제해결전략",
+    aectTerm: "문제해결전략",
+    altNames: ["Problem Solving Strategies"],
+    description:
+      "익숙하지 않은 문제를 해결하기 위해 목표를 설정하고 정보를 분석하며 해법을 탐색·점검하는 체계적 사고 절차를 의미한다. 수단-목표 분석, 하위목표 설정, 유추 같은 일반 전략과 영역 특수적 전략이 결합되며, 이를 명시적으로 가르치는 것이 고차사고 교수의 과제가 된다.",
+    tags: ["문제해결", "고차사고", "인지전략"],
+    references: [AECT_REF(332)],
+  },
+  {
+    seedKey: "concept:visual-and-pictorial-learning",
+    name: "시각 및 이미지 활용 학습",
+    aectTerm: "시각 및 이미지 활용 학습",
+    altNames: ["Visual and Pictorial Learning"],
+    description:
+      "그림·도해·도표·영상 등 시각적 표상을 통해 정보를 처리하고 이해하는 학습을 의미한다. 이중부호화이론에 따르면 시각 정보와 언어 정보가 별도 경로로 처리·연결되어 기억과 이해를 촉진하며, 멀티미디어 학습 원리의 이론적 근거가 된다.",
+    tags: ["시각 학습", "이중부호화", "멀티미디어 학습"],
+    references: [AECT_REF(414)],
   },
 ];
 

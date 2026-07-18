@@ -646,13 +646,38 @@ export default function ArchiveLandingPage() {
             id="guides"
             icon={FlaskConical}
             label="연구 · 글쓰기 가이드"
-            description="연구방법 · 통계방법 · 선행연구·서론 · 논문 · 인용 · APA"
+            description="선행연구·서론 · 연구방법 · 통계방법 · 논문 · 인용 · APA — 연구 여정 순서"
           />
+
+          {/* 선행연구 정리·서론 작성 가이드 — 여정상 방법 선택보다 문헌 고찰이 먼저 (2026-07-19 순서 정렬) */}
+          <Link
+            href="/archive/literature-review-guide"
+            className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+            aria-label="선행연구 정리·서론 작성 가이드 보기"
+          >
+            <article className="rounded-2xl border-l-4 border-l-teal-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+              <div className="flex items-center gap-4 p-5">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
+                  <ListChecks className="h-5 w-5" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-semibold tracking-tight">선행연구 정리·서론 작성 가이드</h3>
+                  <p className="text-sm text-muted-foreground">
+                    선행연구 3대 질문·정리표·한계→연구모형 도출, 서론 4단계 흐름과 묶어쓰기 3패턴까지 논리 구성 과정을 정리합니다.
+                  </p>
+                </div>
+                <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                  보기
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </div>
+              </div>
+            </article>
+          </Link>
 
           {/* 연구방법 가이드 */}
           <Link
             href="/archive/research-methods"
-            className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+            className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="교육공학 연구방법 가이드 보기"
           >
             <article className="rounded-2xl border-l-4 border-l-sky-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
@@ -689,31 +714,6 @@ export default function ArchiveLandingPage() {
                   <h3 className="text-lg font-semibold tracking-tight">교육공학 통계방법 가이드</h3>
                   <p className="text-sm text-muted-foreground">
                     ANOVA · 회귀 · 요인분석 · SEM 등 통계기법을 가정·절차·SPSS/AMOS/R 구문·대안 비교표와 함께 정리합니다.
-                  </p>
-                </div>
-                <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
-                  보기
-                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
-                </div>
-              </div>
-            </article>
-          </Link>
-
-          {/* 선행연구 정리·서론 작성 가이드 */}
-          <Link
-            href="/archive/literature-review-guide"
-            className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
-            aria-label="선행연구 정리·서론 작성 가이드 보기"
-          >
-            <article className="rounded-2xl border-l-4 border-l-teal-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
-              <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
-                  <ListChecks className="h-5 w-5" aria-hidden />
-                </div>
-                <div className="min-w-0 flex-1">
-                  <h3 className="text-lg font-semibold tracking-tight">선행연구 정리·서론 작성 가이드</h3>
-                  <p className="text-sm text-muted-foreground">
-                    선행연구 3대 질문·정리표·한계→연구모형 도출, 서론 4단계 흐름과 묶어쓰기 3패턴까지 논리 구성 과정을 정리합니다.
                   </p>
                 </div>
                 <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
