@@ -3,6 +3,12 @@ import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 import { todayYmdKst } from "@/lib/dday";
+import {
+  WEEKLY_GOAL_PRESETS,
+  weekDays,
+  judgeWeeklyGoal,
+} from "@/lib/weekly-goal";
+import type { WeeklyGoalChannel } from "@/types/weekly-goal";
 
 /**
  * 주간 다이제스트 이메일 cron — Sprint 54
@@ -81,6 +87,16 @@ interface LearningSuggestion {
   diagnosis: "never" | "stale" | null;
   /** research_designs 문서 없음 → 연구 설계 시작 제안 */
   needsResearchDesign: boolean;
+  /** M1(v5): 지난주 주간 목표 결과 — 목표 설정자만. 없으면 undefined(줄 생략) */
+  lastGoal?: LastGoalResult;
+}
+
+/** M1(v5): 지난주 주간 목표 달성 요약 (설정자만) */
+interface LastGoalResult {
+  area: string;
+  achieved: boolean;
+  progress: number;
+  target: number;
 }
 
 function escapeHtml(s: string): string {
@@ -443,6 +459,120 @@ function buildPeerHighlightHtml(
 `;
 }
 
+/* ────────────────── M1(v5): 지난주 주간 목표 달성 집계 ────────────────── */
+
+/** Firestore Admin Timestamp | ISO 문자열 | epoch → KST YYYY-MM-DD (실패 시 null) */
+function anyToYmdKst(v: unknown): string | null {
+  if (!v) return null;
+  if (typeof v === "string") return isoToYmdKst(v);
+  if (typeof v === "object" && v !== null) {
+    const o = v as { toDate?: () => Date; _seconds?: number; seconds?: number };
+    if (typeof o.toDate === "function") return todayYmdKst(o.toDate());
+    const secs = typeof o._seconds === "number" ? o._seconds : o.seconds;
+    if (typeof secs === "number") return todayYmdKst(new Date(secs * 1000));
+  }
+  return null;
+}
+
+/**
+ * 지난주(weekKey === weekStart) 목표를 세운 회원의 달성 여부를 잔디 원천에서 판정한다.
+ * 목표가 하나도 없으면 추가 조회 없이 빈 Map 반환(비용 0). 필요한 채널만 집계한다.
+ *
+ * 달성 판정은 "해당 주 채널 활동 일수" — 클라이언트 카드(countGoalDaysInWeek)와 동일 정의.
+ * 읽기 전용. 실패는 조용히 건너뛴다(다이제스트 차단 금지).
+ *
+ * @param weekStart 지난주 월요일 KST YMD (= shiftYmd(todayYmd,-7))
+ */
+async function loadLastWeekGoalResults(
+  db: FirebaseFirestore.Firestore,
+  userIds: string[],
+  weekStart: string,
+): Promise<Map<string, LastGoalResult>> {
+  const out = new Map<string, LastGoalResult>();
+  const wanted = new Set(userIds);
+
+  const goals: { userId: string; channel: WeeklyGoalChannel; target: number }[] = [];
+  try {
+    const snap = await db.collection("weekly_goals").where("weekKey", "==", weekStart).get();
+    for (const doc of snap.docs) {
+      const g = doc.data() as { userId?: string; channel?: string; target?: number };
+      if (!g.userId || !wanted.has(g.userId)) continue;
+      if (g.channel !== "reading" && g.channel !== "flashcard" && g.channel !== "writing") continue;
+      goals.push({ userId: g.userId, channel: g.channel, target: g.target ?? 1 });
+    }
+  } catch {
+    return out;
+  }
+  if (goals.length === 0) return out;
+
+  const weekDaySet = new Set(weekDays(weekStart)); // 지난주 7일
+  const need = new Set(goals.map((g) => g.channel));
+  const daysByUser: Record<WeeklyGoalChannel, Map<string, Set<string>>> = {
+    reading: new Map(),
+    flashcard: new Map(),
+    writing: new Map(),
+  };
+  const bump = (channel: WeeklyGoalChannel, uid: string | undefined, ymd: string | null) => {
+    if (!uid || !wanted.has(uid) || !ymd || !weekDaySet.has(ymd)) return;
+    let s = daysByUser[channel].get(uid);
+    if (!s) {
+      s = new Set<string>();
+      daysByUser[channel].set(uid, s);
+    }
+    s.add(ymd);
+  };
+
+  // reading: paper_reading_logs.readAt(문자열 YMD) — 지난주 범위 조회
+  if (need.has("reading")) {
+    try {
+      const snap = await db.collection("paper_reading_logs").where("readAt", ">=", weekStart).get();
+      for (const doc of snap.docs) {
+        const r = doc.data() as { userId?: string; readAt?: string };
+        bump("reading", r.userId, r.readAt ?? null);
+      }
+    } catch {
+      /* graceful */
+    }
+  }
+  // flashcard: streak_events.ymd(문자열) + type flashcard-study — 지난주 범위 조회
+  if (need.has("flashcard")) {
+    try {
+      const snap = await db.collection("streak_events").where("ymd", ">=", weekStart).get();
+      for (const doc of snap.docs) {
+        const e = doc.data() as { userId?: string; type?: string; ymd?: string };
+        if (e.type !== "flashcard-study") continue;
+        bump("flashcard", e.userId, e.ymd ?? null);
+      }
+    } catch {
+      /* graceful */
+    }
+  }
+  // writing: writing_paper_history.createdAt(Timestamp/문자열) — 전수 스캔 후 변환(타입 불일치 방어)
+  if (need.has("writing")) {
+    try {
+      const snap = await db.collection("writing_paper_history").get();
+      for (const doc of snap.docs) {
+        const h = doc.data() as { userId?: string; createdAt?: unknown };
+        bump("writing", h.userId, anyToYmdKst(h.createdAt));
+      }
+    } catch {
+      /* graceful */
+    }
+  }
+
+  for (const g of goals) {
+    const count = daysByUser[g.channel].get(g.userId)?.size ?? 0;
+    const j = judgeWeeklyGoal(g.target, count);
+    out.set(g.userId, {
+      area: WEEKLY_GOAL_PRESETS[g.channel].area,
+      achieved: j.achieved,
+      progress: j.progress,
+      target: j.target,
+    });
+  }
+  return out;
+}
+
 /** 개인 요약에 표시할 내용이 하나라도 있는지 (없으면 개인 블록 자체 생략) */
 function hasPersonalContent(p: PersonalDigest): boolean {
   return (
@@ -501,9 +631,9 @@ function buildPersonalHtml(p: PersonalDigest): string {
 `;
 }
 
-/** 재유입 제안(진단·연구 설계)에 표시할 내용이 하나라도 있는지 */
+/** 재유입 제안(진단·연구 설계·지난주 목표)에 표시할 내용이 하나라도 있는지 */
 function hasSuggestionContent(s: LearningSuggestion): boolean {
-  return s.diagnosis !== null || s.needsResearchDesign;
+  return s.diagnosis !== null || s.needsResearchDesign || s.lastGoal !== undefined;
 }
 
 /**
@@ -516,6 +646,16 @@ function buildSuggestionHtml(s: LearningSuggestion): string {
   const base = "https://yonsei-edtech.vercel.app";
   const lines: string[] = [];
 
+  // M1(v5): 지난주 목표 달성 회고 — 목표 설정자만. 맨 위에 노출.
+  if (s.lastGoal) {
+    const g = s.lastGoal;
+    const status = g.achieved
+      ? `달성 🎉 (${g.progress}/${g.target}일)`
+      : `아쉽게 미달 (${g.progress}/${g.target}일)`;
+    lines.push(
+      `<li>🎯 지난주 ${escapeHtml(g.area)} 목표 — <b>${status}</b> <a href="${base}/dashboard" style="color:#003876;text-decoration:none;font-size:13px">이번 주 목표 세우기 →</a></li>`,
+    );
+  }
   if (s.diagnosis === "never") {
     lines.push(
       `<li>🧭 아직 진단을 안 하셨네요 — 논문·연구 준비도를 3분 만에 확인하세요 <a href="${base}/diagnosis" style="color:#003876;text-decoration:none;font-size:13px">진단 시작 →</a></li>`,
@@ -652,6 +792,23 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     peersHtml = buildPeerHighlightHtml(agg.timerMinByUser, agg.activeDaysByUser, usersById);
   } catch (e) {
     console.error("[email] weekly-digest personal aggregate error:", e);
+  }
+
+  // M1(v5): 지난주 목표 달성 회고 병합 (설정자만). 실패해도 나머지 발송은 계속.
+  // todayYmd 는 KST 월요일이므로 -7 = 지난주 월요일 = 지난주 목표의 weekKey.
+  try {
+    const goalResults = await loadLastWeekGoalResults(
+      db,
+      recipients.map((r) => r.id),
+      shiftYmd(todayYmd, -7),
+    );
+    for (const [uid, res] of goalResults) {
+      const s = suggestionById.get(uid) ?? { diagnosis: null, needsResearchDesign: false };
+      s.lastGoal = res;
+      suggestionById.set(uid, s);
+    }
+  } catch (e) {
+    console.error("[email] weekly-digest goal-result merge error:", e);
   }
 
   const resend = new Resend(key);

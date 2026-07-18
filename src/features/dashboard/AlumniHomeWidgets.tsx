@@ -37,12 +37,14 @@ import {
   HeartHandshake,
   Check,
   Settings,
+  MessageCircleQuestion,
 } from "lucide-react";
-import { alumniThesesApi, activitiesApi, seminarsApi } from "@/lib/bkend";
-import type { Activity, AlumniThesis, Seminar } from "@/types";
+import { alumniThesesApi, activitiesApi, seminarsApi, commBoardsApi, commQuestionsApi } from "@/lib/bkend";
+import type { Activity, AlumniThesis, CommBoard, CommQuestion, Seminar } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
 import WidgetCard from "@/components/ui/widget-card";
 import EmptyState from "@/components/ui/empty-state";
+import { MENTORING_CONTEXT_ID, matchesMentorTopics } from "@/features/mentoring/topics";
 
 interface UpcomingEvent {
   id: string;
@@ -95,6 +97,25 @@ export default function AlumniHomeWidgets() {
   const user = useAuthStore((s) => s.user);
   const mentorOpen = !!user?.mentorOpen;
   const mentorTopics = user?.mentorTopics ?? [];
+
+  // ── 멘토링 Q&A: 내 분야 미해결 질문 수 ──
+  // 멘토 오픈 졸업생에게 "내 분야에 답변 기다리는 질문 N건" 을 노출해 참여를 유도.
+  // 보드 미프로비저닝(아직 아무도 /mentoring 방문 전)이면 0건으로 우아하게 폴백.
+  const { data: myTopicOpenCount = 0 } = useQuery({
+    queryKey: ["mentoring-open-questions", user?.id ?? "anon"],
+    enabled: mentorOpen,
+    staleTime: 5 * 60 * 1000,
+    queryFn: async () => {
+      const boardsRes = await commBoardsApi.listByContext("mentoring", MENTORING_CONTEXT_ID);
+      const board = (boardsRes.data as CommBoard[])[0];
+      if (!board) return 0;
+      const qRes = await commQuestionsApi.listByBoard(board.id);
+      const questions = qRes.data as CommQuestion[];
+      return questions.filter(
+        (q) => !q.resolved && matchesMentorTopics(q.presenter, mentorTopics),
+      ).length;
+    },
+  });
 
   // ── 1) 최근 학술활동 (status !== completed, 상위 2건) ──
   // MyAcademicActivitiesWidget 와 동일 queryKey ["activities", "all"] 공유.
@@ -349,8 +370,28 @@ export default function AlumniHomeWidgets() {
                 </div>
               )}
               <Link
+                href="/mentoring"
+                className="mt-3 flex items-center justify-between gap-2 rounded-xl border bg-muted/30 px-3 py-2.5 text-sm transition-colors hover:bg-accent/50"
+              >
+                <span className="inline-flex items-center gap-1.5 font-medium text-foreground">
+                  <MessageCircleQuestion size={15} className="text-primary" aria-hidden="true" />
+                  멘토링 Q&A
+                  {myTopicOpenCount > 0 && (
+                    <span className="inline-flex items-center rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-primary-foreground">
+                      내 분야 {myTopicOpenCount}
+                    </span>
+                  )}
+                </span>
+                <ChevronRight size={14} className="shrink-0 text-muted-foreground" />
+              </Link>
+              <p className="mt-1.5 text-[11px] text-muted-foreground">
+                {myTopicOpenCount > 0
+                  ? "내 분야에 답변을 기다리는 공개 질문이 있어요."
+                  : "후배들의 공개 질문에 답하고 지식을 남겨보세요."}
+              </p>
+              <Link
                 href="/mypage/messages"
-                className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                className="mt-2 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
               >
                 받은 조언 요청 보기 <ChevronRight size={12} />
               </Link>

@@ -180,12 +180,27 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
                     ))}
                   </div>
                 )}
-                <Link
-                  href={`/mypage/messages?compose=${owner.id}&prefill=${encodeURIComponent("[조언 요청] ")}`}
-                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
-                >
-                  조언 요청하기 <ChevronRight size={14} />
-                </Link>
+                <div className="mt-3 flex flex-wrap items-center gap-2">
+                  <Link
+                    href={`/mypage/messages?compose=${owner.id}&prefill=${encodeURIComponent("[조언 요청] ")}`}
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+                  >
+                    쪽지로 조언 요청 <ChevronRight size={14} />
+                  </Link>
+                  <Link
+                    href={`/mentoring?to=${encodeURIComponent(owner.name)}${
+                      owner.mentorTopics?.[0]
+                        ? `&topic=${encodeURIComponent(owner.mentorTopics[0])}`
+                        : ""
+                    }`}
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white/70 px-3 py-2 text-sm font-medium text-emerald-800 transition-colors hover:bg-white dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200"
+                  >
+                    공개 질문으로 남기기 <ChevronRight size={14} />
+                  </Link>
+                </div>
+                <p className="mt-1.5 text-[11px] text-emerald-700/80 dark:text-emerald-300/70">
+                  공개 질문은 멘토링 Q&A 보드에 남아 다른 후배에게도 도움이 됩니다.
+                </p>
               </div>
             </div>
           </section>

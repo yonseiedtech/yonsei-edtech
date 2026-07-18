@@ -27,12 +27,17 @@ export default function MemberCard({ member }: Props) {
   const overflowCount = researchTags.length - MAX_TAGS;
 
   return (
-    <Link
-      href={`/profile/${member.id}?from=members`}
+    <div
       role="listitem"
-      aria-label={`${member.name} 프로필 보기`}
-      className="group block rounded-2xl border bg-card p-6 text-center shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+      className="group relative rounded-2xl border bg-card p-6 text-center shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:border-primary/40 hover:shadow-md focus-within:ring-2 focus-within:ring-primary/40 focus-within:ring-offset-2"
     >
+      {/* 카드 전체를 덮는 기본 링크(프로필) — 멘토 링크 등 보조 액션은 위에 겹쳐 클릭 가능 */}
+      <Link
+        href={`/profile/${member.id}?from=members`}
+        aria-label={`${member.name} 프로필 보기`}
+        className="absolute inset-0 z-0 rounded-2xl focus-visible:outline-none"
+      />
+
       {/* ── 아바타 ── */}
       <div className="mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary ring-2 ring-transparent transition-all duration-150 group-hover:ring-primary/30 group-focus-visible:ring-primary/40">
         {member.profileImage ? (
@@ -106,13 +111,21 @@ export default function MemberCard({ member }: Props) {
         </div>
       )}
 
-      {/* ── 멘토 오픈 배지 (졸업생 옵트인) ── */}
+      {/* ── 멘토 오픈: 공개 질문으로 남기기 (졸업생 옵트인) ── */}
       {member.mentorOpen && (
-        <div className="mt-2.5 flex justify-center">
-          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+        <div className="relative z-10 mt-2.5 flex justify-center">
+          <Link
+            href={`/mentoring?to=${encodeURIComponent(member.name)}${
+              member.mentorTopics?.[0]
+                ? `&topic=${encodeURIComponent(member.mentorTopics[0])}`
+                : ""
+            }`}
+            aria-label={`${member.name} 선배에게 공개 질문 남기기`}
+            className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60"
+          >
             <HeartHandshake size={11} aria-hidden />
-            멘토 오픈
-          </span>
+            멘토 오픈 · 공개 질문
+          </Link>
         </div>
       )}
 
@@ -122,6 +135,6 @@ export default function MemberCard({ member }: Props) {
           {member.bio}
         </p>
       )}
-    </Link>
+    </div>
   );
 }

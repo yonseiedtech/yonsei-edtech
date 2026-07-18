@@ -76,6 +76,7 @@ import type {
   StreakEventType,
   UserFeedback,
   UserNote,
+  WeeklyGoal,
   CollaborativeResearch,
   CollabResearchMember,
   CollabResearchInvite,
@@ -3395,6 +3396,27 @@ export const userNotesApi = {
       data as unknown as Record<string, unknown>,
     ),
   delete: (id: string) => dataApi.delete("user_notes", id),
+};
+
+// ─── Weekly Goals (v5-M1 — 주간 학습 목표·달성 루프) ───
+// 결정적 doc id `${userId}_${weekKey}` 로 1주 1건. upsert 로 채널 변경 시 덮어쓰기.
+export const weeklyGoalsApi = {
+  /** 특정 주차 목표 1건 — 없으면 null (get throw 흡수) */
+  getByKey: async (userId: string, weekKey: string): Promise<WeeklyGoal | null> => {
+    try {
+      return await dataApi.get<WeeklyGoal>("weekly_goals", `${userId}_${weekKey}`);
+    } catch {
+      return null;
+    }
+  },
+  /** 이번 주 목표 설정/변경 (upsert) */
+  set: (userId: string, weekKey: string, channel: WeeklyGoal["channel"], target: number) =>
+    dataApi.upsert<WeeklyGoal>("weekly_goals", `${userId}_${weekKey}`, {
+      userId,
+      weekKey,
+      channel,
+      target,
+    }),
 };
 
 // ────────────────────────────────────────────────────────────

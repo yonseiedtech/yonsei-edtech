@@ -1,5 +1,5 @@
-// 소통 보드(Q&A) 타입 — 스터디 회차·세미나·수업 발표(class) 공용
-export type CommContextType = "study" | "project" | "external" | "seminar" | "class";
+// 소통 보드(Q&A) 타입 — 스터디 회차·세미나·수업 발표(class)·졸업생 멘토링(mentoring) 공용
+export type CommContextType = "study" | "project" | "external" | "seminar" | "class" | "mentoring";
 export type CommBoardStatus = "open" | "closed";
 export type CommSortMode = "recent" | "popular";
 export type CommLikeTarget = "question" | "answer";

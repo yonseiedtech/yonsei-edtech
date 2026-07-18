@@ -85,6 +85,9 @@ export * from "./feedback";
 // 사용자 개인 메모
 export * from "./user-note";
 
+// 주간 학습 목표 (v5-M1 — 코칭 → 목표·달성 루프)
+export * from "./weekly-goal";
+
 // 공동 연구 + 연구지 발간 (collaborative-research Phase 1 MVP)
 export * from "./collaborative-research";
 

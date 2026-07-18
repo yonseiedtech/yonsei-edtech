@@ -74,6 +74,7 @@ import NewPostsBadge from "@/features/dashboard/NewPostsBadge";
 import SemesterKickoffBanner from "@/features/dashboard/SemesterKickoffBanner";
 import LearningStreak from "@/features/mypage/LearningStreak";
 import InactivityCoachingCard from "@/features/dashboard/InactivityCoachingCard";
+import WeeklyGoalCard from "@/features/dashboard/WeeklyGoalCard";
 import StageRecommendationPanel from "@/features/dashboard/StageRecommendationPanel";
 import {
   useDashboardLayout,
@@ -606,6 +607,12 @@ function DashboardContent() {
             신입·활동 고른 회원·해당 없음이면 컴포넌트가 null 렌더로 자동 숨김. */}
         <div className="mb-6 empty:hidden">
           <InactivityCoachingCard />
+        </div>
+
+        {/* M1(v5): 주간 학습 목표 설정·달성 루프 — 코칭 카드 형제.
+            목표 설정 시 진행 바·달성 축하, 미설정 시 프리셋 3종 CTA + 지난주 회고. */}
+        <div className="mb-6 empty:hidden">
+          <WeeklyGoalCard />
         </div>
 
         {/* C-1: 개강 주간(D-7~D+14) 자동 노출 재활성화 배너 */}
