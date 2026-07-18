@@ -7,6 +7,11 @@
  *
  * M7 고도화: 그룹별 "N개 모두 보기" 리스트 딥링크(?q=), ↑↓/Enter 키보드 내비게이션,
  * 매칭어 <mark> 하이라이트, aria-live 결과 수 안내.
+ *
+ * v5-M8 성능: 방문마다 7개 컬렉션을 클라이언트로 전량 로드하던 방식을 폐기하고,
+ * 서버가 CDN 15분 캐시로 서빙하는 경량 인덱스(`GET /api/archive/search-index`)를
+ * react-query 로 1회만 로드해 소비한다. 인덱스 fetch 실패 시에만 기존 컬렉션 로드로 폴백(회귀 0).
+ * 인덱스는 name·altNames·tags·aectTerm 만 담으므로 매칭 범위도 그 필드로 좁혀진다.
  */
 
 import { useMemo, useState, type ReactNode } from "react";
@@ -24,10 +29,33 @@ import {
   writingTipsApi,
 } from "@/lib/bkend";
 import { matchesArchiveSearch } from "@/lib/archive-search";
+import {
+  ARCHIVE_SEARCH_INDEX_TYPES,
+  ARCHIVE_INDEX_MATCH_FIELDS,
+  archiveSearchDetailHref,
+  type ArchiveSearchIndexItem,
+  type ArchiveSearchIndexResponse,
+  type ArchiveSearchIndexType,
+} from "@/lib/archive-search-index";
 import { cn } from "@/lib/utils";
 
 /** 빈 검색 결과 시 제안할 인기/대표 키워드 — 클릭하면 해당 검색어로 즉시 재검색 */
 const POPULAR_QUERIES = ["자기효능감", "타당도", "실험연구", "학습몰입", "신뢰도"] as const;
+
+/** 타입별 표시 메타(라벨·색·리스트 딥링크). 상세 경로는 archiveSearchDetailHref 로 통일. */
+const GROUP_META: Record<
+  ArchiveSearchIndexType,
+  { label: string; color: string; listHref?: string }
+> = {
+  concept: { label: "개념", color: "text-violet-600", listHref: "/archive/concept" },
+  variable: { label: "변인", color: "text-blue-600", listHref: "/archive/variable" },
+  measurement: { label: "측정도구", color: "text-emerald-600", listHref: "/archive/measurement" },
+  "research-methods": { label: "연구방법", color: "text-indigo-600", listHref: "/archive/research-methods" },
+  "statistical-methods": { label: "통계방법", color: "text-cyan-600", listHref: "/archive/statistical-methods" },
+  "foundation-terms": { label: "기초용어", color: "text-sky-600", listHref: "/archive/foundation-terms" },
+  // 글쓰기 리스트는 ?q= 딥링크 미지원 → "모두 보기" 미노출(기존 동작 유지).
+  "writing-tips": { label: "글쓰기", color: "text-rose-600" },
+};
 
 interface ResultItem {
   id: string;
@@ -43,6 +71,39 @@ interface ResultGroup {
   total: number;
   /** 해당 리스트의 ?q= 딥링크 (없으면 "모두 보기" 미노출) */
   listHref?: string;
+}
+
+/** 서버 경량 인덱스를 1회 로드. 실패 시 throw → 컴포넌트가 컬렉션 로드로 폴백. */
+async function fetchArchiveSearchIndex(): Promise<ArchiveSearchIndexItem[]> {
+  const res = await fetch("/api/archive/search-index");
+  if (!res.ok) throw new Error(`search-index ${res.status}`);
+  const data = (await res.json()) as ArchiveSearchIndexResponse;
+  return data.items ?? [];
+}
+
+/** 인덱스 항목 → 표시 그룹. 매칭은 name·altNames·tags·aectTerm 범위. */
+function buildGroupsFromIndex(items: ArchiveSearchIndexItem[], q: string): ResultGroup[] {
+  const qs = q.trim();
+  const out: ResultGroup[] = [];
+  for (const type of ARCHIVE_SEARCH_INDEX_TYPES) {
+    const meta = GROUP_META[type];
+    const matched = items.filter(
+      (it) => it.type === type && matchesArchiveSearch(it, q, ARCHIVE_INDEX_MATCH_FIELDS),
+    );
+    if (!matched.length) continue;
+    out.push({
+      label: meta.label,
+      color: meta.color,
+      items: matched.slice(0, 6).map((it) => ({
+        id: it.id,
+        name: it.name,
+        href: archiveSearchDetailHref(it),
+      })),
+      total: matched.length,
+      listHref: meta.listHref ? `${meta.listHref}?q=${encodeURIComponent(qs)}` : undefined,
+    });
+  }
+  return out;
 }
 
 /** 검색어를 텍스트에서 찾아 <mark> 로 강조 (대소문자 무시, 최초 1회). 없으면 원문 그대로. */
@@ -67,8 +128,20 @@ export default function ArchiveGlobalSearch() {
   const [q, setQ] = useState("");
   const [activeIndex, setActiveIndex] = useState(-1);
   const enabled = q.trim().length >= 1;
-  const opt = { enabled, staleTime: 5 * 60_000 } as const;
 
+  // 1차: 서버 경량 인덱스 1회 로드(긴 staleTime — 재검색 시 재요청 없음).
+  const index = useQuery({
+    queryKey: ["archive-search-index"],
+    queryFn: fetchArchiveSearchIndex,
+    enabled,
+    staleTime: 30 * 60_000,
+    gcTime: 60 * 60_000,
+    retry: 1,
+  });
+  const indexFailed = index.isError;
+
+  // 2차(폴백): 인덱스 로드 실패 시에만 기존 방식으로 7개 컬렉션을 로드(회귀 0).
+  const opt = { enabled: enabled && indexFailed, staleTime: 5 * 60_000 } as const;
   const concepts = useQuery({ queryKey: ["asearch", "concepts"], queryFn: () => archiveConceptsApi.list(), ...opt });
   const variables = useQuery({ queryKey: ["asearch", "variables"], queryFn: () => archiveVariablesApi.list(), ...opt });
   const measurements = useQuery({ queryKey: ["asearch", "measurements"], queryFn: () => archiveMeasurementsApi.list(), ...opt });
@@ -79,11 +152,14 @@ export default function ArchiveGlobalSearch() {
 
   const loading =
     enabled &&
-    (concepts.isLoading || variables.isLoading || measurements.isLoading ||
-      research.isLoading || statistical.isLoading || foundation.isLoading || writing.isLoading);
+    (indexFailed
+      ? concepts.isLoading || variables.isLoading || measurements.isLoading ||
+        research.isLoading || statistical.isLoading || foundation.isLoading || writing.isLoading
+      : index.isLoading);
 
-  const groups = useMemo<ResultGroup[]>(() => {
-    if (!enabled) return [];
+  // 폴백 경로 그룹 — 인덱스 실패 시에만 계산(더 넓은 필드 매칭 유지).
+  const fallbackGroups = useMemo<ResultGroup[]>(() => {
+    if (!enabled || !indexFailed) return [];
     const out: ResultGroup[] = [];
     const qs = q.trim();
     const push = (
@@ -133,9 +209,9 @@ export default function ArchiveGlobalSearch() {
       name: x.name as string,
       href: `/archive/statistical-methods/${x.id}`,
     }), "/archive/statistical-methods");
-    push("기초용어", "text-sky-600", foundation.data?.data, ["name", "definition", "summary", "accessibleSummary"], (x) => ({
+    push("기초용어", "text-sky-600", foundation.data?.data, ["term", "englishName", "summary", "accessibleSummary"], (x) => ({
       id: x.id as string,
-      name: x.name as string,
+      name: (x.term as string) ?? (x.name as string),
       href: `/archive/foundation-terms/${x.id}`,
     }), "/archive/foundation-terms");
     push("글쓰기", "text-rose-600", writing.data?.data, ["title", "explanation", "wrongExample", "correctExample"], (x) => ({
@@ -147,6 +223,7 @@ export default function ArchiveGlobalSearch() {
     return out;
   }, [
     enabled,
+    indexFailed,
     q,
     concepts.data,
     variables.data,
@@ -156,6 +233,13 @@ export default function ArchiveGlobalSearch() {
     foundation.data,
     writing.data,
   ]);
+
+  const indexGroups = useMemo<ResultGroup[]>(() => {
+    if (!enabled || indexFailed || !index.data) return [];
+    return buildGroupsFromIndex(index.data, q);
+  }, [enabled, indexFailed, index.data, q]);
+
+  const groups = indexFailed ? fallbackGroups : indexGroups;
 
   const total = groups.reduce((s, g) => s + g.items.length, 0);
   // 키보드 내비게이션용 평면 목록 (표시 순서대로)

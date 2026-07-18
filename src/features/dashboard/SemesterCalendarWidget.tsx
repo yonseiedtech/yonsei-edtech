@@ -142,7 +142,8 @@ export default function SemesterCalendarWidget() {
                   SEMANTIC[badgeTone].chip,
                 )}
               >
-                {item.days === 0 ? "D-DAY" : `D-${item.days}`}
+                <span aria-hidden="true">{item.days === 0 ? "D-DAY" : `D-${item.days}`}</span>
+                <span className="sr-only">{item.days === 0 ? "오늘" : `${item.days}일 남음`}</span>
               </span>
             </li>
           );

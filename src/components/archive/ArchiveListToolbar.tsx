@@ -118,7 +118,7 @@ export default function ArchiveListToolbar({
       </div>
 
       {showCount && (
-        <p className="text-xs text-muted-foreground">
+        <p className="text-xs text-muted-foreground" aria-live="polite">
           {trimmed || favoritesOnly ? (
             <>
               <span className="font-medium text-foreground">{resultCount ?? 0}</span>

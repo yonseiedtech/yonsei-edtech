@@ -133,6 +133,7 @@ function MentoringBoard() {
                   <button
                     type="button"
                     onClick={() => setTopic("")}
+                    aria-pressed={topic === ""}
                     className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                       topic === ""
                         ? "border-primary bg-primary text-primary-foreground"
@@ -146,6 +147,7 @@ function MentoringBoard() {
                       key={t}
                       type="button"
                       onClick={() => setTopic(t)}
+                      aria-pressed={topic === t}
                       className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                         topic === t
                           ? "border-primary bg-primary text-primary-foreground"
@@ -172,6 +174,7 @@ function MentoringBoard() {
               <button
                 type="button"
                 onClick={() => setFilter("all")}
+                aria-pressed={filter === "all"}
                 className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                   filter === "all"
                     ? "border-primary bg-primary/10 font-medium text-primary"
@@ -185,6 +188,7 @@ function MentoringBoard() {
                   key={t}
                   type="button"
                   onClick={() => setFilter(t)}
+                  aria-pressed={filter === t}
                   className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
                     filter === t
                       ? "border-primary bg-primary/10 font-medium text-primary"
@@ -195,6 +199,11 @@ function MentoringBoard() {
                 </button>
               ))}
             </div>
+
+            {/* 분야 필터 변경 시 결과 수를 스크린리더에 알림 */}
+            <p className="sr-only" aria-live="polite">
+              {filter === "all" ? "전체" : filter} 분야 질문 {visible.length}건
+            </p>
 
             {/* ── 질문 목록 ── */}
             {visible.length === 0 ? (

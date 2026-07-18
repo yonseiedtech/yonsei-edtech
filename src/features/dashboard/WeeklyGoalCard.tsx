@@ -97,7 +97,15 @@ export default function WeeklyGoalCard() {
         </div>
 
         {/* 진행 바 */}
-        <div className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted" aria-hidden="true">
+        <div
+          className="mt-3 h-2 w-full overflow-hidden rounded-full bg-muted"
+          role="progressbar"
+          aria-label={`이번 주 ${preset.area} 목표 진행률`}
+          aria-valuemin={0}
+          aria-valuemax={j.target}
+          aria-valuenow={count}
+          aria-valuetext={`${j.target}일 중 ${count}일 달성`}
+        >
           <div
             className="h-full rounded-full bg-primary transition-[width]"
             style={{ width: `${Math.round(j.ratio * 100)}%` }}

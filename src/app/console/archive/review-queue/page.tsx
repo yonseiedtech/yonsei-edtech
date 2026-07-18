@@ -526,8 +526,8 @@ export default function ConsoleArchiveReviewQueuePage() {
         }
       />
 
-      {/* 품질 지표 미니 카드 (로드된 데이터로 클라이언트 계산) */}
-      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
+      {/* 품질 지표 미니 카드 (로드된 데이터로 클라이언트 계산) — 승인/보류 처리 후 값 변경을 스크린리더에 알림 */}
+      <div className="grid grid-cols-2 gap-2 sm:grid-cols-4" aria-live="polite" aria-atomic="true">
         <MetricCard
           icon={CheckCheck}
           label="이번 주 승인"
@@ -723,8 +723,8 @@ export default function ConsoleArchiveReviewQueuePage() {
                           </Button>
                         )}
                         <Link href={cfg.editHref(item.id)}>
-                          <Button variant="ghost" size="sm" title="상세 편집">
-                            <Pencil className="h-3.5 w-3.5" />
+                          <Button variant="ghost" size="sm" title="상세 편집" aria-label={`${item.name} 상세 편집`}>
+                            <Pencil className="h-3.5 w-3.5" aria-hidden />
                           </Button>
                         </Link>
                       </div>
