@@ -60,11 +60,32 @@ export async function GET(req: NextRequest, ctx: { params: Promise<{ id: string 
     if (!userSnap.exists) {
       return NextResponse.json({ error: "회원을 찾을 수 없습니다." }, { status: 404 });
     }
-    const user = { id: userSnap.id, ...userSnap.data() } as unknown as User;
+    let user = { id: userSnap.id, ...userSnap.data() } as unknown as User;
 
     // 본인판(미검증 포함)은 본인 또는 운영진만 다운로드 가능
     const publicOnly = wantsPublic;
-    if (!publicOnly) {
+    if (publicOnly) {
+      // 공개판(비로그인 허용)은 렌더 전에 화이트리스트 투영 (v5-M7 감사 A).
+      // 전체 user 문서를 PDF 컴포넌트에 넘기면 "템플릿이 안 그리니 괜찮다"는 암묵
+      // 의존이 생기고, 실제로 studentId(학번)가 조건 없이 렌더돼 익명 노출됐다.
+      // 공개 PDF에 필요한 표시 필드만 명시적으로 담는다 (studentId·연락처·secret 제외).
+      const raw = user as unknown as Record<string, unknown>;
+      user = {
+        id: userSnap.id,
+        name: raw.name,
+        role: raw.role,
+        position: raw.position,
+        department: raw.department,
+        affiliation: raw.affiliation,
+        generation: raw.generation,
+        enrollmentYear: raw.enrollmentYear,
+        enrollmentHalf: raw.enrollmentHalf,
+        university: raw.university,
+        graduateSchool: raw.graduateSchool,
+        graduateMajor: raw.graduateMajor,
+        recentPapers: raw.recentPapers,
+      } as unknown as User;
+    } else {
       const auth = await verifyAuth(req);
       const isOwner = auth?.id === id;
       const isStaff = !!auth && STAFF_ROLES.has(auth.role);

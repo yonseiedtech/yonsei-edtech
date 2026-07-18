@@ -251,19 +251,9 @@ export async function POST(req: NextRequest) {
             }
           }
         }
-        // 2차: 이름으로 매칭 (guest 포함)
-        if (resolvedType === "attendee" && authorName) {
-          const nameQuery = await db.collection("users")
-            .where("name", "==", authorName)
-            .where("role", "in", ["staff", "president", "admin"])
-            .limit(1)
-            .get();
-          if (!nameQuery.empty) {
-            const userRole = nameQuery.docs[0].data().role as string;
-            resolvedType = "staff";
-            resolvedAuthorRole = userRole;
-          }
-        }
+        // (v5-M7 감사 B) 이름 기반 2차 매칭 제거 — 비로그인 게스트가 운영진 실명을
+        // 입력하면 "운영진 후기"로 표기되는 표시상 사칭 벡터였다. 운영진 판별은
+        // 위의 인증 uid 기반 1차 매칭만 신뢰한다.
       } catch {
         // 사용자 조회 실패 시 원래 type 유지
       }
