@@ -28,6 +28,7 @@ import {
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import ResearchCockpit from "@/features/research/ResearchCockpit";
+import ResearchTemplateGallery from "@/features/research/ResearchTemplateGallery";
 
 // ── Phase 1 체감속도: 탭 패널 대형 컴포넌트 지연 로딩 ─────────────────────────
 // 5개 탭 × 초대형 에디터(각 80~130KB)를 정적 import 하면 첫 진입 번들에 전부
@@ -47,6 +48,7 @@ const ThesisJourney = dynamic(() => import("@/features/research/ThesisJourney"),
 const AdvisorFeedbackLog = dynamic(() => import("@/features/research/AdvisorFeedbackLog"), { ssr: false, loading: panelFallback });
 const ResearchActivityDashboard = dynamic(() => import("@/features/mypage/ResearchActivityDashboard"), { ssr: false, loading: panelFallback });
 const TopicExplorer = dynamic(() => import("@/features/research/topic-explorer/TopicExplorer"), { ssr: false, loading: panelFallback });
+const ReadingCollectionRecommendations = dynamic(() => import("@/features/research/ReadingCollectionRecommendations"), { ssr: false });
 import { formatPeriodLabel } from "@/lib/research-period";
 import {
   currentSemesterRange,
@@ -279,12 +281,17 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
             title="내 연구활동"
             description="직접 쓰는 논문과 분석한 논문을 한 곳에서 관리하세요."
             actions={
-              <Link
-                href="/mypage"
-                className="text-xs text-muted-foreground hover:text-foreground"
-              >
-                마이페이지로 돌아가기
-              </Link>
+              <div className="flex items-center gap-3">
+                {isSelf && !readOnly && (
+                  <ResearchTemplateGallery userId={userId} />
+                )}
+                <Link
+                  href="/mypage"
+                  className="text-xs text-muted-foreground hover:text-foreground"
+                >
+                  마이페이지로 돌아가기
+                </Link>
+              </div>
             }
           />
         </div>
@@ -443,6 +450,8 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
             <div id="focus-matrix">
               <LiteratureMatrix user={user} readOnly={!isSelf || readOnly} />
             </div>
+            {/* 벤치마크 M1: 내 읽기 컬렉션 기반 반복 탐색 추천 (본인 전용, 콜드스타트 시 자동 미노출) */}
+            {isSelf && <ReadingCollectionRecommendations />}
           </TabsContent>
 
           {/* ── 연구 리포트 ── */}
