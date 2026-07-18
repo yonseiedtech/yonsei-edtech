@@ -4,6 +4,8 @@ import { use, useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSeminar } from "@/features/seminar/useSeminar";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { userNotesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import {
@@ -13,7 +15,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from "@/components/ui/dialog";
-import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, ShieldCheck, Pencil, UserPlus } from "lucide-react";
+import { ArrowLeft, Star, CheckCircle, Loader2, AlertCircle, ShieldCheck, Pencil, UserPlus, NotebookPen } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import PageContainer from "@/components/ui/page-container";
@@ -42,11 +44,15 @@ interface SubmittedReview {
 
 function ReviewForm({ seminarId }: { seminarId: string }) {
   const seminar = useSeminar(seminarId);
+  const { user } = useAuthStore();
 
   // 단계 관리
   const [step, setStep] = useState<Step>("verify");
   const [verifiedAttendee, setVerifiedAttendee] = useState<VerifiedAttendee | null>(null);
   const [submittedReview, setSubmittedReview] = useState<SubmittedReview | null>(null);
+
+  // 지도노트 보내기 (로그인 회원 전용)
+  const [noteState, setNoteState] = useState<"idle" | "sending" | "sent">("idle");
 
   // 기존 후기
   const [existingReview, setExistingReview] = useState<ExistingReview | null>(null);
@@ -186,11 +192,46 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
       }
 
       setSubmittedReview({ content: content.trim(), rating, questionAnswers });
+      setNoteState("idle");
       setStep("done");
     } catch (err) {
       toast.error(err instanceof Error ? err.message : "후기 등록에 실패했습니다.");
     } finally {
       setSubmitting(false);
+    }
+  }
+
+  // 후기 요지를 내 지도노트(user_notes)에 회고 메모로 초안 저장
+  async function handleSendToNotes() {
+    if (!user || !seminar || !submittedReview) return;
+    setNoteState("sending");
+    try {
+      const answerLines = Object.entries(submittedReview.questionAnswers ?? {})
+        .filter(([, a]) => a?.trim())
+        .map(([q, a]) => `${q}\n${a.trim()}`);
+      const noteBody = [
+        `${seminar.title} (${seminar.date})`,
+        `만족도 ${submittedReview.rating}/5`,
+        ...answerLines,
+        submittedReview.content,
+      ]
+        .filter(Boolean)
+        .join("\n\n");
+
+      await userNotesApi.create({
+        userId: user.id,
+        category: "reflection",
+        title: `[세미나 후기] ${seminar.title}`,
+        body: noteBody,
+        pinned: false,
+        tags: ["세미나후기"],
+        relatedSeminarId: seminarId,
+      });
+      setNoteState("sent");
+      toast.success("지도노트에 저장되었습니다.");
+    } catch {
+      setNoteState("idle");
+      toast.error("지도노트 저장에 실패했습니다.");
     }
   }
 
@@ -367,6 +408,47 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
               ))}
               <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{submittedReview.content}</p>
             </div>
+
+            {/* 활동→연구 환류: 후기 요지를 내 지도노트로 초안 저장 (로그인 회원 전용) */}
+            {user && (
+              <div className="rounded-2xl border bg-card p-4">
+                <div className="flex items-start gap-3">
+                  <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                    <NotebookPen size={18} />
+                  </div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-medium">이 후기를 연구 기록으로 남기기</p>
+                    <p className="mt-0.5 text-xs text-muted-foreground">
+                      후기 요지를 내 지도노트(회고)에 초안으로 저장해 나중에 연구 아이디어로 이어가세요.
+                    </p>
+                  </div>
+                </div>
+                {noteState === "sent" ? (
+                  <div className="mt-3 flex items-center justify-between gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+                    <span className="flex items-center gap-1.5">
+                      <CheckCircle size={16} className="shrink-0" />
+                      지도노트에 저장됨
+                    </span>
+                    <Link href="/mypage/notes" className="shrink-0 font-medium underline underline-offset-2">
+                      노트 보기
+                    </Link>
+                  </div>
+                ) : (
+                  <Button
+                    variant="outline"
+                    className="mt-3 w-full gap-1.5"
+                    onClick={handleSendToNotes}
+                    disabled={noteState === "sending"}
+                  >
+                    {noteState === "sending" ? (
+                      <><Loader2 size={14} className="animate-spin" />저장 중...</>
+                    ) : (
+                      <><NotebookPen size={14} />지도노트로 보내기</>
+                    )}
+                  </Button>
+                )}
+              </div>
+            )}
 
             <Link href={`/seminars/${seminarId}`}>
               <Button variant="outline" className="w-full">세미나 페이지로 돌아가기</Button>

@@ -68,6 +68,21 @@ interface PersonalDigest {
   onboardingTodo: string[];
 }
 
+/**
+ * 수신자별 "이번 주 학습 제안" 재유입 블록 (M3 — service-ux-gap-plan 2026-07-17).
+ * 신규 학습 자산(진단·연구 설계·이론 가계도)으로의 재유입을 유도한다.
+ * 데이터 없는 항목은 호출부에서 줄을 생략(graceful) 한다.
+ *
+ * 참고: 복습 due 암기카드는 이미 "나의 한 주" 블록(PersonalDigest.dueCards)에서
+ * 노출되므로 중복 방지를 위해 이 블록에는 포함하지 않는다.
+ */
+interface LearningSuggestion {
+  /** 진단 상태 — never: 미응시 / stale: 마지막 진단 30일+ 경과 / null: 최근 응시 */
+  diagnosis: "never" | "stale" | null;
+  /** research_designs 문서 없음 → 연구 설계 시작 제안 */
+  needsResearchDesign: boolean;
+}
+
 function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
@@ -197,6 +212,8 @@ async function loadPersonalDigests(
   todayYmd: string,
 ): Promise<{
   personal: Map<string, PersonalDigest>;
+  /** M3 재유입 제안 — 수신자별 학습 자산 갭 */
+  suggestions: Map<string, LearningSuggestion>;
   /** Phase 3 동료 하이라이트용 원시 집계 (지난 7일) */
   timerMinByUser: Map<string, number>;
   activeDaysByUser: Map<string, Set<string>>;
@@ -299,8 +316,25 @@ async function loadPersonalDigests(
     /* 집계 실패는 다이제스트를 막지 않음 */
   }
 
+  // ── M3: 연구 설계 착수 여부 (research_designs — 사용자당 1건, 단일 전수 스캔) ──
+  // 실패해도 재유입 제안만 건너뛰고(needsResearchDesign=false) 나머지는 계속.
+  const hasDesignByUser = new Set<string>();
+  try {
+    const designSnap = await db.collection("research_designs").get();
+    for (const doc of designSnap.docs) {
+      const uid = (doc.data() as { userId?: string }).userId;
+      if (uid && wanted.has(uid)) hasDesignByUser.add(uid);
+    }
+  } catch {
+    /* 스캔 실패 시 오탐 방지를 위해 설계 제안을 띄우지 않음 */
+  }
+
+  // 진단 30일+ 경과 판정 기준일 (KST YMD)
+  const diagStaleCutoff = shiftYmd(todayYmd, -30);
+
   // ── 회원별 결과 조립 ──
   const out = new Map<string, PersonalDigest>();
+  const suggestions = new Map<string, LearningSuggestion>();
   for (const userId of userIds) {
     // 진단 준비도 변화 (최신 - 직전)
     let readinessDelta: PersonalDigest["readinessDelta"] = null;
@@ -334,8 +368,25 @@ async function loadPersonalDigests(
       unreadNotifications: unreadByUser.get(userId) ?? 0,
       onboardingTodo,
     });
+
+    // M3: 재유입 제안 — 진단 상태 + 연구 설계 착수 여부
+    let diagnosis: LearningSuggestion["diagnosis"] = null;
+    if (!diag || diag.length === 0) {
+      diagnosis = "never";
+    } else {
+      const latestYmd = diag
+        .map((d) => isoToYmdKst(d.createdAt))
+        .filter((y): y is string => y !== null)
+        .sort()
+        .pop();
+      if (!latestYmd || latestYmd < diagStaleCutoff) diagnosis = "stale";
+    }
+    suggestions.set(userId, {
+      diagnosis,
+      needsResearchDesign: !hasDesignByUser.has(userId),
+    });
   }
-  return { personal: out, timerMinByUser, activeDaysByUser };
+  return { personal: out, suggestions, timerMinByUser, activeDaysByUser };
 }
 
 /**
@@ -450,7 +501,47 @@ function buildPersonalHtml(p: PersonalDigest): string {
 `;
 }
 
-function buildHtml({ seminars, posts, activities, questions, personal, peersHtml }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest; peersHtml?: string }): string {
+/** 재유입 제안(진단·연구 설계)에 표시할 내용이 하나라도 있는지 */
+function hasSuggestionContent(s: LearningSuggestion): boolean {
+  return s.diagnosis !== null || s.needsResearchDesign;
+}
+
+/**
+ * M3 — "이번 주 학습 제안" 재유입 블록 HTML.
+ * 해당되는 항목 2~3개(진단·연구 설계)를 골라 CTA 로 노출하고,
+ * 항상 이론 가계도 발견 1줄을 가볍게 덧붙인다. 내용 없으면 빈 문자열.
+ */
+function buildSuggestionHtml(s: LearningSuggestion): string {
+  if (!hasSuggestionContent(s)) return "";
+  const base = "https://yonsei-edtech.vercel.app";
+  const lines: string[] = [];
+
+  if (s.diagnosis === "never") {
+    lines.push(
+      `<li>🧭 아직 진단을 안 하셨네요 — 논문·연구 준비도를 3분 만에 확인하세요 <a href="${base}/diagnosis" style="color:#003876;text-decoration:none;font-size:13px">진단 시작 →</a></li>`,
+    );
+  } else if (s.diagnosis === "stale") {
+    lines.push(
+      `<li>🧭 마지막 진단 후 한 달이 지났어요 — 그동안의 성장을 다시 진단해보세요 <a href="${base}/diagnosis" style="color:#003876;text-decoration:none;font-size:13px">재진단 →</a></li>`,
+    );
+  }
+  if (s.needsResearchDesign) {
+    lines.push(
+      `<li>📐 연구 설계를 아직 시작하지 않으셨어요 — 8단계 가이드로 연구방법을 잡아보세요 <a href="${base}/mypage/research" style="color:#003876;text-decoration:none;font-size:13px">설계 시작 →</a></li>`,
+    );
+  }
+  // 가벼운 발견 1줄 — 이론 가계도(아카이브 신규 자산) 둘러보기
+  lines.push(
+    `<li>🌳 이론 가계도에서 교육공학 이론의 계보를 한눈에 <a href="${base}/archive/theory-map" style="color:#003876;text-decoration:none;font-size:13px">둘러보기 →</a></li>`,
+  );
+
+  return `
+      <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">🎓 이번 주 학습 제안</h3>
+      <ul style="line-height: 1.9; padding-left: 20px;">${lines.join("")}</ul>
+`;
+}
+
+function buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest; suggestion?: LearningSuggestion; peersHtml?: string }): string {
   const base = "https://yonsei-edtech.vercel.app";
   const seminarHtml = seminars.length === 0
     ? "<li style=\"color:#888\">예정된 세미나가 없습니다.</li>"
@@ -468,6 +559,7 @@ function buildHtml({ seminars, posts, activities, questions, personal, peersHtml
       <h2 style="color: #003876; margin: 0 0 8px;">연세교육공학회 주간 다이제스트</h2>
       <p style="color: #666; margin: 0 0 24px;">이번 주 학회 활동을 한눈에 확인하세요.</p>
 ${personal ? buildPersonalHtml(personal) : ""}
+${suggestion ? buildSuggestionHtml(suggestion) : ""}
 ${peersHtml ?? ""}
       <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">📅 다가오는 세미나</h3>
       <ul style="line-height: 1.9; padding-left: 20px;">${seminarHtml}</ul>
@@ -543,8 +635,9 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   }
   if (recipients.length === 0) return { sent: 0, recipients: 0 };
 
-  // 수신자별 "나의 한 주" 개인 집계 (읽기 전용). 실패해도 비개인화 발송은 계속.
+  // 수신자별 "나의 한 주" 개인 집계 + M3 재유입 제안 (읽기 전용). 실패해도 비개인화 발송은 계속.
   let personalById = new Map<string, PersonalDigest>();
+  let suggestionById = new Map<string, LearningSuggestion>();
   let peersHtml = "";
   try {
     const agg = await loadPersonalDigests(
@@ -554,6 +647,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
       todayYmd,
     );
     personalById = agg.personal;
+    suggestionById = agg.suggestions;
     // Phase 3: 동료 하이라이트 — 지난 7일 몰입·활동 상위 회원 (리더보드 공개 정책 준수)
     peersHtml = buildPeerHighlightHtml(agg.timerMinByUser, agg.activeDaysByUser, usersById);
   } catch (e) {
@@ -563,17 +657,15 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   const resend = new Resend(key);
   const subject = `[연세교육공학회] 주간 다이제스트 (${weekKey})`;
 
-  // 개인 콘텐츠가 있는 회원은 개별 발송(개인 블록 포함), 없는 회원은 공통 BCC 묶음 발송.
-  const personalRecipients = recipients.filter((r) => {
-    const p = personalById.get(r.id);
-    return p ? hasPersonalContent(p) : false;
-  });
-  const genericEmails = recipients
-    .filter((r) => {
-      const p = personalById.get(r.id);
-      return !(p && hasPersonalContent(p));
-    })
-    .map((r) => r.email);
+  // 개인 콘텐츠(나의 한 주) 또는 M3 재유입 제안이 있는 회원은 개별 발송,
+  // 둘 다 없는 회원은 공통 BCC 묶음 발송.
+  const isPersonal = (id: string) => {
+    const p = personalById.get(id);
+    const s = suggestionById.get(id);
+    return (p ? hasPersonalContent(p) : false) || (s ? hasSuggestionContent(s) : false);
+  };
+  const personalRecipients = recipients.filter((r) => isPersonal(r.id));
+  const genericEmails = recipients.filter((r) => !isPersonal(r.id)).map((r) => r.email);
 
   const genericHtml = buildHtml({ seminars, posts, activities, questions, peersHtml });
 
@@ -599,7 +691,8 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   // (b) 개인 콘텐츠 보유 회원 — 개별 발송 (개인 블록 + 공통 이벤트)
   for (const r of personalRecipients) {
     const personal = personalById.get(r.id);
-    const html = buildHtml({ seminars, posts, activities, questions, personal, peersHtml });
+    const suggestion = suggestionById.get(r.id);
+    const html = buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml });
     try {
       await resend.emails.send({
         from: "연세교육공학회 <noreply@yonsei-edtech.vercel.app>",
