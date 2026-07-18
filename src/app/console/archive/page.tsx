@@ -826,19 +826,37 @@ function ReviewQueueSection({
             </Badge>
           )}
         </div>
-        <Button
-          variant="ghost"
-          size="sm"
-          onClick={onRefresh}
-          disabled={loading}
-          title="검수 대기 카운트 새로고침"
-        >
-          {loading ? (
-            <Loader2 className="h-3.5 w-3.5 animate-spin" />
-          ) : (
-            <RefreshCw className="h-3.5 w-3.5" />
-          )}
-        </Button>
+        <div className="flex items-center gap-1">
+          <Link href="/console/archive/review-queue">
+            <Button
+              variant="outline"
+              size="sm"
+              title="4개 검수형 컬렉션의 미검수 항목을 한 리스트에서 승인·보류"
+            >
+              <ClipboardCheck className="mr-1 h-3.5 w-3.5" />
+              통합 검수 큐 열기
+              {!loading && counts && total > 0 && (
+                <Badge variant="outline" className="ml-1.5 border-rose-200 bg-rose-50 text-rose-700 text-[10px] dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
+                  {total}
+                </Badge>
+              )}
+              <ArrowRight className="ml-1 h-3 w-3" aria-hidden />
+            </Button>
+          </Link>
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onRefresh}
+            disabled={loading}
+            title="검수 대기 카운트 새로고침"
+          >
+            {loading ? (
+              <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            ) : (
+              <RefreshCw className="h-3.5 w-3.5" />
+            )}
+          </Button>
+        </div>
       </div>
       <p className="mt-1 text-[11px] text-muted-foreground">
         검수형 4개 컬렉션의 <code className="rounded bg-muted px-1 py-0.5 text-[10px]">published=false</code> 항목을 한 곳에서 모니터링합니다.

@@ -14,7 +14,8 @@ import {
 } from "@/lib/profile-visibility";
 import { useProfileViews } from "@/features/profile/useProfileViews";
 import type { User } from "@/types";
-import { Lock } from "lucide-react";
+import { isAlumni } from "@/features/dashboard/widget-visibility";
+import { Lock, HeartHandshake, ChevronRight } from "lucide-react";
 import Image from "next/image";
 import ProfileHeader from "./ProfileHeader";
 import ProfileOnboardingBadges from "./ProfileOnboardingBadges";
@@ -139,6 +140,11 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
   const showOfficialEmail = isStaffPublic; // 항상 노출되는 공식 이메일
   const showStaffPublicBase = isStaffPublic; // 이름/직책/대학원/소개
 
+  // 후배(재학생) → 멘토 오픈 졸업생에게 조언 요청 진입 (기존 쪽지 재사용).
+  // 노출: 로그인 뷰어 · 본인 아님 · owner 가 멘토 오픈 졸업생 · 뷰어가 재학생(졸업생 아님).
+  const showMentorRequest =
+    !!viewer && !isOwner && !!owner.mentorOpen && isAlumni(owner) && !isAlumni(viewer);
+
   return (
     <div className="min-h-screen bg-slate-50 py-10">
       <div className="mx-auto max-w-2xl space-y-4 px-4">
@@ -147,6 +153,43 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
           <h1 className="text-lg font-bold text-foreground">개인 프로필</h1>
         </div>
         <ProfileHeader owner={owner} isOwner={isOwner} viewer={viewer} />
+
+        {/* 멘토 오픈 졸업생에게 조언 요청 — 재학생 후배 진입 (기존 쪽지) */}
+        {showMentorRequest && (
+          <section className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+            <div className="flex items-start gap-3">
+              <div
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                aria-hidden="true"
+              >
+                <HeartHandshake size={18} />
+              </div>
+              <div className="min-w-0 flex-1">
+                <p className="text-sm font-semibold text-foreground">
+                  {owner.name} 선배님이 후배 질문을 받고 있어요
+                </p>
+                {(owner.mentorTopics?.length ?? 0) > 0 && (
+                  <div className="mt-1.5 flex flex-wrap gap-1.5">
+                    {owner.mentorTopics!.map((t) => (
+                      <span
+                        key={t}
+                        className="inline-flex items-center rounded-full bg-white/70 px-2 py-0.5 text-[11px] text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200"
+                      >
+                        {t}
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <Link
+                  href={`/mypage/messages?compose=${owner.id}&prefill=${encodeURIComponent("[조언 요청] ")}`}
+                  className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+                >
+                  조언 요청하기 <ChevronRight size={14} />
+                </Link>
+              </div>
+            </div>
+          </section>
+        )}
 
         {/* P1: 시작하기 체크리스트 마일스톤 배지 (본인+운영진 항상, 일반 회원은 본인 페이지에서만 노출) */}
         {(isOwner || isStaff) && (

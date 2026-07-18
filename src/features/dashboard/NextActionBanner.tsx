@@ -25,6 +25,7 @@ import {
   Layers,
   FolderPlus,
   DraftingCompass,
+  Network,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useIsWidgetMuted } from "@/lib/dashboard-layout";
@@ -132,7 +133,12 @@ const KIND_META: Record<NextActionKind, { label: string; iconClass: string; Icon
  * 발견성 넛지 — 시간 임박 액션이 없을 때 1건만 노출하는 "먼저 권하는" 추천.
  * 우선순위: 진단 미응시 > due 암기카드 > 연구 설계 미착수 > 빈 포트폴리오 (졸업요건 넛지는 이보다 낮음).
  */
-type DiscoveryKind = "diagnostic" | "flashcard" | "design" | "portfolio";
+type DiscoveryKind =
+  | "diagnostic"
+  | "flashcard"
+  | "theory"
+  | "design"
+  | "portfolio";
 
 interface DiscoveryNudge {
   kind: DiscoveryKind;
@@ -145,7 +151,12 @@ interface DiscoveryNudge {
   iconWrapClass: string;
   badgeClass: string;
   accentClass: string;
+  /** 넛지 클릭 시 부수효과(예: "열람함" 로컬 플래그 기록). */
+  onEngage?: () => void;
 }
+
+/** 이론 가계도 열람 기록 localStorage 키 (per-user). */
+const THEORY_VISITED_KEY_PREFIX = "yedu_visited_theory_map";
 
 export default function NextActionBanner() {
   const { user } = useAuthStore();
@@ -153,6 +164,8 @@ export default function NextActionBanner() {
   const muted = useIsWidgetMuted(userId, "nextActionBanner");
   const [now, setNow] = useState<Date>(() => new Date());
   const [hidden, setHidden] = useState<boolean>(false);
+  // H5: 이론 가계도 열람 여부 — 넛지 1회 소개(열람 시 클릭으로 플래그 기록).
+  const [theoryVisited, setTheoryVisited] = useState<boolean>(true);
 
   // muted 시 5분, 기본 30초마다 now 갱신 (카운트다운 자연 표시)
   useEffect(() => {
@@ -178,6 +191,21 @@ export default function NextActionBanner() {
     else {
       window.localStorage.removeItem(key);
       setHidden(false);
+    }
+  }, [userId]);
+
+  // H5: 이론 가계도 열람 플래그 복원 (없으면 미열람 → 넛지 후보).
+  useEffect(() => {
+    if (typeof window === "undefined" || !userId) {
+      setTheoryVisited(true);
+      return;
+    }
+    try {
+      setTheoryVisited(
+        window.localStorage.getItem(`${THEORY_VISITED_KEY_PREFIX}.${userId}`) === "1",
+      );
+    } catch {
+      setTheoryVisited(true);
     }
   }, [userId]);
 
@@ -356,8 +384,14 @@ export default function NextActionBanner() {
 
   // 연구 설계 미착수 넛지 — 오늘 배포한 연구 설계 단계(H2 발견성)로 연결.
   // 앞선 넛지(진단·암기카드)가 모두 해당 없을 때만 지연 로드(비상주 쿼리 1콜).
+  // H5: 이론 넛지가 우선이므로 열람 전에는 설계 쿼리를 보류(불필요한 로드 차단).
   const needDesignCheck =
-    !!userId && !top && diagnosticCount !== undefined && diagnosticCount > 0 && dueCardCount === 0;
+    !!userId &&
+    !top &&
+    theoryVisited &&
+    diagnosticCount !== undefined &&
+    diagnosticCount > 0 &&
+    dueCardCount === 0;
   const { data: designCount } = useQuery({
     queryKey: ["nudge-design-count", userId],
     queryFn: async () => (await researchDesignsApi.listByUser(userId as string)).data.length,
@@ -425,7 +459,32 @@ export default function NextActionBanner() {
           "border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 dark:border-indigo-900 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/30",
       };
     }
-    // 3) 연구 설계 미착수 (설계 쿼리가 로드된 뒤에만 판정) — 오늘 배포한 연구 설계 단계로 연결
+    // 3) 이론 가계도 미열람 (H5) — 진단 후 "연구 첫 걸음" 브리지. 로컬 플래그만 보므로 추가 로드 없음.
+    if (!theoryVisited) {
+      return {
+        kind: "theory",
+        href: "/archive/theory-map",
+        Icon: Network,
+        title: "이론 가계도 둘러보기",
+        badge: "이론",
+        subtitle: "교육공학 이론의 뿌리·계보를 한눈에 살펴보기",
+        ariaLabel: "이론 가계도 둘러보기 · 아카이브 이론 지도로 이동",
+        iconWrapClass: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
+        badgeClass: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
+        accentClass:
+          "border-teal-200 bg-teal-50/50 hover:bg-teal-50 dark:border-teal-900 dark:bg-teal-950/20 dark:hover:bg-teal-950/30",
+        onEngage: () => {
+          if (!userId) return;
+          try {
+            window.localStorage.setItem(`${THEORY_VISITED_KEY_PREFIX}.${userId}`, "1");
+          } catch {
+            // ignore
+          }
+          setTheoryVisited(true);
+        },
+      };
+    }
+    // 4) 연구 설계 미착수 (설계 쿼리가 로드된 뒤에만 판정) — 오늘 배포한 연구 설계 단계로 연결
     if (designCount === 0) {
       return {
         kind: "design",
@@ -440,7 +499,7 @@ export default function NextActionBanner() {
         accentClass: cn(SEMANTIC.warning.border, SEMANTIC.warning.bg, "hover:bg-muted/40"),
       };
     }
-    // 4) 빈 포트폴리오 (포트폴리오 쿼리가 로드된 뒤에만 판정)
+    // 5) 빈 포트폴리오 (포트폴리오 쿼리가 로드된 뒤에만 판정)
     if (portfolioCount === 0) {
       return {
         kind: "portfolio",
@@ -457,7 +516,7 @@ export default function NextActionBanner() {
       };
     }
     return null;
-  }, [userId, diagnosticCount, dueCardCount, designCount, portfolioCount]);
+  }, [userId, diagnosticCount, dueCardCount, theoryVisited, designCount, portfolioCount]);
 
   // ── 졸업요건 미달 넛지 (최저 우선순위: 시간 임박 액션·발견성 넛지가 모두 없을 때만) ──
   const { remainingCount, topUnmet } = useGraduationSummary(userId);
@@ -490,6 +549,7 @@ export default function NextActionBanner() {
         <div className="mx-auto max-w-6xl px-4">
           <Link
             href={discovery.href}
+            onClick={discovery.onEngage}
             className={cn(
               "group flex items-center gap-2 rounded-2xl border px-3 py-1.5 shadow-sm transition-colors sm:gap-3 sm:py-2",
               discovery.accentClass,

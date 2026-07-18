@@ -34,9 +34,13 @@ import {
   Anchor,
   PenLine,
   BookText,
+  HeartHandshake,
+  Check,
+  Settings,
 } from "lucide-react";
 import { alumniThesesApi, activitiesApi, seminarsApi } from "@/lib/bkend";
 import type { Activity, AlumniThesis, Seminar } from "@/types";
+import { useAuthStore } from "@/features/auth/auth-store";
 import WidgetCard from "@/components/ui/widget-card";
 import EmptyState from "@/components/ui/empty-state";
 
@@ -88,6 +92,10 @@ function formatAwardedYearMonth(value: string): string {
 }
 
 export default function AlumniHomeWidgets() {
+  const user = useAuthStore((s) => s.user);
+  const mentorOpen = !!user?.mentorOpen;
+  const mentorTopics = user?.mentorTopics ?? [];
+
   // ── 1) 최근 학술활동 (status !== completed, 상위 2건) ──
   // MyAcademicActivitiesWidget 와 동일 queryKey ["activities", "all"] 공유.
   const { data: activitiesRes } = useQuery({
@@ -303,6 +311,65 @@ export default function AlumniHomeWidgets() {
               );
             })}
           </div>
+        </WidgetCard>
+      </div>
+
+      {/* ── 4) 후배 질문 받기 (멘토 오픈) 기여 카드 ── */}
+      <div className="md:col-span-2">
+        <WidgetCard
+          title="후배 멘토링"
+          icon={HeartHandshake}
+          actions={
+            <Link
+              href="/mypage?tab=settings"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-primary"
+            >
+              <Settings size={11} /> 설정
+            </Link>
+          }
+        >
+          {mentorOpen ? (
+            <div className="mt-3">
+              <p className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+                <Check size={13} aria-hidden="true" /> 멘토 오픈 중
+              </p>
+              <p className="mt-2 text-xs text-muted-foreground">
+                후배들이 회원 명부·프로필에서 회원님께 조언을 요청할 수 있어요. 요청은 쪽지함으로 도착합니다.
+              </p>
+              {mentorTopics.length > 0 && (
+                <div className="mt-2.5 flex flex-wrap gap-1.5">
+                  {mentorTopics.map((t) => (
+                    <span
+                      key={t}
+                      className="inline-flex items-center rounded-full bg-muted/60 px-2 py-0.5 text-[11px] text-muted-foreground"
+                    >
+                      {t}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <Link
+                href="/mypage/messages"
+                className="mt-3 inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+              >
+                받은 조언 요청 보기 <ChevronRight size={12} />
+              </Link>
+            </div>
+          ) : (
+            <div className="mt-3">
+              <p className="text-sm font-semibold text-foreground">후배의 질문을 받아보세요</p>
+              <p className="mt-1 text-xs text-muted-foreground">
+                멘토 오픈을 켜면 재학생 후배가 논문·진로·학위과정에 대한 조언을 기존 쪽지로 요청할 수 있어요.
+                공개 범위는 그대로이고 언제든 끌 수 있습니다.
+              </p>
+              <Link
+                href="/mypage?tab=settings"
+                className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-primary px-3 py-2 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                <HeartHandshake size={15} aria-hidden="true" /> 멘토 오픈 설정하기
+              </Link>
+            </div>
+          )}
         </WidgetCard>
       </div>
     </div>

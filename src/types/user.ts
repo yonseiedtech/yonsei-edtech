@@ -359,6 +359,14 @@ export interface User { [key: string]: unknown;
   interestKeywords?: string[];
   /** Sprint 67-E: 관심 연구 주제 (1-3문장 자유서술, 복수) */
   researchTopics?: string[];
+  /**
+   * 졸업생 멘토 오픈 여부 — 후배(재학생)의 조언 요청 쪽지를 받을 의향.
+   * 기본값(undefined/false): 비노출(옵트인). true 일 때만 명부·프로필에 "멘토 오픈" 노출.
+   * (alumni 퍼소나에게만 편집 UI 노출 — service-ux-gap-plan H3)
+   */
+  mentorOpen?: boolean;
+  /** 멘토로서 조언 가능한 분야 자유 태그 (mentorOpen 시 안내용) */
+  mentorTopics?: string[];
   /** 최근 논문 */
   recentPapers?: RecentPaper[];
   /** 졸업생 학위논문 읽기 리스트 (alumniThesis id 배열) */

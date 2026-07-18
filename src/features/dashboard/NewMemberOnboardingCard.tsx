@@ -34,6 +34,7 @@ import {
   PenSquare,
   Heart,
   ClipboardCheck,
+  Compass,
   type LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -258,6 +259,17 @@ export default function NewMemberOnboardingCard() {
           );
         })}
       </ul>
+
+      {/* 스프린트3 H4: 정본 온보딩(전체 가이드)로의 단일 브리지 —
+          기존 WelcomeBanner 의 디딤판 안내를 이 카드로 흡수. */}
+      <Link
+        href="/steppingstone/onboarding"
+        className="mt-4 inline-flex items-center gap-1.5 text-xs font-semibold text-primary transition-colors hover:underline"
+      >
+        <Compass size={14} aria-hidden="true" />
+        전체 온보딩 가이드 보기
+        <ArrowRight size={13} aria-hidden="true" />
+      </Link>
     </div>
   );
 }

@@ -16,6 +16,12 @@ import {
   Info,
   ArrowRight,
   Laptop,
+  PenSquare,
+  ClipboardCheck,
+  Library,
+  BookOpen,
+  Layers,
+  type LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isStaffOrAbove } from "@/lib/permissions";
@@ -206,6 +212,104 @@ const IT_SERVICES: { title: string; desc: string; url: string | null; tag: strin
     tag: "학술",
   },
 ];
+
+/**
+ * 스프린트3 H4/H5: 운영진 가이드 항목(guideItems) 미발행 시 노출되는 정적 기본 체크리스트.
+ * 콘텐츠 발행 전에도 "완결된 첫 경험"을 보장하고, H5 "연구 첫 걸음"(진단·아카이브 입문)을 포함한다.
+ */
+const DEFAULT_ONBOARDING_STEPS: {
+  icon: LucideIcon;
+  title: string;
+  desc: string;
+  href: string;
+  cta: string;
+}[] = [
+  {
+    icon: PenSquare,
+    title: "프로필 완성하기",
+    desc: "자기소개·관심 연구 키워드를 등록해 맞춤 추천을 받으세요.",
+    href: "/mypage/edit",
+    cta: "프로필 편집",
+  },
+  {
+    icon: ClipboardCheck,
+    title: "연구 준비도 진단 받기",
+    desc: "5분 진단으로 내 연구 준비도와 약점을 확인하세요.",
+    href: "/diagnosis",
+    cta: "진단 시작",
+  },
+  {
+    icon: Library,
+    title: "아카이브 둘러보기",
+    desc: "교육공학 개념·이론 가계도·용어사전을 살펴보세요.",
+    href: "/archive",
+    cta: "아카이브 열기",
+  },
+  {
+    icon: BookOpen,
+    title: "세미나 신청하기",
+    desc: "관심 세미나에 참여해 학회 활동을 시작하세요.",
+    href: "/seminars",
+    cta: "세미나 보기",
+  },
+  {
+    icon: Layers,
+    title: "암기카드 시작하기",
+    desc: "핵심 개념을 간격 반복(SRS)으로 익혀보세요.",
+    href: "/flashcards",
+    cta: "암기카드 열기",
+  },
+];
+
+function DefaultChecklistFallback() {
+  return (
+    <div className="space-y-4">
+      <div className="rounded-2xl border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">
+        맞춤 가이드가 준비되는 동안, 아래 기본 첫 단계부터 시작해 보세요.
+      </div>
+      <div className="space-y-2">
+        {DEFAULT_ONBOARDING_STEPS.map((s) => {
+          const Icon = s.icon;
+          return (
+            <Link
+              key={s.href}
+              href={s.href}
+              className="group flex items-start gap-3 rounded-2xl border bg-card p-4 transition-colors hover:border-primary/40 hover:bg-primary/5"
+            >
+              <div className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <Icon size={18} aria-hidden="true" />
+              </div>
+              <div className="min-w-0 flex-1">
+                <h3 className="flex items-center gap-1 font-semibold">
+                  <span className="truncate">{s.title}</span>
+                  <ArrowRight
+                    size={14}
+                    className="shrink-0 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                    aria-hidden="true"
+                  />
+                </h3>
+                <p className="mt-1 text-sm leading-relaxed text-muted-foreground">
+                  {s.desc}
+                </p>
+                <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-primary">
+                  {s.cta}
+                </span>
+              </div>
+            </Link>
+          );
+        })}
+      </div>
+      <div className="text-center">
+        <Link
+          href="/contact"
+          className="inline-flex items-center gap-1 text-xs text-primary underline"
+        >
+          먼저 알고 싶은 항목 요청하기
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 export default function OnboardingPage() {
   const { user } = useAuthStore();
@@ -404,19 +508,7 @@ export default function OnboardingPage() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <div className="rounded-2xl border border-dashed bg-muted/30 p-10 text-center">
-          <p className="text-sm text-muted-foreground">
-            아직 등록된 가이드 항목이 없습니다.
-            <br />
-            운영진이 곧 콘텐츠를 추가할 예정입니다.
-          </p>
-          <Link
-            href="/contact"
-            className="mt-3 inline-flex items-center gap-1 text-xs text-primary underline"
-          >
-            먼저 알고 싶은 항목 요청하기
-          </Link>
-        </div>
+        <DefaultChecklistFallback />
       ) : (
         <div className="space-y-8">
           {grouped.map(([category, catItems]) => (

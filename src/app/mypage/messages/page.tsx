@@ -66,7 +66,10 @@ function MessagesInner({ user }: { user: User }) {
   // Phase 2-D: ?compose=<userId> 딥링크 — 모임 참석자 명단 등에서 바로 쪽지 작성.
   // useSearchParams 대신 window 접근(마운트 1회) — 프리렌더 Suspense 제약 회피.
   useEffect(() => {
-    const composeId = new URLSearchParams(window.location.search).get("compose");
+    const sp = new URLSearchParams(window.location.search);
+    const composeId = sp.get("compose");
+    // 조언 요청 등 진입 시 제목/본문 프리필 (예: "[조언 요청] ")
+    const prefill = sp.get("prefill");
     if (!composeId || composeId === user.id) return;
     let cancelled = false;
     (async () => {
@@ -75,6 +78,7 @@ function MessagesInner({ user }: { user: User }) {
         const list = await profilesApi.listByIds([composeId]);
         if (!cancelled && list[0]) {
           setRecipient(list[0] as User);
+          if (prefill) setContent(prefill);
           setComposeOpen(true);
         }
       } catch {

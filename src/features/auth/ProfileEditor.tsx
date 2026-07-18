@@ -9,6 +9,7 @@ import { Save, Plus, X, Pencil, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 import { useUpdateProfile } from "@/features/member/useMembers";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { isAlumni } from "@/features/dashboard/widget-visibility";
 import type {
   User,
   OccupationType,
@@ -120,6 +121,12 @@ export default function ProfileEditor({ user }: Props) {
   const [editingTopicIdx, setEditingTopicIdx] = useState<number | null>(null);
   const [editingTopicText, setEditingTopicText] = useState("");
 
+  // ── 졸업생 멘토 오픈 (후배 조언 요청 받기) — alumni 퍼소나 한정 ──
+  const showMentor = isAlumni(user);
+  const [mentorOpen, setMentorOpen] = useState<boolean>(!!user.mentorOpen);
+  const [mentorTopics, setMentorTopics] = useState<string[]>(user.mentorTopics ?? []);
+  const [mentorTopicDraft, setMentorTopicDraft] = useState("");
+
   const { register, handleSubmit, control, setValue } = useForm<ProfileData>({
     defaultValues: {
       name: user.name,
@@ -197,6 +204,10 @@ export default function ProfileEditor({ user }: Props) {
         accumulatedSemestersAsOf: data.accumulatedSemesters ? currentSemesterKey() : undefined,
         interestKeywords,
         researchTopics,
+        // 졸업생 멘토 오픈 — alumni 에게만 UI 노출·저장 (그 외 신분은 기존 값 보존)
+        ...(showMentor
+          ? { mentorOpen, mentorTopics: mentorTopics.map((t) => t.trim()).filter(Boolean) }
+          : {}),
       };
       await updateProfile({ id: user.id, data: payload as unknown as Record<string, unknown> });
       // 본인 프로필을 편집한 경우에만 authStore를 갱신.
@@ -694,6 +705,85 @@ export default function ProfileEditor({ user }: Props) {
           )}
         />
       </div>
+
+      {/* 졸업생 멘토 오픈 — 후배(재학생)의 조언 요청 받기 (alumni 한정) */}
+      {showMentor && (
+        <div className="border-t pt-6">
+          <h3 className="text-sm font-bold">후배 질문 받기 (멘토 오픈)</h3>
+          <p className="mt-1 text-xs text-muted-foreground">
+            켜면 회원 명부·프로필에 &lsquo;멘토 오픈&rsquo; 표시가 붙고, 재학생 후배가 기존 쪽지로 조언을 요청할 수 있습니다.
+            연락처 등 공개 범위는 그대로이며, 언제든 끌 수 있습니다.
+          </p>
+
+          <label className="mt-3 flex items-center gap-2.5 rounded-lg border bg-muted/20 px-3 py-2.5 text-sm">
+            <input
+              type="checkbox"
+              checked={mentorOpen}
+              onChange={(e) => setMentorOpen(e.target.checked)}
+              className="h-4 w-4"
+            />
+            <span className="font-medium">후배의 조언 요청 쪽지를 받겠습니다</span>
+          </label>
+
+          {mentorOpen && (
+            <div className="mt-3">
+              <label className="mb-1.5 block text-sm font-medium">조언 가능한 분야 (선택)</label>
+              {mentorTopics.length > 0 && (
+                <div className="mb-2 flex flex-wrap gap-1.5">
+                  {mentorTopics.map((t) => (
+                    <span
+                      key={t}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
+                    >
+                      {t}
+                      <button
+                        type="button"
+                        onClick={() => setMentorTopics((prev) => prev.filter((x) => x !== t))}
+                        aria-label={`${t} 제거`}
+                        className="rounded-full p-0.5 hover:bg-primary/20"
+                      >
+                        <X size={11} />
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+              <div className="flex gap-2">
+                <Input
+                  value={mentorTopicDraft}
+                  onChange={(e) => setMentorTopicDraft(e.target.value)}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter") {
+                      e.preventDefault();
+                      const trimmed = mentorTopicDraft.trim();
+                      if (trimmed && !mentorTopics.includes(trimmed)) {
+                        setMentorTopics((prev) => [...prev, trimmed]);
+                      }
+                      setMentorTopicDraft("");
+                    }
+                  }}
+                  placeholder="예: 논문 주제 잡기, 취업 준비, 학위과정 병행"
+                  maxLength={40}
+                />
+                <button
+                  type="button"
+                  onClick={() => {
+                    const trimmed = mentorTopicDraft.trim();
+                    if (trimmed && !mentorTopics.includes(trimmed)) {
+                      setMentorTopics((prev) => [...prev, trimmed]);
+                    }
+                    setMentorTopicDraft("");
+                  }}
+                  disabled={!mentorTopicDraft.trim()}
+                  className="inline-flex shrink-0 items-center gap-1 rounded-md border border-input bg-card px-3 py-2 text-sm text-foreground hover:bg-muted disabled:opacity-50"
+                >
+                  <Plus size={14} /> 추가
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* 섹션별 공개 범위 안내 (개인 페이지에서 직접 설정) */}
       <div className="border-t pt-6">

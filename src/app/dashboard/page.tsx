@@ -53,9 +53,7 @@ import RecentPostsWidget from "@/features/dashboard/RecentPostsWidget";
 import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCountdown";
 import PageHeader from "@/components/ui/page-header";
 import TermBriefHero from "@/components/dashboard/TermBriefHero";
-import NewMemberWelcomeBanner from "@/features/dashboard/NewMemberWelcomeBanner";
 import NewMemberOnboardingCard from "@/features/dashboard/NewMemberOnboardingCard";
-import NewMemberChecklistWidget from "@/features/dashboard/NewMemberChecklistWidget";
 import AlumniHomeWidgets from "@/features/dashboard/AlumniHomeWidgets";
 import AIForumLiveWidget from "@/features/dashboard/AIForumLiveWidget";
 import SpacedRepetitionWidget from "@/features/dashboard/SpacedRepetitionWidget";
@@ -499,11 +497,6 @@ function DashboardContent() {
       {/* ── 섹션 1: 헤더 영역 ── */}
       {/* 사이클 86: 상단 이중 마진(py + mt) 제거 — 최상위 py 가 상단 여백 담당, 섹션 mt 제거로 과다 여백 해소 */}
       <section className="mx-auto max-w-6xl px-4">
-        {/*
-         * NewMemberWelcomeBanner — DESIGN.md §9 회원용 페이지 패턴:
-         * PageHeader 아래에 배치. 신규 회원에게만 노출되므로
-         * PageHeader 인사 다음에 이어지는 것이 자연스러운 플로우.
-         */}
         <PageHeader
           icon={
             // PageHeader 가 JSX 아이콘을 48px 칩 박스로 감싸므로, 엠블럼은 박스 안에
@@ -615,14 +608,9 @@ function DashboardContent() {
           <StageRecommendationPanel user={user} />
         </div>
 
-        {/* 신규 회원 온보딩 배너 — PageHeader 바로 아래, TermBriefHero 위 */}
-        <NewMemberWelcomeBanner />
-
-        {/* 신규 회원 6단계 체크리스트 (Phase C) — 가입 30일 이내 또는 완성도 < 60% 일 때만 노출.
-            empty:hidden — 기존 회원에게 위젯이 null 렌더될 때 빈 div 의 유령 여백(mb-6) 제거 (사이클 84) */}
-        <div className="mb-6 empty:hidden">
-          <NewMemberChecklistWidget />
-        </div>
+        {/* 스프린트3 H4: 신입 온보딩 표면 통합 — 기존 WelcomeBanner·ChecklistWidget 2종을
+            상단 NewMemberOnboardingCard(자족형) 단일 카드로 수렴. 전체 가이드는 카드 하단
+            브리지에서 /steppingstone/onboarding(정본 온보딩)으로 위임. */}
 
         {/* 학기 진행 Hero (학사일정 통합) */}
         <TermBriefHero

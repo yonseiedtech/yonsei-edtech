@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { User as UserIcon } from "lucide-react";
+import { User as UserIcon, HeartHandshake } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_LABELS } from "@/types";
 import { formatEnrollment } from "@/lib/utils";
@@ -103,6 +103,16 @@ export default function MemberCard({ member }: Props) {
               +{overflowCount}
             </span>
           )}
+        </div>
+      )}
+
+      {/* ── 멘토 오픈 배지 (졸업생 옵트인) ── */}
+      {member.mentorOpen && (
+        <div className="mt-2.5 flex justify-center">
+          <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <HeartHandshake size={11} aria-hidden />
+            멘토 오픈
+          </span>
         </div>
       )}
 
