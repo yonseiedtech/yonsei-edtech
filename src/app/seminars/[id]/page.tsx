@@ -50,6 +50,7 @@ import ShareButton from "@/components/ShareButton";
 import { SeminarEventJsonLd } from "@/components/seo/JsonLd";
 import PageContainer from "@/components/ui/page-container";
 import StaffTools from "@/features/seminar/detail/StaffTools";
+import SeminarKnowledgeAssets from "@/features/seminar/detail/SeminarKnowledgeAssets";
 import EditDialogs from "@/features/seminar/detail/EditDialogs";
 import type { EditSection, InfoFormData, SpeakersFormData } from "@/features/seminar/detail/EditDialogs";
 import { reviewsApi } from "@/lib/bkend";
@@ -610,6 +611,11 @@ function SeminarDetail({ id }: { id: string }) {
             </Link>
           </div>
         </div>
+
+        {/* Section 7.5: Knowledge Assets (종료 세미나 지식 아카이브화) */}
+        {computedStatus === "completed" && (
+          <SeminarKnowledgeAssets seminarId={id} seminar={seminar} />
+        )}
 
         {/* Section 7: Staff Tools */}
         {isStaff && (

@@ -30,7 +30,7 @@ export async function POST(req: NextRequest) {
           <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
             <h2 style="color: #003876;">연세교육공학회</h2>
             <p>안녕하세요,</p>
-            <p>관리자에 의해 비밀번호 재설정이 요청되었습니다. 아래 버튼을 클릭하여 새 비밀번호를 설정해주세요.</p>
+            <p>관리자가 비밀번호 재설정을 요청했습니다. 아래 버튼을 클릭하여 새 비밀번호를 설정해주세요.</p>
             <a href="${link.replace(/&/g, "&amp;").replace(/"/g, "&quot;")}"
                style="display: inline-block; margin: 16px 0; padding: 12px 24px;
                       background: #003876; color: white; text-decoration: none;

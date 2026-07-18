@@ -487,7 +487,7 @@ export default function SignupForm({ onSuccess, defaultName, defaultStudentId, i
         )}
         {hasEmailInput && !errors.email && !isYonseiEmail && (
           <p className="mt-2 rounded-md border border-amber-200 bg-amber-50 px-2.5 py-1.5 text-xs text-amber-800">
-            연세 메일이 아닐 경우 관리자에 의해 확인 후 승인됩니다.
+            연세 메일이 아닌 경우 관리자 확인 후 승인됩니다.
           </p>
         )}
       </div>

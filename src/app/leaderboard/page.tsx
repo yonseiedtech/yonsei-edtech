@@ -22,6 +22,7 @@ import PageHeader from "@/components/ui/page-header";
 import PageContainer from "@/components/ui/page-container";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import { getMemberStage, type MemberStage } from "@/lib/member-stage";
 import type { StreakEvent, User } from "@/types";
 
 // ── 탭 정의 ────────────────────────────────────────────────────────────────
@@ -32,6 +33,19 @@ const RANGE_TABS: { key: RangeKey; label: string }[] = [
   { key: "semester", label: "이번 학기" },
   { key: "all", label: "전체" },
 ];
+
+// ── 코호트(회원 단계) 분해 ──────────────────────────────────────────────────
+// 전역 원점수 순위는 상·하위 소수만 동기부여 → 같은 단계끼리의 "동류 비교"를 제공.
+// 단계 판정은 member-stage.getMemberStage 재사용. 리더보드는 회원별 진단 이력을
+// 추가 fetch(N+1)하지 않으므로 diagnosticCount는 undefined로 두어 가입일·퍼소나
+// 기준(신입=가입 60일 이내 / 졸업생=alumni 퍼소나 / 그 외=재학·논문)으로만 나눈다.
+type CohortKey = "all" | "mine";
+
+const STAGE_LABEL: Record<MemberStage, string> = {
+  newcomer: "신입",
+  researcher: "재학·논문",
+  alumni: "졸업생",
+};
 
 // ── 학기 시작 날짜 계산 ─────────────────────────────────────────────────────
 function currentSemesterStartYmd(): string {
@@ -68,6 +82,30 @@ interface RankedEntry {
   isAnon: boolean;
   totalScore: number;
   rank: number;
+  stage: MemberStage;
+}
+
+// ── 정렬된 점수 → 순위 배열 (동점 처리 공통 헬퍼) ───────────────────────────
+// [userId, score] 내림차순 배열을 받아 rank(동점 동순위)를 매긴다.
+// 전역·코호트 두 곳에서 재사용.
+function assignRanks(
+  sorted: [string, number][],
+  userMap: Map<string, User>,
+  now: number,
+): RankedEntry[] {
+  const result: RankedEntry[] = [];
+  let rank = 1;
+  for (let i = 0; i < sorted.length; i++) {
+    const [userId, totalScore] = sorted[i];
+    if (i > 0 && sorted[i - 1][1] !== totalScore) rank = i + 1;
+    const u = userMap.get(userId);
+    const isAnon = !u || u.showInLeaderboard === false;
+    const displayName = isAnon ? "ㅇㅇ" : u.name;
+    // 진단 이력은 리더보드에서 미조회 → undefined(가입일·퍼소나 기준 판정).
+    const stage = getMemberStage(u, undefined, now);
+    result.push({ userId, displayName, isAnon, totalScore, rank, stage });
+  }
+  return result;
 }
 
 function LeaderboardContent() {
@@ -75,7 +113,11 @@ function LeaderboardContent() {
   const myId = authUser?.id ?? "";
 
   const [range, setRange] = useState<RangeKey>("30d");
+  const [cohort, setCohort] = useState<CohortKey>("all");
   const [showMore, setShowMore] = useState(false);
+
+  // 내 단계 판정 — 코호트 필터·백분위 서사의 기준.
+  const myStage = getMemberStage(authUser, undefined);
 
   // ── 1. streak_events 전체 1회 fetch ─────────────────────────────────────
   const { data: eventsRes, isLoading: eventsLoading } = useQuery({
@@ -116,8 +158,8 @@ function LeaderboardContent() {
     return `${y}-${mo}-${da}`;
   }, [range]);
 
-  // ── 4. 집계 ──────────────────────────────────────────────────────────────
-  const ranked = useMemo<RankedEntry[]>(() => {
+  // ── 4. 전역 집계 ─────────────────────────────────────────────────────────
+  const rankedGlobal = useMemo<RankedEntry[]>(() => {
     const events = eventsRes?.data ?? [];
     const scores = new Map<string, number>();
 
@@ -127,31 +169,60 @@ function LeaderboardContent() {
       scores.set(ev.userId, (scores.get(ev.userId) ?? 0) + ev.points);
     }
 
-    // 점수 내림차순 정렬
-    const sorted = Array.from(scores.entries())
-      .sort((a, b) => b[1] - a[1]);
-
-    const result: RankedEntry[] = [];
-    let rank = 1;
-    for (let i = 0; i < sorted.length; i++) {
-      const [userId, totalScore] = sorted[i];
-      // 동점 처리: 이전 점수와 같으면 같은 순위
-      if (i > 0 && sorted[i - 1][1] !== totalScore) rank = i + 1;
-      const u = userMap.get(userId);
-      const isAnon = !u || u.showInLeaderboard === false;
-      const displayName = isAnon ? "ㅇㅇ" : u.name;
-      result.push({ userId, displayName, isAnon, totalScore, rank });
-    }
-    return result;
+    const sorted = Array.from(scores.entries()).sort((a, b) => b[1] - a[1]);
+    return assignRanks(sorted, userMap, Date.now());
   }, [eventsRes, cutoffYmd, userMap]);
 
-  // ── 5. 본인 위치 ─────────────────────────────────────────────────────────
+  // ── 4b. 내 단계 코호트(재순위) — 백분위 서사·"내 단계" 탭의 기준 ─────────
+  // 전역과 무관하게 항상 내 단계 안에서의 순위를 계산(카드 백분위 안정).
+  const myCohortRanked = useMemo<RankedEntry[]>(() => {
+    const inStage = rankedGlobal
+      .filter((r) => r.stage === myStage)
+      .map((r) => [r.userId, r.totalScore] as [string, number]);
+    // 이미 점수 내림차순 → 코호트 내부에서 rank 재부여.
+    return assignRanks(inStage, userMap, Date.now());
+  }, [rankedGlobal, myStage, userMap]);
+
+  // 활성 탭에 따른 표시 목록.
+  const ranked = cohort === "mine" ? myCohortRanked : rankedGlobal;
+
+  // ── 5. 본인 위치(활성 탭 기준) ───────────────────────────────────────────
   const myEntry = useMemo(
     () => ranked.find((r) => r.userId === myId),
     [ranked, myId],
   );
   const myRank = myEntry?.rank ?? null;
   const isMyInTop50 = myRank !== null && myRank <= 50;
+
+  // ── 5b. 내 단계 백분위 + 주간 추세(원점수 대신 백분위 중심 서사) ─────────
+  const myStageEntry = useMemo(
+    () => myCohortRanked.find((r) => r.userId === myId),
+    [myCohortRanked, myId],
+  );
+  // 상위 N% = 내 단계 코호트 안에서의 순위 백분위(1~100, 낮을수록 상위).
+  const myPercentile = useMemo(() => {
+    if (!myStageEntry || myCohortRanked.length === 0) return null;
+    return Math.max(
+      1,
+      Math.min(100, Math.round((myStageEntry.rank / myCohortRanked.length) * 100)),
+    );
+  }, [myStageEntry, myCohortRanked]);
+
+  // 이번 주(최근 7일) 내가 획득한 점수 — 기간 탭과 무관한 주간 추세.
+  const myWeeklyGain = useMemo(() => {
+    if (!myId) return 0;
+    const d = new Date();
+    d.setDate(d.getDate() - 7);
+    const y = d.getFullYear();
+    const mo = String(d.getMonth() + 1).padStart(2, "0");
+    const da = String(d.getDate()).padStart(2, "0");
+    const week = `${y}-${mo}-${da}`;
+    let sum = 0;
+    for (const ev of eventsRes?.data ?? []) {
+      if (ev.userId === myId && ev.ymd >= week) sum += ev.points;
+    }
+    return sum;
+  }, [eventsRes, myId]);
 
   // ── 6. 표시 목록 ─────────────────────────────────────────────────────────
   const top50 = ranked.slice(0, 50);
@@ -199,17 +270,51 @@ function LeaderboardContent() {
         })}
       </nav>
 
-      {/* 본인 순위 요약 */}
-      {!isLoading && myEntry && (
-        <div className="mt-4 flex items-center gap-3 rounded-2xl border border-primary/30 bg-primary/5 px-5 py-3.5">
+      {/* 코호트(단계) 탭 — 전역 vs 내 단계 동류 비교 */}
+      <nav
+        className="mt-3 flex gap-1 overflow-x-auto"
+        aria-label="비교 대상 탭"
+      >
+        {([
+          { key: "all" as CohortKey, label: "전체" },
+          { key: "mine" as CohortKey, label: `내 단계 · ${STAGE_LABEL[myStage]}` },
+        ]).map((tab) => {
+          const isActive = cohort === tab.key;
+          return (
+            <button
+              key={tab.key}
+              type="button"
+              onClick={() => { setCohort(tab.key); setShowMore(false); }}
+              aria-pressed={isActive}
+              className={cn(
+                "flex flex-none items-center gap-1 rounded-full px-3.5 py-1.5 text-xs font-medium transition-colors",
+                isActive
+                  ? "bg-primary text-primary-foreground"
+                  : "bg-muted text-muted-foreground hover:text-foreground",
+              )}
+            >
+              {tab.label}
+            </button>
+          );
+        })}
+      </nav>
+
+      {/* 내 위치 카드 — 원점수 대신 "내 단계 기준 백분위 + 주간 추세" 서사 */}
+      {!isLoading && myStageEntry && myPercentile !== null && (
+        <div className="mt-4 flex flex-wrap items-center gap-x-4 gap-y-2 rounded-2xl border border-primary/30 bg-primary/5 px-5 py-3.5">
           <Flame size={18} className="shrink-0 text-primary" />
           <p className="text-sm">
-            내 순위:{" "}
+            {STAGE_LABEL[myStage]} 동료 중{" "}
+            <strong className="text-primary">상위 {myPercentile}%</strong>
+            <span className="ml-1 text-muted-foreground">
+              ({myCohortRanked.length}명 중 {myStageEntry.rank}위)
+            </span>
+          </p>
+          <p className="text-sm text-muted-foreground">
+            이번 주{" "}
             <strong className="text-primary">
-              {myRank}위
+              +{myWeeklyGain.toLocaleString()}점
             </strong>
-            {" "}· 누적{" "}
-            <strong className="text-primary">{myEntry.totalScore}점</strong>
           </p>
         </div>
       )}

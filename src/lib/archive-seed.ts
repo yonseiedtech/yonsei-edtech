@@ -1323,7 +1323,7 @@ export const SEED_VARIABLES: SeedVariable[] = [
     name: "학습 만족도",
     altNames: ["Learning Satisfaction"],
     description:
-      "학습 경험·내용·방법·환경에 대한 학습자의 정서적 평가. 이러닝·블렌디드 러닝 효과 연구의 표준 결과 변인이며, 학습 지속의도와 강한 정적 상관을 가진다.",
+      "학습 경험·내용·방법·환경에 대한 학습자의 정서적 평가. 이러닝·블렌디드 러닝 효과 연구의 표준 결과 변인이며, 학습 지속의도와 강한 정적 상관을 보인다.",
     type: "affective",
     tags: ["만족도", "이러닝"],
     references: [

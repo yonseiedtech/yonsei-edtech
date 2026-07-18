@@ -77,6 +77,7 @@ import DefensePracticeTrendCard from "@/features/mypage/DefensePracticeTrendCard
 import MyActivityHub from "@/components/mypage/MyActivityHub";
 import ThesisProgressWidget from "@/features/research/ThesisProgressWidget";
 import GraduationChecklistCard from "@/features/mypage/GraduationChecklistCard";
+import { isWrappedSeason } from "@/features/mypage/useSemesterWrapped";
 import { useAuth } from "@/features/auth/useAuth";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
 import { formatDate } from "@/lib/utils";
@@ -677,6 +678,32 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                 </Link>
               )}
 
+              {/* H2: 학기 Wrapped 진입 — 학기 말(≤6주) + 활동 데이터 충분 시에만 노출(과밀 방지, 본인만) */}
+              {isSelf && !readOnly && isWrappedSeason() &&
+                (diagnosticCount > 0 ||
+                  flashcardTotal > 0 ||
+                  publishedPaperCount > 0 ||
+                  myPosts.length > 0 ||
+                  myActivities.length + mySeminars.length > 0) && (
+                  <Link
+                    href="/mypage/wrapped"
+                    className="block overflow-hidden rounded-2xl border-2 border-primary/30 bg-primary p-5 text-primary-foreground transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+                  >
+                    <div className="flex items-start gap-4">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-primary-foreground/15">
+                        <Sparkles size={22} />
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <h3 className="text-base font-bold">이번 학기 나의 학회 발자취</h3>
+                        <p className="mt-0.5 text-sm text-primary-foreground/80">
+                          학습·읽기·집필·진단·세미나를 모아 이번 학기의 성장 이야기로 되돌려 드려요.
+                        </p>
+                      </div>
+                      <ArrowRight size={18} className="shrink-0 self-center" />
+                    </div>
+                  </Link>
+                )}
+
               {(() => {
                 const today = todayYmdLocal();
                 const upcomingActivities = myActivities
@@ -837,7 +864,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                 if (candidates.length === 0) return null;
 
                 const hasHistory = myActivities.length > 0;
-                const heading = hasHistory ? "당신을 위한 추천" : "곧 시작하는 활동";
+                const heading = hasHistory ? "회원님 맞춤 추천" : "곧 시작하는 활동";
 
                 return (
                   <div className="rounded-2xl border border-violet-200/70 bg-violet-50/50 p-5">

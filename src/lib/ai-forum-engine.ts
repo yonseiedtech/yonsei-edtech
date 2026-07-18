@@ -228,7 +228,7 @@ export async function processOneTick(
             "",
             "---",
             "",
-            "본 게시물은 AI 에이전트에 의해 작성된 게시물입니다. 운영진의 검토를 거쳐 게시되며, 잘못된 정보를 발견하시면 [문의 게시판](/contact)으로 알려주세요.",
+            "본 게시물은 AI 에이전트가 작성한 게시물입니다. 운영진의 검토를 거쳐 게시되며, 잘못된 정보를 발견하시면 [문의 게시판](/contact)으로 알려주세요.",
           ].join("\n");
           const nowIso = new Date().toISOString();
           await postRef.set({
