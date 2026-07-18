@@ -5,6 +5,7 @@ import Link from "next/link";
 import QrCodeDisplay from "@/features/seminar/QrCodeDisplay";
 import { attendeesApi } from "@/lib/bkend";
 import SeminarRegistrationForm from "@/features/seminar/SeminarRegistrationForm";
+import SeminarCalendarCta from "@/features/seminar/detail/SeminarCalendarCta";
 import { Button } from "@/components/ui/button";
 import {
   UserPlus,
@@ -14,6 +15,7 @@ import {
   Settings,
   Clock,
   XCircle,
+  Users,
 } from "lucide-react";
 import type { Seminar, SeminarAttendee, SeminarStatus, User, WaitlistEntry } from "@/types";
 
@@ -70,6 +72,24 @@ export default function RegistrationSection({
           </button>
         )}
       </div>
+
+      {/* Participation snapshot — 신청 현황 한눈에 (회원 참석자 기준) */}
+      {computedStatus === "upcoming" && (
+        <div className="mb-4 flex flex-wrap items-center gap-x-2 gap-y-1 text-sm">
+          <Users size={15} className="text-muted-foreground" />
+          <span className="font-medium text-foreground">
+            신청 {seminar.attendeeIds?.length ?? 0}명
+          </span>
+          {seminar.maxAttendees != null && (
+            <span className="text-muted-foreground">(정원 {seminar.maxAttendees}명)</span>
+          )}
+          {isFull && waitlist.length > 0 && (
+            <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
+              대기 {waitlist.length}명
+            </span>
+          )}
+        </div>
+      )}
 
       {/* External registration button */}
       {seminar.registrationUrl && computedStatus === "upcoming" && (
@@ -200,6 +220,11 @@ export default function RegistrationSection({
             />
           </div>
         </div>
+      )}
+
+      {/* Calendar add + reminder note — 신청 완료 상태 (Luma형 원페이지 강화) */}
+      {isAttending && computedStatus === "upcoming" && (
+        <SeminarCalendarCta seminar={seminar} />
       )}
     </div>
   );
