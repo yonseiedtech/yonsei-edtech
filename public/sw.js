@@ -44,7 +44,21 @@ self.addEventListener("fetch", (event) => {
     return;
   }
 
-  // 정적 자산: 캐시 우선, 네트워크 폴백
+  // 정적 자산만 캐시 우선 (해시된 번들·아이콘·이미지).
+  // 주의: RSC 내비게이션 페이로드(?_rsc=)·기타 데이터 GET 을 캐시하면
+  // 배포 후에도 낡은 페이지 데이터가 영구 서빙된다 — 명시적 정적 경로만 캐시하고
+  // 나머지는 SW 개입 없이 네트워크로 통과시킨다.
+  const url = new URL(request.url);
+  const isStaticAsset =
+    url.origin === self.location.origin &&
+    !url.searchParams.has("_rsc") &&
+    (url.pathname.startsWith("/_next/static/") ||
+      /\.(png|jpg|jpeg|webp|gif|svg|ico|woff2?|ttf)$/.test(url.pathname));
+
+  if (!isStaticAsset) {
+    return; // 네트워크 직행 (캐시 미개입)
+  }
+
   event.respondWith(
     caches.match(request).then((cached) => {
       if (cached) return cached;

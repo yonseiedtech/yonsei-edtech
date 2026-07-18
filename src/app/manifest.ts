@@ -11,8 +11,8 @@ export default function manifest(): MetadataRoute.Manifest {
       "연세대학교 교육대학원 교육공학전공 학술 커뮤니티 — 교육의 미래를 함께 설계합니다",
     start_url: "/",
     display: "standalone",
-    background_color: "#ffffff",
-    theme_color: "#003876",
+    background_color: "#003378",
+    theme_color: "#003378",
     icons: [
       {
         src: "/icon.svg",

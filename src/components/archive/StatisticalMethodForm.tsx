@@ -14,6 +14,7 @@ import {
   researchMethodsApi,
   alumniThesesApi,
 } from "@/lib/bkend";
+import { syncReverseLinks } from "@/lib/archive-crosslink-sync";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   STATISTICAL_METHOD_CATEGORY_LABELS,
@@ -371,13 +372,32 @@ export default function StatisticalMethodForm({ initial, userId }: Props) {
         ...reviewMeta,
       };
 
+      let savedId = initial?.id ?? "";
       if (isEdit && initial) {
         await statisticalMethodsApi.update(initial.id, payload);
       } else {
-        await statisticalMethodsApi.create({
+        const created = await statisticalMethodsApi.create({
           ...payload,
           createdBy: userId,
         });
+        savedId = created.id;
+      }
+
+      // H3 — 양방향 크로스링크 write-time 동기화.
+      // 상대 연구방법 문서의 statisticalMethodIds 에 이 통계방법 id 를 반영.
+      // 실패해도 forward 저장은 완료되고 read-time 병합이 표시를 보정하므로,
+      // 저장 자체는 성공으로 처리하고 경고만 노출한다(백필로 재보정 가능).
+      try {
+        await syncReverseLinks({
+          targetCollection: "archive_research_methods",
+          reverseField: "statisticalMethodIds",
+          selfId: savedId,
+          prevIds: initial?.relatedResearchMethodIds ?? [],
+          nextIds: relatedResearchMethodIds,
+        });
+      } catch (syncErr) {
+        console.error("[StatisticalMethodForm] reverse-link sync failed", syncErr);
+        toast.warning("역방향 연계 동기화 일부 실패 — 백필로 보정 가능합니다.");
       }
 
       toast.success("저장 완료");

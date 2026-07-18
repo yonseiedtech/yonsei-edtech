@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { Noto_Serif_KR, Hahmlet } from "next/font/google";
 // Inter font removed — Pretendard only
@@ -16,6 +16,7 @@ import ConsentGate from "@/components/auth/ConsentGate";
 import UndergradInfoPrompt from "@/components/auth/UndergradInfoPrompt";
 import SitePopupGate from "@/components/popup/SitePopupGate";
 import InstallPromptBanner from "@/components/pwa/InstallPromptBanner";
+import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import ScrollToTopOnNav from "@/components/layout/ScrollToTopOnNav";
 import VisitTracker from "@/components/layout/VisitTracker";
 import "./globals.css";
@@ -117,6 +118,11 @@ export const metadata: Metadata = {
   },
 };
 
+export const viewport: Viewport = {
+  // PWA 상태바/주소창 색상 — 브랜드 네이비
+  themeColor: "#003378",
+};
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -136,11 +142,6 @@ export default function RootLayout({
                   if (t === 'dark') document.documentElement.classList.add('dark');
                 } catch(e) {}
               })();
-              if ('serviceWorker' in navigator) {
-                window.addEventListener('load', function() {
-                  navigator.serviceWorker.register('/sw.js');
-                });
-              }
             `,
           }}
         />
@@ -165,6 +166,7 @@ export default function RootLayout({
             <UndergradInfoPrompt />
             <SitePopupGate />
             <InstallPromptBanner />
+            <ServiceWorkerRegister />
             <Toaster richColors position="top-center" />
           </AuthProvider>
         </QueryProvider>

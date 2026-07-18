@@ -28,10 +28,19 @@ export const VARIABLE_TYPE_LABELS: Record<VariableType, string> = {
 };
 
 /**
+ * 검수 상태 (v5-H2). 하위호환: 필드 부재 시 published ? "approved" : "draft" 로 간주.
+ *  - draft: 미검수(등록 직후 또는 보류 해제·재검토 대기)
+ *  - approved: 승인·공개 (published=true 와 동반)
+ *  - held: 보류 — 사유(reviewNote) 기록, DB 영속. published=false 유지, 큐 보류 탭에서 재검토.
+ */
+export type ArchiveReviewStatus = "draft" | "approved" | "held";
+
+/**
  * Phase 3.5 — 운영 메타 필드 (8개 archive_* 컬렉션 공통).
  * 모든 필드 optional. 기존 항목 마이그레이션 불필요.
  *  - updatedBy/updatedByUid: 마지막 수정자 (form 저장 시 자동 주입)
- *  - reviewedBy/reviewedByUid/reviewedAt: published=true 로 토글되는 순간 자동 기록
+ *  - reviewedBy/reviewedByUid/reviewedAt: 승인·보류 등 검수 처리 순간 자동 기록
+ *  - reviewStatus/reviewNote: v5-H2 영속 검수 상태 모델. 부재 시 published 로부터 유추(하위호환).
  */
 export interface ArchiveOperationalMeta {
   updatedBy?: string;
@@ -39,6 +48,10 @@ export interface ArchiveOperationalMeta {
   reviewedBy?: string;
   reviewedByUid?: string;
   reviewedAt?: string;
+  /** v5-H2 — 영속 검수 상태. 없으면 published ? "approved" : "draft" 로 유추. */
+  reviewStatus?: ArchiveReviewStatus;
+  /** v5-H2 — 보류(held) 사유. 선택 입력. */
+  reviewNote?: string;
 }
 
 export interface ArchiveConcept extends ArchiveOperationalMeta {
