@@ -303,10 +303,31 @@ export default function ArchiveDetailPage() {
       toast.error("로그인이 필요합니다");
       return;
     }
-    if (type !== "concept" || !item || flashcardState !== "idle") return;
+    if (!item || flashcardState !== "idle") return;
     setFlashcardState("saving");
     try {
-      await flashcardsApi.saveFromConcept(user.id, item as ArchiveConcept);
+      if (type === "concept") {
+        await flashcardsApi.saveFromConcept(user.id, item as ArchiveConcept);
+      } else if (type === "variable") {
+        const v = item as ArchiveVariable;
+        await flashcardsApi.saveFromVariable(user.id, {
+          id: v.id,
+          name: v.name,
+          description: v.description,
+          typeLabel: v.type ? VARIABLE_TYPE_LABELS[v.type] : undefined,
+        });
+      } else {
+        const m = item as ArchiveMeasurementTool;
+        await flashcardsApi.saveFromMeasurement(user.id, {
+          id: m.id,
+          name: m.name,
+          description: m.description,
+          originalName: m.originalName,
+          author: m.author,
+          scaleType: m.scaleType,
+          reliability: m.reliability,
+        });
+      }
       setFlashcardState("saved");
       toast.success("암기카드에 저장했어요");
     } catch (err) {
@@ -491,30 +512,28 @@ export default function ArchiveDetailPage() {
                   </Button>
                 </Link>
               )}
-              {type === "concept" && (
-                <Button
-                  variant={flashcardState === "saved" ? "default" : "outline"}
-                  size="sm"
-                  onClick={handleSaveFlashcard}
-                  disabled={!user || flashcardState !== "idle"}
-                  title={!user ? "로그인 후 저장할 수 있어요" : undefined}
-                  className={cn(
-                    flashcardState === "saved" &&
-                      "border-violet-500 bg-violet-600 hover:bg-violet-700",
-                  )}
-                >
-                  {flashcardState === "saved" ? (
-                    <Check className="mr-1 h-4 w-4" />
-                  ) : (
-                    <Layers className="mr-1 h-4 w-4" />
-                  )}
-                  {flashcardState === "saving"
-                    ? "저장 중…"
-                    : flashcardState === "saved"
-                      ? "저장됨"
-                      : "암기카드로 저장"}
-                </Button>
-              )}
+              <Button
+                variant={flashcardState === "saved" ? "default" : "outline"}
+                size="sm"
+                onClick={handleSaveFlashcard}
+                disabled={!user || flashcardState !== "idle"}
+                title={!user ? "로그인 후 저장할 수 있어요" : undefined}
+                className={cn(
+                  flashcardState === "saved" &&
+                    "border-violet-500 bg-violet-600 hover:bg-violet-700",
+                )}
+              >
+                {flashcardState === "saved" ? (
+                  <Check className="mr-1 h-4 w-4" />
+                ) : (
+                  <Layers className="mr-1 h-4 w-4" />
+                )}
+                {flashcardState === "saving"
+                  ? "저장 중…"
+                  : flashcardState === "saved"
+                    ? "저장됨"
+                    : "암기카드로 저장"}
+              </Button>
               {user && (
                 <Button
                   variant={isFav ? "default" : "outline"}
@@ -528,7 +547,7 @@ export default function ArchiveDetailPage() {
               )}
             </div>
           </div>
-          {type === "concept" && flashcardState === "saved" && (
+          {flashcardState === "saved" && (
             <Link
               href="/flashcards"
               className="mt-2 inline-flex w-fit items-center gap-1 text-sm font-medium text-violet-700 hover:underline dark:text-violet-300"

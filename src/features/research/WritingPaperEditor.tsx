@@ -35,6 +35,7 @@ import {
   Play, Timer, Lightbulb, Plus, Trash2, History,
   Diff, RotateCcw, ArrowUp, ArrowDown, Download, ClipboardCheck, Quote, Copy, Calculator,
   Loader2, Compass, GraduationCap, Paperclip, BookMarked, ListOrdered,
+  DraftingCompass,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -85,6 +86,8 @@ import {
   useUpdateWritingPaper,
 } from "./useWritingPaper";
 import { useLogWritingActivity } from "./useWritingPaperHistory";
+import { useResearchDesign } from "./useResearchDesign";
+import { buildResearchMethodDraft } from "@/lib/research-design-draft";
 import ResearchJourneyGuide from "./ResearchJourneyGuide";
 
 interface Props {
@@ -754,6 +757,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   const update = useUpdateWritingPaper();
   const logActivity = useLogWritingActivity();
   const queryClient = useQueryClient();
+  // H1(2026-07-18): 연구 설계 → 논문 '연구 방법(Ⅲ장)' import 소스 (계획서 import의 남은 반쪽)
+  const { design } = useResearchDesign(readOnly ? undefined : user.id);
 
   const { active: timerActive, start: startTimer } = useStudyTimerStore();
   const { mutateAsync: createSession } = useCreateSession();
@@ -1650,6 +1655,58 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
       .join(" · ");
     toast.success(`연구보고서 내용을 ${done} 초안으로 가져왔습니다 — 인용·문장을 본문 수준으로 다듬어 저장하세요.`);
     logEditorEvent(user.id, "seed_from_report");
+  }
+
+  // H1(2026-07-18): 연구 설계에 의미 있는 작성분이 있는지 — 있을 때만 '가져오기' 노출
+  const designHasContent = useMemo(() => {
+    if (!design) return false;
+    const p = design.participants;
+    return !!(
+      design.approach ||
+      design.methodName?.trim() ||
+      design.dataCollection?.trim() ||
+      design.dataAnalysis?.trim() ||
+      (design.selectedStatMethods ?? []).length > 0 ||
+      (design.procedureSteps ?? []).some((s) => s.step?.trim() || s.detail?.trim()) ||
+      (design.instruments ?? []).some((it) => it.name?.trim() || it.plan?.trim()) ||
+      (p && (p.population?.trim() || p.sampleSize?.trim() || p.samplingMethod?.trim() || p.protection?.trim()))
+    );
+  }, [design]);
+
+  /**
+   * H1(2026-07-18): 연구 설계(buildResearchMethodDraft) → 논문 'Ⅲ. 연구 방법' 장 요약에 실제 삽입.
+   * ResearchProposalEditor.seedMethodFromDesign 와 동일 UX — 공용 순수함수로 초안을 조립하고,
+   * 기존 작성분이 있으면 덮어쓰지 않고 확인 후 '장 요약'에 이어 붙인다.
+   */
+  function seedMethodFromDesign() {
+    if (readOnly || !paper) return;
+    if (!design) {
+      toast.info("아직 작성된 연구 설계가 없습니다 — '연구 설계' 단계에서 먼저 작성하세요.");
+      return;
+    }
+    const text = buildResearchMethodDraft(design).trim();
+    if (!text) {
+      toast.info("가져올 설계 내용이 없습니다.");
+      return;
+    }
+    if (!chapterIsEmpty(form.sections.method)) {
+      const ok = confirm(
+        "'연구 방법(Ⅲ장)'에 이미 작성된 내용이 있습니다.\n확인 = '장 요약'에 설계 초안을 이어 붙이기 / 취소 = 중단",
+      );
+      if (!ok) return;
+    }
+    setForm((prev) => {
+      const secs = [...prev.sections.method];
+      const ovIdx = secs.findIndex((sec) => isOverviewSection(sec));
+      const idx = ovIdx >= 0 ? ovIdx : 0;
+      const kept = secs[idx].paragraphs.filter((par) => par.text.trim());
+      secs[idx] = { ...secs[idx], paragraphs: [...kept, { id: uid(), text }] };
+      return { ...prev, sections: { ...prev.sections, method: secs } };
+    });
+    markDirty();
+    toast.success(
+      "연구 설계에서 연구방법 초안을 '장 요약'에 가져왔습니다 — 각 절로 옮겨 본문 수준으로 다듬어 저장하세요.",
+    );
   }
 
   /** R3: 계획서 referencePaperIds + 보고서 priorResearchPaperIds → APA7 참고문헌 텍스트 */
@@ -2894,6 +2951,38 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             )}
           </div>
         </div>
+
+        {/* H1(2026-07-18): 연구 설계 → 연구 방법(Ⅲ장) import — 설계 작성분이 있으면 초안 가져오기,
+            없으면 설계 단계로 안내 */}
+        {!readOnly && paper && step === "method" && (
+          designHasContent ? (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-primary/40 bg-primary/5 px-4 py-3">
+              <p className="text-xs text-foreground/85">
+                작성하신 <span className="font-semibold">연구 설계</span>(대상·도구·절차·분석)를 Ⅲ장 연구방법 초안으로 가져올 수 있어요.
+              </p>
+              <Button
+                size="sm"
+                variant="outline"
+                className="h-7 shrink-0 gap-1 text-xs"
+                onClick={seedMethodFromDesign}
+              >
+                <DraftingCompass size={12} /> 연구 설계에서 가져오기
+              </Button>
+            </div>
+          ) : chapterIsEmpty(form.sections.method) ? (
+            <div className="mt-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-dashed border-muted-foreground/30 bg-muted/20 px-4 py-3">
+              <p className="text-xs text-muted-foreground">
+                <span className="font-semibold text-foreground/80">연구 설계</span> 단계를 먼저 작성하면 대상·도구·절차·분석 계획을 Ⅲ장 연구방법 초안으로 자동 가져올 수 있어요.
+              </p>
+              <Link
+                href="/mypage/research?tab=design"
+                className="inline-flex h-7 shrink-0 items-center gap-1 rounded-md border px-2.5 text-xs text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+              >
+                <DraftingCompass size={12} /> 연구 설계로 이동
+              </Link>
+            </div>
+          ) : null
+        )}
 
         {/* 장 요약 — 세부 절 앞 도입 단락 (항상 표시) */}
         {overviewSection && (

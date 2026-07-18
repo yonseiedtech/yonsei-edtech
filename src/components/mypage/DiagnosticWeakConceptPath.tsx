@@ -21,7 +21,14 @@ import {
   Ruler,
   GraduationCap,
   BookOpen,
+  GitFork,
+  Layers,
 } from "lucide-react";
+import {
+  conceptMatchesTheory,
+  THEORY_MAP_HREF,
+  FLASHCARDS_HREF,
+} from "@/features/diagnosis/weak-concept-links";
 
 const MAX_THESES = 4;
 
@@ -170,6 +177,14 @@ export default function DiagnosticWeakConceptPath({
                 </Link>
               </div>
 
+              {/* 학습 자산 원클릭 — 진단 결과 페이지와 동일 동선(이론 계보·암기카드) */}
+              <div className="flex flex-wrap items-center gap-1 px-3 pb-2">
+                {conceptMatchesTheory(name) && (
+                  <PathAction href={THEORY_MAP_HREF} icon={GitFork} label="이론 계보" />
+                )}
+                <PathAction href={FLASHCARDS_HREF} icon={Layers} label="암기카드" />
+              </div>
+
               {/* 펼침 패널 — 측정도구 + 졸업생 논문 */}
               {isOpen && (
                 <div className="border-t border-violet-200/60 bg-card/60 px-3 py-2.5 dark:border-violet-800/40 dark:bg-black/20">
@@ -286,5 +301,26 @@ export default function DiagnosticWeakConceptPath({
         })}
       </div>
     </div>
+  );
+}
+
+/** 약점 개념 학습 동선 칩 — 이론 계보·암기카드로 원클릭 이동(진단 결과 페이지와 동일 톤, 위젯용 축약). */
+function PathAction({
+  href,
+  icon: Icon,
+  label,
+}: {
+  href: string;
+  icon: typeof GitFork;
+  label: string;
+}) {
+  return (
+    <Link
+      href={href}
+      className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-card/60 px-2 py-0.5 text-[11px] font-medium text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-800 dark:bg-black/20 dark:text-violet-300 dark:hover:bg-violet-900/40"
+    >
+      <Icon size={11} className="text-violet-500 dark:text-violet-400" aria-hidden />
+      {label}
+    </Link>
   );
 }

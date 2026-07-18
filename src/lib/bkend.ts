@@ -3078,8 +3078,19 @@ import type { Flashcard, FlashcardSource, WrongCardSeed } from "@/types/flashcar
 import { todayYmdKst as flashcardTodayYmdKst } from "./dday";
 
 export const flashcardsApi = {
-  makeId: (userId: string, source: FlashcardSource, refId: string) =>
-    `${userId}__${source === "concept" ? "concept" : source === "foundation_term" ? "term" : "dx"}__${refId}`,
+  makeId: (userId: string, source: FlashcardSource, refId: string) => {
+    const prefix =
+      source === "concept"
+        ? "concept"
+        : source === "foundation_term"
+          ? "term"
+          : source === "variable"
+            ? "variable"
+            : source === "measurement"
+              ? "measurement"
+              : "dx";
+    return `${userId}__${prefix}__${refId}`;
+  },
   /** 본인 카드 전체 (정렬은 클라이언트). */
   listByUser: (userId: string) =>
     dataApi.list<Flashcard>("flashcards", { "filter[userId]": userId, limit: 1000 }),
@@ -3173,6 +3184,101 @@ export const flashcardsApi = {
       sourceQuestionId: null,
       conceptId: null,
       foundationTermId: term.id,
+    };
+    const existing = await dataApi.get<Flashcard>("flashcards", id).catch(() => null);
+    if (existing) {
+      // 멱등 — 복습 메타 비변경.
+      return dataApi.update<Flashcard>("flashcards", id, content);
+    }
+    const today = flashcardTodayYmdKst();
+    return dataApi.upsert<Flashcard>("flashcards", id, {
+      ...content,
+      dueAt: today,
+      streak: 0,
+      intervalDays: 1,
+      reviewCount: 0,
+      correctCount: 0,
+      lastReviewedAt: null,
+    });
+  },
+  /**
+   * 아카이브 변인(archive_variables) → 카드 멱등 저장 (M9).
+   * 앞면=변인명, 뒷면=정의(+유형). doc id = `${userId}__variable__${variableId}`.
+   * saveFromConcept 과 동일한 get-선확인 멱등(복습 메타 보존). area 는 "concept" 고정.
+   */
+  saveFromVariable: async (
+    userId: string,
+    variable: { id: string; name: string; description?: string; typeLabel?: string },
+  ): Promise<Flashcard> => {
+    const id = `${userId}__variable__${variable.id}`;
+    const back = [variable.description, variable.typeLabel ? `유형: ${variable.typeLabel}` : null]
+      .filter(Boolean)
+      .join("\n\n");
+    const content: Record<string, unknown> = {
+      userId,
+      source: "variable",
+      front: variable.name,
+      back: back || "(정의가 등록되지 않은 변인입니다)",
+      frontHint: null,
+      area: "concept",
+      cognitiveLevel: null,
+      sourceQuestionId: null,
+      conceptId: null,
+      variableId: variable.id,
+    };
+    const existing = await dataApi.get<Flashcard>("flashcards", id).catch(() => null);
+    if (existing) {
+      // 멱등 — 복습 메타 비변경.
+      return dataApi.update<Flashcard>("flashcards", id, content);
+    }
+    const today = flashcardTodayYmdKst();
+    return dataApi.upsert<Flashcard>("flashcards", id, {
+      ...content,
+      dueAt: today,
+      streak: 0,
+      intervalDays: 1,
+      reviewCount: 0,
+      correctCount: 0,
+      lastReviewedAt: null,
+    });
+  },
+  /**
+   * 아카이브 측정도구(archive_measurements) → 카드 멱등 저장 (M9).
+   * 앞면=도구명(원어 병기), 뒷면=정의+핵심 메타(저자·척도·신뢰도).
+   * doc id = `${userId}__measurement__${measurementId}`. area 는 "concept" 고정.
+   */
+  saveFromMeasurement: async (
+    userId: string,
+    tool: {
+      id: string;
+      name: string;
+      description?: string;
+      originalName?: string;
+      author?: string;
+      scaleType?: string;
+      reliability?: string;
+    },
+  ): Promise<Flashcard> => {
+    const id = `${userId}__measurement__${tool.id}`;
+    const back = [
+      tool.description,
+      tool.author ? `저자: ${tool.author}` : null,
+      tool.scaleType ? `척도: ${tool.scaleType}` : null,
+      tool.reliability ? `신뢰도: ${tool.reliability}` : null,
+    ]
+      .filter(Boolean)
+      .join("\n\n");
+    const content: Record<string, unknown> = {
+      userId,
+      source: "measurement",
+      front: tool.originalName ? `${tool.name} (${tool.originalName})` : tool.name,
+      back: back || "(정의가 등록되지 않은 측정도구입니다)",
+      frontHint: null,
+      area: "concept",
+      cognitiveLevel: null,
+      sourceQuestionId: null,
+      conceptId: null,
+      measurementId: tool.id,
     };
     const existing = await dataApi.get<Flashcard>("flashcards", id).catch(() => null);
     if (existing) {

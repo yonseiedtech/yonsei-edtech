@@ -11,7 +11,12 @@
 
 import type { CognitiveLevel, DiagnosticArea } from "./diagnostic";
 
-export type FlashcardSource = "diagnostic_wrong" | "concept" | "foundation_term";
+export type FlashcardSource =
+  | "diagnostic_wrong"
+  | "concept"
+  | "foundation_term"
+  | "variable"
+  | "measurement";
 
 export interface Flashcard {
   /** deterministic doc id — 같은 문항/개념 재저장 시 upsert(merge) 로 중복 차단. */
@@ -34,6 +39,10 @@ export interface Flashcard {
   conceptId?: string;
   /** archive_foundation_terms 문서 id → /archive/foundation-terms/[id] 링크 (Phase 4-A) */
   foundationTermId?: string;
+  /** archive_variables 문서 id → /archive/variable/[id] 링크 (M9) */
+  variableId?: string;
+  /** archive_measurements 문서 id → /archive/measurement/[id] 링크 (M9) */
+  measurementId?: string;
   area?: DiagnosticArea;
   cognitiveLevel?: CognitiveLevel;
 
