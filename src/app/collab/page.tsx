@@ -14,6 +14,7 @@ import {
 } from "@/features/collaborative-research/api/useCollabResearch";
 import CollabResearchCard from "@/features/collaborative-research/components/CollabResearchCard";
 import CollabResearchInviteInbox from "@/features/collaborative-research/components/CollabResearchInviteInbox";
+import SimilarResearchersSection from "./_components/SimilarResearchersSection";
 
 export default function CollabResearchListPage() {
   return (
@@ -43,6 +44,8 @@ function CollabResearchListContent() {
       />
 
       <div className="space-y-6">
+        {user && <SimilarResearchersSection me={user} />}
+
         {user?.id && invites.length > 0 && (
           <CollabResearchInviteInbox invites={invites} recipientId={user.id} />
         )}
