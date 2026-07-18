@@ -26,6 +26,7 @@ import AuthGuard from "@/features/auth/AuthGuard";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { logAudit } from "@/lib/audit";
 import { roadmapStagesApi } from "@/lib/bkend";
 import { isAtLeast } from "@/lib/permissions";
 import { auth as firebaseAuth } from "@/lib/firebase";
@@ -147,6 +148,15 @@ function AdminContent() {
     setBusyId(stageId);
     try {
       await roadmapStagesApi.delete(stageId);
+      logAudit({
+        action: "로드맵 단계 삭제",
+        category: "system",
+        detail: `"${stages.find((s) => s.id === stageId)?.title ?? stageId}"`,
+        targetId: stageId,
+        targetName: stages.find((s) => s.id === stageId)?.title,
+        userId: user?.id ?? "",
+        userName: user?.name ?? "",
+      });
       toast.success("삭제됨");
       void load();
     } catch (e) {

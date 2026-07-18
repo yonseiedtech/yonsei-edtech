@@ -29,6 +29,7 @@ export type DashboardWidgetKey =
   | "diagnosisReadiness"
   | "myGrowth"
   | "thesisProgress"
+  | "semesterCalendar"
   | "seminars"
   | "staffAlerts";
 
@@ -115,6 +116,10 @@ export const DASHBOARD_WIDGET_META: Record<
     label: "내 논문 진행도",
     description: "보고서 완성도(장별 작성률·분량 균형·점검 통과율)를 한눈에.",
   },
+  semesterCalendar: {
+    label: "이번 학기 주요 일정",
+    description: "개강·중간·기말·종강 등 다가오는 학사 일정을 D-day로.",
+  },
   seminars: {
     label: "예정 세미나",
     description: "다가오는 세미나.",
@@ -154,6 +159,7 @@ export const DASHBOARD_WIDGET_KEYS: DashboardWidgetKey[] = [
   "diagnosisReadiness",
   "myGrowth",
   "thesisProgress",
+  "semesterCalendar",
   "seminars",
   "staffAlerts",
 ];
@@ -173,6 +179,7 @@ export const DEFAULT_VISIBLE_WIDGETS: Set<DashboardWidgetKey> = new Set([
   "miniCalendar",
   "myAcademicActivities",
   "diagnosisReadiness",
+  "semesterCalendar",
   "seminars",
   "staffAlerts", // 역할 게이트로 운영진에게만 표시됨
 ]);

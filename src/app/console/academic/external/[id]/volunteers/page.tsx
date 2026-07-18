@@ -30,6 +30,7 @@ import {
   activityApplicantsApi,
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { logAudit } from "@/lib/audit";
 import {
   VOLUNTEER_ROLE_LABELS,
   type VolunteerAssignment,
@@ -208,7 +209,18 @@ export default function ExternalActivityVolunteersConsole({
   function handleDelete(v: VolunteerAssignment) {
     if (!window.confirm(`${v.userName ?? "이 봉사자"} 님의 배정을 삭제할까요?`)) return;
     deleteMutation.mutate(v.id, {
-      onSuccess: () => toast.success("배정을 삭제했습니다."),
+      onSuccess: () => {
+        toast.success("배정을 삭제했습니다.");
+        logAudit({
+          action: "봉사 배정 삭제",
+          category: "system",
+          detail: `${v.userName ?? "봉사자"} 배정 삭제`,
+          targetId: v.id,
+          targetName: v.userName,
+          userId: viewer?.id ?? "",
+          userName: viewer?.name ?? "",
+        });
+      },
       onError: (e) =>
         toast.error(`삭제 실패: ${e instanceof Error ? e.message : "오류"}`),
     });

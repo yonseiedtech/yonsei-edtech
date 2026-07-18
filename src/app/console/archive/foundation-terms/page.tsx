@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { logAudit } from "@/lib/audit";
 import { isAtLeast } from "@/lib/permissions";
 import { useInvalidateArchiveDraftBadge } from "@/features/admin/useArchiveDraftBadge";
 import { foundationTermsApi } from "@/lib/bkend";
@@ -124,6 +125,15 @@ export default function ConsoleFoundationTermsPage() {
     if (!confirm(`"${t.term}"을 삭제하시겠습니까?`)) return;
     try {
       await foundationTermsApi.delete(t.id);
+      logAudit({
+        action: "아카이브 기초용어 삭제",
+        category: "system",
+        detail: `"${t.term}"`,
+        targetId: t.id,
+        targetName: t.term,
+        userId: user?.id ?? "",
+        userName: user?.name ?? "",
+      });
       toast.success("삭제 완료");
       load();
     } catch (err) {

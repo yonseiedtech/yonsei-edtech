@@ -21,9 +21,18 @@ const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType; 
 };
 
 type CategoryFilter = "all" | AuditLog["category"];
+type PeriodFilter = "all" | "7d" | "30d";
+
+const PERIOD_OPTIONS: { key: PeriodFilter; label: string }[] = [
+  { key: "all", label: "전체 기간" },
+  { key: "7d", label: "최근 7일" },
+  { key: "30d", label: "최근 30일" },
+];
 
 export default function AuditLogPage() {
   const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>("all");
+  const [query, setQuery] = useState("");
+  const [period, setPeriod] = useState<PeriodFilter>("all");
 
   const { data, isLoading } = useQuery({
     queryKey: ["audit-logs"],
@@ -36,9 +45,22 @@ export default function AuditLogPage() {
   const logs = data ?? [];
 
   const filtered = useMemo(() => {
-    if (categoryFilter === "all") return logs;
-    return logs.filter((l) => l.category === categoryFilter);
-  }, [logs, categoryFilter]);
+    const term = query.trim().toLowerCase();
+    const now = Date.now();
+    const periodMs = period === "7d" ? 7 * 864e5 : period === "30d" ? 30 * 864e5 : 0;
+    return logs.filter((l) => {
+      if (categoryFilter !== "all" && l.category !== categoryFilter) return false;
+      if (periodMs > 0) {
+        const ts = new Date(l.createdAt).getTime();
+        if (Number.isFinite(ts) && now - ts > periodMs) return false;
+      }
+      if (term) {
+        const haystack = `${l.action} ${l.userName} ${l.detail} ${l.targetName ?? ""}`.toLowerCase();
+        if (!haystack.includes(term)) return false;
+      }
+      return true;
+    });
+  }, [logs, categoryFilter, query, period]);
 
   if (isLoading) {
     return (
@@ -82,6 +104,32 @@ export default function AuditLogPage() {
             </button>
           );
         })}
+      </div>
+
+      {/* 액션·행위자 검색 + 기간 필터 */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <input
+          type="text"
+          value={query}
+          onChange={(e) => setQuery(e.target.value)}
+          placeholder="작업·수행자·상세 검색"
+          className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring sm:max-w-xs"
+        />
+        <div className="flex flex-wrap gap-2">
+          {PERIOD_OPTIONS.map(({ key, label }) => (
+            <button
+              key={key}
+              onClick={() => setPeriod(key)}
+              className={cn(
+                "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                period === key ? "bg-primary text-primary-foreground" : "hover:bg-muted",
+              )}
+            >
+              {label}
+            </button>
+          ))}
+        </div>
+        <span className="text-xs text-muted-foreground sm:ml-auto">{filtered.length}건 표시</span>
       </div>
 
       {/* 로그 목록 */}

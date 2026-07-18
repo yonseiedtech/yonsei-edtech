@@ -21,6 +21,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
+import { logAudit } from "@/lib/audit";
 import {
   archiveConceptsApi,
   archiveVariablesApi,
@@ -227,6 +228,16 @@ export default function ConsoleArchivePage() {
       if (type === "concept") await archiveConceptsApi.delete(item.id);
       else if (type === "variable") await archiveVariablesApi.delete(item.id);
       else await archiveMeasurementsApi.delete(item.id);
+      const typeLabel = type === "concept" ? "개념" : type === "variable" ? "변인" : "측정도구";
+      logAudit({
+        action: `아카이브 ${typeLabel} 삭제`,
+        category: "system",
+        detail: `"${item.name}"`,
+        targetId: item.id,
+        targetName: item.name,
+        userId: user?.id ?? "",
+        userName: user?.name ?? "",
+      });
       toast.success("삭제 완료");
       load();
     } catch (err) {

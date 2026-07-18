@@ -11,6 +11,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { logAudit } from "@/lib/audit";
 import { isAtLeast } from "@/lib/permissions";
 import { useInvalidateArchiveDraftBadge } from "@/features/admin/useArchiveDraftBadge";
 import { statisticalMethodsApi } from "@/lib/bkend";
@@ -97,6 +98,15 @@ export default function ConsoleStatisticalMethodsPage() {
     if (!confirm(`"${m.name}"을 삭제하시겠습니까?`)) return;
     try {
       await statisticalMethodsApi.delete(m.id);
+      logAudit({
+        action: "통계방법 삭제",
+        category: "system",
+        detail: `"${m.name}"`,
+        targetId: m.id,
+        targetName: m.name,
+        userId: user?.id ?? "",
+        userName: user?.name ?? "",
+      });
       toast.success("삭제 완료");
       load();
     } catch (err) {

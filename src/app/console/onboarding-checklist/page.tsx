@@ -50,6 +50,7 @@ import {
 } from "@/lib/bkend";
 import { importOnboardingChecklistSeed } from "@/lib/onboarding-checklist-seed";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { logAudit } from "@/lib/audit";
 import {
   CHECKLIST_COMPLETION_LABELS,
   CHECKLIST_ICONS,
@@ -345,7 +346,18 @@ export default function OnboardingChecklistConsolePage() {
                             type="button"
                             onClick={() => {
                               if (confirm(`"${it.label}" 항목을 삭제할까요?`))
-                                deleteMutation.mutate(it.id);
+                                deleteMutation.mutate(it.id, {
+                                  onSuccess: () =>
+                                    logAudit({
+                                      action: "온보딩 체크리스트 항목 삭제",
+                                      category: "system",
+                                      detail: `"${it.label}"`,
+                                      targetId: it.id,
+                                      targetName: it.label,
+                                      userId: user?.id ?? "",
+                                      userName: user?.name ?? "",
+                                    }),
+                                });
                             }}
                             title="삭제"
                             className="rounded-md p-1.5 text-red-500 hover:bg-red-50"

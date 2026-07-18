@@ -10,6 +10,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { ClipboardList, Plus, Trash2, Power, Save } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { logAudit } from "@/lib/audit";
 import { isAtLeast } from "@/lib/permissions";
 import { guideTracksApi, guideItemsApi } from "@/lib/bkend";
 import {
@@ -232,10 +233,20 @@ function ConsoleSteppingStoneContent() {
   async function removeItem(id: string) {
     if (!isStaff) return;
     if (!confirm("이 항목을 삭제할까요?")) return;
+    const target = items.find((x) => x.id === id);
     setBusy(true);
     try {
       await guideItemsApi.delete(id);
       setItems((prev) => prev.filter((x) => x.id !== id));
+      logAudit({
+        action: "가이드 항목 삭제",
+        category: "system",
+        detail: `"${target?.title ?? id}"`,
+        targetId: id,
+        targetName: target?.title,
+        userId: viewer?.id ?? "",
+        userName: viewer?.name ?? "",
+      });
     } finally {
       setBusy(false);
     }
@@ -259,6 +270,15 @@ function ConsoleSteppingStoneContent() {
     setBusy(true);
     try {
       await guideTracksApi.delete(t.id);
+      logAudit({
+        action: "가이드 트랙 삭제",
+        category: "system",
+        detail: `"${t.title}"`,
+        targetId: t.id,
+        targetName: t.title,
+        userId: viewer?.id ?? "",
+        userName: viewer?.name ?? "",
+      });
       setTracks((prev) => {
         const next = prev.filter((x) => x.id !== t.id);
         if (activeTrackId === t.id) {

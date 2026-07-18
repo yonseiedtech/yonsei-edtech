@@ -60,6 +60,7 @@ import SpacedRepetitionWidget from "@/features/dashboard/SpacedRepetitionWidget"
 import DiagnosisReadinessWidget from "@/features/dashboard/DiagnosisReadinessWidget";
 import MyGrowthWidget from "@/features/dashboard/MyGrowthWidget";
 import ThesisProgressWidget from "@/features/research/ThesisProgressWidget";
+import SemesterCalendarWidget from "@/features/dashboard/SemesterCalendarWidget";
 import DailyReflectionPrompt from "@/features/dashboard/DailyReflectionPrompt";
 import { canShowWidget, isAlumni } from "@/features/dashboard/widget-visibility";
 import DraggableWidget from "@/features/dashboard/editing/DraggableWidget";
@@ -421,6 +422,14 @@ function DashboardContent() {
         <ThesisProgressWidget variant="card" />
       </section>
     ),
+    // M3: 이번 학기 주요 일정 — 학사 컨텍스트 위젯이므로 재학생 전용(졸업생/자문 제외).
+    //   콘솔 academic-calendar 와 동일 정책(academicCalendar 페르소나 게이트)을 재사용.
+    //   데이터/다가오는 일정 없으면 위젯 컴포넌트가 null 렌더로 자동 숨김.
+    semesterCalendar: canShowWidget(user.role, "academicCalendar") ? (
+      <section className="mx-auto mt-6 max-w-6xl px-4">
+        <SemesterCalendarWidget />
+      </section>
+    ) : null,
   };
 
   const sortedWidgets = getSortedWidgets(layout);

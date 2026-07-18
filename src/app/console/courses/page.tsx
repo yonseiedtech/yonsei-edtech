@@ -30,6 +30,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { logAudit } from "@/lib/audit";
 import { isAtLeast } from "@/lib/permissions";
 import { courseOfferingsApi, courseEnrollmentsApi, profilesApi, comprehensiveExamsApi } from "@/lib/bkend";
 import { normalizePeriodSchedule } from "@/lib/courseSchedule";
@@ -261,6 +262,15 @@ function ConsoleCoursesContent() {
       await courseOfferingsApi.delete(row.id);
       setRows((prev) => prev.filter((r) => r.id !== row.id));
       if (expandedId === row.id) setExpandedId(null);
+      logAudit({
+        action: "강좌 삭제",
+        category: "system",
+        detail: `"${row.courseName}"`,
+        targetId: row.id,
+        targetName: row.courseName,
+        userId: viewer?.id ?? "",
+        userName: viewer?.name ?? "",
+      });
       toast.success("삭제되었습니다");
     } catch (e) {
       console.error("[courses/handleDelete] 실패", e);

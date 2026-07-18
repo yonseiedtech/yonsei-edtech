@@ -30,6 +30,7 @@ import {
   activityApplicantsApi,
 } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { logAudit } from "@/lib/audit";
 import {
   SPEAKER_SUBMISSION_TYPE_LABELS,
   SPEAKER_SUBMISSION_TYPE_COLORS,
@@ -220,7 +221,18 @@ export default function ExternalActivitySpeakersConsole({
   function handleDelete(s: SpeakerAssignment) {
     if (!window.confirm(`${s.userName ?? "이 발표자"} 님의 배정을 삭제할까요?`)) return;
     deleteMutation.mutate(s.id, {
-      onSuccess: () => toast.success("발표자 배정을 삭제했습니다."),
+      onSuccess: () => {
+        toast.success("발표자 배정을 삭제했습니다.");
+        logAudit({
+          action: "연사 배정 삭제",
+          category: "system",
+          detail: `${s.userName ?? "발표자"} 배정 삭제`,
+          targetId: s.id,
+          targetName: s.userName,
+          userId: viewer?.id ?? "",
+          userName: viewer?.name ?? "",
+        });
+      },
       onError: (e) =>
         toast.error(`삭제 실패: ${e instanceof Error ? e.message : "오류"}`),
     });

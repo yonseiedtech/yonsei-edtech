@@ -27,6 +27,7 @@ import AuthGuard from "@/features/auth/AuthGuard";
 import EmptyState from "@/components/ui/empty-state";
 import InlineNotification from "@/components/ui/inline-notification";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { logAudit } from "@/lib/audit";
 import { aiForumsApi } from "@/lib/bkend";
 import {
   AI_FORUM_CATEGORIES,
@@ -165,6 +166,15 @@ function AdminContent() {
     setBusyId(id);
     try {
       await aiForumsApi.delete(id);
+      logAudit({
+        action: "AI 포럼 토론 삭제",
+        category: "system",
+        detail: `"${topics.find((t) => t.id === id)?.title ?? id}"`,
+        targetId: id,
+        targetName: topics.find((t) => t.id === id)?.title,
+        userId: user?.id ?? "",
+        userName: user?.name ?? "",
+      });
       toast.success("삭제되었습니다.");
       void load();
     } catch (e) {

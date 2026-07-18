@@ -21,6 +21,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { logAudit } from "@/lib/audit";
 import { isAtLeast } from "@/lib/permissions";
 import { useInvalidateArchiveDraftBadge } from "@/features/admin/useArchiveDraftBadge";
 import { writingTipsApi } from "@/lib/bkend";
@@ -102,6 +103,15 @@ export default function ConsoleWritingTipsPage() {
     if (!confirm(`"${t.title}"을 삭제하시겠습니까?`)) return;
     try {
       await writingTipsApi.delete(t.id);
+      logAudit({
+        action: "글쓰기 팁 삭제",
+        category: "system",
+        detail: `"${t.title}"`,
+        targetId: t.id,
+        targetName: t.title,
+        userId: user?.id ?? "",
+        userName: user?.name ?? "",
+      });
       toast.success("삭제 완료");
       load();
     } catch (err) {
