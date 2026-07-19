@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useOrgChart, buildOrgTree, type OrgTreeNode, type OrgRole } from "@/features/admin/settings/useOrgChart";
+import { semesterLabelFromKey } from "@/lib/semester";
 
 const ROLE_LABELS: Record<OrgRole, string> = {
-  advisor: "주임교수",
+  advisor: "자문위원",
   professor: "전공 교수",
   president: "학회장",
   vice_president: "부학회장",
@@ -243,7 +244,7 @@ function MobileOrgList({ nodes, depth = 0 }: { nodes: OrgTreeNode[]; depth?: num
 }
 
 export default function OrgChart() {
-  const { positions, isLoading } = useOrgChart();
+  const { positions, isLoading, semesterKey } = useOrgChart();
 
   if (isLoading) {
     return (
@@ -260,7 +261,8 @@ export default function OrgChart() {
 
   return (
     <div className="rounded-2xl border bg-card p-6">
-      <h3 className="mb-4 text-center text-lg font-bold">조직도</h3>
+      <h3 className="text-center text-lg font-bold">조직도</h3>
+      <p className="mb-4 text-center text-xs text-muted-foreground">{semesterLabelFromKey(semesterKey)} 기준</p>
 
       {/* 데스크톱: 트리 시각화 */}
       <div className="hidden justify-center overflow-x-auto md:flex">

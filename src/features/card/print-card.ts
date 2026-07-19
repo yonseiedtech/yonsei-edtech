@@ -51,6 +51,8 @@ export interface PrintCardColors {
   qrBox: string;
   /** QR 전경(모듈) 색 — 인쇄 대비 위해 항상 진한 색 */
   qrFg: string;
+  /** 재단선(crop marks) 색 — 배경 대비 확보(라이트=흑, 네이비=백) */
+  cropMark: string;
 }
 
 /** 두 디자인 변형 — ① 라이트(백색) ② 네이비 */
@@ -64,6 +66,7 @@ export const PRINT_CARD_COLORS: Record<PrintCardVariant, PrintCardColors> = {
     emblemBadge: BRAND_PALETTE.white,
     qrBox: BRAND_PALETTE.white,
     qrFg: BRAND_PALETTE.navy,
+    cropMark: "#000000", // 백색 바탕 → 흑색 재단선
   },
   navy: {
     bg: BRAND_PALETTE.navy,
@@ -74,8 +77,15 @@ export const PRINT_CARD_COLORS: Record<PrintCardVariant, PrintCardColors> = {
     emblemBadge: BRAND_PALETTE.white,
     qrBox: BRAND_PALETTE.white,
     qrFg: BRAND_PALETTE.navy,
+    cropMark: "#ffffff", // 네이비 바탕 → 백색 재단선
   },
 };
+
+/** 연락처 프리픽스 (명함 관행: M.=휴대전화, E.=이메일) — 미리보기·PDF 공용 */
+export const CONTACT_PREFIX = { phone: "M.", email: "E." } as const;
+
+/** 연락처 입력값 localStorage 키 (재방문 시 복원) */
+export const PRINT_CARD_CONTACT_STORAGE_KEY = "yonsei:print-card-contact";
 
 export const PRINT_CARD_VARIANT_LABELS: Record<PrintCardVariant, string> = {
   light: "라이트 (백색 바탕)",

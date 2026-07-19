@@ -99,6 +99,8 @@ interface LastGoalResult {
   achieved: boolean;
   progress: number;
   target: number;
+  /** v6-H3: 직전 주(2주 전) 회고 한 줄 — 있으면 다이제스트에 인용 */
+  priorReflection?: string;
 }
 
 function escapeHtml(s: string): string {
@@ -729,6 +731,16 @@ function buildSuggestionHtml(s: LearningSuggestion): string {
     lines.push(
       `<li>🎯 지난주 ${escapeHtml(g.area)} 목표 — <b>${status}</b> <a href="${base}/dashboard" style="color:#003876;text-decoration:none;font-size:13px">이번 주 목표 세우기 →</a></li>`,
     );
+    // v6-H3: 회고 루프 — 직전 회고가 있으면 인용, 없으면 회고 작성 프롬프트 1줄.
+    if (g.priorReflection) {
+      lines.push(
+        `<li style="color:#555">📝 직전 회고 — “${escapeHtml(g.priorReflection)}” <a href="${base}/dashboard" style="color:#003876;text-decoration:none;font-size:13px">지난주 회고 남기기 →</a></li>`,
+      );
+    } else {
+      lines.push(
+        `<li style="color:#555">📝 지난주를 한 줄로 돌아볼까요? <a href="${base}/dashboard" style="color:#003876;text-decoration:none;font-size:13px">회고 남기기 →</a></li>`,
+      );
+    }
   }
   if (s.diagnosis === "never") {
     lines.push(
@@ -877,16 +889,58 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
 
   // M1(v5): 지난주 목표 달성 회고 병합 (설정자만). 실패해도 나머지 발송은 계속.
   // todayYmd 는 KST 월요일이므로 -7 = 지난주 월요일 = 지난주 목표의 weekKey.
+  // v6-H3: 판정 결과를 weekly_goal_records 에 영속화(연속·추세·회고 축적). merge 로 회고 보존.
   try {
+    const lastWeekKey = shiftYmd(todayYmd, -7);
     const goalResults = await loadLastWeekGoalResults(
       db,
       recipients.map((r) => r.id),
-      shiftYmd(todayYmd, -7),
+      lastWeekKey,
     );
+    // v6-H3: 직전 주(2주 전) 회고 한 줄 인용용 — 단일 쿼리로 uid→reflection 맵.
+    const priorWeekKey = shiftYmd(lastWeekKey, -7);
+    const priorReflectionByUser = new Map<string, string>();
+    try {
+      const rSnap = await db
+        .collection("weekly_goal_records")
+        .where("weekKey", "==", priorWeekKey)
+        .get();
+      for (const doc of rSnap.docs) {
+        const d = doc.data() as { userId?: string; reflection?: string };
+        if (d.userId && typeof d.reflection === "string" && d.reflection.trim()) {
+          priorReflectionByUser.set(d.userId, d.reflection.trim());
+        }
+      }
+    } catch {
+      /* graceful — 회고 인용 없이 진행 */
+    }
+    const nowIso = new Date().toISOString();
     for (const [uid, res] of goalResults) {
+      const prior = priorReflectionByUser.get(uid);
+      if (prior) res.priorReflection = prior;
       const s = suggestionById.get(uid) ?? { diagnosis: null, needsResearchDesign: false };
       s.lastGoal = res;
       suggestionById.set(uid, s);
+      // 주차 마감 기록 upsert — reflection 필드는 미포함(merge 로 기존 회고 보존).
+      try {
+        await db
+          .collection("weekly_goal_records")
+          .doc(`${uid}_${lastWeekKey}`)
+          .set(
+            {
+              userId: uid,
+              weekKey: lastWeekKey,
+              goal: res.target,
+              achieved: res.progress,
+              met: res.achieved,
+              createdAt: nowIso,
+              updatedAt: nowIso,
+            },
+            { merge: true },
+          );
+      } catch (e) {
+        console.error("[email] weekly-digest goal-record upsert error:", e);
+      }
     }
   } catch (e) {
     console.error("[email] weekly-digest goal-result merge error:", e);

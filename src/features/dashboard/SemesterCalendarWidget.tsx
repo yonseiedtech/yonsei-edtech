@@ -20,11 +20,15 @@ import {
   FileCheck2,
   PartyPopper,
   Sun,
+  ClipboardCheck,
+  Gavel,
 } from "lucide-react";
 import {
   useAcademicCalendar,
   pickActiveEntry,
+  REVIEW_TYPE_LABEL,
   type AcademicCalendarEntry,
+  type AcademicReviewType,
 } from "@/features/site-settings/useAcademicCalendar";
 import { cn } from "@/lib/utils";
 import { SEMANTIC, type SemanticTone } from "@/lib/design-tokens";
@@ -75,12 +79,18 @@ function ddayTone(days: number): SemanticTone {
   return "default";
 }
 
+const REVIEW_META: Record<AcademicReviewType, { icon: LucideIcon; tone: SemanticTone }> = {
+  preliminary: { icon: ClipboardCheck, tone: "warning" },
+  final: { icon: Gavel, tone: "danger" },
+};
+
 interface UpcomingItem {
   label: string;
   icon: LucideIcon;
   tone: SemanticTone;
   date: Date;
   days: number;
+  ongoing?: boolean; // 기간형 일정이 오늘 진행 중
 }
 
 export default function SemesterCalendarWidget() {
@@ -94,13 +104,34 @@ export default function SemesterCalendarWidget() {
   if (!entry) return null;
 
   const today = kstToday(new Date());
-  const upcoming: UpcomingItem[] = MILESTONES.map((m) => {
+  const milestoneItems: (UpcomingItem | null)[] = MILESTONES.map((m) => {
     const date = parseYmd(entry[m.key] as string | undefined);
     if (!date) return null;
     const days = diffDays(today, date);
     if (days < 0) return null; // 이미 지난 일정 제외
     return { label: m.label, icon: m.icon, tone: m.tone, date, days };
-  })
+  });
+
+  // 기간형 심사 일정(예비심사·본심사) — 시작일 기준 D-day, 오늘 진행 중이면 "진행 중"
+  const reviewItems: (UpcomingItem | null)[] = (entry.reviews ?? []).map((r) => {
+    const start = parseYmd(r.startDate);
+    if (!start) return null;
+    const end = parseYmd(r.endDate) ?? start;
+    if (today > end) return null; // 이미 끝난 심사 제외
+    const meta = REVIEW_META[r.type];
+    const label = r.notes ? `${REVIEW_TYPE_LABEL[r.type]} (${r.notes})` : REVIEW_TYPE_LABEL[r.type];
+    const ongoing = today >= start && today <= end;
+    return {
+      label,
+      icon: meta.icon,
+      tone: meta.tone,
+      date: start,
+      days: ongoing ? 0 : diffDays(today, start),
+      ongoing,
+    };
+  });
+
+  const upcoming: UpcomingItem[] = [...milestoneItems, ...reviewItems]
     .filter((x): x is UpcomingItem => x !== null)
     .sort((a, b) => a.days - b.days)
     .slice(0, 5);
@@ -118,10 +149,10 @@ export default function SemesterCalendarWidget() {
     >
       <ul className="mt-4 space-y-1.5">
         {upcoming.map((item) => {
-          const badgeTone = ddayTone(item.days);
+          const badgeTone = item.ongoing ? "success" : ddayTone(item.days);
           return (
             <li
-              key={item.label}
+              key={`${item.label}-${formatMonthDay(item.date)}`}
               className="flex items-center gap-3 rounded-lg px-2 py-2"
             >
               <span
@@ -142,8 +173,12 @@ export default function SemesterCalendarWidget() {
                   SEMANTIC[badgeTone].chip,
                 )}
               >
-                <span aria-hidden="true">{item.days === 0 ? "D-DAY" : `D-${item.days}`}</span>
-                <span className="sr-only">{item.days === 0 ? "오늘" : `${item.days}일 남음`}</span>
+                <span aria-hidden="true">
+                  {item.ongoing ? "진행 중" : item.days === 0 ? "D-DAY" : `D-${item.days}`}
+                </span>
+                <span className="sr-only">
+                  {item.ongoing ? "진행 중" : item.days === 0 ? "오늘" : `${item.days}일 남음`}
+                </span>
               </span>
             </li>
           );

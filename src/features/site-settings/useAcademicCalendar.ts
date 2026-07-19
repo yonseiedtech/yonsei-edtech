@@ -3,6 +3,26 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { siteSettingsApi } from "@/lib/bkend";
 
+/** 기간형 심사 일정 유형 — 예비심사·본심사 (학위논문 심사) */
+export type AcademicReviewType = "preliminary" | "final";
+
+export const REVIEW_TYPE_LABEL: Record<AcademicReviewType, string> = {
+  preliminary: "예비심사",
+  final: "본심사",
+};
+
+/**
+ * 기간형 심사 일정 항목.
+ * 단일 날짜만 필요하면 endDate 를 비워 두면 되고(하위호환), 기간이면 startDate~endDate 로 표시한다.
+ */
+export interface AcademicReview {
+  id: string;
+  type: AcademicReviewType;
+  startDate: string;   // YYYY-MM-DD 시작일(필수)
+  endDate?: string;    // YYYY-MM-DD 종료일(선택) — 없으면 단일일
+  notes?: string;      // 세부 메모(예: 석사/박사)
+}
+
 export interface AcademicCalendarEntry {
   year: number;
   semester: "first" | "second";
@@ -13,11 +33,25 @@ export interface AcademicCalendarEntry {
   finalEnd: string;        // 기말고사 종료
   semesterEnd: string;     // 종강
   breakEnd: string;        // 방학 종료(다음 학기 개강 전날)
+  reviews?: AcademicReview[]; // 예비심사·본심사 등 기간형 심사 일정(선택)
   notes?: string;
 }
 
 export interface AcademicCalendarData {
   entries: AcademicCalendarEntry[];
+}
+
+/**
+ * 학기 최신순 정렬 비교자 — 연도 내림차순, 같은 연도면 2학기(후기) 우선.
+ * (예: 2026 후기 → 2026 전기 → 2025 후기 …)
+ */
+export function compareSemesterDesc(
+  a: Pick<AcademicCalendarEntry, "year" | "semester">,
+  b: Pick<AcademicCalendarEntry, "year" | "semester">,
+): number {
+  if (a.year !== b.year) return b.year - a.year;
+  if (a.semester === b.semester) return 0;
+  return a.semester === "second" ? -1 : 1;
 }
 
 const KEY = "academic_calendar";

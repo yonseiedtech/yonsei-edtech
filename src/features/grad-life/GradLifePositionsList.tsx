@@ -12,7 +12,8 @@
  * - 회원 프로필 페이지의 ProfileGradLife가 listByUser 로 조회·표시
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
+import { useSearchParams } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { GraduationCap, Plus, Pencil, Trash2, Users, Filter } from "lucide-react";
@@ -74,6 +75,17 @@ const initialForm = (): FormState => ({
   notes: "",
 });
 
+/** 조직도 직책명 → grad-life 역할 추론(불확실하면 society_staff). 프리필 편의용. */
+function inferGradRole(title: string): GradLifeRole {
+  const t = title.trim();
+  if (t.includes("부학회장") || t.includes("부회장")) return "society_vice_president";
+  if (t.includes("학회장") || t.includes("회장")) return "society_president";
+  if (t.includes("전공대표")) return "major_rep";
+  if (t.includes("조교")) return "ta";
+  if (t.includes("자문") || t.includes("지도")) return "student_advisor";
+  return "society_staff";
+}
+
 function formatRange(p: GradLifePosition): string {
   const start = `${p.startYear}년 ${GRAD_LIFE_SEMESTER_LABELS[p.startSemester]}`;
   if (!p.endYear || !p.endSemester) return `${start} ~ 진행중`;
@@ -122,6 +134,30 @@ export default function GradLifePositionsList() {
   const [openForm, setOpenForm] = useState(false);
   const [form, setForm] = useState<FormState>(initialForm());
   const [busy, setBusy] = useState(false);
+
+  // 조직 설정 → "활동 이력에 기록" 딥링크 프리필 (1회 가드). 없는 필드는 무시.
+  const searchParams = useSearchParams();
+  const prefilledRef = useRef(false);
+  useEffect(() => {
+    if (prefilledRef.current) return;
+    const uid = searchParams.get("userId");
+    if (!uid) return;
+    prefilledRef.current = true;
+    const position = searchParams.get("position")?.trim() ?? "";
+    const sem = searchParams.get("semester");
+    const semMatch = sem ? /^(\d{4})-([12])$/.exec(sem) : null;
+    const base = initialForm();
+    setForm({
+      ...base,
+      userId: uid,
+      userName: searchParams.get("userName")?.trim() ?? "",
+      role: position ? inferGradRole(position) : base.role,
+      detail: position,
+      startYear: semMatch ? semMatch[1] : base.startYear,
+      startSemester: semMatch ? (semMatch[2] === "1" ? "first" : "second") : base.startSemester,
+    });
+    setOpenForm(true);
+  }, [searchParams]);
 
   function openCreate() {
     setForm(initialForm());

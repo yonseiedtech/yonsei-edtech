@@ -23,6 +23,8 @@ interface Props {
   onClear?: () => void;
   /** 제외할 회원 id 목록 (이미 추가된 회원) */
   excludeIds?: string[];
+  /** true 면 승인(approved) 회원만 검색 결과에 노출 — 미승인 가입자 실명 노출 방지 */
+  approvedOnly?: boolean;
   placeholder?: string;
   className?: string;
 }
@@ -33,6 +35,7 @@ export default function MemberAutocomplete({
   onSelect,
   onClear,
   excludeIds = [],
+  approvedOnly = false,
   placeholder = "회원 이름을 입력하세요",
   className,
 }: Props) {
@@ -45,6 +48,7 @@ export default function MemberAutocomplete({
     const q = query.trim().toLowerCase();
     if (!q) return [];
     return members
+      .filter((m) => !approvedOnly || m.approved)
       .filter((m) => !excludeIds.includes(m.id))
       .filter((m) => {
         const name = (m.name ?? "").toLowerCase();
@@ -52,7 +56,7 @@ export default function MemberAutocomplete({
         return name.includes(q) || sid.includes(q);
       })
       .slice(0, 10);
-  }, [members, query, excludeIds]);
+  }, [members, query, excludeIds, approvedOnly]);
 
   useEffect(() => {
     function onClickOutside(e: MouseEvent) {

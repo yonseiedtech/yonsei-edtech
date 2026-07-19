@@ -47,39 +47,55 @@ export default function HandoverSection() {
   const composeParam = searchParams.get("compose");
   const { positions } = useOrgChart();
 
-  // 업무노트 직책 목록 = 운영진 설정(조직도)의 직책명 ∪ 기본 직책(하위호환)
+  const { data: handoverDocs = [] } = useQuery({
+    queryKey: ["handover_docs"],
+    queryFn: async () => {
+      const res = await dataApi.list<HandoverDocument>("handover_docs", {
+        sort: "role:asc,priority:asc",
+        limit: 500,
+      });
+      return res.data;
+    },
+  });
+
+  // 업무노트 직책 목록 = 운영진 설정(조직도)의 직책명 ∪ 기본 직책(하위호환) ∪ 기존 문서에 실재하는 role
+  // (직책 개명 시에도 기존 문서가 탭에서 이탈하지 않게 문서 role 을 합집합에 포함)
   const roleOptions = useMemo(() => {
     const fromOrg = positions.map((p) => p.title).filter(Boolean);
-    return Array.from(new Set([...fromOrg, ...STAFF_ROLES]));
-  }, [positions]);
+    const fromDocs = handoverDocs.map((d) => d.role).filter(Boolean);
+    return Array.from(new Set([...fromOrg, ...STAFF_ROLES, ...fromDocs]));
+  }, [positions, handoverDocs]);
 
-  const [selectedRole, setSelectedRole] = useState<string>(roleParam ?? "all");
+  // ?role= 딥링크는 합집합(roleOptions)에 포함될 때만 유효 — 개명·삭제된 role 로 진입 시 무시(#10)
+  const validRoleParam = roleParam && roleOptions.includes(roleParam) ? roleParam : null;
+
+  const [selectedRole, setSelectedRole] = useState<string>("all");
   const [showDocDialog, setShowDocDialog] = useState(false);
   const [editingDoc, setEditingDoc] = useState<HandoverDocument | null>(null);
   const [expandedDoc, setExpandedDoc] = useState<string | null>(null);
   const [docForm, setDocForm] = useState({
-    role: roleParam ?? STAFF_ROLES[0],
+    role: STAFF_ROLES[0],
     title: "",
     content: "",
     category: "routine" as HandoverDocument["category"],
     priority: "medium" as HandoverDocument["priority"],
   });
 
-  // 조직 설정 딥링크(?role=)로 진입 시 해당 직책으로 필터 동기화
+  // 조직 설정 딥링크(?role=)로 진입 시 해당 직책으로 필터 동기화 (합집합에 실재할 때만)
   useEffect(() => {
-    if (roleParam) setSelectedRole(roleParam);
-  }, [roleParam]);
+    if (validRoleParam) setSelectedRole(validRoleParam);
+  }, [validRoleParam]);
 
   // ?compose=1 딥링크 시 해당 직책으로 새 문서 작성 다이얼로그 자동 오픈 (1회)
   const composedRef = useRef(false);
   useEffect(() => {
-    if (composeParam === "1" && roleParam && !composedRef.current) {
+    if (composeParam === "1" && validRoleParam && !composedRef.current) {
       composedRef.current = true;
       setEditingDoc(null);
-      setDocForm({ role: roleParam, title: "", content: "", category: "routine", priority: "medium" });
+      setDocForm({ role: validRoleParam, title: "", content: "", category: "routine", priority: "medium" });
       setShowDocDialog(true);
     }
-  }, [composeParam, roleParam]);
+  }, [composeParam, validRoleParam]);
   const contentRef = useRef<HTMLTextAreaElement | null>(null);
   const [previewMode, setPreviewMode] = useState<"edit" | "split" | "preview">("edit");
 
@@ -120,17 +136,6 @@ export default function HandoverSection() {
       ta.setSelectionRange(cursorStart, cursorEnd);
     });
   }
-
-  const { data: handoverDocs = [] } = useQuery({
-    queryKey: ["handover_docs"],
-    queryFn: async () => {
-      const res = await dataApi.list<HandoverDocument>("handover_docs", {
-        sort: "role:asc,priority:asc",
-        limit: 500,
-      });
-      return res.data;
-    },
-  });
 
   const filteredDocs = selectedRole === "all"
     ? handoverDocs

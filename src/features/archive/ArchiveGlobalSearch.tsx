@@ -14,7 +14,7 @@
  * 인덱스는 name·altNames·tags·aectTerm 만 담으므로 매칭 범위도 그 필드로 좁혀진다.
  */
 
-import { useMemo, useState, type ReactNode } from "react";
+import { useEffect, useMemo, useState, type ReactNode } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
@@ -29,6 +29,7 @@ import {
   writingTipsApi,
 } from "@/lib/bkend";
 import { matchesArchiveSearch } from "@/lib/archive-search";
+import { trackSearchMiss } from "@/lib/search-miss-tracker";
 import {
   ARCHIVE_SEARCH_INDEX_TYPES,
   ARCHIVE_INDEX_MATCH_FIELDS,
@@ -244,6 +245,18 @@ export default function ArchiveGlobalSearch() {
   const total = groups.reduce((s, g) => s + g.items.length, 0);
   // 키보드 내비게이션용 평면 목록 (표시 순서대로)
   const flatItems = useMemo(() => groups.flatMap((g) => g.items), [groups]);
+
+  // M6: 무결과 질의 적재 — debounce 600ms 후 결과 0건 + 2자 이상 조건에서 기록
+  useEffect(() => {
+    const qs = q.trim();
+    if (qs.length < 2) return;
+    const timer = setTimeout(() => {
+      if (!loading && total === 0) {
+        void trackSearchMiss(qs);
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [q, total, loading]);
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
     if (!enabled || flatItems.length === 0) return;

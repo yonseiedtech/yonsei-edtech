@@ -30,6 +30,7 @@ import {
   guideItemsApi,
   guideProgressApi,
 } from "@/lib/bkend";
+import { logOnboardingEvent } from "@/lib/funnel-telemetry";
 import {
   GUIDE_ITEM_ACTION_LABELS,
   type GuideTrack,
@@ -379,6 +380,14 @@ export default function OnboardingPage() {
     };
   }, [user, isStaffViewer]);
 
+  // M2: 온보딩 진입 이벤트 (로그인 + 데이터 로드 완료 시 1회)
+  useEffect(() => {
+    if (!loading && user) {
+      logOnboardingEvent(user.id, "enter");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user?.id]);
+
   const grouped = useMemo(() => {
     const map = new Map<string, GuideItem[]>();
     items.forEach((i) => {
@@ -402,7 +411,8 @@ export default function OnboardingPage() {
     setSavingId(itemId);
     try {
       const completed = { ...(progress?.completedItems || {}) };
-      if (completed[itemId]) {
+      const wasCompleted = !!completed[itemId];
+      if (wasCompleted) {
         delete completed[itemId];
       } else {
         completed[itemId] = new Date().toISOString();
@@ -423,6 +433,14 @@ export default function OnboardingPage() {
           updatedAt: now,
         });
         setProgress(created);
+      }
+      // M2: 퍼널 이벤트 — 항목 완료 전환 시에만 기록 (취소는 제외)
+      if (!wasCompleted) {
+        logOnboardingEvent(user.id, "progress"); // 첫 완료 시 1회 (Set 중복 방지)
+        const nowDone = items.filter((i) => !!completed[i.id]).length;
+        if (nowDone > 0 && nowDone === items.length) {
+          logOnboardingEvent(user.id, "complete");
+        }
       }
     } finally {
       setSavingId(null);

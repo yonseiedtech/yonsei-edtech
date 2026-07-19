@@ -52,6 +52,7 @@ import { SEMESTER_TERM_LABELS } from "@/types";
 import { cn } from "@/lib/utils";
 import { GROUP_ORDER, visibleRoutes, visibleActions } from "./command-routes";
 import CommandPaletteCoach from "./CommandPaletteCoach";
+import { trackSearchMiss } from "@/lib/search-miss-tracker";
 
 interface SearchItem {
   key: string;
@@ -356,6 +357,19 @@ export default function GlobalSearch() {
   useEffect(() => {
     setActiveIdx((i) => Math.min(i, Math.max(0, results.length - 1)));
   }, [results.length]);
+
+  // M6: 무결과 질의 적재 — debounce 600ms 후 결과 0건 + 2자 이상 조건에서 기록
+  useEffect(() => {
+    if (!open) return;
+    const q = query.trim();
+    if (q.length < 2) return;
+    const timer = setTimeout(() => {
+      if (!isLoading && results.length === 0) {
+        void trackSearchMiss(q);
+      }
+    }, 600);
+    return () => clearTimeout(timer);
+  }, [open, query, results.length, isLoading]);
 
   function go(item: SearchItem) {
     // "최근" 그룹에서 선택해도 원본 key 그대로 저장 (group 은 표시용 복제)

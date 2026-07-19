@@ -9,6 +9,7 @@
 
 import { Document, Page, View, Text, Image, StyleSheet, Font } from "@react-pdf/renderer";
 import {
+  CONTACT_PREFIX,
   MM_TO_PT,
   PRINT_SPEC,
   SOCIETY_NAME_EN,
@@ -37,6 +38,16 @@ const PAGE_W = PRINT_SPEC.bleedW * MM_TO_PT; // 94mm
 const PAGE_H = PRINT_SPEC.bleedH * MM_TO_PT; // 54mm
 const SAFE = PRINT_SPEC.safeInset * MM_TO_PT; // 4mm 안전여백
 
+// ── 재단선(crop marks) 좌표 산식 ──
+// 작업(bleed) 페이지 94×54 에서 재단(trim) 90×50 은 사방 2mm 안쪽.
+// 재단선은 bleed 여백(2mm 띠) 안에만 그리고, 재단 사각형 내부로 침범하지 않는다.
+const BLEED_MARGIN = ((PRINT_SPEC.bleedW - PRINT_SPEC.trimW) / 2) * MM_TO_PT; // 2mm
+const CROP_STROKE = 0.5; // pt
+const TRIM_L = BLEED_MARGIN;
+const TRIM_R = PAGE_W - BLEED_MARGIN;
+const TRIM_T = BLEED_MARGIN;
+const TRIM_B = PAGE_H - BLEED_MARGIN;
+
 export interface BusinessCardPrintProps {
   fields: PrintCardLines & { name: string };
   colors: PrintCardColors;
@@ -51,6 +62,8 @@ export interface BusinessCardPrintProps {
   emblemDataUrl?: string;
   /** 뒷면 포함 여부 */
   includeBack: boolean;
+  /** 재단선(crop marks) 인쇄 여부 (인쇄소 제출용, 기본 on) */
+  showCropMarks: boolean;
 }
 
 export function BusinessCardPrintPdfDocument({
@@ -63,6 +76,7 @@ export function BusinessCardPrintPdfDocument({
   qrDataUrl,
   emblemDataUrl,
   includeBack,
+  showCropMarks,
 }: BusinessCardPrintProps) {
   const styles = StyleSheet.create({
     page: {
@@ -163,6 +177,10 @@ export function BusinessCardPrintPdfDocument({
       fontSize: 7.2,
       color: colors.sub,
     },
+    contactTag: {
+      fontWeight: 700,
+      color: colors.accent,
+    },
     // ── 우측: QR ──
     right: {
       width: 62,
@@ -229,11 +247,35 @@ export function BusinessCardPrintPdfDocument({
       color: colors.sub,
       marginTop: 10,
     },
+    // ── 재단선(crop marks) ──
+    cropMark: {
+      position: "absolute",
+      backgroundColor: colors.cropMark,
+    },
   });
 
-  const contactLines: string[] = [];
-  if (showEmail && fields.email) contactLines.push(fields.email);
-  if (showPhone && fields.phone) contactLines.push(fields.phone);
+  const contactItems: { tag: string; value: string }[] = [];
+  if (showEmail && fields.email) contactItems.push({ tag: CONTACT_PREFIX.email, value: fields.email });
+  if (showPhone && fields.phone) contactItems.push({ tag: CONTACT_PREFIX.phone, value: fields.phone });
+
+  // 재단선 8선(모서리당 수평·수직 각 1) — bleed 여백 띠 안에만 배치.
+  const cropMarks = [
+    // top-left
+    { left: 0, top: TRIM_T - CROP_STROKE / 2, width: BLEED_MARGIN, height: CROP_STROKE },
+    { left: TRIM_L - CROP_STROKE / 2, top: 0, width: CROP_STROKE, height: BLEED_MARGIN },
+    // top-right
+    { left: TRIM_R, top: TRIM_T - CROP_STROKE / 2, width: BLEED_MARGIN, height: CROP_STROKE },
+    { left: TRIM_R - CROP_STROKE / 2, top: 0, width: CROP_STROKE, height: BLEED_MARGIN },
+    // bottom-left
+    { left: 0, top: TRIM_B - CROP_STROKE / 2, width: BLEED_MARGIN, height: CROP_STROKE },
+    { left: TRIM_L - CROP_STROKE / 2, top: TRIM_B, width: CROP_STROKE, height: BLEED_MARGIN },
+    // bottom-right
+    { left: TRIM_R, top: TRIM_B - CROP_STROKE / 2, width: BLEED_MARGIN, height: CROP_STROKE },
+    { left: TRIM_R - CROP_STROKE / 2, top: TRIM_B, width: CROP_STROKE, height: BLEED_MARGIN },
+  ];
+
+  const renderCropMarks = () =>
+    showCropMarks ? cropMarks.map((m, i) => <View key={i} style={[styles.cropMark, m]} />) : null;
 
   // 컴포넌트가 아닌 렌더 함수(직접 호출) — colors 의존 styles 를 클로저로 참조하되
   // react-hooks/static-components(렌더 중 컴포넌트 생성) 회피.
@@ -288,9 +330,10 @@ export function BusinessCardPrintPdfDocument({
 
             {/* 하단 연락처 */}
             <View style={styles.contactBlock}>
-              {contactLines.map((line, i) => (
+              {contactItems.map((item, i) => (
                 <Text key={i} style={styles.contactLine}>
-                  {line}
+                  <Text style={styles.contactTag}>{item.tag}</Text>
+                  {`  ${item.value}`}
                 </Text>
               ))}
             </View>
@@ -305,6 +348,7 @@ export function BusinessCardPrintPdfDocument({
             <Text style={styles.qrCaption}>QR · 프로필</Text>
           </View>
         </View>
+        {renderCropMarks()}
       </Page>
 
       {/* ── 뒷면(선택) ── */}
@@ -317,6 +361,7 @@ export function BusinessCardPrintPdfDocument({
             <Text style={styles.backTagline}>{SOCIETY_TAGLINE}</Text>
             <Text style={styles.backUrl}>{profileUrl}</Text>
           </View>
+          {renderCropMarks()}
         </Page>
       )}
     </Document>

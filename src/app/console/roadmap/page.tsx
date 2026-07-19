@@ -37,7 +37,6 @@ import {
 } from "@/types/steppingstone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 
 interface StageDraft {
@@ -349,13 +348,79 @@ function AdminContent() {
         </div>
 
         <div className="mt-3">
-          <label className="text-xs font-semibold">체크리스트 항목 (한 줄에 하나)</label>
-          <Textarea
-            value={draft.items.join("\n")}
-            onChange={(e) => onChange({ items: e.target.value.split("\n") })}
-            placeholder="신입생 OT 참여 + 학회 가입 신청"
-            className="mt-1 min-h-[120px]"
-          />
+          <label className="text-xs font-semibold">체크리스트 항목</label>
+          <div className="mt-1 space-y-2">
+            {draft.items.map((item, idx) => (
+              <div key={idx} className="flex items-center gap-1.5">
+                <span className="w-5 shrink-0 text-center text-xs font-medium text-muted-foreground tabular-nums">
+                  {idx + 1}
+                </span>
+                <Input
+                  value={item}
+                  onChange={(e) => {
+                    const next = [...draft.items];
+                    next[idx] = e.target.value;
+                    onChange({ items: next });
+                  }}
+                  placeholder={`항목 ${idx + 1} — 예: 신입생 OT 참여 + 학회 가입 신청`}
+                  className="flex-1"
+                />
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  onClick={() => {
+                    if (idx === 0) return;
+                    const next = [...draft.items];
+                    [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                    onChange({ items: next });
+                  }}
+                  disabled={idx === 0}
+                  aria-label={`${idx + 1}번 항목 위로`}
+                >
+                  <ArrowUp size={12} />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  onClick={() => {
+                    if (idx === draft.items.length - 1) return;
+                    const next = [...draft.items];
+                    [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                    onChange({ items: next });
+                  }}
+                  disabled={idx === draft.items.length - 1}
+                  aria-label={`${idx + 1}번 항목 아래로`}
+                >
+                  <ArrowDown size={12} />
+                </Button>
+                <Button
+                  size="sm"
+                  variant="outline"
+                  type="button"
+                  onClick={() => {
+                    const next = draft.items.filter((_, i) => i !== idx);
+                    onChange({ items: next.length > 0 ? next : [""] });
+                  }}
+                  className="text-destructive"
+                  aria-label={`${idx + 1}번 항목 삭제`}
+                >
+                  <Trash2 size={12} />
+                </Button>
+              </div>
+            ))}
+            <Button
+              size="sm"
+              variant="outline"
+              type="button"
+              onClick={() => onChange({ items: [...draft.items, ""] })}
+              className="gap-1"
+            >
+              <Plus size={12} />
+              항목 추가
+            </Button>
+          </div>
         </div>
 
         <div className="mt-3 flex flex-wrap items-center gap-3">

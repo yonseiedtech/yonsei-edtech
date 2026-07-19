@@ -2,8 +2,9 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw, FlaskConical, BarChart3, BookOpen, PenLine, AlertTriangle, ClipboardCheck, ArrowRight } from "lucide-react";
+import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw, FlaskConical, BarChart3, BookOpen, PenLine, AlertTriangle, ClipboardCheck, ArrowRight, Link2 } from "lucide-react";
 import { importArchiveSeed, refreshArchiveSeedReferences } from "@/lib/archive-seed";
+import { auth } from "@/lib/firebase";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -92,6 +93,7 @@ export default function ConsoleArchivePage() {
   const [seeding, setSeeding] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [seedAcknowledged, setSeedAcknowledged] = useState(false);
+  const [backfilling, setBackfilling] = useState(false);
   const [reviewQueue, setReviewQueue] = useState<ReviewQueueCounts | null>(null);
   const [queueLoading, setQueueLoading] = useState(true);
 
@@ -169,6 +171,45 @@ export default function ConsoleArchivePage() {
       toast.error(err instanceof Error ? err.message : "References 갱신 실패");
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  /**
+   * 연구방법 ↔ 통계방법 크로스링크 백필 (v5 사후 정합화, admin 전용).
+   * dry-run 으로 변경 규모를 먼저 확인시키고, 변경분이 있을 때만 confirm 후 적용.
+   * 적용은 arrayUnion 기반 비파괴(기존 id 제거 없음) — 서버 라우트 규칙 참조.
+   */
+  const handleCrosslinkBackfill = async () => {
+    setBackfilling(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("로그인이 필요합니다.");
+      const headers = { Authorization: `Bearer ${token}` };
+      const dryRes = await fetch("/api/admin/archive-crosslink-backfill", { method: "POST", headers });
+      if (!dryRes.ok) throw new Error(`dry-run 실패 (${dryRes.status})`);
+      const dry = await dryRes.json();
+      if (!dry.docsToUpdate) {
+        toast.success(`크로스링크 정합 — 보정할 문서가 없습니다 (연구방법 ${dry.researchDocs}·통계방법 ${dry.statDocs} 검사).`);
+        return;
+      }
+      if (
+        !confirm(
+          `크로스링크 백필 dry-run 결과\n` +
+            `- 보정 대상 문서: ${dry.docsToUpdate}건\n` +
+            `- 추가될 역참조 id: ${dry.idsToAdd}개\n\n` +
+            `기존 id 는 제거하지 않는 비파괴(arrayUnion) 적용입니다. 반영할까요?`,
+        )
+      )
+        return;
+      const applyRes = await fetch("/api/admin/archive-crosslink-backfill?apply=true", { method: "POST", headers });
+      if (!applyRes.ok) throw new Error(`적용 실패 (${applyRes.status})`);
+      const applied = await applyRes.json();
+      toast.success(`크로스링크 백필 완료 — 문서 ${applied.docsUpdated}건에 역참조 ${applied.idsAdded}개 추가.`);
+    } catch (err) {
+      console.error("[console-archive] crosslink backfill failed", err);
+      toast.error(err instanceof Error ? err.message : "크로스링크 백필 실패");
+    } finally {
+      setBackfilling(false);
     }
   };
 
@@ -337,6 +378,22 @@ export default function ConsoleArchivePage() {
               )}
               메타데이터 갱신
             </Button>
+            {isAtLeast(user, "admin") && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={handleCrosslinkBackfill}
+                disabled={seeding || refreshing || backfilling}
+                title="연구방법↔통계방법 양방향 링크의 기존 데이터 정합화 (dry-run 확인 후 비파괴 적용)"
+              >
+                {backfilling ? (
+                  <Loader2 className="mr-1 h-4 w-4 animate-spin" />
+                ) : (
+                  <Link2 className="mr-1 h-4 w-4" />
+                )}
+                크로스링크 백필
+              </Button>
+            )}
             <Button onClick={() => setEditing({ type: tab })} size="sm">
               <Plus className="mr-1 h-4 w-4" />새 {ARCHIVE_ITEM_TYPE_LABELS[tab]}
             </Button>

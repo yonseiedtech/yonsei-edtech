@@ -7,7 +7,7 @@
 // PDF 는 클라이언트에서 생성(선택 필드만 문서에 포함 → 개인정보 최소화). QR·엠블럼은 캔버스로
 // 고해상 PNG 를 만들어 임베드, 텍스트/도형은 @react-pdf 벡터(300dpi 이상 충족).
 
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
 import { Download, Info, Loader2 } from "lucide-react";
 import { toast } from "sonner";
@@ -17,8 +17,10 @@ import { cn } from "@/lib/utils";
 import PrintBusinessCard from "@/features/card/PrintBusinessCard";
 import {
   PRINT_CARD_COLORS,
+  PRINT_CARD_CONTACT_STORAGE_KEY,
   PRINT_CARD_VARIANT_LABELS,
   buildPrintCardLines,
+  formatPhone,
   printCardFilename,
   type PrintCardVariant,
 } from "@/features/card/print-card";
@@ -60,8 +62,40 @@ export default function PrintCardSection({
   const [showPhone, setShowPhone] = useState(false);
   const [showField, setShowField] = useState(true);
   const [includeBack, setIncludeBack] = useState(true);
+  const [showCropMarks, setShowCropMarks] = useState(true);
+  const [showGuides, setShowGuides] = useState(true);
   const [isGenerating, setIsGenerating] = useState(false);
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+
+  // 연락처 입력값 — 초기값은 프로필 기본값(SSR/CSR 일치), 마운트 후 localStorage 로 복원.
+  const profileDefaults = buildPrintCardLines(user);
+  const [emailInput, setEmailInput] = useState(profileDefaults.email);
+  const [phoneInput, setPhoneInput] = useState(profileDefaults.phone);
+
+  // 마운트 시 저장값 복원 (있을 때만 덮어씀 → 하이드레이션 불일치 회피)
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem(PRINT_CARD_CONTACT_STORAGE_KEY);
+      if (!raw) return;
+      const saved = JSON.parse(raw) as { email?: string; phone?: string };
+      if (typeof saved.email === "string") setEmailInput(saved.email);
+      if (typeof saved.phone === "string") setPhoneInput(saved.phone);
+    } catch {
+      /* 무시 — 저장값 손상 시 프로필 기본값 유지 */
+    }
+  }, []);
+
+  // 입력값 변경 시 localStorage 유지
+  useEffect(() => {
+    try {
+      localStorage.setItem(
+        PRINT_CARD_CONTACT_STORAGE_KEY,
+        JSON.stringify({ email: emailInput, phone: phoneInput }),
+      );
+    } catch {
+      /* 무시 — 저장 실패는 치명적이지 않음 */
+    }
+  }, [emailInput, phoneInput]);
 
   const qrFg = PRINT_CARD_COLORS.light.qrFg; // 항상 진한 네이비(양 변형 공통) — 인쇄 대비
 
@@ -81,7 +115,12 @@ export default function PrintCardSection({
       const lines = buildPrintCardLines(user);
       const blob = await pdf(
         <BusinessCardPrintPdfDocument
-          fields={{ ...lines, name: user.name }}
+          fields={{
+            ...lines,
+            name: user.name,
+            email: emailInput,
+            phone: formatPhone(phoneInput),
+          }}
           colors={PRINT_CARD_COLORS[variant]}
           showEmail={showEmail}
           showPhone={showPhone}
@@ -90,6 +129,7 @@ export default function PrintCardSection({
           qrDataUrl={qrDataUrl}
           emblemDataUrl={emblemDataUrl}
           includeBack={includeBack}
+          showCropMarks={showCropMarks}
         />,
       ).toBlob();
 
@@ -136,6 +176,9 @@ export default function PrintCardSection({
             showEmail={showEmail}
             showPhone={showPhone}
             showField={showField}
+            email={emailInput}
+            phone={formatPhone(phoneInput)}
+            showGuides={showGuides}
             profileUrl={profileUrl}
             side="front"
           />
@@ -149,9 +192,24 @@ export default function PrintCardSection({
               showEmail={showEmail}
               showPhone={showPhone}
               showField={showField}
+              email={emailInput}
+              phone={formatPhone(phoneInput)}
+              showGuides={showGuides}
               profileUrl={profileUrl}
               side="back"
             />
+          </div>
+        )}
+        {showGuides && (
+          <div className="flex items-center justify-center gap-4 text-[11px] text-muted-foreground">
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-0 w-4 border-t" style={{ borderColor: "rgba(229,72,77,0.85)" }} aria-hidden />
+              재단선(자르는 선)
+            </span>
+            <span className="flex items-center gap-1.5">
+              <span className="inline-block h-0 w-4 border-t border-dashed" style={{ borderColor: "rgba(59,130,246,0.9)" }} aria-hidden />
+              안전영역(글자 배치 한계)
+            </span>
           </div>
         )}
       </div>
@@ -200,7 +258,45 @@ export default function PrintCardSection({
           <button type="button" onClick={() => setIncludeBack((v) => !v)} aria-pressed={includeBack} className={toggleClass(includeBack)}>
             뒷면 포함
           </button>
+          <button type="button" onClick={() => setShowCropMarks((v) => !v)} aria-pressed={showCropMarks} className={toggleClass(showCropMarks)}>
+            재단선(PDF)
+          </button>
+          <button type="button" onClick={() => setShowGuides((v) => !v)} aria-pressed={showGuides} className={toggleClass(showGuides)}>
+            미리보기 가이드
+          </button>
         </div>
+      </div>
+
+      {/* 연락처 입력 (프로필 기본값 · 자유 수정 · 자동 저장) */}
+      <div className="mt-4">
+        <p className="mb-2 text-xs font-medium text-muted-foreground">연락처 (직접 수정 가능 · 자동 저장)</p>
+        <div className="grid gap-2 sm:grid-cols-2">
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] text-muted-foreground">전화번호</span>
+            <input
+              type="tel"
+              inputMode="tel"
+              value={phoneInput}
+              onChange={(e) => setPhoneInput(e.target.value)}
+              placeholder="010-1234-5678"
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </label>
+          <label className="flex flex-col gap-1">
+            <span className="text-[11px] text-muted-foreground">이메일</span>
+            <input
+              type="email"
+              inputMode="email"
+              value={emailInput}
+              onChange={(e) => setEmailInput(e.target.value)}
+              placeholder="name@example.com"
+              className="rounded-lg border border-border bg-background px-3 py-1.5 text-sm text-foreground placeholder:text-muted-foreground/60 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+            />
+          </label>
+        </div>
+        <p className="mt-1.5 text-[11px] text-muted-foreground">
+          위 &quot;명함에 표시할 정보&quot;에서 전화번호·이메일이 켜져 있고 값이 있을 때만 명함에 표기됩니다.
+        </p>
       </div>
 
       {/* 다운로드 */}
@@ -220,6 +316,7 @@ export default function PrintCardSection({
         <Info size={14} className="mt-0.5 shrink-0" />
         <div className="space-y-1">
           <p>재단 크기 90×50mm · 작업 크기 94×54mm(사방 2mm 재단여백 포함) · 안전영역 86×46mm 규격으로 생성됩니다.</p>
+          <p>재단선(crop marks)은 여백 영역에만 표기되어 재단 후 남지 않습니다. 인쇄소 제출 시 켜두는 것을 권장합니다.</p>
           <p>글자·도형은 벡터라 해상도 제한이 없습니다(300dpi 이상 인쇄 품질 충족).</p>
           <p>색상은 RGB로 저장됩니다. 인쇄소에서 CMYK 변환을 권장하며, 엠블럼·QR 이미지는 RGB로 포함됩니다.</p>
           <p>QR은 본인 공개 프로필로 연결됩니다.</p>

@@ -54,7 +54,7 @@ function setDismiss(id: string, duration: PopupDismissDuration) {
 const SUPPRESSED_PATHS = ["/login", "/signup", "/consent", "/forgot-password"];
 
 export default function SitePopupGate() {
-  const { user } = useAuthStore();
+  const { user, initialized } = useAuthStore();
   const pathname = usePathname();
   const [closedIds, setClosedIds] = useState<Set<string>>(new Set());
 
@@ -78,6 +78,9 @@ export default function SitePopupGate() {
   }, []);
 
   const visiblePopup: SitePopup | null = useMemo(() => {
+    // 인증 하이드레이션 완료 전에는 audience(member/guest) 판정이 뒤집혀
+    // 게스트 팝업이 로그인 회원에게 잠깐 노출되는 등의 flash 가 발생 — 대기.
+    if (!initialized) return null;
     const all = data?.data ?? [];
     if (all.length === 0) return null;
     const now = new Date().toISOString();
@@ -96,7 +99,7 @@ export default function SitePopupGate() {
       .sort((a, b) => (b.priority ?? 0) - (a.priority ?? 0));
 
     return candidates[0] ?? null;
-  }, [data, user, closedIds]);
+  }, [data, user, closedIds, initialized]);
 
   // route 변경 시 다시 열리지 않도록 closedIds는 메모리 유지 (Refresh 시 isDismissed 검사로 제어)
   useEffect(() => {

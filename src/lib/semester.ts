@@ -64,6 +64,35 @@ export function semesterLabelFromKey(key: string | undefined | null): string {
   return `${year}년 ${half}`;
 }
 
+/**
+ * 학기 키를 delta 학기만큼 이동. "2026-2" +1 → "2027-1", -1 → "2026-1".
+ * 형식("YYYY-1" | "YYYY-2")이 아니면 null.
+ */
+export function shiftSemesterKey(key: string | undefined | null, delta: number): string | null {
+  if (!key) return null;
+  const m = /^(\d{4})-([12])$/.exec(key.trim());
+  if (!m) return null;
+  // 학기 인덱스(0-based): year*2 + (half-1)
+  const idx = Number(m[1]) * 2 + (Number(m[2]) - 1) + delta;
+  const y = Math.floor(idx / 2);
+  const half = (idx % 2) + 1;
+  return `${y}-${half}`;
+}
+
+/**
+ * 현재 학기 기준 앞뒤 학기 키 목록(미래→과거 순, 즉 최신이 앞).
+ * back=과거 학기 수, forward=미래 학기 수. 학사일정 관행처럼 몇 학기 앞뒤로 생성.
+ */
+export function listSemesterKeys(back = 4, forward = 1, now: Date = new Date()): string[] {
+  const cur = currentSemesterKey(now);
+  const keys: string[] = [];
+  for (let d = forward; d >= -back; d--) {
+    const k = shiftSemesterKey(cur, d);
+    if (k) keys.push(k);
+  }
+  return keys;
+}
+
 /** YYYY-MM 형식의 from/to 범위 */
 export interface SemesterRange {
   from: string;

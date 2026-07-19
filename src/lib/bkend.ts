@@ -77,6 +77,7 @@ import type {
   UserFeedback,
   UserNote,
   WeeklyGoal,
+  WeeklyGoalRecord,
   CollaborativeResearch,
   CollabResearchMember,
   CollabResearchInvite,
@@ -3416,6 +3417,41 @@ export const weeklyGoalsApi = {
       weekKey,
       channel,
       target,
+    }),
+};
+
+// ── 주차 마감 기록 (v6-H3) — weekly_goal_records/{userId}_{weekKey} ──
+// weekly-digest cron 이 주차 종료 판정을 upsert(goal/achieved/met)하고,
+// 회원은 회고(reflection)를 사후 저장한다. firestore.rules weekly_goal_records 와 양쪽 게이트.
+export const weeklyGoalRecordsApi = {
+  /** 특정 주차 기록 1건 — 없으면 null (get throw 흡수) */
+  getByKey: async (userId: string, weekKey: string): Promise<WeeklyGoalRecord | null> => {
+    try {
+      return await dataApi.get<WeeklyGoalRecord>("weekly_goal_records", `${userId}_${weekKey}`);
+    } catch {
+      return null;
+    }
+  },
+  /**
+   * 내 최근 기록 — 복합 인덱스 회피(filter[userId] 단일 필터), weekKey 정렬은 client-side.
+   * 카드의 연속·추세 계산에 필요한 범위(기본 12주)만 넉넉히 로드한다.
+   */
+  listByUser: async (userId: string, limit = 12): Promise<WeeklyGoalRecord[]> => {
+    const res = await dataApi.list<WeeklyGoalRecord>("weekly_goal_records", {
+      "filter[userId]": userId,
+      limit: 200,
+    });
+    return res.data
+      .slice()
+      .sort((a, b) => (b.weekKey ?? "").localeCompare(a.weekKey ?? ""))
+      .slice(0, limit);
+  },
+  /** 회고 한 줄 저장 (upsert — merge). 기록이 없으면 최소 필드로 생성. */
+  saveReflection: (userId: string, weekKey: string, reflection: string) =>
+    dataApi.upsert<WeeklyGoalRecord>("weekly_goal_records", `${userId}_${weekKey}`, {
+      userId,
+      weekKey,
+      reflection: reflection.trim(),
     }),
 };
 

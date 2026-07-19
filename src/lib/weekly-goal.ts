@@ -151,3 +151,54 @@ export function judgeWeeklyGoal(target: number, count: number): WeeklyGoalJudgem
     ratio: Math.min(1, count / t),
   };
 }
+
+// ─── v6-H3: 연속·추세 (weekly_goal_records 축적 위 순수 계산) ───
+
+/** met(달성) 여부만 아는 주차 기록 최소 형태 */
+export interface WeekMetLite {
+  weekKey: string;
+  met: boolean;
+}
+
+/**
+ * 가장 최근 완료 주(lastCompletedWeekKey)부터 과거로 연속 달성(met=true)한 주 수.
+ * 미달·기록 없음(목표 미설정)에서 끊긴다. 주는 7일 간격으로 역행하며 확인한다.
+ */
+export function computeGoalStreak(
+  records: readonly WeekMetLite[],
+  lastCompletedWeekKey: string,
+): number {
+  const metByWeek = new Map(records.map((r) => [r.weekKey, r.met]));
+  let streak = 0;
+  let wk = lastCompletedWeekKey;
+  while (metByWeek.get(wk) === true) {
+    streak += 1;
+    wk = addWeeks(wk, -1);
+  }
+  return streak;
+}
+
+/** 미니 바 셀 — met: 달성 / false: 미달 / null: 목표 미설정(기록 없음) */
+export interface WeekBarCell {
+  weekKey: string;
+  met: boolean | null;
+}
+
+/**
+ * lastCompletedWeekKey 에서 과거로 count 주(기본 6)의 추세 셀 배열(오래된 주 → 최근 주).
+ * 기록이 없는 주는 met=null(목표 미설정)로 채운다.
+ */
+export function recentWeekBars(
+  records: readonly WeekMetLite[],
+  lastCompletedWeekKey: string,
+  count = 6,
+): WeekBarCell[] {
+  const metByWeek = new Map(records.map((r) => [r.weekKey, r.met]));
+  const cells: WeekBarCell[] = [];
+  for (let i = count - 1; i >= 0; i--) {
+    const wk = addWeeks(lastCompletedWeekKey, -i);
+    const m = metByWeek.get(wk);
+    cells.push({ weekKey: wk, met: m === undefined ? null : m });
+  }
+  return cells;
+}

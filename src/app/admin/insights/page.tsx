@@ -92,6 +92,16 @@ const InsightsActionPanel = dynamic(
   },
 );
 
+const SearchMissSection = dynamic(
+  () => import("@/features/insights/SearchMissSection"),
+  { ssr: false },
+);
+
+const FunnelSection = dynamic(
+  () => import("@/features/insights/FunnelSection"),
+  { ssr: false },
+);
+
 type SubTab =
   | "summary"
   | "actions"
@@ -142,11 +152,17 @@ function InsightsInner() {
         <TabsContent value="actions" className="mt-4">
           <InsightsActionPanel />
         </TabsContent>
-        <TabsContent value="opkpi" className="mt-4">
+        <TabsContent value="opkpi" className="mt-4 space-y-4">
           {/* C-5(2026-07-04): 기능 채택률 — 개강 채택 전환 사이클 KPI */}
           <AdoptionSection />
 
           <OperationalKpiSection />
+
+          {/* M6(2026-07-19): 검색 실패 분석 — 아카이브 콘텐츠 갭 신호 */}
+          <SearchMissSection />
+
+          {/* M2(2026-07-19): 온보딩·진단 퍼널 전환율 */}
+          <FunnelSection />
         </TabsContent>
         <TabsContent value="dashboard" className="mt-4">
           <AnalyticsView />

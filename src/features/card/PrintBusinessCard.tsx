@@ -12,6 +12,7 @@ import { QRCodeSVG } from "qrcode.react";
 import type { User } from "@/types";
 import {
   CARD_ASPECT,
+  CONTACT_PREFIX,
   PRINT_CARD_COLORS,
   SOCIETY_NAME_EN,
   SOCIETY_NAME_KR,
@@ -27,6 +28,12 @@ interface PrintBusinessCardProps {
   showPhone: boolean;
   showField: boolean;
   profileUrl: string;
+  /** 표시할 이메일(사용자가 편집 가능) — 미지정 시 프로필 기본값 */
+  email?: string;
+  /** 표시할 전화(사용자가 편집 가능) — 미지정 시 프로필 기본값 */
+  phone?: string;
+  /** 재단선(실선)·안전영역(점선) 가이드 오버레이 표시 (미리보기 전용) */
+  showGuides?: boolean;
   /** "back" 이면 뒷면 미리보기 렌더 */
   side?: "front" | "back";
 }
@@ -38,14 +45,41 @@ export default function PrintBusinessCard({
   showPhone,
   showField,
   profileUrl,
+  email,
+  phone,
+  showGuides = false,
   side = "front",
 }: PrintBusinessCardProps) {
   const c = PRINT_CARD_COLORS[variant];
   const lines = buildPrintCardLines(user);
 
-  const contacts: string[] = [];
-  if (showEmail && lines.email) contacts.push(lines.email);
-  if (showPhone && lines.phone) contacts.push(lines.phone);
+  // 편집값 우선, 없으면 프로필 기본값
+  const emailValue = email ?? lines.email;
+  const phoneValue = phone ?? lines.phone;
+
+  const contacts: { tag: string; value: string }[] = [];
+  if (showEmail && emailValue) contacts.push({ tag: CONTACT_PREFIX.email, value: emailValue });
+  if (showPhone && phoneValue) contacts.push({ tag: CONTACT_PREFIX.phone, value: phoneValue });
+
+  // 미리보기 전용 가이드 오버레이 — 재단선(카드 가장자리=실선) + 안전영역(점선).
+  // 안전영역은 재단(90×50) 기준 사방 2mm 인셋 → 가로 2/90≈2.22%, 세로 2/50=4%.
+  const guideOverlay = showGuides ? (
+    <div className="pointer-events-none absolute inset-0 z-10" aria-hidden>
+      {/* 재단선 (실선) */}
+      <span className="absolute inset-0" style={{ border: "1px solid rgba(229,72,77,0.85)" }} />
+      {/* 안전영역 (점선) */}
+      <span
+        className="absolute"
+        style={{
+          top: "4%",
+          bottom: "4%",
+          left: "2.22%",
+          right: "2.22%",
+          border: "1px dashed rgba(59,130,246,0.9)",
+        }}
+      />
+    </div>
+  ) : null;
 
   // 컴포넌트가 아닌 렌더 함수(직접 호출) — c(색) 클로저 참조 + react-hooks/static-components 회피.
   const renderEmblem = (size: number) => (
@@ -66,9 +100,10 @@ export default function PrintBusinessCard({
   if (side === "back") {
     return (
       <div
-        className="mx-auto flex w-full max-w-[360px] flex-col items-center justify-center overflow-hidden rounded-xl shadow-md ring-1 ring-black/10"
+        className="relative mx-auto flex w-full max-w-[360px] flex-col items-center justify-center overflow-hidden rounded-xl shadow-md ring-1 ring-black/10"
         style={{ aspectRatio: CARD_ASPECT, backgroundColor: c.bg }}
       >
+        {guideOverlay}
         {renderEmblem(44)}
         <p className="mt-2 text-base font-bold tracking-wide" style={{ color: c.society }}>
           {SOCIETY_NAME_KR}
@@ -85,10 +120,11 @@ export default function PrintBusinessCard({
 
   return (
     <div
-      className="mx-auto w-full max-w-[360px] overflow-hidden rounded-xl shadow-md ring-1 ring-black/10"
+      className="relative mx-auto w-full max-w-[360px] overflow-hidden rounded-xl shadow-md ring-1 ring-black/10"
       style={{ aspectRatio: CARD_ASPECT, backgroundColor: c.bg }}
     >
-      {/* 안전영역(≈8% 인셋) */}
+      {guideOverlay}
+      {/* 콘텐츠 인셋 — 안전영역(사방 2mm) 여유 있게 감싸도록 배치 */}
       <div className="flex h-full w-full" style={{ padding: "7.5%" }}>
         {/* 좌측: 브랜드 / 이름 / 연락처 */}
         <div className="flex min-w-0 flex-1 flex-col justify-between pr-2">
@@ -135,9 +171,12 @@ export default function PrintBusinessCard({
           </div>
 
           <div className="space-y-0.5">
-            {contacts.map((line) => (
-              <p key={line} className="truncate text-[8.5px]" style={{ color: c.sub }}>
-                {line}
+            {contacts.map((item) => (
+              <p key={item.tag} className="truncate text-[8.5px]" style={{ color: c.sub }}>
+                <span className="font-semibold" style={{ color: c.accent }}>
+                  {item.tag}
+                </span>{" "}
+                {item.value}
               </p>
             ))}
           </div>

@@ -38,6 +38,7 @@ import {
   questionFrontText,
   userAnswerText,
 } from "@/lib/diagnostic-answer-text";
+import { logDiagnosticEvent } from "@/lib/funnel-telemetry";
 import DiagnosisLanding, {
   type CustomDiagnosisConfig,
 } from "@/components/diagnosis/DiagnosisLanding";
@@ -272,6 +273,14 @@ export default function DiagnosisPage() {
     return counts;
   }, [pool]);
 
+  // M2: 진단 랜딩 진입 이벤트 (로그인 회원 + 문항 로드 완료 시 1회)
+  useEffect(() => {
+    if (!loading && phase === "landing" && user) {
+      logDiagnosticEvent(user.id, "start");
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [loading, user?.id]);
+
   // ── 진단 시작 (문제은행에서 가중 추출 — 매 진단 다른 문제, 영역·유형·인지수준 혼합) ──
   const handleStart = (area: DiagnosticArea | "all") => {
     const ordered: typeof pool = [];
@@ -290,6 +299,7 @@ export default function DiagnosisPage() {
     setActiveQuestions(ordered);
     setSaveState("idle");
     setPhase("running");
+    logDiagnosticEvent(user?.id, "q1"); // M2: 문항 시작 (1회)
   };
 
   // ── 개인화 진단 시작 (사용자가 선택한 영역·유형으로 커스텀 문항셋 구성) ──
@@ -320,6 +330,7 @@ export default function DiagnosisPage() {
     setActiveQuestions(ordered);
     setSaveState("idle");
     setPhase("running");
+    logDiagnosticEvent(user?.id, "q1"); // M2: 개인화 진단 문항 시작 (1회)
   };
 
   /** 문항의 약점 개념 해석 — conceptId(Firestore) 우선, 없으면 conceptSeedKey(폴백) */
@@ -415,7 +426,9 @@ export default function DiagnosisPage() {
     setWeakConcepts(weak);
     setWrongItems(wrongSeeds);
     setReviewItems(reviews);
+    logDiagnosticEvent(user?.id, "complete"); // M2: 제출 완료
     setPhase("report");
+    logDiagnosticEvent(user?.id, "report"); // M2: 리포트 열람
 
     // 피어 비교(M4) 익명 동료 분포 로드 — 로그인 회원만. 실패해도 리포트 동작에 영향 없음.
     if (user) {

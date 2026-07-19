@@ -1,15 +1,16 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Plus, Trash2, ChevronUp, ChevronDown, Pencil, Sparkles, ArrowUpCircle, FileText, GraduationCap } from "lucide-react";
-import { useOrgChart, useUpdateOrgChart, DEFAULT_ORG_SEED, type OrgPosition, type OrgRole } from "./useOrgChart";
+import { Plus, Trash2, ChevronUp, ChevronDown, Pencil, Sparkles, ArrowUpCircle, FileText, GraduationCap, Copy } from "lucide-react";
+import { useOrgChart, useUpdateOrgChart, orgChartKey, DEFAULT_ORG_SEED, type OrgPosition, type OrgRole } from "./useOrgChart";
 import { useAllMembers, useChangeRole } from "@/features/member/useMembers";
+import { currentSemesterKey, listSemesterKeys, shiftSemesterKey, semesterLabelFromKey } from "@/lib/semester";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { logAudit } from "@/lib/audit";
 import { ROLE_HIERARCHY } from "@/lib/permissions";
-import { dataApi } from "@/lib/bkend";
+import { dataApi, siteSettingsApi } from "@/lib/bkend";
 import { ROLE_LABELS as USER_ROLE_LABELS } from "@/types";
 import type { UserRole, HandoverDocument } from "@/types";
 import { Button } from "@/components/ui/button";
@@ -28,7 +29,7 @@ const LEVEL_LABELS: Record<number, string> = {
 };
 
 const ROLE_LABELS: Record<OrgRole, string> = {
-  advisor: "주임교수",
+  advisor: "자문위원",
   professor: "전공 교수",
   president: "학회장",
   vice_president: "부학회장",
@@ -39,13 +40,21 @@ const ROLE_LABELS: Record<OrgRole, string> = {
 /**
  * 조직 역할(OrgRole) → 회원 계정 역할(UserRole) 승격 제안 매핑.
  * 자동 변경은 금지 — 담당자 배정 시 "제안"만 하고, 명시적 버튼 + 감사로그로만 실제 승격.
+ * team_member(팀원)는 운영진 권한이 불필요하므로 제안에서 제외(최소권한 — 과도승격 방지).
+ * vice_president/direct_aide → staff 는 실권한(콘솔 접근)이 필요하다는 판단으로 유지.
  */
 const ORG_ROLE_TO_USER_ROLE: Partial<Record<OrgRole, UserRole>> = {
   advisor: "advisor",
   president: "president",
   vice_president: "staff",
   direct_aide: "staff",
-  team_member: "staff",
+};
+
+/** 승격 제안 시 안내할 "부여될 권한 수준" 문구. */
+const ROLE_PERMISSION_NOTE: Partial<Record<UserRole, string>> = {
+  staff: "운영진 콘솔 접근(회원·게시물·설정 관리)",
+  president: "회장 — 운영진 전체 권한",
+  advisor: "자문위원 열람 권한",
 };
 
 function generateId() {
@@ -55,12 +64,14 @@ function generateId() {
 interface EditDialogProps {
   position: OrgPosition | null;
   allPositions: OrgPosition[];
+  /** 현재 편집 중인 학기 키 — grad-life 프리필 링크에 전달 */
+  semesterKey: string;
   open: boolean;
   onClose: () => void;
   onSave: (pos: OrgPosition) => void;
 }
 
-function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialogProps) {
+function EditDialog({ position, allPositions, semesterKey, open, onClose, onSave }: EditDialogProps) {
   const { members } = useAllMembers();
   const { user } = useAuthStore();
   const { changeRole, isLoading: promoting } = useChangeRole();
@@ -83,6 +94,18 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
     !!assignedMember &&
     !!suggestedRole &&
     ROLE_HIERARCHY[assignedMember.role] < ROLE_HIERARCHY[suggestedRole];
+
+  // 배정 해제/교체 시 이전 담당자가 승격된 역할(staff 이상)이면 수동 강등 검토 안내.
+  // 자동 강등은 절대 금지 — 안내 toast 로만 유도(#2).
+  function warnResidualRole(prevUserId?: string) {
+    if (!prevUserId) return;
+    const prev = members.find((m) => m.id === prevUserId);
+    if (prev && ROLE_HIERARCHY[prev.role] >= ROLE_HIERARCHY.staff) {
+      toast.info(
+        `${prev.name} 님의 계정 역할(${USER_ROLE_LABELS[prev.role]})은 배정 해제로 자동 변경되지 않습니다. 회원 관리에서 역할을 검토하세요.`,
+      );
+    }
+  }
 
   async function handlePromote() {
     if (!assignedMember || !suggestedRole) return;
@@ -221,13 +244,20 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
             <MemberAutocomplete
               value={form.userId ?? ""}
               displayName={form.userName}
+              approvedOnly
               onSelect={(m) => {
+                // 담당자 교체 시 이전 담당자가 승격된 권한을 보유하면 수동 검토 안내(#2)
+                if (form.userId && form.userId !== m.id) warnResidualRole(form.userId);
                 const full = members.find((x) => x.id === m.id);
                 setForm({ ...form, userId: m.id, userName: m.name, userPhoto: full?.profileImage });
               }}
-              onClear={() => setForm({ ...form, userId: undefined, userName: undefined, userPhoto: undefined })}
-              placeholder="회원 이름·학번으로 검색 (공석이면 비워두기)"
+              onClear={() => {
+                warnResidualRole(form.userId);
+                setForm({ ...form, userId: undefined, userName: undefined, userPhoto: undefined });
+              }}
+              placeholder="승인 회원 이름·학번으로 검색 (공석이면 비워두기)"
             />
+            <p className="mt-1 text-[11px] text-muted-foreground">승인된 회원만 배정할 수 있습니다.</p>
             {needsPromotion && suggestedRole && (
               <div className="mt-2 rounded-lg border border-primary/30 bg-primary/5 p-2.5 text-xs">
                 <p className="leading-relaxed">
@@ -236,6 +266,11 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
                   이 직책에 맞게 <strong>{USER_ROLE_LABELS[suggestedRole]}</strong>(으)로 승격을 제안합니다.
                   <span className="text-muted-foreground"> (자동 변경되지 않습니다)</span>
                 </p>
+                {ROLE_PERMISSION_NOTE[suggestedRole] && (
+                  <p className="mt-1 text-[11px] text-muted-foreground">
+                    부여될 권한: {ROLE_PERMISSION_NOTE[suggestedRole]}
+                  </p>
+                )}
                 <Button size="sm" variant="outline" className="mt-2" onClick={handlePromote} disabled={promoting}>
                   <ArrowUpCircle size={13} className="mr-1" />
                   {promoting ? "승격 중…" : `${USER_ROLE_LABELS[suggestedRole]}(으)로 승격`}
@@ -264,7 +299,7 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
             </p>
             {assignedMember && (
               <Link
-                href="/console/grad-life/positions"
+                href={`/console/grad-life/positions?userId=${encodeURIComponent(assignedMember.id)}&userName=${encodeURIComponent(assignedMember.name)}&position=${encodeURIComponent(form.title)}&semester=${encodeURIComponent(semesterKey)}`}
                 className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-primary hover:underline"
               >
                 <GraduationCap size={12} /> {assignedMember.name} 님의 활동 이력(대학원 생활)에 기록 →
@@ -294,24 +329,73 @@ function EditDialog({ position, allPositions, open, onClose, onSave }: EditDialo
 }
 
 export default function OrgChartEditor() {
-  const { positions, recordId, isLoading } = useOrgChart();
+  // 편집 대상 학기 (기본=현재 학기). 과거/다음 학기 선택 시 해당 학기 조직도 로드·편집.
+  const [selectedSemester, setSelectedSemester] = useState(() => currentSemesterKey());
+  const semesterOptions = useMemo(() => listSemesterKeys(4, 1), []);
+  const { positions, recordId, signature, isLegacyFallback, isLoading } = useOrgChart(selectedSemester);
+  const { members, isLoading: membersLoading } = useAllMembers();
   const updateMutation = useUpdateOrgChart();
   const [items, setItems] = useState<OrgPosition[]>([]);
   const [editPos, setEditPos] = useState<OrgPosition | null>(null);
   const [showDialog, setShowDialog] = useState(false);
+  // 저장 전 이탈 경고용 dirty 플래그(#11)
+  const [dirty, setDirty] = useState(false);
 
   useEffect(() => { if (!isLoading) setItems(positions); }, [isLoading, positions]);
+
+  // 저장되지 않은 편집이 있으면 브라우저 이탈·새로고침 시 경고(#11)
+  useEffect(() => {
+    if (!dirty) return;
+    const handler = (e: BeforeUnloadEvent) => { e.preventDefault(); e.returnValue = ""; };
+    window.addEventListener("beforeunload", handler);
+    return () => window.removeEventListener("beforeunload", handler);
+  }, [dirty]);
+
+  // 배정된 userId 가 현재 회원 목록에 없으면 탈퇴/미확인 회원으로 간주(#6)
+  function isOrphanAssignee(pos: OrgPosition): boolean {
+    if (!pos.userId) return false;
+    if (membersLoading || members.length === 0) return false; // 로딩 중 오탐 방지
+    return !members.some((m) => m.id === pos.userId);
+  }
 
   function handleSavePosition(pos: OrgPosition) {
     setItems((prev) => {
       const exists = prev.find((p) => p.id === pos.id);
       if (exists) return prev.map((p) => p.id === pos.id ? pos : p);
-      return [...prev, pos];
+      // 신규: 동일 부모 스코프 내 max order + 1 부여 (삭제 후 전역 order 충돌 방지)(#12)
+      const scopeMax = prev
+        .filter((p) => p.parentId === pos.parentId)
+        .reduce((mx, p) => Math.max(mx, p.order), -1);
+      return [...prev, { ...pos, order: scopeMax + 1 }];
     });
+    setDirty(true);
+  }
+
+  // 서브트리 전체를 재귀적으로 수집(계단식 삭제)(#8)
+  function collectSubtree(list: OrgPosition[], id: string): Set<string> {
+    const toRemove = new Set<string>([id]);
+    let changed = true;
+    while (changed) {
+      changed = false;
+      for (const p of list) {
+        if (p.parentId && toRemove.has(p.parentId) && !toRemove.has(p.id)) {
+          toRemove.add(p.id);
+          changed = true;
+        }
+      }
+    }
+    return toRemove;
   }
 
   function handleDelete(id: string) {
-    setItems((prev) => prev.filter((p) => p.id !== id && p.parentId !== id));
+    // 하위 직책이 함께 지워질 때만 확인 — 편집기 내에서 되돌릴 수 없는 일괄 삭제
+    const childCount = collectSubtree(items, id).size - 1;
+    if (childCount > 0 && !confirm(`하위 직책 ${childCount}개가 함께 삭제됩니다. 계속할까요?`)) return;
+    setItems((prev) => {
+      const toRemove = collectSubtree(prev, id);
+      return prev.filter((p) => !toRemove.has(p.id));
+    });
+    setDirty(true);
   }
 
   function handleMoveOrder(id: string, delta: number) {
@@ -319,22 +403,60 @@ export default function OrgChartEditor() {
       const idx = prev.findIndex((p) => p.id === id);
       if (idx < 0) return prev;
       const item = prev[idx];
-      const sameLevel = prev.filter((p) => p.level === item.level).sort((a, b) => a.order - b.order);
-      const posInLevel = sameLevel.findIndex((p) => p.id === id);
-      const swapIdx = posInLevel + delta;
-      if (swapIdx < 0 || swapIdx >= sameLevel.length) return prev;
-      const swap = sameLevel[swapIdx];
+      // 순서 스왑은 동일 부모 스코프 내로 한정 — 다른 가지의 순서를 교란하지 않도록(#12)
+      const sameParent = prev.filter((p) => p.parentId === item.parentId).sort((a, b) => a.order - b.order);
+      const posInScope = sameParent.findIndex((p) => p.id === id);
+      const swapIdx = posInScope + delta;
+      if (swapIdx < 0 || swapIdx >= sameParent.length) return prev;
+      const swap = sameParent[swapIdx];
       return prev.map((p) => {
         if (p.id === item.id) return { ...p, order: swap.order };
         if (p.id === swap.id) return { ...p, order: item.order };
         return p;
       });
     });
+    setDirty(true);
   }
 
-  function handleSaveAll() {
-    updateMutation.mutate({ recordId, positions: items }, {
-      onSuccess: () => toast.success("조직도가 저장되었습니다."),
+  // 선택 학기가 비어 있을 때, 직전 학기(또는 레거시) 조직도를 초안으로 불러오기
+  async function handleCopyFromPrevious() {
+    const prevKey = shiftSemesterKey(selectedSemester, -1);
+    let res = prevKey ? await siteSettingsApi.getByKey(orgChartKey(prevKey)) : { data: [] as Record<string, unknown>[] };
+    let sourceLabel = prevKey ? `${semesterLabelFromKey(prevKey)} 조직도` : "";
+    if (res.data.length === 0) {
+      res = await siteSettingsApi.getByKey("org_chart");
+      sourceLabel = "이전(레거시) 조직도";
+    }
+    if (res.data.length === 0) { toast.info("복사할 이전 학기 조직도가 없습니다."); return; }
+    let parsed: OrgPosition[] = [];
+    try {
+      const p = JSON.parse(res.data[0].value as string);
+      if (Array.isArray(p)) parsed = p as OrgPosition[];
+    } catch { /* 손상값 무시 */ }
+    if (parsed.length === 0) { toast.info("이전 학기 조직도가 비어 있습니다."); return; }
+    setItems(parsed);
+    setDirty(true);
+    toast.success(`${sourceLabel}에서 불러왔습니다. '저장'을 눌러 이 학기로 반영하세요.`);
+  }
+
+  async function handleSaveAll() {
+    // 동시편집 방어(#3): 저장 직전 서버의 최신 시그니처를 로드 시점과 비교 (학기 키 단위)
+    if (recordId && signature) {
+      try {
+        const fresh = await siteSettingsApi.getByKey(orgChartKey(selectedSemester));
+        const freshRow = fresh.data[0];
+        const freshSig = freshRow
+          ? ((freshRow.updatedAt as string | undefined) ?? (freshRow.value as string | undefined))
+          : undefined;
+        if (freshSig && freshSig !== signature) {
+          if (!confirm("다른 운영자가 먼저 저장했습니다. 덮어쓸까요? (취소하면 저장하지 않습니다)")) return;
+        }
+      } catch {
+        // 비교 실패 시 기존 동작대로 저장 진행
+      }
+    }
+    updateMutation.mutate({ recordId, positions: items, semesterKey: selectedSemester }, {
+      onSuccess: () => { setDirty(false); toast.success("조직도가 저장되었습니다."); },
       onError: () => toast.error("저장 실패"),
     });
   }
@@ -357,8 +479,32 @@ export default function OrgChartEditor() {
         회원 프로필에 자동 반영되며, 직책별 담당 업무·업무노트가 연결됩니다. 계정 역할(권한) 승격은 각 직책 편집에서
         명시적으로 제안·실행합니다 (자동 변경 없음).
       </p>
+
+      {/* 학기 선택 — 운영진 구성은 학기마다 다를 수 있음 */}
+      <div className="mb-4 flex flex-wrap items-center gap-2 rounded-lg border bg-muted/20 px-3 py-2">
+        <label className="text-xs font-medium text-muted-foreground">편집 학기</label>
+        <select
+          value={selectedSemester}
+          onChange={(e) => { setSelectedSemester(e.target.value); setDirty(false); }}
+          className="rounded-md border bg-card px-2.5 py-1.5 text-sm"
+        >
+          {semesterOptions.map((k) => (
+            <option key={k} value={k}>
+              {semesterLabelFromKey(k)}{k === currentSemesterKey() ? " (현재)" : ""}
+            </option>
+          ))}
+        </select>
+        {isLegacyFallback && (
+          <span className="text-[11px] text-muted-foreground">
+            아직 이 학기 조직도가 없어 이전 구성을 표시 중 — 저장하면 이 학기로 반영됩니다.
+          </span>
+        )}
+      </div>
+
       {levels.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">등록된 직책이 없습니다.</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">
+          {semesterLabelFromKey(selectedSemester)}에 등록된 직책이 없습니다.
+        </p>
       )}
 
       {levels.map((level) => (
@@ -382,6 +528,11 @@ export default function OrgChartEditor() {
                     {pos.userName ?? "공석"}
                     {pos.department && ` · ${pos.department}`}
                   </p>
+                  {isOrphanAssignee(pos) && (
+                    <span className="mt-1 inline-block rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-600">
+                      탈퇴/미확인 회원
+                    </span>
+                  )}
                 </div>
                 <div className="flex shrink-0 gap-0.5">
                   <button onClick={() => handleMoveOrder(pos.id, -1)} className="rounded p-1 text-muted-foreground hover:bg-muted"><ChevronUp size={14} /></button>
@@ -405,11 +556,17 @@ export default function OrgChartEditor() {
           onClick={() => {
             if (items.length > 0 && !confirm("기존 직책을 모두 지우고 기본 구조로 초기화합니다. 계속하시겠습니까?")) return;
             setItems(DEFAULT_ORG_SEED.map((p) => ({ ...p })));
+            setDirty(true);
             toast.success("기본 구조를 불러왔습니다. '저장' 버튼을 눌러 반영하세요.");
           }}
         >
           <Sparkles size={14} className="mr-1" />기본 구조 불러오기
         </Button>
+        {items.length === 0 && (
+          <Button variant="outline" size="sm" onClick={handleCopyFromPrevious}>
+            <Copy size={14} className="mr-1" />이전 학기에서 복사
+          </Button>
+        )}
         <Button size="sm" onClick={handleSaveAll} disabled={updateMutation.isPending}>
           {updateMutation.isPending ? "저장 중..." : "저장"}
         </Button>
@@ -418,6 +575,7 @@ export default function OrgChartEditor() {
       <EditDialog
         position={editPos}
         allPositions={items}
+        semesterKey={selectedSemester}
         open={showDialog}
         onClose={() => { setShowDialog(false); setEditPos(null); }}
         onSave={handleSavePosition}

@@ -63,6 +63,7 @@ export default function SitePopupModal({ popup, onClose, onDismissUntil, preview
         onClick={onClose}
         role="dialog"
         aria-modal="true"
+        aria-label={popup.title}
       >
         <div onClick={(e) => e.stopPropagation()}>
           <PopupCard popup={popup} onClose={onClose} dismissLabel={dismissLabel} onDismissUntil={onDismissUntil} />
@@ -73,7 +74,7 @@ export default function SitePopupModal({ popup, onClose, onDismissUntil, preview
 
   // bottom-right 배너
   return (
-    <div className="fixed bottom-4 right-4 z-[60] max-w-[320px]" role="dialog">
+    <div className="fixed bottom-4 right-4 z-[60] max-w-[320px]" role="dialog" aria-label={popup.title}>
       <PopupCard popup={popup} onClose={onClose} dismissLabel={dismissLabel} onDismissUntil={onDismissUntil} compact />
     </div>
   );
@@ -102,7 +103,7 @@ function PopupCard({
       <button
         onClick={onClose}
         aria-label="닫기"
-        className="absolute right-2 top-2 z-10 rounded-full bg-black/10 p-1 text-white hover:bg-black/30"
+        className="absolute right-2 top-2 z-10 rounded-full bg-background/80 p-1 text-foreground shadow-sm ring-1 ring-border hover:bg-muted"
       >
         <X size={14} />
       </button>
@@ -134,6 +135,7 @@ function PopupCard({
             href={popup.ctaUrl}
             target={popup.ctaUrl.startsWith("http") ? "_blank" : undefined}
             rel="noopener noreferrer"
+            onClick={onClose}
             className={cn(
               "mt-3 inline-flex items-center justify-center rounded-md bg-primary px-3 py-2 font-semibold text-white hover:bg-primary/90",
               compact ? "text-xs" : "text-sm",

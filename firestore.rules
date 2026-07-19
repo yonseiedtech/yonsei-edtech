@@ -1180,6 +1180,19 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && isAdmin();
     }
 
+    // ─── 검색 실패 집계 — M6 zero-result query (2026-07-19) ───
+    // 익명 포함 누구나 count 증가 적재 가능 (query·count·lastAt 3필드 경량 upsert).
+    // userId 저장 없음. 조회는 staff 이상만 (콘솔 인사이트 전용).
+    match /search_misses/{docId} {
+      allow read, list: if isAuthenticated() && isStaffOrAbove();
+      // 익명 적재 허용하되 필드 스키마·길이 검증으로 남용 방지 (tracker 의 100자 캡과 쌍)
+      allow create, update: if request.resource.data.keys().hasOnly(['query', 'count', 'lastAt'])
+        && request.resource.data.query is string
+        && request.resource.data.query.size() >= 2
+        && request.resource.data.query.size() <= 100;
+      allow delete: if isAuthenticated() && isAdmin();
+    }
+
     // ─── 교육공학 아카이브 (Concept / Variable / MeasurementTool) ───
     // 공개 read (탐색용), staff 이상이 write
     match /archive_concepts/{docId} {
@@ -1570,6 +1583,22 @@ service cloud.firestore {
     // ─── Weekly Goals (v5-M1 — 주간 학습 목표) ───
     // 결정적 doc id `${userId}_${weekKey}` — 본인만 자기 목표 생성/수정/조회.
     match /weekly_goals/{docId} {
+      allow read, list: if isAuthenticated()
+        && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && docId == request.resource.data.userId + "_" + request.resource.data.weekKey;
+      allow update: if isAuthenticated()
+        && resource.data.userId == request.auth.uid
+        && request.resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
+    // ─── Weekly Goal Records (v6-H3) — 주차 마감 기록·연속·회고 ───
+    // weekly-digest cron 이 Admin SDK 로 판정 결과(goal/achieved/met)를 적재(규칙 우회).
+    // 클라이언트는 본인 기록 read + 회고(reflection) upsert 만. read 는 본인·운영자.
+    match /weekly_goal_records/{docId} {
       allow read, list: if isAuthenticated()
         && (resource == null || resource.data.userId == request.auth.uid || isAdmin());
       allow create: if isAuthenticated()
