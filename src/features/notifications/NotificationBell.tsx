@@ -31,6 +31,7 @@ const TYPE_ICONS: Record<AppNotification["type"], string> = {
   reaction: "❤️",
   profile_like: "👍",
   kudos: "👏",
+  newcomer_sequence: "🎓",
 };
 
 function timeAgo(dateStr: string): string {

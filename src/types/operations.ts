@@ -76,7 +76,8 @@ export type NotificationType =
   | "collab_invite"         // 공동 연구 초대 수신
   | "reaction"              // 내 글에 이모지 공감
   | "profile_like"          // 내 프로필 좋아요
-  | "kudos";                // 동기가 내 학습 활동에 응원 (v7-H5, 코호트 한정)
+  | "kudos"                 // 동기가 내 학습 활동에 응원 (v7-H5, 코호트 한정)
+  | "newcomer_sequence";    // 신입 첫 2주 활성화 시퀀스 단계별 넛지 (v7-M2, cron)
 
 export interface AppNotification {
   id: string;

@@ -24,6 +24,7 @@ import {
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
   ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote, Images, ClipboardCheck, Workflow, LayoutGrid,
   UserPlus, ListChecks, AlertTriangle, Archive, Map, Bot, Sparkles, Trophy,
+  PackageSearch,
 } from "lucide-react";
 import { fetchPendingDrafts } from "@/features/content-draft/content-draft-store";
 import { useState } from "react";
@@ -293,6 +294,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
       items: [
         // 사용자 요청(2026-07-19): 아카이브 홈을 그룹 맨 위로 — 진입 허브 우선
         { href: "/console/archive", label: "아카이브 홈", icon: Archive },
+        { href: "/console/archive/content-gaps", label: "콘텐츠 갭", icon: PackageSearch },
         { href: "/console/archive/research-methods", label: "연구방법 가이드", icon: FlaskConical },
         { href: "/console/archive/statistical-methods", label: "통계방법 가이드", icon: BarChart3Icon },
         { href: "/console/archive/foundation-terms", label: "기초 용어 가이드", icon: BookOpen },

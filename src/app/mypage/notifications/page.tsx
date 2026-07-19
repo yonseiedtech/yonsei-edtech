@@ -50,6 +50,7 @@ const TYPE_ICONS: Record<NotificationType, string> = {
   reaction: "❤️",
   profile_like: "👍",
   kudos: "👏",
+  newcomer_sequence: "🎓",
 };
 
 const TYPE_LABELS: Record<NotificationType, string> = {
@@ -76,6 +77,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   reaction: "공감",
   profile_like: "프로필 좋아요",
   kudos: "학습 응원",
+  newcomer_sequence: "신입 안내",
 };
 
 // 필터 탭 정의
