@@ -34,7 +34,6 @@ import {
   courseOfferingsApi,
   courseTodosApi,
   seminarsApi,
-  diagnosticResultsApi,
   flashcardsApi,
   awardsApi,
   externalActivitiesApi,
@@ -50,9 +49,9 @@ import {
   type CourseOffering,
   type CourseTodo,
   type Seminar,
-  type DiagnosticResult,
   type Flashcard,
 } from "@/types";
+import { useUserDiagnostics } from "@/features/dashboard/useUserDiagnostics";
 import { cn } from "@/lib/utils";
 import { SEMANTIC } from "@/lib/design-tokens";
 
@@ -361,14 +360,8 @@ export default function NextActionBanner() {
 
   // ── 발견성 넛지 데이터 (시간 임박 액션이 없을 때만 의미) ──
   // 진단 이력·암기카드는 대시보드 상주 위젯과 동일 캐시 키 재사용
-  //  → StageRecommendationPanel(["stage-rec-diagnostics"]) · TodayCard(["today-flashcards"]) 와 dedupe, 추가 로드 비용 0.
-  const { data: diagnostics } = useQuery({
-    queryKey: ["stage-rec-diagnostics", userId],
-    queryFn: async () =>
-      (await diagnosticResultsApi.listByUser(userId as string)).data as DiagnosticResult[],
-    enabled: !!userId,
-    staleTime: 5 * 60_000,
-  });
+  //  → 공통 useUserDiagnostics 훅 · TodayCard(["today-flashcards"]) 와 dedupe, 추가 로드 비용 0.
+  const { data: diagnostics } = useUserDiagnostics(userId);
   const { data: flashcards } = useQuery({
     queryKey: ["today-flashcards", userId],
     queryFn: async () => (await flashcardsApi.listByUser(userId as string)).data as Flashcard[],

@@ -15,21 +15,15 @@
 
 import { useMemo } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useUserDiagnostics } from "@/features/dashboard/useUserDiagnostics";
 import { ArrowRight, Footprints, Target } from "lucide-react";
 import { JOURNEY_STAGES } from "@/features/research/ThesisJourney";
 import { getEffectiveSemesterCount } from "@/lib/interview-target";
-import { diagnosticResultsApi } from "@/lib/bkend";
-import type { User, DiagnosticResult } from "@/types";
+import type { User } from "@/types";
 
 export default function StageRecommendationPanel({ user }: { user: User }) {
   // Phase 3: 진단 결과 배선 — 최신 진단의 약점 개념을 학기 추천에 반영
-  const { data: diagResults = [] } = useQuery({
-    queryKey: ["stage-rec-diagnostics", user.id],
-    queryFn: async () => (await diagnosticResultsApi.listByUser(user.id)).data as DiagnosticResult[],
-    enabled: !!user.id,
-    staleTime: 5 * 60_000,
-  });
+  const { data: diagResults = [] } = useUserDiagnostics(user.id);
   const weakConcepts = useMemo(() => {
     const latest = [...diagResults].sort((a, b) =>
       (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),

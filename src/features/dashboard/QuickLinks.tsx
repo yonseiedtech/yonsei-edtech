@@ -14,7 +14,7 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
+import { useUserDiagnostics } from "@/features/dashboard/useUserDiagnostics";
 import {
   FlaskConical,
   CalendarRange,
@@ -32,9 +32,7 @@ import {
   Users,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { diagnosticResultsApi } from "@/lib/bkend";
 import { getMemberStage, type MemberStage } from "@/lib/member-stage";
-import type { DiagnosticResult } from "@/types";
 
 type QuickLink = { href: string; label: string; icon: typeof FlaskConical };
 
@@ -76,13 +74,7 @@ export default function QuickLinks() {
   const userId = user?.id;
 
   // 진단 이력 — NextActionBanner·StageRecommendationPanel 과 동일 캐시 키 재사용(dedupe, 추가 로드 0).
-  const { data: diagnostics } = useQuery({
-    queryKey: ["stage-rec-diagnostics", userId],
-    queryFn: async () =>
-      (await diagnosticResultsApi.listByUser(userId as string)).data as DiagnosticResult[],
-    enabled: !!userId,
-    staleTime: 5 * 60_000,
-  });
+  const { data: diagnostics } = useUserDiagnostics(userId);
 
   const links = useMemo(() => {
     const stage = getMemberStage(user, diagnostics?.length);

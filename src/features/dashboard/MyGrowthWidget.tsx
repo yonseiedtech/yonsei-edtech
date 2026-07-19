@@ -16,7 +16,6 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import {
   Sprout,
   ClipboardCheck,
@@ -25,7 +24,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { diagnosticResultsApi } from "@/lib/bkend";
+import { useUserDiagnostics } from "@/features/dashboard/useUserDiagnostics";
 import { useStudySessions } from "@/features/research/study-timer/useStudySessions";
 import { useWritingPaper } from "@/features/research/useWritingPaper";
 import { useResearchProposal } from "@/features/research/useResearchProposal";
@@ -86,18 +85,11 @@ export default function MyGrowthWidget() {
   const { user } = useAuthStore();
   const userId = user?.id;
 
-  // 1) 진단 준비도 — 최근 1건 (DiagnosisReadinessWidget 과 동일 read, 캐시 key 분리)
-  const { data: latestDiagnostic } = useQuery({
-    queryKey: ["my-growth-diagnosis", userId],
-    queryFn: async (): Promise<DiagnosticResult | null> => {
-      if (!userId) return null;
-      const res = await diagnosticResultsApi.listByUser(userId);
-      const list = Array.isArray(res.data) ? res.data : [];
-      return list[0] ?? null;
-    },
-    enabled: !!userId,
-    staleTime: 5 * 60_000,
-  });
+  // 1) 진단 준비도 — 최근 1건 (공통 useUserDiagnostics 훅으로 전 위젯과 캐시 공유)
+  const { data: latestDiagnostic } = useUserDiagnostics<DiagnosticResult | null>(
+    userId,
+    (list) => list[0] ?? null,
+  );
 
   // 2)·3) 연구 타이머 누적 + 이번 학기 학습 활동일수 (study_sessions 재사용)
   const { sessions } = useStudySessions();

@@ -9,10 +9,9 @@
  */
 
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import { ClipboardCheck, ArrowRight, Sparkles } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { diagnosticResultsApi } from "@/lib/bkend";
+import { useUserDiagnostics } from "@/features/dashboard/useUserDiagnostics";
 import { formatDate } from "@/lib/utils";
 import type { DiagnosticResult } from "@/types/diagnostic";
 
@@ -48,17 +47,10 @@ export default function DiagnosisReadinessWidget() {
   const { user } = useAuthStore();
   const userId = user?.id;
 
-  const { data: latest, isLoading } = useQuery({
-    queryKey: ["dashboard-diagnosis-readiness", userId],
-    queryFn: async (): Promise<DiagnosticResult | null> => {
-      if (!userId) return null;
-      const res = await diagnosticResultsApi.listByUser(userId);
-      const list = Array.isArray(res.data) ? res.data : [];
-      return list[0] ?? null;
-    },
-    enabled: !!userId,
-    staleTime: 5 * 60_000,
-  });
+  const { data: latest, isLoading } = useUserDiagnostics<DiagnosticResult | null>(
+    userId,
+    (list) => list[0] ?? null,
+  );
 
   if (isLoading) {
     return (

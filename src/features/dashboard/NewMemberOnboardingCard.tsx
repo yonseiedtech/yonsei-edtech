@@ -24,7 +24,6 @@
 
 import { useCallback, useMemo, useState, useSyncExternalStore } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
 import {
   Sparkles,
   CheckCircle2,
@@ -38,7 +37,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { diagnosticResultsApi } from "@/lib/bkend";
+import { useUserDiagnostics } from "@/features/dashboard/useUserDiagnostics";
 
 const DISMISS_KEY_PREFIX = "yedu_onboarding_card_dismissed";
 
@@ -89,18 +88,11 @@ export default function NewMemberOnboardingCard() {
   const [dismissedOverride, setDismissedOverride] = useState(false);
   const dismissed = dismissedStored || dismissedOverride;
 
-  // 진단평가 이력 1건+ 여부 — DiagnosisReadinessWidget 와 동일 staleTime.
-  const { data: hasDiagnosis } = useQuery({
-    queryKey: ["onboarding-card-diagnosis", userId],
-    queryFn: async () => {
-      if (!userId) return false;
-      const res = await diagnosticResultsApi.listByUser(userId);
-      const list = Array.isArray(res.data) ? res.data : [];
-      return list.length > 0;
-    },
-    enabled: !!userId,
-    staleTime: 5 * 60_000,
-  });
+  // 진단평가 이력 1건+ 여부 — 공통 useUserDiagnostics 훅으로 전 위젯과 캐시 공유.
+  const { data: hasDiagnosis } = useUserDiagnostics<boolean>(
+    userId,
+    (list) => list.length > 0,
+  );
 
   const steps: OnboardingStep[] = useMemo(() => {
     if (!user) return [];

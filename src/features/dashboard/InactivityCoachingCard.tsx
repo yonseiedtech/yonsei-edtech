@@ -14,27 +14,19 @@
 
 import Link from "next/link";
 import { useMemo } from "react";
-import { useQuery } from "@tanstack/react-query";
 import { Sprout, ArrowRight } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { diagnosticResultsApi } from "@/lib/bkend";
+import { useUserDiagnostics } from "@/features/dashboard/useUserDiagnostics";
 import { getMemberStage } from "@/lib/member-stage";
 import { useGradActivityData } from "@/features/mypage/useGradActivityData";
 import { pickInactivityCoaching } from "@/lib/inactivity-coaching";
-import type { DiagnosticResult } from "@/types";
 
 export default function InactivityCoachingCard() {
   const { user } = useAuthStore();
   const userId = user?.id;
 
-  // 진단 이력 — QuickLinks/StageRecommendationPanel 과 동일 캐시 키 재사용(추가 로드 0)
-  const { data: diagnostics } = useQuery({
-    queryKey: ["stage-rec-diagnostics", userId],
-    queryFn: async () =>
-      (await diagnosticResultsApi.listByUser(userId as string)).data as DiagnosticResult[],
-    enabled: !!userId,
-    staleTime: 5 * 60_000,
-  });
+  // 진단 이력 — 공통 useUserDiagnostics 훅으로 대시보드 전 위젯과 캐시 공유(추가 로드 0)
+  const { data: diagnostics } = useUserDiagnostics(userId);
 
   const { activityByDay } = useGradActivityData(userId);
 
