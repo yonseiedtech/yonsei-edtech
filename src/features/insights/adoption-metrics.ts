@@ -1,5 +1,6 @@
 import { Timestamp } from "firebase-admin/firestore";
 import { currentWeekKey } from "@/lib/weekly-goal";
+import { cohortKeyOf, currentSemesterKey } from "@/lib/semester";
 
 /**
  * 기능 채택률 집계 (v6-H1) — GET /api/console/adoption 과 주간 스냅샷 cron 공유 소스.
@@ -36,7 +37,15 @@ export interface AdoptionMetrics {
   diagnostics: { completed30d: number; total: number };
   flashcards: { active: number; total: number };
   weeklyGoals: { setThisWeek: number };
-  mentoring: { questions: number; answers: number; resolved: number };
+  mentoring: {
+    questions: number;
+    answers: number;
+    resolved: number;
+    /** 현재 학기 신입 중 멘토링 질문 미작성 회원 수 (-1 = 집계 실패) */
+    unmatchedNewcomers: number;
+    /** 답변 있는 질문 비율 0~100 (null = 질문 없음) */
+    responseRate: number | null;
+  };
   reviewQueue: { processed: number; pending: number };
   // M4 검수 품질 추세 — 4개 검수형 컬렉션(연구방법·통계방법·기초용어·학술글쓰기) 합계
   reviewQueueDetail: { draft: number; held: number };
@@ -162,18 +171,42 @@ export async function computeAdoption(
     /* 이벤트 분포 실패는 전체를 막지 않음 */
   }
 
-  // 멘토링(comm_boards contextType="mentoring") — 질문/답변/채택 카운트.
-  // 보드는 소수(대개 1) → 보드별 순회. 채택(resolved) 은 복합 색인 회피 위해 메모리 집계.
+  // 멘토링(comm_boards contextType="mentoring") — 질문/답변/채택 + 응답률 + 미매칭 신입 수.
+  // 보드는 소수(대개 1) → 보드별 순회. 채택(resolved)·응답률은 복합 색인 회피 위해 메모리 집계.
+  // 미매칭 신입 = 현재 학기 코호트 중 멘토링 질문 미작성 회원 수 (v8-M3).
   let mQuestions = 0;
   let mAnswers = 0;
   let mResolved = 0;
+  let mUnmatchedNewcomers = -1;
+  let mResponseRate: number | null = null;
   try {
     const boards = await col("comm_boards").where("contextType", "==", "mentoring").get();
+    const askerIds = new Set<string>();
+    let mWithAnswers = 0;
     for (const b of boards.docs) {
       const qs = await col("comm_questions").where("boardId", "==", b.id).get();
       mQuestions += qs.size;
-      mResolved += qs.docs.filter((d) => (d.data() as { resolved?: boolean }).resolved === true).length;
+      for (const qd of qs.docs) {
+        const qdata = qd.data() as { resolved?: boolean; authorId?: string; answerCount?: number };
+        if (qdata.resolved === true) mResolved++;
+        if (qdata.authorId) askerIds.add(qdata.authorId);
+        if ((qdata.answerCount ?? 0) > 0) mWithAnswers++;
+      }
       mAnswers += Math.max(await cnt(col("comm_answers").where("boardId", "==", b.id)), 0);
+    }
+    // 응답률 = 답변 있는 질문 / 전체 질문
+    mResponseRate = mQuestions > 0 ? Math.round((mWithAnswers / mQuestions) * 100) : null;
+    // 미매칭 신입: 현재 학기 승인 회원 중 멘토링 질문 미작성 수
+    try {
+      const semKey = currentSemesterKey();
+      const usersSnap = await col("users").where("approved", "==", true).get();
+      const newcomers = usersSnap.docs.filter((d) => {
+        const u = d.data() as { enrollmentYear?: number; enrollmentHalf?: number; createdAt?: string };
+        return cohortKeyOf(u) === semKey;
+      });
+      mUnmatchedNewcomers = newcomers.filter((d) => !askerIds.has(d.id)).length;
+    } catch {
+      /* 미매칭 신입 집계 실패 — -1 센티널 유지 */
     }
   } catch {
     /* 멘토링 집계 실패는 전체를 막지 않음 */
@@ -215,7 +248,13 @@ export async function computeAdoption(
     diagnostics: { completed30d: diagnosticsCompleted30d, total: diagnosticsTotal },
     flashcards: { active: flashcardsActive, total: flashcardsTotal },
     weeklyGoals: { setThisWeek: weeklyGoalsSet },
-    mentoring: { questions: mQuestions, answers: mAnswers, resolved: mResolved },
+    mentoring: {
+      questions: mQuestions,
+      answers: mAnswers,
+      resolved: mResolved,
+      unmatchedNewcomers: mUnmatchedNewcomers,
+      responseRate: mResponseRate,
+    },
     reviewQueue: { processed: reviewProcessed, pending: reviewDraft },
     reviewQueueDetail: { draft: rqDraft, held: rqHeld },
   };

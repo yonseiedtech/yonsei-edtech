@@ -19,6 +19,7 @@ const SERIES: { key: string; label: string; pick: (s: AdoptionSnapshot) => numbe
   { key: "flashcards", label: "암기카드 활성", pick: (s) => s.flashcards.active },
   { key: "weeklyGoals", label: "이번 주 목표", pick: (s) => s.weeklyGoals.setThisWeek },
   { key: "mentoring", label: "멘토링 질문", pick: (s) => s.mentoring.questions },
+  { key: "mentoringUnmatched", label: "멘토링 미참여 신입", pick: (s) => s.mentoring.unmatchedNewcomers ?? -1 },
   { key: "reviewQueue", label: "검수 처리", pick: (s) => s.reviewQueue.processed },
 ];
 

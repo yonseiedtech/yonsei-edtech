@@ -114,6 +114,16 @@ export default function AdoptionSection() {
         <Stat label="암기카드 활성 / 누적" value={`${data.flashcards.active} / ${data.flashcards.total}`} sub="복습 1회+" />
         <Stat label="이번 주 목표 설정" value={data.weeklyGoals.setThisWeek} />
         <Stat label="멘토링 질문 / 답변 / 채택" value={`${data.mentoring.questions} / ${data.mentoring.answers} / ${data.mentoring.resolved}`} />
+        <Stat
+          label="멘토링 미참여 신입"
+          value={data.mentoring.unmatchedNewcomers ?? -1}
+          sub="현재 학기 · 질문 미작성"
+        />
+        <Stat
+          label="멘토링 응답률"
+          value={data.mentoring.responseRate != null ? `${data.mentoring.responseRate}%` : "—"}
+          sub="답변 있는 질문 / 전체"
+        />
         <Stat label="검수 처리 / 대기" value={`${data.reviewQueue.processed} / ${data.reviewQueue.pending}`} sub="아카이브 개념" />
       </div>
     </section>
