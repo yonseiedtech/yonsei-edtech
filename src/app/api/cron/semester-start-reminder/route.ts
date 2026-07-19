@@ -2,6 +2,7 @@ import { NextRequest } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers } from "@/lib/push-admin";
+import { cohortKeyOf } from "@/lib/semester";
 
 /**
  * 개강 리마인더 Cron (매일 09:00 KST) — 방학 이탈 회원 회수 안전망.
@@ -114,7 +115,71 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    return Response.json({ ok: true, date: today, semester: target.semKey, daysLeft: target.daysLeft, notifCount, pushResult });
+    // ── 신입(현재 학기 코호트) 온보딩 리마인드 분기 (M1) ──
+    // 이번 학기 입학 신입에게만 온보딩 정착을 별도 안내. 기존 알림 패턴 재사용(신규 cron 없음),
+    // type/refId 를 분리해 개강 리마인더(class_reminder)와 중복 가드를 독립적으로 유지.
+    let onboardingNotifCount = 0;
+    try {
+      const onboardRefId = `${target.semKey}_onboarding_d${target.daysLeft}`;
+      const existingOnboard = await db
+        .collection("notifications")
+        .where("type", "==", "onboarding_reminder")
+        .where("refId", "==", onboardRefId)
+        .get();
+      const onboardSent = new Set(
+        existingOnboard.docs.map((d) => (d.data() as { userId?: string }).userId),
+      );
+      // usersSnap(승인 회원) 재사용 — 신입 = cohortKeyOf(회원) === 이번 학기 키
+      const newcomerIds = usersSnap.docs
+        .filter((d) => {
+          const u = d.data() as {
+            enrollmentYear?: number;
+            enrollmentHalf?: number;
+            createdAt?: string;
+          };
+          return cohortKeyOf(u) === target.semKey;
+        })
+        .map((d) => d.id)
+        .filter((id) => !onboardSent.has(id));
+
+      for (let i = 0; i < newcomerIds.length; i += 400) {
+        const batch = db.batch();
+        for (const userId of newcomerIds.slice(i, i + 400)) {
+          const ref = db.collection("notifications").doc();
+          batch.set(ref, {
+            userId,
+            type: "onboarding_reminder",
+            title: `${target.label} 신입 온보딩`,
+            message:
+              target.daysLeft === 7
+                ? `${target.label} 개강이 일주일 앞으로 다가왔어요. 신입 온보딩 체크리스트로 학회 활동을 준비해 보세요.`
+                : `내일 ${target.label}가 시작됩니다. 신입 온보딩 체크리스트로 첫 걸음을 확인해 보세요.`,
+            link: "/steppingstone/onboarding",
+            refId: onboardRefId,
+            read: false,
+            createdAt: nowIso,
+          });
+          onboardingNotifCount++;
+        }
+        await batch.commit();
+      }
+
+      if (newcomerIds.length > 0) {
+        try {
+          await sendPushToUsers(newcomerIds, {
+            title: `${target.label} 신입 온보딩`,
+            body: "신입 온보딩 체크리스트로 학회 첫 걸음을 준비해 보세요.",
+            link: "/steppingstone/onboarding",
+          });
+        } catch (e) {
+          console.error("[semester-start-reminder] onboarding push failed", e);
+        }
+      }
+    } catch (e) {
+      console.error("[semester-start-reminder] onboarding branch failed", e);
+    }
+
+    return Response.json({ ok: true, date: today, semester: target.semKey, daysLeft: target.daysLeft, notifCount, onboardingNotifCount, pushResult });
   } catch (err) {
     console.error("[cron/semester-start-reminder]", err);
     return Response.json({ error: "Internal error" }, { status: 500 });

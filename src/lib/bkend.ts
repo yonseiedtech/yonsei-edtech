@@ -2402,6 +2402,14 @@ export const guideProgressApi = {
     });
     return res.data[0] ?? null;
   },
+  /** 트랙 전체 진행 상태 (코호트 완료율 평균 집계용 — M1) */
+  listByTrack: async (trackId: string): Promise<GuideProgress[]> => {
+    const res = await dataApi.list<GuideProgress>("guide_progress", {
+      "filter[trackId]": trackId,
+      limit: 500,
+    });
+    return res.data;
+  },
   create: (data: Record<string, unknown>) =>
     dataApi.create<GuideProgress>("guide_progress", data),
   update: (id: string, data: Record<string, unknown>) =>

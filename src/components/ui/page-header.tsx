@@ -48,7 +48,9 @@ export default function PageHeader({
 
   return (
     <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between sm:gap-4">
-      <div className="flex min-w-0 items-center gap-3">
+      {/* 타이틀은 자연 폭을 유지(sm+ shrink-0)하고, 액션이 많은 페이지는 액션 쪽이 줄바꿈되게 한다
+          — 액션 8개+ 페이지(콘솔 아카이브 등)에서 타이틀이 세로 1글자 폭으로 눌리는 문제 방지 */}
+      <div className="flex min-w-0 items-center gap-3 sm:shrink-0">
         {icon && renderIcon(icon, isConsole)}
         <div className="min-w-0">
           {/* Sprint 67-AP Phase 1: 헤드라인 폰트 크기 ↑ (토스 패턴 — 큰 임팩트) */}
@@ -69,7 +71,7 @@ export default function PageHeader({
         </div>
       </div>
       {actions && (
-        <div className="flex flex-wrap items-center gap-2 sm:shrink-0">{actions}</div>
+        <div className="flex min-w-0 flex-wrap items-center gap-2 sm:justify-end">{actions}</div>
       )}
     </div>
   );

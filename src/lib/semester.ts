@@ -52,6 +52,25 @@ export function semesterKeyOf(iso: string | undefined | null): string | null {
 }
 
 /**
+ * 회원의 코호트(가입 기수) 학기 키 — "YYYY-1"(전기) | "YYYY-2"(후기) | null.
+ * M1(8월 신입 코호트): 신규 컬렉션·필드 강제 없이 기존 회원 문서에서 가입 학기를 파생.
+ *  1) enrollmentYear + enrollmentHalf(1|2) 우선 — 연락망 "입학시점"과 동일 소스.
+ *  2) 없으면 createdAt(가입일)로부터 학기 키 유도(semesterKeyOf 재사용).
+ * 둘 다 없으면 null(코호트 미상).
+ */
+export function cohortKeyOf(member: {
+  enrollmentYear?: number | null;
+  enrollmentHalf?: number | null;
+  createdAt?: string | null;
+}): string | null {
+  const { enrollmentYear, enrollmentHalf } = member;
+  if (enrollmentYear && (enrollmentHalf === 1 || enrollmentHalf === 2)) {
+    return `${enrollmentYear}-${enrollmentHalf}`;
+  }
+  return semesterKeyOf(member.createdAt);
+}
+
+/**
  * 학기 키("YYYY-1" | "YYYY-2") → 표시 라벨. formatSemester 와 동일한 전기/후기 어법.
  * 예: "2026-2" → "2026년 후기". 형식이 아니면 원문 반환.
  */

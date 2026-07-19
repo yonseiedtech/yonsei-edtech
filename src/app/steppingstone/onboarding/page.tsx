@@ -31,6 +31,7 @@ import {
   guideProgressApi,
 } from "@/lib/bkend";
 import { logOnboardingEvent } from "@/lib/funnel-telemetry";
+import CohortSection from "@/features/onboarding/CohortSection";
 import {
   GUIDE_ITEM_ACTION_LABELS,
   type GuideTrack,
@@ -504,6 +505,15 @@ export default function OnboardingPage() {
             />
           </div>
         </div>
+      )}
+
+      {/* M1: 우리 기수 (신입 코호트 — 진행률 평균·동기 명단·버디 추천) */}
+      {user && (
+        <CohortSection
+          me={user}
+          onboardingTrackId={track?.id ?? null}
+          totalItems={totalCount}
+        />
       )}
 
       {loading ? (
