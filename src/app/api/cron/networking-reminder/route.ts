@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { buildCandidateSlots, eventPollSlots, tallyAvailability, bestSlots, resolveSlotStartAt } from "@/features/networking/networking-utils";
@@ -15,7 +16,7 @@ import type { NetworkingAvailability } from "@/types";
  * 세미나 리마인더와 동일한 사용자 단위 중복 가드(notifications 조회) 사용.
  * poll 미확정(startAt 빈 값)·비공개·취소 행사는 건너뜀.
  */
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -326,3 +327,5 @@ function addDays(date: Date, days: number): string {
   d.setDate(d.getDate() + days);
   return d.toISOString().split("T")[0];
 }
+
+export const GET = withCronLog("networking-reminder", _handler);

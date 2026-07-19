@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers } from "@/lib/push-admin";
@@ -11,7 +12,7 @@ import { sendPushToUsers } from "@/lib/push-admin";
  * 내일(KST) 마감되는 인터뷰/설문마다 "아직 응답하지 않은 승인 회원"에게 인앱+웹푸시.
  * refId(`deadline_{postId}`) 멱등 가드 — 크론 재실행에도 1회만.
  */
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -111,3 +112,5 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const GET = withCronLog("deadline-reminder", _handler);

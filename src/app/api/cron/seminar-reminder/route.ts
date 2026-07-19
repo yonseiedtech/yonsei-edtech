@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 
@@ -105,7 +106,7 @@ async function sendReminderEmails(
  * 세미나 사전 알림 Cron (매일 09:00 KST 실행)
  * D-3, D-1 세미나에 대해 참석 예정 회원에게 알림 + 이메일 발송
  */
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -188,3 +189,5 @@ function addDays(date: Date, days: number): string {
   d.setDate(d.getDate() + days);
   return d.toISOString().split("T")[0];
 }
+
+export const GET = withCronLog("seminar-reminder", _handler);

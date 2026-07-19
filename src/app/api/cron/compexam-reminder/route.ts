@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers } from "@/lib/push-admin";
@@ -13,7 +14,7 @@ import { sendPushToUsers } from "@/lib/push-admin";
  * D-30 / D-7 / D-1 에 인앱 + 웹푸시 발송. refId 멱등 가드로 중복 방지,
  * 크론 1회 실패에 대비해 범위 보정(D-30~8→d30, D-7~2→d7, D-1→d1).
  */
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -119,3 +120,5 @@ function diffDays(fromYmd: string, toYmd: string): number {
   const [ty, tm, td] = toYmd.split("-").map(Number);
   return Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86400000);
 }
+
+export const GET = withCronLog("compexam-reminder", _handler);

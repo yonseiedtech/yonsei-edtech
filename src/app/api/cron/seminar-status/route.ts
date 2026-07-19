@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sentReviewRequestUserIds } from "@/lib/seminar-review-dedupe";
@@ -17,7 +18,7 @@ function escapeHtml(str: string): string {
  * 4. D+7: 미제출 후기 리마인더
  * 5. 수료증 발급 준비 알림 (후기 3건 이상 시)
  */
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -469,3 +470,5 @@ async function autoIssueCompletionCertificates(
     });
   }
 }
+
+export const GET = withCronLog("seminar-status", _handler);

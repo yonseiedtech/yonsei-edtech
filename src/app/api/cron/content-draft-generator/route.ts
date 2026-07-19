@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import {
@@ -36,7 +37,7 @@ function cutoffDateStr(days: number): string {
   return d.toISOString().split("T")[0];
 }
 
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -185,3 +186,5 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const GET = withCronLog("content-draft-generator", _handler);

@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
@@ -1048,7 +1049,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   return { sent, recipients: recipients.length };
 }
 
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -1090,3 +1091,5 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const GET = withCronLog("weekly-digest", _handler);

@@ -19,6 +19,10 @@ import {
   Bell,
   Filter,
   Loader2,
+  AlertTriangle,
+  CheckCircle2,
+  XCircle,
+  Activity,
 } from "lucide-react";
 import { dataApi } from "@/lib/bkend";
 import { auth } from "@/lib/firebase";
@@ -40,6 +44,158 @@ interface PushLog {
   seminarId?: string;
   userId?: string;
   date?: string;
+}
+
+/** cron_runs 컬렉션 kind별 집계 (서버 /api/console/cron-runs 반환) */
+interface KindStatus {
+  kind: string;
+  lastRunAt: string;
+  lastSuccess: boolean;
+  lastDurationMs: number;
+  consecutiveFailures: number;
+  lastErrorMessage?: string;
+  lastSummary: Record<string, number>;
+}
+
+/** v7-M6: cron 실행 상태 섹션 — cron_runs 최근 실행을 kind별 표 + 연속 실패 배너 */
+function CronStatusSection() {
+  const { data, isLoading, refetch, isRefetching } = useQuery({
+    queryKey: ["console", "cron-runs-status"],
+    queryFn: async () => {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("로그인 필요");
+      const res = await fetch("/api/console/cron-runs", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`조회 실패 (${res.status})`);
+      const json = (await res.json()) as { statuses: KindStatus[] };
+      return json.statuses ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  const statuses = data ?? [];
+  const failingKinds = statuses.filter((s) => s.consecutiveFailures >= 2);
+
+  const fmtDuration = (ms: number) =>
+    ms >= 60_000
+      ? `${Math.floor(ms / 60_000)}m ${Math.floor((ms % 60_000) / 1000)}s`
+      : ms >= 1_000
+        ? `${(ms / 1000).toFixed(1)}s`
+        : `${ms}ms`;
+
+  return (
+    <div className="space-y-2">
+      {/* 연속 2회+ 실패 경고 배너 */}
+      {failingKinds.length > 0 && (
+        <div className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-[11px] text-destructive">
+          <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+          <div>
+            <span className="font-semibold">연속 실패 감지 — </span>
+            {failingKinds.map((k) => (
+              <span key={k.kind} className="mr-2">
+                <code className="rounded bg-destructive/10 px-1">{k.kind}</code>
+                {" "}
+                <span className="font-semibold">{k.consecutiveFailures}회 연속 실패</span>
+                {k.lastErrorMessage && (
+                  <span className="ml-1 opacity-70">({k.lastErrorMessage.slice(0, 60)})</span>
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 실행 상태 테이블 */}
+      <div className="rounded-2xl border bg-card p-4">
+        <div className="mb-2 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="flex items-center gap-1 text-xs font-semibold">
+            <Activity size={12} />
+            cron 실행 상태
+            <Badge variant="outline" className="text-[10px]">
+              cron_runs · kind별 최신
+            </Badge>
+          </h2>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            className="h-7 gap-1 px-2 text-[11px]"
+          >
+            {isRefetching ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
+            새로고침
+          </Button>
+        </div>
+
+        {isLoading ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">
+            <Loader2 size={12} className="mx-auto mb-1 animate-spin" /> 불러오는 중…
+          </p>
+        ) : statuses.length === 0 ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">
+            아직 cron 실행 기록이 없습니다. cron이 실행되면 자동으로 집계됩니다.
+          </p>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="min-w-full text-[11px]">
+              <thead>
+                <tr className="border-b text-left text-muted-foreground">
+                  <th className="py-1 pr-2 font-medium">kind</th>
+                  <th className="py-1 px-2 font-medium">마지막 실행</th>
+                  <th className="py-1 px-2 font-medium">결과</th>
+                  <th className="py-1 px-2 font-medium text-right">소요</th>
+                  <th className="py-1 pl-2 font-medium text-right">연속 실패</th>
+                </tr>
+              </thead>
+              <tbody>
+                {statuses.map((s) => (
+                  <tr key={s.kind} className="border-b last:border-b-0">
+                    <td className="py-1.5 pr-2">
+                      <code className="rounded bg-muted px-1 text-[10px]">{s.kind}</code>
+                    </td>
+                    <td className="py-1.5 px-2 text-muted-foreground">
+                      {s.lastRunAt
+                        ? new Date(s.lastRunAt).toLocaleString("ko-KR")
+                        : "—"}
+                    </td>
+                    <td className="py-1.5 px-2">
+                      {s.lastSuccess ? (
+                        <span className="flex items-center gap-1 text-emerald-600">
+                          <CheckCircle2 size={11} /> 성공
+                        </span>
+                      ) : (
+                        <span className="flex items-center gap-1 text-destructive">
+                          <XCircle size={11} /> 실패
+                          {s.lastErrorMessage && (
+                            <span className="ml-1 max-w-[160px] truncate opacity-70" title={s.lastErrorMessage}>
+                              {s.lastErrorMessage.slice(0, 40)}
+                            </span>
+                          )}
+                        </span>
+                      )}
+                    </td>
+                    <td className="py-1.5 px-2 text-right font-mono text-muted-foreground">
+                      {fmtDuration(s.lastDurationMs)}
+                    </td>
+                    <td className="py-1.5 pl-2 text-right">
+                      {s.consecutiveFailures >= 2 ? (
+                        <span className="font-semibold text-destructive">{s.consecutiveFailures}회</span>
+                      ) : s.consecutiveFailures === 1 ? (
+                        <span className="text-amber-600">1회</span>
+                      ) : (
+                        <span className="text-muted-foreground">—</span>
+                      )}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 const KIND_LABELS: Record<string, { label: string; color: string }> = {
@@ -215,6 +371,9 @@ export default function CronLogsPage() {
           새로고침
         </Button>
       </div>
+
+      {/* v7-M6 — cron 실행 상태 (cron_runs 컬렉션 · kind별 최신 + 연속 실패 배너) */}
+      <CronStatusSection />
 
       {/* v7-H3 — 로그 보존 정리 dry-run (조회 전용, 삭제 없음).
           자동 스케줄은 vercel.json 미등록(휴면) — 여기서 삭제 예정 규모를 확인한 뒤 활성화를 결정한다. */}

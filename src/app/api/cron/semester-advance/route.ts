@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import type { DocumentReference } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
@@ -87,7 +88,7 @@ async function advanceSemesters(): Promise<AdvanceResult> {
   return { semesterKey: key, advanced, anchored, skipped };
 }
 
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -114,3 +115,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const GET = withCronLog("semester-advance", _handler);

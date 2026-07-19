@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { requireAuth } from "@/lib/api-auth";
@@ -22,7 +23,7 @@ import { requireAuth } from "@/lib/api-auth";
 const BATCH_LIMIT = 2000; // 컬렉션당 1회 삭제 상한 (타임아웃 방어)
 const CHUNK = 500;        // Firestore writeBatch 최대 500건
 
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   const dryRun = new URL(req.url).searchParams.get("dryRun") === "true";
 
   if (!verifyCronAuth(req)) {
@@ -95,3 +96,5 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const GET = withCronLog("analytics-retention", _handler);

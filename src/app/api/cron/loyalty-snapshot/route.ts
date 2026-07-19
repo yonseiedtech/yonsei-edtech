@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { requireAuth } from "@/lib/api-auth";
@@ -66,7 +67,7 @@ async function captureSnapshot(): Promise<CaptureResult> {
   return { period, totalMembers: rows.length, avgLoyalty };
 }
 
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -93,3 +94,5 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+
+export const GET = withCronLog("loyalty-snapshot", _handler);

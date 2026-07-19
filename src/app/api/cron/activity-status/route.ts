@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { nextCertSeq, formatCertNo } from "@/lib/cert-counter";
@@ -13,7 +14,7 @@ import { nextCertSeq, formatCertNo } from "@/lib/cert-counter";
  *    - study/project: completion (수료증) — 활동 기간/역할 포함
  *    - external: participation (참석확인서) — 주관기관/일정 포함
  */
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -307,3 +308,5 @@ function formatActivityPeriod(startDate?: string, endDate?: string): string | un
   if (s === e) return s;
   return `${s} - ${e}`;
 }
+
+export const GET = withCronLog("activity-status", _handler);

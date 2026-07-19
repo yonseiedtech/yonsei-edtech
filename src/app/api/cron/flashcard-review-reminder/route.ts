@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers, filterRecipientsByPreference } from "@/lib/push-admin";
@@ -27,7 +28,7 @@ import { todayYmdKst } from "@/lib/dday";
 /** 복습 알림 발송 임계(due 카드 수). 운영진 결정 항목 — 기본 1장. */
 const REVIEW_THRESHOLD = 1;
 
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -133,3 +134,5 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: "Internal error" }, { status: 500 });
   }
 }
+
+export const GET = withCronLog("flashcard-review-reminder", _handler);

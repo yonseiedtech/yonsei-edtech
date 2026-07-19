@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers } from "@/lib/push-admin";
@@ -10,7 +11,7 @@ import { cohortKeyOf } from "@/lib/semester";
  * 관례 개강일(1학기 3/1, 2학기 9/1) 기준 D-7·D-1 에 승인 회원 전원에게 인앱 알림.
  * 학기 키(YYYY-N) + D-값을 refId 로 사용자 단위 중복 가드.
  */
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -192,3 +193,5 @@ function diffDays(fromYmd: string, toYmd: string): number {
   const [ty, tm, td] = toYmd.split("-").map(Number);
   return Math.round((Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86400000);
 }
+
+export const GET = withCronLog("semester-start-reminder", _handler);

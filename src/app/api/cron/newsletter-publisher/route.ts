@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { Resend } from "resend";
@@ -16,7 +17,7 @@ function escapeHtml(str: string): string {
  * 예약 발송 뉴스레터 자동 발행 Cron (매시간 실행)
  * publishAt <= now 인 draft 학회보를 찾아 이메일 발송 후 status를 published로 업데이트
  */
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -176,3 +177,5 @@ export async function GET(req: NextRequest) {
 
   return Response.json({ ok: true, published, errors });
 }
+
+export const GET = withCronLog("newsletter-publisher", _handler);

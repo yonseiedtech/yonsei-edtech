@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { processOneTick, type TickResult } from "@/lib/ai-forum-engine";
@@ -17,7 +18,7 @@ const MAX_STEPS_PER_TICK = 6;
  *
  * 비용 안전장치: processOneTick() 내부 MAX_FORUM_COST_USD 캡으로 forum 단위 제한.
  */
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -40,3 +41,5 @@ export async function GET(req: NextRequest) {
     return Response.json({ error: msg }, { status: 500 });
   }
 }
+
+export const GET = withCronLog("ai-forum-tick", _handler);

@@ -1,4 +1,5 @@
-import { NextRequest } from "next/server";
+﻿import { NextRequest } from "next/server";
+import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers } from "@/lib/push-admin";
@@ -84,7 +85,7 @@ type UserDoc = {
 };
 
 // ── 핸들러 ───────────────────────────────────────────────────────────────────
-export async function GET(req: NextRequest) {
+async function _handler(req: NextRequest) {
   if (!verifyCronAuth(req)) {
     return Response.json({ error: "Unauthorized" }, { status: 401 });
   }
@@ -295,3 +296,5 @@ function diffYmd(fromYmd: string, toYmd: string): number {
     (Date.UTC(ty, tm - 1, td) - Date.UTC(fy, fm - 1, fd)) / 86400000,
   );
 }
+
+export const GET = withCronLog("newcomer-activation-sequence", _handler);
