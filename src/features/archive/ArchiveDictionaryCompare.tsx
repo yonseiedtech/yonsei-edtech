@@ -28,7 +28,7 @@ const ROLES: DictRole[] = [
     when: "처음 만나는 단어일 때",
     desc: "변인·연구설계·측정 등 자주 쓰는 입문 용어와 헷갈리는 용어 페어를 빠르게 확인합니다.",
     href: "/archive/foundation-terms",
-    accent: "text-slate-700 dark:text-slate-300",
+    accent: "text-cat-6",
   },
   {
     icon: BookMarked,
@@ -36,7 +36,7 @@ const ROLES: DictRole[] = [
     when: "표준 역어·정의를 확인할 때",
     desc: "『교육공학 용어해설』(학지사, 2020) 공식 표제어·역어 186개로 표준 표기를 대조합니다.",
     href: "/archive/terminology",
-    accent: "text-indigo-700 dark:text-indigo-300",
+    accent: "text-info",
   },
   {
     icon: Lightbulb,
@@ -44,7 +44,7 @@ const ROLES: DictRole[] = [
     when: "이론·구성개념을 심화할 때",
     desc: "자기효능감·학습몰입처럼 이론적 개념을 변인·측정도구까지 연결해 깊이 살펴봅니다.",
     href: "/archive/concept",
-    accent: "text-violet-700 dark:text-violet-300",
+    accent: "text-cat-5",
   },
 ];
 

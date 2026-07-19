@@ -69,19 +69,19 @@ const TYPE_META: Record<
     title: "개념",
     description: "교육공학에서 다루는 이론·구성개념을 모은 라이브러리. 클릭하여 연결된 변인·측정도구를 살펴보세요.",
     icon: Lightbulb,
-    borderClass: "border-l-violet-400",
+    borderClass: "border-l-cat-5",
   },
   variable: {
     title: "변인",
     description: "양적 연구에서 다루는 측정 가능한 변인. 어떤 개념과 닿아 있고 어떤 측정도구로 잴 수 있는지 따라가 보세요.",
     icon: VariableIcon,
-    borderClass: "border-l-blue-400",
+    borderClass: "border-l-info",
   },
   measurement: {
     title: "측정도구",
     description: "신뢰도·타당도가 검증된 척도. 문항·저자·신뢰도와 함께, 측정 대상 변인을 역으로 확인할 수 있습니다.",
     icon: Ruler,
-    borderClass: "border-l-emerald-400",
+    borderClass: "border-l-success",
   },
 };
 
@@ -593,7 +593,7 @@ function ArchiveCard({
                   </span>
                 )}
                 {aectTerm && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[10px] font-medium text-indigo-800 dark:border-indigo-400/30 dark:bg-indigo-950/30 dark:text-indigo-300">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-info/20 bg-info/5 px-2 py-0.5 text-[10px] font-medium text-info">
                     AECT · {aectTerm}
                   </span>
                 )}

@@ -39,7 +39,7 @@ export default function AectTerminologyPage() {
         <Separator className="mt-6" />
 
         {/* ── 출처 카드 (서지 정보) ── */}
-        <Card className="mt-6 border-l-4 border-l-indigo-400 bg-card shadow-sm">
+        <Card className="mt-6 border-l-4 border-l-info bg-card shadow-sm">
           <CardContent className="py-5">
             <p className="text-sm font-semibold">출처</p>
             <p className="mt-1.5 text-sm leading-relaxed text-foreground/90">

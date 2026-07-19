@@ -542,7 +542,7 @@ export default function ArchiveDetailPage() {
                     </span>
                   )}
                   {aectTerm && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-800 dark:border-indigo-400/30 dark:bg-indigo-950/30 dark:text-indigo-300">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-info/20 bg-info/5 px-2.5 py-0.5 text-xs font-medium text-info">
                       AECT · {aectTerm}
                     </span>
                   )}
@@ -586,7 +586,7 @@ export default function ArchiveDetailPage() {
                 title={!user ? "로그인 후 저장할 수 있어요" : undefined}
                 className={cn(
                   flashcardState === "saved" &&
-                    "border-violet-500 bg-violet-600 hover:bg-violet-700",
+                    "border-cat-5 bg-cat-5 hover:bg-cat-5/80",
                 )}
               >
                 {flashcardState === "saved" ? (
@@ -605,7 +605,7 @@ export default function ArchiveDetailPage() {
                   variant={isFav ? "default" : "outline"}
                   size="sm"
                   onClick={handleToggleFav}
-                  className={cn(isFav && "bg-amber-500 hover:bg-amber-600 border-amber-500")}
+                  className={cn(isFav && "bg-warning hover:bg-warning/80 border-warning")}
                 >
                   <Star className={cn("mr-1 h-4 w-4", isFav && "fill-current")} />
                   {isFav ? "관심 저장됨" : "관심 저장"}
@@ -616,7 +616,7 @@ export default function ArchiveDetailPage() {
           {flashcardState === "saved" && (
             <Link
               href="/flashcards"
-              className="mt-2 inline-flex w-fit items-center gap-1 text-sm font-medium text-violet-700 hover:underline dark:text-violet-300"
+              className="mt-2 inline-flex w-fit items-center gap-1 text-sm font-medium text-cat-5 hover:underline"
             >
               암기카드 학습하기
               <ArrowRight className="h-3.5 w-3.5" aria-hidden />
@@ -715,7 +715,7 @@ export default function ArchiveDetailPage() {
               href={(item as ArchiveMeasurementTool).resourceUrl}
               target="_blank"
               rel="noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline"
+              className="inline-flex items-center gap-1 text-sm text-info hover:underline"
             >
               <ExternalLink className="h-3.5 w-3.5" />
               외부 자료
@@ -733,7 +733,7 @@ export default function ArchiveDetailPage() {
                   {keyScholars.map((sch) => (
                     <span
                       key={sch}
-                      className="inline-flex items-center rounded-full border border-indigo-200 bg-indigo-50 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:border-indigo-400/30 dark:bg-indigo-950/30 dark:text-indigo-300"
+                      className="inline-flex items-center rounded-full border border-info/20 bg-info/5 px-2 py-0.5 text-[11px] font-medium text-info"
                     >
                       {sch}
                     </span>
@@ -750,14 +750,14 @@ export default function ArchiveDetailPage() {
                           href={w.url}
                           target="_blank"
                           rel="noreferrer"
-                          className="inline-flex items-center gap-0.5 whitespace-nowrap text-blue-600 hover:underline"
+                          className="inline-flex items-center gap-0.5 whitespace-nowrap text-info hover:underline"
                         >
                           <ExternalLink className="h-3 w-3" />
                           {w.openAccess ? "원문 보기" : "출판사 링크"}
                         </a>
                       )}
                       {w.openAccess && (
-                        <span className="inline-flex items-center rounded bg-emerald-100 px-1 py-px text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                        <span className="inline-flex items-center rounded bg-success/10 px-1 py-px text-[10px] font-semibold text-success">
                           무료 공개
                         </span>
                       )}
@@ -769,7 +769,7 @@ export default function ArchiveDetailPage() {
               {type === "concept" && (
                 <Link
                   href="/archive/theory-map"
-                  className="mt-2 inline-flex w-fit items-center gap-1 text-xs font-medium text-violet-700 hover:underline dark:text-violet-300"
+                  className="mt-2 inline-flex w-fit items-center gap-1 text-xs font-medium text-cat-5 hover:underline"
                 >
                   <GitFork className="h-3.5 w-3.5" aria-hidden />
                   학습이론 가계도에서 이 이론의 계보 보기
@@ -955,7 +955,7 @@ export default function ArchiveDetailPage() {
                         onClick={() => handleToggleReading(t.id)}
                         className={cn(
                           "shrink-0",
-                          inList && "bg-emerald-600 hover:bg-emerald-700 border-emerald-600",
+                          inList && "bg-success hover:bg-success/80 border-success",
                         )}
                       >
                         {inList ? (
@@ -995,7 +995,7 @@ export default function ArchiveDetailPage() {
                     <Link key={m.id} href={`/archive/research-methods/${m.id}`}>
                       <Badge
                         variant="outline"
-                        className="cursor-pointer border-rose-200 bg-rose-50 text-rose-800 transition-shadow hover:shadow-sm dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300"
+                        className="cursor-pointer border-destructive/20 bg-destructive/5 text-destructive transition-shadow hover:shadow-sm"
                       >
                         {m.name}
                       </Badge>
@@ -1083,7 +1083,7 @@ function OfflineArchiveView({
         </Button>
       </Link>
 
-      <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-950/30 dark:text-amber-300">
+      <div className="mb-4 flex items-center gap-2 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-sm text-warning">
         <WifiOff className="h-4 w-4 shrink-0" aria-hidden />
         <span>오프라인 상태입니다 — 기기에 저장된 최근 열람 내용을 표시합니다.</span>
       </div>

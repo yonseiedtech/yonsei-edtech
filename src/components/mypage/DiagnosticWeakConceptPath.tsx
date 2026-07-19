@@ -126,9 +126,9 @@ export default function DiagnosticWeakConceptPath({
   if (weakConceptIds.length === 0) return null;
 
   return (
-    <div className="mt-4 border-t border-violet-200/60 pt-3 dark:border-violet-800/40">
-      <p className="flex items-center gap-1.5 text-sm font-semibold text-violet-900 dark:text-violet-200">
-        <Lightbulb size={14} className="text-amber-500" />
+    <div className="mt-4 border-t border-cat-5/20 pt-3">
+      <p className="flex items-center gap-1.5 text-sm font-semibold text-cat-5">
+        <Lightbulb size={14} className="text-warning" />
         추천 학습 경로
       </p>
       <p className="mt-1 text-xs text-muted-foreground">
@@ -146,7 +146,7 @@ export default function DiagnosticWeakConceptPath({
           return (
             <div
               key={cid}
-              className="overflow-hidden rounded-xl border border-violet-200 bg-violet-50/60 dark:border-violet-800 dark:bg-violet-950/30"
+              className="overflow-hidden rounded-xl border border-cat-5/20 bg-cat-5/5"
             >
               {/* 개념 헤더 — 펼침 토글 + 아카이브 링크 */}
               <div className="flex items-center gap-1.5 px-3 py-2">
@@ -158,20 +158,20 @@ export default function DiagnosticWeakConceptPath({
                 >
                   <ChevronDown
                     size={14}
-                    className={`shrink-0 text-violet-500 transition-transform dark:text-violet-400 ${isOpen ? "rotate-180" : ""}`}
+                    className={`shrink-0 text-cat-5 transition-transform ${isOpen ? "rotate-180" : ""}`}
                   />
-                  <span className="truncate text-[13px] font-semibold text-violet-900 dark:text-violet-200">
+                  <span className="truncate text-[13px] font-semibold text-cat-5">
                     {name}
                   </span>
                   {!isLoading && (measurementCount > 0 || thesisCount > 0) && (
-                    <span className="shrink-0 text-[10px] text-violet-600/70 dark:text-violet-300/60">
+                    <span className="shrink-0 text-[10px] text-cat-5/70">
                       측정도구 {measurementCount} · 논문 {thesisCount}
                     </span>
                   )}
                 </button>
                 <Link
                   href={`/archive/concept/${cid}`}
-                  className="inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-medium text-violet-700 transition-colors hover:bg-violet-100 dark:text-violet-300 dark:hover:bg-violet-900/40"
+                  className="inline-flex shrink-0 items-center gap-0.5 rounded-full px-1.5 py-0.5 text-[11px] font-medium text-cat-5 transition-colors hover:bg-cat-5/10"
                 >
                   정의 보기
                   <ArrowRight size={11} />
@@ -188,20 +188,20 @@ export default function DiagnosticWeakConceptPath({
 
               {/* 펼침 패널 — 측정도구 + 졸업생 논문 */}
               {isOpen && (
-                <div className="border-t border-violet-200/60 bg-card/60 px-3 py-2.5 dark:border-violet-800/40 dark:bg-black/20">
+                <div className="border-t border-cat-5/20 bg-card/60 px-3 py-2.5 dark:bg-black/20">
                   {/* 이 개념으로 30분 집중 읽기 — 일반 reading 세션(잔디 반영) */}
                   <button
                     type="button"
                     onClick={() => handleReadConcept(name)}
                     disabled={isStarting || !!active}
-                    className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-violet-600 px-3 py-1.5 text-[12px] font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-violet-500 dark:hover:bg-violet-600"
+                    className="mb-2.5 inline-flex items-center gap-1.5 rounded-full bg-cat-5 px-3 py-1.5 text-[12px] font-semibold text-white shadow-sm transition-colors hover:bg-cat-5/80 disabled:cursor-not-allowed disabled:opacity-50"
                   >
                     <BookOpen size={13} />
                     {active ? "진행 중인 세션 있음" : "이 개념으로 30분 집중 읽기"}
                   </button>
                   {isLoading ? (
                     <div
-                      className="h-12 animate-pulse rounded-lg bg-violet-100/60 dark:bg-violet-900/20"
+                      className="h-12 animate-pulse rounded-lg bg-cat-5/10"
                       aria-busy="true"
                       aria-label="추천 학습 경로 불러오는 중"
                     />
@@ -210,7 +210,7 @@ export default function DiagnosticWeakConceptPath({
                       아직 연결된 측정도구·논문이 없습니다.{" "}
                       <Link
                         href={`/archive/concept/${cid}`}
-                        className="font-medium text-violet-700 underline-offset-2 hover:underline dark:text-violet-300"
+                        className="font-medium text-cat-5 underline-offset-2 hover:underline"
                       >
                         아카이브에서 개념 정의 보기
                       </Link>
@@ -220,7 +220,7 @@ export default function DiagnosticWeakConceptPath({
                       {/* 측정도구 */}
                       {measurementCount > 0 && (
                         <div>
-                          <p className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+                          <p className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-success">
                             <Ruler size={11} />
                             측정도구
                           </p>
@@ -229,7 +229,7 @@ export default function DiagnosticWeakConceptPath({
                               <li key={m.id}>
                                 <Link
                                   href={`/archive/measurement/${m.id}`}
-                                  className="group flex items-start gap-1.5 rounded-md px-1.5 py-1 transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+                                  className="group flex items-start gap-1.5 rounded-md px-1.5 py-1 transition-colors hover:bg-success/5"
                                 >
                                   <span className="min-w-0 flex-1">
                                     <span className="text-[12px] font-medium text-foreground group-hover:underline">
@@ -248,7 +248,7 @@ export default function DiagnosticWeakConceptPath({
                                   </span>
                                   <ArrowRight
                                     size={11}
-                                    className="mt-0.5 shrink-0 text-emerald-500 opacity-0 transition-opacity group-hover:opacity-100"
+                                    className="mt-0.5 shrink-0 text-success opacity-0 transition-opacity group-hover:opacity-100"
                                   />
                                 </Link>
                               </li>
@@ -260,7 +260,7 @@ export default function DiagnosticWeakConceptPath({
                       {/* 졸업생 논문 */}
                       {thesisCount > 0 && (
                         <div>
-                          <p className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-violet-700 dark:text-violet-300">
+                          <p className="mb-1 flex items-center gap-1 text-[11px] font-semibold text-cat-5">
                             <GraduationCap size={11} />
                             졸업생 논문
                           </p>
@@ -269,7 +269,7 @@ export default function DiagnosticWeakConceptPath({
                               <li key={t.id}>
                                 <Link
                                   href={`/alumni/thesis/${t.id}`}
-                                  className="group block rounded-md px-1.5 py-1 transition-colors hover:bg-violet-100/60 dark:hover:bg-violet-900/30"
+                                  className="group block rounded-md px-1.5 py-1 transition-colors hover:bg-cat-5/10"
                                 >
                                   <span className="line-clamp-2 text-[12px] font-medium text-foreground group-hover:underline">
                                     {t.title}
@@ -287,7 +287,7 @@ export default function DiagnosticWeakConceptPath({
                                         {tags.map((tag) => (
                                           <span
                                             key={tag}
-                                            className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[9px] font-medium text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+                                            className="rounded-full bg-cat-5/10 px-1.5 py-0.5 text-[9px] font-medium text-cat-5"
                                           >
                                             {tag}
                                           </span>
@@ -302,7 +302,7 @@ export default function DiagnosticWeakConceptPath({
                           {thesisCount > MAX_THESES && (
                             <Link
                               href={`/archive/concept/${cid}`}
-                              className="mt-1 inline-block text-[10px] font-medium text-violet-600 hover:underline dark:text-violet-400"
+                              className="mt-1 inline-block text-[10px] font-medium text-cat-5 hover:underline"
                             >
                               외 {thesisCount - MAX_THESES}편 더 보기
                             </Link>
@@ -334,9 +334,9 @@ function PathAction({
   return (
     <Link
       href={href}
-      className="inline-flex items-center gap-1 rounded-full border border-violet-200 bg-card/60 px-2 py-0.5 text-[11px] font-medium text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-800 dark:bg-black/20 dark:text-violet-300 dark:hover:bg-violet-900/40"
+      className="inline-flex items-center gap-1 rounded-full border border-cat-5/20 bg-card/60 px-2 py-0.5 text-[11px] font-medium text-cat-5 transition-colors hover:bg-cat-5/10 dark:bg-black/20"
     >
-      <Icon size={11} className="text-violet-500 dark:text-violet-400" aria-hidden />
+      <Icon size={11} className="text-cat-5" aria-hidden />
       {label}
     </Link>
   );

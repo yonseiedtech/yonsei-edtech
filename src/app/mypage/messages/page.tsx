@@ -221,7 +221,7 @@ function MessagesInner({ user }: { user: User }) {
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-1.5">
                     {box === "received" && !m.read && (
-                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />
+                      <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />
                     )}
                     <p className="truncate text-sm font-semibold">
                       {box === "received" ? m.fromName : `${m.toName ?? "회원"} 님에게`}
@@ -238,7 +238,7 @@ function MessagesInner({ user }: { user: User }) {
                     e.stopPropagation();
                     handleDelete(m.id);
                   }}
-                  className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-rose-500"
+                  className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-muted hover:text-destructive"
                   aria-label="쪽지 삭제"
                 >
                   <Trash2 size={15} />

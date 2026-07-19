@@ -61,45 +61,45 @@ const CATEGORY_GUIDES: CategoryGuide[] = [
     title: "번역투",
     description: "영어·일본어 직역에서 비롯된 어색한 한국어 표현과 권장 대체 표현.",
     icon: Languages,
-    borderClass: "border-l-rose-400",
-    iconBg: "bg-rose-100 dark:bg-rose-950/60",
-    iconText: "text-rose-700 dark:text-rose-300",
+    borderClass: "border-l-destructive",
+    iconBg: "bg-destructive/10",
+    iconText: "text-destructive",
   },
   {
     category: "subject-predicate",
     title: "주술호응",
     description: "주어와 서술어가 맞지 않거나, 긴 문장에서 주어가 길을 잃는 경우.",
     icon: Link2,
-    borderClass: "border-l-violet-400",
-    iconBg: "bg-violet-100 dark:bg-violet-950/60",
-    iconText: "text-violet-700 dark:text-violet-300",
+    borderClass: "border-l-cat-5",
+    iconBg: "bg-cat-5/10",
+    iconText: "text-cat-5",
   },
   {
     category: "tense-voice",
     title: "시제·태",
     description: "결과는 과거시제, 이론·정의는 현재시제 — 능동·피동의 적절한 사용.",
     icon: Clock,
-    borderClass: "border-l-blue-400",
-    iconBg: "bg-blue-100 dark:bg-blue-950/60",
-    iconText: "text-blue-700 dark:text-blue-300",
+    borderClass: "border-l-info",
+    iconBg: "bg-info/10",
+    iconText: "text-info",
   },
   {
     category: "spelling-spacing",
     title: "맞춤법·표기",
     description: "띄어쓰기·외래어 표기·되/돼 구분 등 자주 틀리는 한글 표기.",
     icon: SpellCheck2,
-    borderClass: "border-l-amber-400",
-    iconBg: "bg-amber-100 dark:bg-amber-950/60",
-    iconText: "text-amber-700 dark:text-amber-300",
+    borderClass: "border-l-warning",
+    iconBg: "bg-warning/10",
+    iconText: "text-warning",
   },
   {
     category: "academic-convention",
     title: "학술 관례",
     description: "'본 연구는' 일관 사용, 1인칭 회피, 인용 패턴 등 한국 학위논문 관례.",
     icon: GraduationCap,
-    borderClass: "border-l-emerald-400",
-    iconBg: "bg-emerald-100 dark:bg-emerald-950/60",
-    iconText: "text-emerald-700 dark:text-emerald-300",
+    borderClass: "border-l-success",
+    iconBg: "bg-success/10",
+    iconText: "text-success",
   },
 ];
 
@@ -309,7 +309,7 @@ export default function WritingTipsLandingPage() {
                                   {!t.published && canManage && (
                                     <Badge
                                       variant="outline"
-                                      className="bg-rose-50 text-rose-700 border-rose-200 text-[10px]"
+                                      className="bg-destructive/5 text-destructive border-destructive/20 text-[10px]"
                                     >
                                       draft
                                     </Badge>
@@ -331,11 +331,11 @@ export default function WritingTipsLandingPage() {
                                 </p>
                               )}
                               <div className="mt-3 grid grid-cols-1 gap-1.5 text-[11px] sm:grid-cols-2">
-                                <div className="rounded-md border border-rose-200 bg-rose-50/60 px-2 py-1 text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
+                                <div className="rounded-md border border-destructive/20 bg-destructive/5 px-2 py-1 text-destructive">
                                   <span className="mr-1 font-semibold">❌</span>
                                   <span className="line-clamp-1">{t.wrongExample}</span>
                                 </div>
-                                <div className="rounded-md border border-emerald-200 bg-emerald-50/60 px-2 py-1 text-emerald-800 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
+                                <div className="rounded-md border border-success/20 bg-success/5 px-2 py-1 text-success">
                                   <span className="mr-1 font-semibold">✅</span>
                                   <span className="line-clamp-1">{t.correctExample}</span>
                                 </div>
@@ -360,7 +360,7 @@ export default function WritingTipsLandingPage() {
         </Tabs>
 
         {/* 학술 책임 고지 */}
-        <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mt-10 flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-4 text-xs text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>
             본 가이드는 참고용입니다. 최종 표기·문체·인용 형식은 지도교수·해당 학술지

@@ -49,10 +49,10 @@ const FAVORITE_TYPE_LABELS: Record<ArchiveFavoriteItemType, string> = {
 
 const FAVORITE_TYPE_COLORS: Record<ArchiveFavoriteItemType, string> = {
   ...ARCHIVE_ITEM_TYPE_COLORS,
-  "research-method": "bg-sky-50 text-sky-800 border border-sky-200",
-  "statistical-method": "bg-indigo-50 text-indigo-800 border border-indigo-200",
-  "foundation-term": "bg-amber-50 text-amber-800 border border-amber-200",
-  "writing-tip": "bg-rose-50 text-rose-800 border border-rose-200",
+  "research-method": "bg-info/5 text-info border border-info/20",
+  "statistical-method": "bg-info/5 text-info border border-info/20",
+  "foundation-term": "bg-warning/5 text-warning border border-warning/20",
+  "writing-tip": "bg-destructive/5 text-destructive border border-destructive/20",
 };
 
 /** 그룹 표시 순서 — 사전·라이브러리 → 가이드 계열. */
@@ -164,7 +164,7 @@ export default function MyArchivePage() {
           id="my-archive-favorites"
           className="mb-3 flex items-center gap-2 text-lg font-semibold tracking-tight"
         >
-          <Star className="h-5 w-5 text-amber-500" aria-hidden />
+          <Star className="h-5 w-5 text-warning" aria-hidden />
           즐겨찾기
           {favorites.length > 0 && (
             <span className="text-sm font-normal text-muted-foreground">
@@ -191,7 +191,7 @@ export default function MyArchivePage() {
           <Card className="rounded-2xl border-dashed">
             <CardContent className="py-10 text-center text-sm text-muted-foreground">
               아직 저장한 관심 항목이 없습니다. 각 아카이브 리스트·상세에서{" "}
-              <Star className="inline h-3.5 w-3.5 text-amber-500" aria-hidden /> 별을 눌러
+              <Star className="inline h-3.5 w-3.5 text-warning" aria-hidden /> 별을 눌러
               저장해 보세요.
             </CardContent>
           </Card>
@@ -258,7 +258,7 @@ export default function MyArchivePage() {
             <button
               type="button"
               onClick={handleClearRecent}
-              className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-rose-600"
+              className="inline-flex items-center gap-1 text-xs text-muted-foreground transition-colors hover:text-destructive"
             >
               <Trash2 className="h-3.5 w-3.5" aria-hidden />
               기록 지우기
@@ -298,12 +298,12 @@ export default function MyArchivePage() {
             id="my-archive-weak"
             className="mb-3 flex items-center gap-2 text-lg font-semibold tracking-tight"
           >
-            <Target className="h-5 w-5 text-amber-600" aria-hidden />
+            <Target className="h-5 w-5 text-warning" aria-hidden />
             진단 약점 개념 보완
           </h2>
-          <Card className="rounded-2xl border-amber-200 bg-amber-50/40 dark:border-amber-900 dark:bg-amber-950/20">
+          <Card className="rounded-2xl border-warning/20 bg-warning/5">
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm text-amber-900 dark:text-amber-200">
+              <CardTitle className="text-sm text-warning">
                 최근 진단에서 약점으로 나온 개념 — 상세로 이동해 보완하세요.
               </CardTitle>
             </CardHeader>
@@ -313,7 +313,7 @@ export default function MyArchivePage() {
                   <Link key={c.id} href={`/archive/concept/${c.id}`}>
                     <Badge
                       variant="outline"
-                      className="cursor-pointer border-amber-300/60 bg-amber-50 text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200"
+                      className="cursor-pointer border-warning/30 bg-warning/5 text-warning transition-colors hover:bg-warning/10"
                     >
                       {c.name}
                     </Badge>

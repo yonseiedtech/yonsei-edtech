@@ -70,41 +70,41 @@ const CATEGORY_GUIDES: CategoryGuide[] = [
     category: "anova_family",
     title: "ANOVA 계열",
     description: "집단 간 평균 차이 검정 — t-test · ANOVA · ANCOVA · MANOVA · MANCOVA",
-    borderClass: "border-l-blue-400",
-    iconBg: "bg-blue-100 dark:bg-blue-950/60",
-    iconText: "text-blue-700 dark:text-blue-300",
+    borderClass: "border-l-info",
+    iconBg: "bg-info/10",
+    iconText: "text-info",
   },
   {
     category: "regression",
     title: "회귀분석",
     description: "독립변수가 종속변수를 어떻게 예측·설명하는지 — 다중회귀·로지스틱회귀",
-    borderClass: "border-l-violet-400",
-    iconBg: "bg-violet-100 dark:bg-violet-950/60",
-    iconText: "text-violet-700 dark:text-violet-300",
+    borderClass: "border-l-cat-5",
+    iconBg: "bg-cat-5/10",
+    iconText: "text-cat-5",
   },
   {
     category: "factor",
     title: "요인분석",
     description: "관측 변수 사이의 잠재 구조 — EFA(탐색) · CFA(확인)",
-    borderClass: "border-l-emerald-400",
-    iconBg: "bg-emerald-100 dark:bg-emerald-950/60",
-    iconText: "text-emerald-700 dark:text-emerald-300",
+    borderClass: "border-l-success",
+    iconBg: "bg-success/10",
+    iconText: "text-success",
   },
   {
     category: "sem",
     title: "구조방정식(SEM)",
     description: "잠재변인을 포함한 다중 인과 관계 동시 추정",
-    borderClass: "border-l-indigo-400",
-    iconBg: "bg-indigo-100 dark:bg-indigo-950/60",
-    iconText: "text-indigo-700 dark:text-indigo-300",
+    borderClass: "border-l-info",
+    iconBg: "bg-info/10",
+    iconText: "text-info",
   },
   {
     category: "mediation_moderation",
     title: "매개·조절",
     description: "변수 사이의 메커니즘 — 매개효과·조절효과·조건부 분석",
-    borderClass: "border-l-rose-400",
-    iconBg: "bg-rose-100 dark:bg-rose-950/60",
-    iconText: "text-rose-700 dark:text-rose-300",
+    borderClass: "border-l-destructive",
+    iconBg: "bg-destructive/10",
+    iconText: "text-destructive",
   },
   {
     category: "multilevel",
@@ -118,25 +118,25 @@ const CATEGORY_GUIDES: CategoryGuide[] = [
     category: "nonparametric",
     title: "비모수",
     description: "정규성 가정이 어려운 경우 — Mann-Whitney·Wilcoxon·Kruskal-Wallis",
-    borderClass: "border-l-amber-400",
-    iconBg: "bg-amber-100 dark:bg-amber-950/60",
-    iconText: "text-amber-700 dark:text-amber-300",
+    borderClass: "border-l-warning",
+    iconBg: "bg-warning/10",
+    iconText: "text-warning",
   },
   {
     category: "measurement",
     title: "측정·타당도",
     description: "도구의 품질 — 내용타당도(CVI)·신뢰도(Cronbach α)",
-    borderClass: "border-l-purple-400",
-    iconBg: "bg-purple-100 dark:bg-purple-950/60",
-    iconText: "text-purple-700 dark:text-purple-300",
+    borderClass: "border-l-cat-5",
+    iconBg: "bg-cat-5/10",
+    iconText: "text-cat-5",
   },
   {
     category: "other",
     title: "기타",
     description: "위 분류에 포함되지 않는 통계기법",
-    borderClass: "border-l-slate-400",
-    iconBg: "bg-slate-100 dark:bg-slate-900/60",
-    iconText: "text-slate-700 dark:text-slate-300",
+    borderClass: "border-l-muted-foreground",
+    iconBg: "bg-muted",
+    iconText: "text-muted-foreground",
   },
 ];
 
@@ -427,7 +427,7 @@ function StatisticalMethodsLandingPageInner() {
                             {!m.published && canManage && (
                               <Badge
                                 variant="outline"
-                                className="bg-rose-50 text-rose-700 border-rose-200 text-[10px]"
+                                className="bg-destructive/5 text-destructive border-destructive/20 text-[10px]"
                               >
                                 draft
                               </Badge>
@@ -477,7 +477,7 @@ function StatisticalMethodsLandingPageInner() {
         )}
 
         {/* 학술 책임 고지 */}
-        <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mt-10 flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-4 text-xs text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>
             본 가이드는 참고용입니다. 최종 통계 분석 설계는 지도교수와 상의하시기 바랍니다.

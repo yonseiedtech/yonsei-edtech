@@ -110,14 +110,14 @@ const CATEGORY_META: Record<
   activity: {
     label: "학술활동",
     icon: FolderKanban,
-    bg: "bg-emerald-100 dark:bg-emerald-950/50",
-    fg: "text-emerald-700 dark:text-emerald-300",
+    bg: "bg-success/10",
+    fg: "text-success",
   },
   gathering: {
     label: "모임",
     icon: Users,
-    bg: "bg-violet-100 dark:bg-violet-950/50",
-    fg: "text-violet-700 dark:text-violet-300",
+    bg: "bg-cat-5/10",
+    fg: "text-cat-5",
   },
 };
 
@@ -349,10 +349,10 @@ export default function MyActivityHub({
           <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 font-medium text-primary">
             <CalendarDays size={11} /> 세미나 {counts.seminar}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-0.5 font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-0.5 font-medium text-success">
             <FolderKanban size={11} /> 학술활동 {counts.activity}
           </span>
-          <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 px-2.5 py-0.5 font-medium text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
+          <span className="inline-flex items-center gap-1 rounded-full bg-cat-5/10 px-2.5 py-0.5 font-medium text-cat-5">
             <Users size={11} /> 모임 {counts.gathering}
           </span>
         </div>
@@ -362,7 +362,7 @@ export default function MyActivityHub({
       {unpaidDues.length > 0 && (
         <Link
           href="/gatherings"
-          className={cn("flex items-center gap-3 rounded-2xl border p-3.5 transition hover:border-amber-300", SEMANTIC.warning.border, SEMANTIC.warning.bg)}
+          className={cn("flex items-center gap-3 rounded-2xl border p-3.5 transition hover:border-warning", SEMANTIC.warning.border, SEMANTIC.warning.bg)}
         >
           <div className={cn("flex h-10 w-10 shrink-0 items-center justify-center rounded-xl", SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText)}>
             <Wallet size={18} />
@@ -423,14 +423,14 @@ export default function MyActivityHub({
       {gatheringsBySemester.length > 0 && (
         <section className="rounded-2xl border bg-card p-4">
           <h4 className="flex items-center gap-1.5 text-sm font-bold">
-            <Users size={15} className="text-violet-600 dark:text-violet-300" /> 학기별 모임 참여
+            <Users size={15} className="text-cat-5" /> 학기별 모임 참여
           </h4>
           <p className="mt-0.5 text-xs text-muted-foreground">참석 확정한 모임·행사를 학기 단위로 모았습니다.</p>
           <div className="mt-3 space-y-3">
             {gatheringsBySemester.map((sem) => (
               <div key={sem.key}>
                 <p className="mb-1 flex items-center gap-1.5 text-xs font-semibold">
-                  <span className="rounded-full bg-violet-100 px-2 py-0.5 text-[11px] text-violet-700 dark:bg-violet-950/40 dark:text-violet-300">
+                  <span className="rounded-full bg-cat-5/10 px-2 py-0.5 text-[11px] text-cat-5">
                     {sem.label}
                   </span>
                   <span className="text-muted-foreground">{sem.list.length}회</span>

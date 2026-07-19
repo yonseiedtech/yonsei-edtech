@@ -431,7 +431,7 @@ export default function StatisticalMethodDetailPage() {
               {!method.published && (
                 <Badge
                   variant="outline"
-                  className="bg-rose-50 text-rose-700 border-rose-200 text-xs"
+                  className="bg-destructive/5 text-destructive border-destructive/20 text-xs"
                 >
                   DRAFT
                 </Badge>
@@ -451,7 +451,7 @@ export default function StatisticalMethodDetailPage() {
                   {method.comparisonProfile.groupCount && (
                     <Badge
                       variant="outline"
-                      className="bg-slate-50 text-slate-700 border-slate-200 text-[11px]"
+                      className="bg-muted text-muted-foreground border-muted-foreground/20 text-[11px]"
                     >
                       {GROUP_COUNT_LABELS[method.comparisonProfile.groupCount]}
                     </Badge>
@@ -459,7 +459,7 @@ export default function StatisticalMethodDetailPage() {
                   {method.comparisonProfile.dependentVariableCount && (
                     <Badge
                       variant="outline"
-                      className="bg-slate-50 text-slate-700 border-slate-200 text-[11px]"
+                      className="bg-muted text-muted-foreground border-muted-foreground/20 text-[11px]"
                     >
                       종속변수{" "}
                       {DV_COUNT_LABELS[method.comparisonProfile.dependentVariableCount]}
@@ -468,7 +468,7 @@ export default function StatisticalMethodDetailPage() {
                   {method.comparisonProfile.independentVariableCount && (
                     <Badge
                       variant="outline"
-                      className="bg-slate-50 text-slate-700 border-slate-200 text-[11px]"
+                      className="bg-muted text-muted-foreground border-muted-foreground/20 text-[11px]"
                     >
                       독립변수{" "}
                       {IV_COUNT_LABELS[method.comparisonProfile.independentVariableCount]}
@@ -477,7 +477,7 @@ export default function StatisticalMethodDetailPage() {
                   {method.comparisonProfile.designType && (
                     <Badge
                       variant="outline"
-                      className="bg-slate-50 text-slate-700 border-slate-200 text-[11px]"
+                      className="bg-muted text-muted-foreground border-muted-foreground/20 text-[11px]"
                     >
                       {DESIGN_TYPE_LABELS[method.comparisonProfile.designType]}
                     </Badge>
@@ -493,7 +493,7 @@ export default function StatisticalMethodDetailPage() {
                 onClick={handleToggleFav}
                 disabled={favPending}
                 className={cn(
-                  isFav && "bg-amber-500 hover:bg-amber-600 border-amber-500",
+                  isFav && "bg-warning hover:bg-warning/80 border-warning",
                 )}
                 aria-pressed={isFav}
               >
@@ -531,10 +531,10 @@ export default function StatisticalMethodDetailPage() {
         {method.accessibleSummary && method.accessibleSummary.trim() !== "" && (
           <section id="accessibleSummary" className="mt-8 scroll-mt-24">
             <div
-              className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-emerald-50 p-4 dark:border-sky-900 dark:from-sky-950/30 dark:to-emerald-950/30"
+              className="rounded-xl border border-info/20 bg-gradient-to-br from-info/5 to-success/5 p-4"
               aria-label="쉽게 이해하기"
             >
-              <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-sky-900 dark:text-sky-200">
+              <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-info">
                 <Lightbulb className="h-4 w-4" aria-hidden />
                 쉽게 이해하기
               </h3>
@@ -569,9 +569,9 @@ export default function StatisticalMethodDetailPage() {
               </Card>
             )}
             {method.whenToUse && (
-              <Card id="when-to-use" className="rounded-xl border-l-4 border-l-blue-400 scroll-mt-24">
+              <Card id="when-to-use" className="rounded-xl border-l-4 border-l-info scroll-mt-24">
                 <CardContent className="py-4">
-                  <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-blue-800 dark:text-blue-300">
+                  <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-info">
                     <Lightbulb className="h-4 w-4" aria-hidden />
                     언제 사용하는가
                   </h3>
@@ -611,7 +611,7 @@ export default function StatisticalMethodDetailPage() {
                           </span>
                         )}
                         {a.ifViolated && (
-                          <span className="mt-1.5 block rounded-md bg-amber-50 px-2 py-1 text-[11px] leading-relaxed text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+                          <span className="mt-1.5 block rounded-md bg-warning/5 px-2 py-1 text-[11px] leading-relaxed text-warning">
                             <span className="font-semibold">깨졌다면:</span> {a.ifViolated}
                           </span>
                         )}
@@ -680,14 +680,14 @@ export default function StatisticalMethodDetailPage() {
               <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                 <Sparkles className="h-4 w-4" aria-hidden />
                 jamovi로 따라하기
-                <span className="rounded bg-emerald-100 px-1.5 py-px text-[10px] font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                <span className="rounded bg-success/10 px-1.5 py-px text-[10px] font-medium text-success">
                   무료 SW
                 </span>
               </h2>
               <ol className="space-y-1.5 rounded-lg border bg-card p-4">
                 {g.steps.map((s, i) => (
                   <li key={i} className="flex gap-2.5 text-sm">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/10 text-[11px] font-semibold text-success">
                       {i + 1}
                     </span>
                     <span className="text-foreground/85">{s}</span>
@@ -711,14 +711,14 @@ export default function StatisticalMethodDetailPage() {
               <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-muted-foreground">
                 <Sparkles className="h-4 w-4" aria-hidden />
                 SPSS로 따라하기
-                <span className="rounded bg-blue-100 px-1.5 py-px text-[10px] font-medium text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                <span className="rounded bg-info/10 px-1.5 py-px text-[10px] font-medium text-info">
                   메뉴 경로
                 </span>
               </h2>
               <ol className="space-y-1.5 rounded-lg border bg-card p-4">
                 {g.steps.map((s, i) => (
                   <li key={i} className="flex gap-2.5 text-sm">
-                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[11px] font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+                    <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-info/10 text-[11px] font-semibold text-info">
                       {i + 1}
                     </span>
                     <span className="text-foreground/85">{s}</span>
@@ -817,7 +817,7 @@ export default function StatisticalMethodDetailPage() {
                         {alt.summary}
                       </p>
                       {reason && (
-                        <div className="mt-2 rounded-md bg-violet-50 px-2 py-1.5 text-[11px] text-violet-900 dark:bg-violet-950/30 dark:text-violet-200">
+                        <div className="mt-2 rounded-md bg-cat-5/5 px-2 py-1.5 text-[11px] text-cat-5">
                           <span className="font-medium">왜·언제 쓰는가 — </span>
                           {reason}
                         </div>
@@ -825,7 +825,7 @@ export default function StatisticalMethodDetailPage() {
                       {!alt.published && canManage && (
                         <Badge
                           variant="outline"
-                          className="mt-2 bg-rose-50 text-rose-700 border-rose-200 text-[10px]"
+                          className="mt-2 bg-destructive/5 text-destructive border-destructive/20 text-[10px]"
                         >
                           draft
                         </Badge>
@@ -1076,7 +1076,7 @@ export default function StatisticalMethodDetailPage() {
         </div>
 
         {/* 학술 책임 고지 */}
-        <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mt-10 flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-4 text-xs text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>본 가이드는 참고용입니다. 최종 연구설계는 지도교수와 상의하시기 바랍니다.</p>
         </div>

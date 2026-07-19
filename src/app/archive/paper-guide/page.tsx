@@ -254,11 +254,11 @@ export default function PaperGuidePage() {
                   ))}
                 </ul>
               </div>
-              <div className="rounded-lg bg-amber-50 p-3 dark:bg-amber-950/20">
-                <p className="mb-1 flex items-center gap-1 font-semibold text-amber-800 dark:text-amber-300">
+              <div className="rounded-lg bg-warning/5 p-3">
+                <p className="mb-1 flex items-center gap-1 font-semibold text-warning">
                   <Lightbulb className="h-3.5 w-3.5" /> 작성 팁
                 </p>
-                <ul className="list-disc space-y-0.5 pl-5 text-amber-900/80 dark:text-amber-200/70">
+                <ul className="list-disc space-y-0.5 pl-5 text-warning/80">
                   {c.tips.map((x, i) => (
                     <li key={i}>{x}</li>
                   ))}
@@ -272,11 +272,11 @@ export default function PaperGuidePage() {
       {/* 교육공학 실험 유의사항 */}
       <Card
         id="cautions"
-        className="mt-8 scroll-mt-24 border-l-4 border-l-rose-400"
+        className="mt-8 scroll-mt-24 border-l-4 border-l-destructive"
       >
         <CardHeader className="pb-3">
           <CardTitle className="flex items-center gap-2 text-base">
-            <AlertTriangle className="h-4 w-4 text-rose-500" />
+            <AlertTriangle className="h-4 w-4 text-destructive" />
             교육공학 실험 연구 유의사항
           </CardTitle>
         </CardHeader>

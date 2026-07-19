@@ -351,7 +351,7 @@ export default function FoundationTermDetailPage() {
                   </span>
                 )}
                 {term.aectTerm?.trim() && term.aectTerm.trim() !== term.term && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-indigo-200 bg-indigo-50 px-2.5 py-0.5 text-xs font-medium text-indigo-800 dark:border-indigo-400/30 dark:bg-indigo-950/30 dark:text-indigo-300">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-info/20 bg-info/5 px-2.5 py-0.5 text-xs font-medium text-info">
                     AECT · {term.aectTerm.trim()}
                   </span>
                 )}
@@ -370,7 +370,7 @@ export default function FoundationTermDetailPage() {
               {!term.published && (
                 <Badge
                   variant="outline"
-                  className="bg-rose-50 text-rose-700 border-rose-200 text-xs"
+                  className="bg-destructive/5 text-destructive border-destructive/20 text-xs"
                 >
                   비공개 (draft)
                 </Badge>
@@ -385,7 +385,7 @@ export default function FoundationTermDetailPage() {
                 onClick={handleToggleFav}
                 disabled={favPending}
                 className={cn(
-                  isFav && "bg-amber-500 hover:bg-amber-600 border-amber-500",
+                  isFav && "bg-warning hover:bg-warning/80 border-warning",
                 )}
                 aria-pressed={isFav}
               >
@@ -435,10 +435,10 @@ export default function FoundationTermDetailPage() {
         {term.accessibleSummary && term.accessibleSummary.trim() !== "" && (
           <section id="accessibleSummary" className="mt-8 scroll-mt-24">
             <div
-              className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-emerald-50 p-4 dark:border-sky-900 dark:from-sky-950/30 dark:to-emerald-950/30"
+              className="rounded-xl border border-info/20 bg-gradient-to-br from-info/5 to-success/5 p-4"
               aria-label="쉽게 이해하기"
             >
-              <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-sky-900 dark:text-sky-200">
+              <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-info">
                 <Lightbulb className="h-4 w-4" aria-hidden />
                 쉽게 이해하기
               </h3>
@@ -476,10 +476,10 @@ export default function FoundationTermDetailPage() {
         {term.examples && term.examples.length > 0 && (
           <section id="research-sentences" className="mt-8 scroll-mt-24">
             <div
-              className="rounded-xl border border-blue-200 bg-gradient-to-br from-blue-50 to-slate-50 p-4 dark:border-blue-900 dark:from-blue-950/30 dark:to-slate-900/40"
+              className="rounded-xl border border-info/20 bg-gradient-to-br from-info/5 to-muted p-4"
               aria-label="연구에서는 이렇게 쓰입니다"
             >
-              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-blue-900 dark:text-blue-200">
+              <h3 className="mb-3 flex items-center gap-1.5 text-sm font-semibold text-info">
                 <PenLine className="h-4 w-4" aria-hidden />
                 📝 연구에서는 이렇게 쓰입니다
               </h3>
@@ -487,7 +487,7 @@ export default function FoundationTermDetailPage() {
                 {term.examples.map((ex) => (
                   <li
                     key={ex.id}
-                    className="rounded-md border-l-4 border-blue-300 bg-white/70 px-3 py-2 font-serif text-sm italic leading-relaxed text-slate-700 dark:border-blue-700 dark:bg-slate-900/40 dark:text-slate-200"
+                    className="rounded-md border-l-4 border-info/30 bg-white/70 px-3 py-2 font-serif text-sm italic leading-relaxed text-muted-foreground dark:bg-muted/40"
                   >
                     “{ex.text}”
                   </li>
@@ -500,21 +500,21 @@ export default function FoundationTermDetailPage() {
         {/* "비슷하지만 다른" 용어 페어 */}
         {term.confusedWith && term.confusedWith.length > 0 && (
           <section id="confused-with" className="mt-10 scroll-mt-24">
-            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-rose-800 dark:text-rose-200">
+            <h2 className="mb-3 flex items-center gap-2 text-sm font-semibold text-destructive">
               <Split className="h-4 w-4" aria-hidden />
               비슷하지만 다른 용어
             </h2>
             <div className="grid grid-cols-1 gap-3 md:grid-cols-2">
               {term.confusedWith.map((c) => {
                 const inner = (
-                  <article className="h-full rounded-xl border border-rose-200 bg-gradient-to-br from-rose-50 to-amber-50 p-4 dark:border-rose-900 dark:from-rose-950/30 dark:to-amber-950/30">
+                  <article className="h-full rounded-xl border border-destructive/20 bg-gradient-to-br from-destructive/5 to-warning/5 p-4">
                     <div className="flex items-start gap-2">
                       <AlertTriangle
-                        className="mt-0.5 h-4 w-4 shrink-0 text-rose-600 dark:text-rose-300"
+                        className="mt-0.5 h-4 w-4 shrink-0 text-destructive"
                         aria-hidden
                       />
                       <div className="min-w-0">
-                        <p className="text-sm font-semibold text-rose-900 dark:text-rose-100">
+                        <p className="text-sm font-semibold text-destructive">
                           {c.confusedTermLabel ?? "(연결된 용어)"}
                         </p>
                         <p className="mt-1.5 whitespace-pre-wrap text-xs leading-relaxed text-foreground/85">
@@ -586,7 +586,7 @@ export default function FoundationTermDetailPage() {
                 >
                   <Badge
                     variant="outline"
-                    className="cursor-pointer bg-violet-50 text-violet-800 border-violet-200 hover:shadow-sm dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800"
+                    className="cursor-pointer bg-cat-5/5 text-cat-5 border-cat-5/20 hover:shadow-sm"
                   >
                     {c.name}
                   </Badge>
@@ -611,7 +611,7 @@ export default function FoundationTermDetailPage() {
                 >
                   <Badge
                     variant="outline"
-                    className="cursor-pointer bg-sky-50 text-sky-800 border-sky-200 hover:shadow-sm dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800"
+                    className="cursor-pointer bg-info/5 text-info border-info/20 hover:shadow-sm"
                   >
                     {rm.name}
                   </Badge>
@@ -636,7 +636,7 @@ export default function FoundationTermDetailPage() {
                 >
                   <Badge
                     variant="outline"
-                    className="cursor-pointer bg-indigo-50 text-indigo-800 border-indigo-200 hover:shadow-sm dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800"
+                    className="cursor-pointer bg-info/5 text-info border-info/20 hover:shadow-sm"
                   >
                     {sm.name}
                   </Badge>
@@ -691,7 +691,7 @@ export default function FoundationTermDetailPage() {
         </div>
 
         {/* 학술 책임 고지 */}
-        <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mt-10 flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-4 text-xs text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>
             본 가이드는 참고용입니다. 최종 학술 정의·연구설계는 지도교수와 상의하시기

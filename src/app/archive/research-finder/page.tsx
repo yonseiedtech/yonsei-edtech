@@ -191,12 +191,12 @@ export default function ResearchFinderPage() {
 
         {/* UX(2026-07-04): 로드 실패 안내 + 재시도 */}
         {loadFailed && (
-          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-amber-300 bg-amber-50 px-4 py-2.5 text-sm text-amber-800 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+          <div className="mt-4 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-warning/30 bg-warning/5 px-4 py-2.5 text-sm text-warning">
             <span>가이드 데이터를 불러오지 못했습니다 — 추천 결과의 상세 링크·선배 논문 매칭이 표시되지 않을 수 있어요.</span>
             <button
               type="button"
               onClick={() => setRetryTick((t) => t + 1)}
-              className="shrink-0 rounded-lg border border-amber-400 bg-white px-2.5 py-1 text-xs font-medium hover:bg-amber-100 dark:bg-transparent"
+              className="shrink-0 rounded-lg border border-warning/40 bg-white px-2.5 py-1 text-xs font-medium hover:bg-warning/10 dark:bg-transparent"
             >
               다시 시도
             </button>
@@ -215,16 +215,16 @@ export default function ResearchFinderPage() {
               </h2>
               {current.help && <p className="mt-1 text-sm text-muted-foreground">{current.help}</p>}
               {current.terms && current.terms.length > 0 && (
-                <div className="mt-3 rounded-xl border border-blue-200 bg-blue-50 p-3 dark:border-blue-900 dark:bg-blue-950/30">
-                  <p className="flex items-center gap-1 text-xs font-semibold text-blue-800 dark:text-blue-300">
+                <div className="mt-3 rounded-xl border border-info/20 bg-info/5 p-3">
+                  <p className="flex items-center gap-1 text-xs font-semibold text-info">
                     <Info className="h-3.5 w-3.5" aria-hidden />
                     용어 도움말
                   </p>
                   <dl className="mt-1.5 space-y-1.5">
                     {current.terms.map((t) => (
                       <div key={t.term} className="text-xs">
-                        <dt className="font-medium text-blue-900 dark:text-blue-200">{t.term}</dt>
-                        <dd className="leading-relaxed text-blue-800/90 dark:text-blue-300/90">{t.def}</dd>
+                        <dt className="font-medium text-info">{t.term}</dt>
+                        <dd className="leading-relaxed text-info/90">{t.def}</dd>
                       </div>
                     ))}
                   </dl>
@@ -259,9 +259,9 @@ export default function ResearchFinderPage() {
         {result && (
           <div className="mt-4 space-y-4">
             {/* 추천 연구방법 */}
-            <Card className="rounded-2xl border-l-4 border-l-amber-400">
+            <Card className="rounded-2xl border-l-4 border-l-warning">
               <CardContent className="p-6">
-                <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+                <div className="flex items-center gap-2 text-warning">
                   <CheckCircle2 className="h-5 w-5" />
                   <span className="text-sm font-medium">추천 연구방법</span>
                 </div>
@@ -403,7 +403,7 @@ export default function ResearchFinderPage() {
           </div>
         )}
 
-        <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mt-10 flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-4 text-xs text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>
             이 추천은 일반적 의사결정 가이드입니다. 실제 연구문제·현장·자료에 따라 적합한 방법은 달라질 수 있으니,

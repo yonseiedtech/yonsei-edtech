@@ -66,49 +66,49 @@ const CATEGORY_GUIDES: CategoryGuide[] = [
     category: "variables",
     title: "변인",
     description: "독립·종속·매개·조절 등 양적 연구의 기본 변인 용어.",
-    borderClass: "border-l-blue-400",
-    iconBg: "bg-blue-100 dark:bg-blue-950/60",
-    iconText: "text-blue-700 dark:text-blue-300",
+    borderClass: "border-l-info",
+    iconBg: "bg-info/10",
+    iconText: "text-info",
   },
   {
     category: "research-design",
     title: "연구설계",
     description: "연구모형·처치·무선할당·사전-사후 등 설계의 기본 어휘.",
-    borderClass: "border-l-violet-400",
-    iconBg: "bg-violet-100 dark:bg-violet-950/60",
-    iconText: "text-violet-700 dark:text-violet-300",
+    borderClass: "border-l-cat-5",
+    iconBg: "bg-cat-5/10",
+    iconText: "text-cat-5",
   },
   {
     category: "instructional-design",
     title: "교수설계",
     description: "ISD·ID·교육과정 등 교수설계 분야 핵심 용어와 그 차이.",
-    borderClass: "border-l-emerald-400",
-    iconBg: "bg-emerald-100 dark:bg-emerald-950/60",
-    iconText: "text-emerald-700 dark:text-emerald-300",
+    borderClass: "border-l-success",
+    iconBg: "bg-success/10",
+    iconText: "text-success",
   },
   {
     category: "systems-theory",
     title: "체제이론",
     description: "체제·체계·체제적 분석 — 자주 혼동되는 시스템 이론 어휘.",
-    borderClass: "border-l-indigo-400",
-    iconBg: "bg-indigo-100 dark:bg-indigo-950/60",
-    iconText: "text-indigo-700 dark:text-indigo-300",
+    borderClass: "border-l-info",
+    iconBg: "bg-info/10",
+    iconText: "text-info",
   },
   {
     category: "measurement",
     title: "측정·평가",
     description: "모집단·표본·신뢰도·타당도·효과크기 등 측정 이론의 기본.",
-    borderClass: "border-l-amber-400",
-    iconBg: "bg-amber-100 dark:bg-amber-950/60",
-    iconText: "text-amber-700 dark:text-amber-300",
+    borderClass: "border-l-warning",
+    iconBg: "bg-warning/10",
+    iconText: "text-warning",
   },
   {
     category: "learning-theory",
     title: "학습이론",
     description: "ZPD·인지부하 등 학습이론 핵심 용어.",
-    borderClass: "border-l-rose-400",
-    iconBg: "bg-rose-100 dark:bg-rose-950/60",
-    iconText: "text-rose-700 dark:text-rose-300",
+    borderClass: "border-l-destructive",
+    iconBg: "bg-destructive/10",
+    iconText: "text-destructive",
   },
 ];
 
@@ -450,7 +450,7 @@ function FoundationTermsLandingPageInner() {
                             {!t.published && canManage && (
                               <Badge
                                 variant="outline"
-                                className="bg-rose-50 text-rose-700 border-rose-200 text-[10px]"
+                                className="bg-destructive/5 text-destructive border-destructive/20 text-[10px]"
                               >
                                 draft
                               </Badge>
@@ -486,7 +486,7 @@ function FoundationTermsLandingPageInner() {
                           );
                         })()}
                         {t.confusedWith && t.confusedWith.length > 0 && (
-                          <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-amber-700 dark:text-amber-300">
+                          <p className="mt-2 inline-flex items-center gap-1 text-[11px] text-warning">
                             <AlertTriangle className="h-3 w-3" aria-hidden />
                             비슷하지만 다른 용어 {t.confusedWith.length}건
                           </p>
@@ -511,7 +511,7 @@ function FoundationTermsLandingPageInner() {
         })}
 
         {/* 학술 책임 고지 */}
-        <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mt-10 flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-4 text-xs text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>
             본 가이드는 참고용입니다. 최종 학술 정의·연구설계는 지도교수와 상의하시기

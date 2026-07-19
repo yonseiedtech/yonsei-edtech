@@ -519,16 +519,16 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               {/* 내 연구활동 카드 (학회활동과 동일 격) */}
               <Link
                 href="/mypage/research"
-                className="block rounded-2xl border-2 border-amber-200/60 bg-gradient-to-br from-amber-50 to-amber-100/60 p-5 transition hover:border-amber-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/50 focus-visible:ring-offset-2"
+                className="block rounded-2xl border-2 border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10 p-5 transition hover:border-warning/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning/50 focus-visible:ring-offset-2"
               >
                 <div className="flex items-start gap-4">
-                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-200/40 text-amber-700">
+                  <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-warning/20 text-warning">
                     <BookOpen size={22} />
                   </div>
                   <div className="min-w-0 flex-1">
                     <div className="flex items-center gap-2">
                       <h3 className="text-base font-bold">내 연구활동</h3>
-                      <Badge variant="secondary" className="bg-amber-200/60 text-amber-800 text-[10px]">신규</Badge>
+                      <Badge variant="secondary" className="bg-warning/20 text-warning text-[10px]">신규</Badge>
                     </div>
                     <p className="mt-0.5 text-sm text-muted-foreground">
                       논문 여정 · 5장 작성 · 지도 노트를 한 화면에서 관리해보세요.
@@ -539,7 +539,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                       </span>
                     </div>
                   </div>
-                  <ArrowRight size={18} className="shrink-0 self-center text-amber-700" />
+                  <ArrowRight size={18} className="shrink-0 self-center text-warning" />
                 </div>
               </Link>
 
@@ -551,11 +551,11 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
 
               {/* 진단평가 — 연구 준비도 진단 → 약점 개념 읽기 추천 → 재진단 루프 (본인만) */}
               {isSelf && !readOnly && (
-                <div className="rounded-2xl border-2 border-violet-200/60 bg-gradient-to-br from-violet-50 to-violet-100/60 p-5 dark:border-violet-800/40 dark:from-violet-950/20 dark:to-violet-900/10">
+                <div className="rounded-2xl border-2 border-cat-5/20 bg-gradient-to-br from-cat-5/5 to-cat-5/10 p-5">
                   {latestDiagnostic ? (
                     <>
                       <div className="flex items-start gap-4">
-                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-200/40 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-cat-5/20 text-cat-5">
                           <ClipboardCheck size={22} />
                         </div>
                         <div className="min-w-0 flex-1">
@@ -564,7 +564,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                             <span className="text-[11px] text-muted-foreground">
                               마지막 진단 {formatDate(latestDiagnostic.createdAt || "")}
                               {diagnosticCount > 1 && (
-                                <span className="ml-1 text-violet-700/70 dark:text-violet-300/70">· {diagnosticCount}번째 진단</span>
+                                <span className="ml-1 text-cat-5/70">· {diagnosticCount}번째 진단</span>
                               )}
                             </span>
                           </div>
@@ -575,7 +575,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                             <div className="rounded-xl border bg-card px-3 py-2.5">
                               <p className="text-[11px] text-muted-foreground">논문 작성 준비도</p>
                               <div className="mt-0.5 flex items-baseline gap-1.5">
-                                <p className="text-lg font-bold tabular-nums text-violet-700 dark:text-violet-300">
+                                <p className="text-lg font-bold tabular-nums text-cat-5">
                                   {latestDiagnostic.paperReadiness}
                                   <span className="ml-0.5 text-xs font-normal text-muted-foreground">/ 100</span>
                                 </p>
@@ -587,7 +587,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                             <div className="rounded-xl border bg-card px-3 py-2.5">
                               <p className="text-[11px] text-muted-foreground">연구 분석 준비도</p>
                               <div className="mt-0.5 flex items-baseline gap-1.5">
-                                <p className="text-lg font-bold tabular-nums text-violet-700 dark:text-violet-300">
+                                <p className="text-lg font-bold tabular-nums text-cat-5">
                                   {latestDiagnostic.analysisReadiness}
                                   <span className="ml-0.5 text-xs font-normal text-muted-foreground">/ 100</span>
                                 </p>
@@ -609,14 +609,14 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                       )}
 
                       {needsRediagnosis && (
-                        <p className="mt-4 rounded-lg bg-violet-100/70 px-3 py-2 text-[12px] text-violet-800 dark:bg-violet-900/30 dark:text-violet-200">
+                        <p className="mt-4 rounded-lg bg-cat-5/10 px-3 py-2 text-[12px] text-cat-5">
                           마지막 진단으로부터 2주가 지났어요. 그동안의 학습을 반영해 재진단해 보면 준비도 변화를 확인할 수 있어요.
                         </p>
                       )}
 
                       <div className="mt-4">
                         <Link href="/diagnosis">
-                          <Button variant="outline" size="sm" className="border-violet-300 text-violet-700 hover:bg-violet-100 dark:border-violet-700 dark:text-violet-300">
+                          <Button variant="outline" size="sm" className="border-cat-5/30 text-cat-5 hover:bg-cat-5/10">
                             다시 진단하기
                             <ArrowRight size={14} className="ml-1" />
                           </Button>
@@ -625,7 +625,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                     </>
                   ) : (
                     <Link href="/diagnosis" className="flex items-start gap-4">
-                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-200/40 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                      <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-cat-5/20 text-cat-5">
                         <ClipboardCheck size={22} />
                       </div>
                       <div className="min-w-0 flex-1">
@@ -634,7 +634,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                           통계방법·연구방법·핵심개념을 진단해 논문 작성·연구 분석 준비도를 확인하고 약점 개념을 아카이브로 연결합니다.
                         </p>
                       </div>
-                      <ArrowRight size={18} className="shrink-0 self-center text-violet-700 dark:text-violet-300" />
+                      <ArrowRight size={18} className="shrink-0 self-center text-cat-5" />
                     </Link>
                   )}
                   {/* 사이클 122 완료: 진단 완료를 학습 잔디 활동으로 인정 — LearningStreak SCORES.diagnosticComplete(+5)로 createdAt 일별 1회 가산(연구활동🔬). */}
@@ -654,17 +654,17 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               {isSelf && !readOnly && flashcardTotal > 0 && (
                 <Link
                   href="/flashcards"
-                  className="block rounded-2xl border-2 border-sky-200/60 bg-gradient-to-br from-sky-50 to-sky-100/60 p-5 transition hover:border-sky-300 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-sky-400/50 focus-visible:ring-offset-2 dark:border-sky-800/40 dark:from-sky-950/20 dark:to-sky-900/10"
+                  className="block rounded-2xl border-2 border-info/20 bg-gradient-to-br from-info/5 to-info/10 p-5 transition hover:border-info/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-info/50 focus-visible:ring-offset-2"
                 >
                   <div className="flex items-start gap-4">
-                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-sky-200/40 text-sky-700 dark:bg-sky-900/30 dark:text-sky-300">
+                    <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-info/20 text-info">
                       <Layers size={22} />
                     </div>
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
                         <h3 className="text-base font-bold">내 암기카드</h3>
                         {flashcardDueToday > 0 && (
-                          <Badge className="bg-sky-600 text-[10px] tabular-nums text-white hover:bg-sky-600">
+                          <Badge className="bg-info text-[10px] tabular-nums text-white hover:bg-info">
                             오늘 복습 {flashcardDueToday}장
                           </Badge>
                         )}
@@ -675,7 +675,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                           : `저장한 카드 ${flashcardTotal}장. 오늘 복습 대상은 없지만 미리 둘러볼 수 있어요.`}
                       </p>
                     </div>
-                    <ArrowRight size={18} className="shrink-0 self-center text-sky-700 dark:text-sky-300" />
+                    <ArrowRight size={18} className="shrink-0 self-center text-info" />
                   </div>
                 </Link>
               )}
@@ -778,10 +778,10 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                     {pendingApps.length > 0 && (
                       <Link
                         href="/mypage/activities"
-                        className={cn("block rounded-2xl border p-4 transition hover:border-amber-300 hover:bg-amber-50", SEMANTIC.warning.border, SEMANTIC.warning.bg)}
+                        className={cn("block rounded-2xl border p-4 transition hover:border-warning hover:bg-warning/5", SEMANTIC.warning.border, SEMANTIC.warning.bg)}
                       >
                         <div className="flex items-start gap-3">
-                          <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-amber-200/60", SEMANTIC.warning.accent)}>
+                          <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-warning/20", SEMANTIC.warning.accent)}>
                             <AlertCircle size={18} />
                           </div>
                           <div className="min-w-0 flex-1">
@@ -802,10 +802,10 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                       <Link
                         key={`prv-${s.id}`}
                         href={`/seminars/${s.id}/review`}
-                        className={cn("block rounded-2xl border p-4 transition hover:border-blue-300 hover:bg-blue-50", SEMANTIC.info.border, SEMANTIC.info.bg)}
+                        className={cn("block rounded-2xl border p-4 transition hover:border-info hover:bg-info/5", SEMANTIC.info.border, SEMANTIC.info.bg)}
                       >
                         <div className="flex items-start gap-3">
-                          <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-blue-200/60", SEMANTIC.info.accent)}>
+                          <div className={cn("flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-info/20", SEMANTIC.info.accent)}>
                             <PenSquare size={18} />
                           </div>
                           <div className="min-w-0 flex-1">
@@ -869,12 +869,12 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                 const heading = hasHistory ? "회원님 맞춤 추천" : "곧 시작하는 활동";
 
                 return (
-                  <div className="rounded-2xl border border-violet-200/70 bg-violet-50/50 p-5">
+                  <div className="rounded-2xl border border-cat-5/20 bg-cat-5/5 p-5">
                     <div className="flex items-center gap-2">
-                      <Sparkles size={16} className="text-violet-600" />
-                      <h3 className="text-sm font-semibold text-violet-900">{heading}</h3>
+                      <Sparkles size={16} className="text-cat-5" />
+                      <h3 className="text-sm font-semibold text-cat-5">{heading}</h3>
                     </div>
-                    <ul className="mt-3 divide-y divide-violet-100">
+                    <ul className="mt-3 divide-y divide-cat-5/10">
                       {candidates.map(({ a }) => {
                         const typeLabel = ACTIVITY_LABELS[a.type] || a.type;
                         const tagPreview = (a.tags || []).slice(0, 2).join(" · ");
@@ -885,15 +885,15 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                               className="flex items-center justify-between gap-2"
                             >
                               <div className="min-w-0 flex-1">
-                                <p className="truncate text-sm font-medium text-violet-900 hover:text-violet-700">
+                                <p className="truncate text-sm font-medium text-cat-5 hover:text-cat-5/80">
                                   {a.title}
                                 </p>
-                                <p className="mt-0.5 truncate text-xs text-violet-800/80">
+                                <p className="mt-0.5 truncate text-xs text-cat-5/80">
                                   {typeLabel} · {formatDate(a.date)}
                                   {tagPreview && ` · ${tagPreview}`}
                                 </p>
                               </div>
-                              <ChevronRight size={14} className="shrink-0 text-violet-700" />
+                              <ChevronRight size={14} className="shrink-0 text-cat-5" />
                             </Link>
                           </li>
                         );
@@ -960,11 +960,11 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                 if (recent.length === 0) return null;
 
                 const ICON_MAP: Record<TLEvent["type"], { icon: typeof Calendar; bg: string; fg: string }> = {
-                  activity: { icon: FolderKanban, bg: "bg-emerald-100 dark:bg-emerald-950/50", fg: "text-emerald-700 dark:text-emerald-300" },
+                  activity: { icon: FolderKanban, bg: "bg-success/10", fg: "text-success" },
                   seminar: { icon: Calendar, bg: "bg-primary/15", fg: "text-primary" },
-                  certificate: { icon: Award, bg: "bg-amber-100 dark:bg-amber-950/50", fg: "text-amber-700 dark:text-amber-300" },
+                  certificate: { icon: Award, bg: "bg-warning/10", fg: "text-warning" },
                   post: { icon: FileText, bg: "bg-muted", fg: "text-muted-foreground" },
-                  interview: { icon: Mic, bg: "bg-blue-100 dark:bg-blue-950/50", fg: "text-blue-700 dark:text-blue-300" },
+                  interview: { icon: Mic, bg: "bg-info/10", fg: "text-info" },
                 };
 
                 return (
@@ -1108,7 +1108,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                 className="flex items-center justify-between rounded-2xl border bg-card px-5 py-4 transition hover:border-primary/40 hover:shadow-sm"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/10 text-warning">
                     <Award size={20} />
                   </div>
                   <div>
@@ -1143,10 +1143,10 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               </p>
               <Link
                 href="/mypage/research"
-                className="flex items-center justify-between rounded-2xl border-2 border-amber-200/60 bg-gradient-to-br from-amber-50 to-amber-100/60 px-5 py-4 transition hover:border-amber-300 hover:shadow-sm dark:border-amber-800/40 dark:from-amber-950/20 dark:to-amber-900/10"
+                className="flex items-center justify-between rounded-2xl border-2 border-warning/20 bg-gradient-to-br from-warning/5 to-warning/10 px-5 py-4 transition hover:border-warning/40 hover:shadow-sm"
               >
                 <div className="flex items-center gap-3">
-                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-amber-200/40 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+                  <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-warning/20 text-warning">
                     <BookOpen size={20} />
                   </div>
                   <div>
@@ -1154,7 +1154,7 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                     <p className="mt-0.5 text-xs text-muted-foreground">논문 {publishedPaperCount}편 · 분석 노트</p>
                   </div>
                 </div>
-                <ArrowRight size={16} className="shrink-0 text-amber-700 dark:text-amber-300" />
+                <ArrowRight size={16} className="shrink-0 text-warning" />
               </Link>
             </div>
           )}

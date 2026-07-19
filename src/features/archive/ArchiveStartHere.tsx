@@ -52,10 +52,10 @@ export default function ArchiveStartHere() {
   return (
     <section
       aria-labelledby="archive-start-here"
-      className="mt-6 rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50/70 via-teal-50/50 to-cyan-50/40 p-5 shadow-sm dark:border-emerald-800 dark:from-emerald-950/30 dark:via-teal-950/20 dark:to-cyan-950/20"
+      className="mt-6 rounded-2xl border border-success/20 bg-gradient-to-br from-success/5 via-teal-50/50 to-cyan-50/40 p-5 shadow-sm dark:via-teal-950/20 dark:to-cyan-950/20"
     >
       <div className="mb-4 flex items-center gap-3">
-        <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/70 text-emerald-700 shadow-sm dark:bg-slate-900/60 dark:text-emerald-300">
+        <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/70 text-success shadow-sm dark:bg-muted/60">
           <Rocket className="h-5 w-5" aria-hidden />
         </div>
         <div className="min-w-0">
@@ -79,7 +79,7 @@ export default function ArchiveStartHere() {
               className="group flex h-full items-start gap-3 rounded-xl border bg-card p-3 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40"
               aria-label={`${s.step}단계: ${s.title}`}
             >
-              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-sm font-bold text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-300">
+              <span className="inline-flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-success/10 text-sm font-bold text-success">
                 {s.step}
               </span>
               <div className="min-w-0 flex-1">

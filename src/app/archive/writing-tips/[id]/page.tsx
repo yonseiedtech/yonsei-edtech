@@ -212,7 +212,7 @@ export default function WritingTipDetailPage() {
               {!tip.published && (
                 <Badge
                   variant="outline"
-                  className="bg-rose-50 text-rose-700 border-rose-200 text-xs"
+                  className="bg-destructive/5 text-destructive border-destructive/20 text-xs"
                 >
                   비공개 (draft)
                 </Badge>
@@ -227,7 +227,7 @@ export default function WritingTipDetailPage() {
                 onClick={handleToggleFav}
                 disabled={favPending}
                 className={cn(
-                  isFav && "bg-amber-500 hover:bg-amber-600 border-amber-500",
+                  isFav && "bg-warning hover:bg-warning/80 border-warning",
                 )}
                 aria-pressed={isFav}
               >
@@ -263,8 +263,8 @@ export default function WritingTipDetailPage() {
 
         {/* ❌ 잘못된 예 ↔ ✅ 권장 예 대비 카드 */}
         <section id="wrong-correct-examples" className="mt-8 grid grid-cols-1 gap-3 md:grid-cols-2 scroll-mt-24">
-          <article className="rounded-xl border border-rose-200 bg-rose-50/60 p-4 dark:border-rose-900 dark:bg-rose-950/30">
-            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-rose-800 dark:text-rose-200">
+          <article className="rounded-xl border border-destructive/20 bg-destructive/5 p-4">
+            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-destructive">
               <XCircle className="h-4 w-4" aria-hidden />
               ❌ 잘못된 예
             </h3>

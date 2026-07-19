@@ -109,24 +109,24 @@ const VERSION_STYLE: Record<
   { border: string; bg: string; head: string; body: string; icon: typeof CheckCircle2 }
 > = {
   bad: {
-    border: "border-rose-200 dark:border-rose-900",
-    bg: "bg-rose-50/60 dark:bg-rose-950/20",
-    head: "text-rose-700 dark:text-rose-300",
-    body: "text-rose-900 dark:text-rose-200",
+    border: "border-destructive/20",
+    bg: "bg-destructive/5",
+    head: "text-destructive",
+    body: "text-destructive",
     icon: XCircle,
   },
   weak: {
-    border: "border-amber-200 dark:border-amber-900",
-    bg: "bg-amber-50/60 dark:bg-amber-950/20",
-    head: "text-amber-700 dark:text-amber-300",
-    body: "text-amber-900 dark:text-amber-200",
+    border: "border-warning/20",
+    bg: "bg-warning/5",
+    head: "text-warning",
+    body: "text-warning",
     icon: MinusCircle,
   },
   good: {
-    border: "border-emerald-200 dark:border-emerald-900",
-    bg: "bg-emerald-50/60 dark:bg-emerald-950/20",
-    head: "text-emerald-700 dark:text-emerald-300",
-    body: "text-emerald-900 dark:text-emerald-200",
+    border: "border-success/20",
+    bg: "bg-success/5",
+    head: "text-success",
+    body: "text-success",
     icon: CheckCircle2,
   },
 };
@@ -193,7 +193,7 @@ export default function CitationGuidePage() {
                   </div>
                 ))}
               </div>
-              <div className="flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-3.5 text-xs leading-relaxed text-rose-900 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
+              <div className="flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/5 p-3.5 text-xs leading-relaxed text-destructive">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 <p>
                   <strong>출처를 달아도 표절일 수 있습니다.</strong> 문장 구조가 원문과 같고 단어만
@@ -223,14 +223,14 @@ export default function CitationGuidePage() {
                       <td className="px-3 py-2.5">원문을 그대로 가져옴</td>
                       <td className="px-3 py-2.5">O</td>
                       <td className="px-3 py-2.5">O (쪽수 포함)</td>
-                      <td className="px-3 py-2.5 text-rose-700 dark:text-rose-300">최소화</td>
+                      <td className="px-3 py-2.5 text-destructive">최소화</td>
                     </tr>
                     <tr className="border-t">
                       <td className="px-3 py-2.5 font-medium text-foreground">간접 인용</td>
                       <td className="px-3 py-2.5">이해한 내용을 내 언어로 다시 씀</td>
                       <td className="px-3 py-2.5">X</td>
                       <td className="px-3 py-2.5 font-semibold text-foreground">반드시 O</td>
-                      <td className="px-3 py-2.5 text-emerald-700 dark:text-emerald-300">대부분</td>
+                      <td className="px-3 py-2.5 text-success">대부분</td>
                     </tr>
                   </tbody>
                 </table>
@@ -291,7 +291,7 @@ export default function CitationGuidePage() {
                   </li>
                 ))}
               </ol>
-              <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs leading-relaxed text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+              <div className="flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-3.5 text-xs leading-relaxed text-warning">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 <p>
                   원문을 옆에 두고 쓰는 것은 해설지를 보며 문제를 푸는 것과 같아 뇌가 원문 구조를
@@ -397,7 +397,7 @@ export default function CitationGuidePage() {
                 표절은 학문적 윤리 위반이며, 학위·연구자 경력 전반에 걸친 장기적 검증 리스크가 됩니다.
                 정직한 인용은 연구자 자신을 보호하는 일이기도 합니다.
               </p>
-              <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs leading-relaxed text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+              <div className="flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-3.5 text-xs leading-relaxed text-warning">
                 <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 <p>
                   <strong>재인용(2차 인용)은 최후 수단입니다.</strong> 원본을 끝내 찾을 수 없을 때만

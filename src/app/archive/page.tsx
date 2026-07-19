@@ -89,10 +89,10 @@ const FAVORITE_TYPE_LABELS: Record<ArchiveFavoriteItemType, string> = {
 /** 즐겨찾기 칩 색상 — 기존 3종 + 신규 4종 (각 컬렉션 상세 페이지 헤더 색과 톤 일치) */
 const FAVORITE_TYPE_COLORS: Record<ArchiveFavoriteItemType, string> = {
   ...ARCHIVE_ITEM_TYPE_COLORS,
-  "research-method": "bg-sky-50 text-sky-800 border border-sky-200",
-  "statistical-method": "bg-indigo-50 text-indigo-800 border border-indigo-200",
-  "foundation-term": "bg-slate-50 text-slate-800 border border-slate-200",
-  "writing-tip": "bg-rose-50 text-rose-800 border border-rose-200",
+  "research-method": "bg-info/5 text-info border border-info/20",
+  "statistical-method": "bg-info/5 text-info border border-info/20",
+  "foundation-term": "bg-muted text-muted-foreground border border-muted-foreground/20",
+  "writing-tip": "bg-destructive/5 text-destructive border border-destructive/20",
 };
 
 /** 스티키 서브내비 섹션 인덱스 (H1) — 각 id 는 ArchiveSectionHeader 앵커와 1:1 */
@@ -114,9 +114,9 @@ const TYPE_GUIDES: TypeGuide[] = [
     examples: ["자기효능감", "학습몰입", "메타인지", "사회적 실재감"],
     icon: Lightbulb,
     accent: "violet",
-    borderClass: "border-l-violet-400",
-    iconBg: "bg-violet-100 dark:bg-violet-950/60",
-    iconText: "text-violet-700 dark:text-violet-300",
+    borderClass: "border-l-cat-5",
+    iconBg: "bg-cat-5/10",
+    iconText: "text-cat-5",
   },
   {
     type: "variable",
@@ -127,9 +127,9 @@ const TYPE_GUIDES: TypeGuide[] = [
     examples: ["과제 자기효능감", "학습 몰입도", "자기조절학습 전략 사용"],
     icon: VariableIcon,
     accent: "blue",
-    borderClass: "border-l-blue-400",
-    iconBg: "bg-blue-100 dark:bg-blue-950/60",
-    iconText: "text-blue-700 dark:text-blue-300",
+    borderClass: "border-l-info",
+    iconBg: "bg-info/10",
+    iconText: "text-info",
   },
   {
     type: "measurement",
@@ -140,9 +140,9 @@ const TYPE_GUIDES: TypeGuide[] = [
     examples: ["GSE-K (Schwarzer, 1995)", "MSLQ", "Flow State Scale"],
     icon: Ruler,
     accent: "emerald",
-    borderClass: "border-l-emerald-400",
-    iconBg: "bg-emerald-100 dark:bg-emerald-950/60",
-    iconText: "text-emerald-700 dark:text-emerald-300",
+    borderClass: "border-l-success",
+    iconBg: "bg-success/10",
+    iconText: "text-success",
   },
 ];
 
@@ -156,9 +156,9 @@ interface RecentAddedItem {
 }
 
 const RECENT_ADDED_BADGE: Record<ArchiveItemType, string> = {
-  concept: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800",
-  variable: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800",
-  measurement: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800",
+  concept: "bg-cat-5/5 text-cat-5 border-cat-5/20",
+  variable: "bg-info/5 text-info border-info/20",
+  measurement: "bg-success/5 text-success border-success/20",
 };
 
 export default function ArchiveLandingPage() {
@@ -294,7 +294,7 @@ export default function ArchiveLandingPage() {
           {recentAdded.length > 0 && (
             <div className="mt-4">
               <div className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                <Sparkles className="h-3.5 w-3.5 text-amber-500" aria-hidden />
+                <Sparkles className="h-3.5 w-3.5 text-warning" aria-hidden />
                 최근 추가된 항목
               </div>
               <ul className="flex flex-wrap gap-1.5">
@@ -344,9 +344,9 @@ export default function ArchiveLandingPage() {
             className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="교육공학 진단평가 시작"
           >
-            <article className="overflow-hidden rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 via-emerald-50 to-cyan-50 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md dark:border-teal-800 dark:from-teal-950/40 dark:via-emerald-950/30 dark:to-cyan-950/40">
+            <article className="overflow-hidden rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 via-success/5 to-cyan-50 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md dark:border-teal-800 dark:from-teal-950/40 dark:to-cyan-950/40">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70 text-teal-700 shadow-sm dark:bg-slate-900/60 dark:text-teal-300">
+                <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70 text-teal-700 shadow-sm dark:bg-muted/60 dark:text-teal-300">
                   <ClipboardCheck className="h-6 w-6" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -390,9 +390,9 @@ export default function ArchiveLandingPage() {
           {/* 연구방법 추천 마법사 진입 CTA */}
           <Link
             href="/archive/research-finder"
-            className="group mt-3 flex items-center gap-4 rounded-2xl border border-amber-300/40 bg-gradient-to-r from-amber-50/60 to-transparent p-5 transition-all hover:-translate-y-0.5 hover:border-amber-400/60 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-amber-400/40 dark:border-amber-900/40 dark:from-amber-950/20"
+            className="group mt-3 flex items-center gap-4 rounded-2xl border border-warning/30 bg-gradient-to-r from-warning/10 to-transparent p-5 transition-all hover:-translate-y-0.5 hover:border-warning/40 hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-warning/40"
           >
-            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+            <span className="inline-flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-warning/10 text-warning">
               <Compass className="h-5 w-5" aria-hidden />
             </span>
             <span className="min-w-0 flex-1">
@@ -414,10 +414,10 @@ export default function ArchiveLandingPage() {
 
           {/* 즐겨찾기 모음 (로그인+즐겨찾기 있을 때만) */}
           {user && favorites.length > 0 && (
-            <Card className="mt-6 rounded-2xl border-amber-200 bg-amber-50/40 shadow-sm dark:border-amber-800 dark:bg-amber-950/20">
+            <Card className="mt-6 rounded-2xl border-warning/20 bg-warning/5 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm flex items-center gap-2">
-                  <Star className="h-4 w-4 fill-amber-400 text-amber-500" aria-hidden />
+                  <Star className="h-4 w-4 fill-warning text-warning" aria-hidden />
                   내 관심 저장 ({favorites.length})
                 </CardTitle>
               </CardHeader>
@@ -462,9 +462,9 @@ export default function ArchiveLandingPage() {
             className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="교육공학 기초 용어 가이드 보기"
           >
-            <article className="rounded-2xl border-l-4 border-l-slate-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <article className="rounded-2xl border-l-4 border-l-muted-foreground bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-slate-100 text-slate-700 dark:bg-slate-800/60 dark:text-slate-300">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-muted text-muted-foreground">
                   <BookText className="h-5 w-5" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -487,9 +487,9 @@ export default function ArchiveLandingPage() {
             className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="AECT 용어 표준 사전 보기"
           >
-            <article className="rounded-2xl border-l-4 border-l-indigo-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <article className="rounded-2xl border-l-4 border-l-info bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
                   <BookMarked className="h-5 w-5" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -512,9 +512,9 @@ export default function ArchiveLandingPage() {
             className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="학습이론 가계도 보기"
           >
-            <article className="rounded-2xl border-l-4 border-l-violet-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <article className="rounded-2xl border-l-4 border-l-cat-5 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 text-violet-700 dark:bg-violet-950/60 dark:text-violet-300">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cat-5/10 text-cat-5">
                   <GitFork className="h-5 w-5" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -619,15 +619,15 @@ export default function ArchiveLandingPage() {
             </summary>
             <div className="px-4 pb-4">
               <div className="flex flex-wrap items-center gap-2 text-sm">
-                <Badge variant="outline" className="bg-violet-50 text-violet-800 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800">
+                <Badge variant="outline" className="bg-cat-5/5 text-cat-5 border-cat-5/20">
                   개념
                 </Badge>
                 <ArrowRight className="h-4 w-4 text-muted-foreground" aria-hidden />
-                <Badge variant="outline" className="bg-blue-50 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800">
+                <Badge variant="outline" className="bg-info/5 text-info border-info/20">
                   변인
                 </Badge>
                 <ArrowRight className="h-4 w-4 text-muted-foreground" aria-hidden />
-                <Badge variant="outline" className="bg-emerald-50 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800">
+                <Badge variant="outline" className="bg-success/5 text-success border-success/20">
                   측정도구
                 </Badge>
                 <span className="ml-2 text-xs text-muted-foreground">
@@ -680,9 +680,9 @@ export default function ArchiveLandingPage() {
             className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="교육공학 연구방법 가이드 보기"
           >
-            <article className="rounded-2xl border-l-4 border-l-sky-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <article className="rounded-2xl border-l-4 border-l-info bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
                   <FlaskConical className="h-5 w-5" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -705,9 +705,9 @@ export default function ArchiveLandingPage() {
             className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="교육공학 통계방법 가이드 보기"
           >
-            <article className="rounded-2xl border-l-4 border-l-indigo-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <article className="rounded-2xl border-l-4 border-l-info bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
                   <BarChart3 className="h-5 w-5" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -730,9 +730,9 @@ export default function ArchiveLandingPage() {
             className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="논문 쓰기 가이드 보기"
           >
-            <article className="rounded-2xl border-l-4 border-l-indigo-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <article className="rounded-2xl border-l-4 border-l-info bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-indigo-100 text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-300">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
                   <FileText className="h-5 w-5" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -755,9 +755,9 @@ export default function ArchiveLandingPage() {
             className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="학술 글쓰기 가이드 보기"
           >
-            <article className="rounded-2xl border-l-4 border-l-rose-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <article className="rounded-2xl border-l-4 border-l-destructive bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
                   <PenLine className="h-5 w-5" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -805,9 +805,9 @@ export default function ArchiveLandingPage() {
             className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="APA 7판 참고문헌 작성 가이드 보기"
           >
-            <article className="rounded-2xl border-l-4 border-l-amber-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <article className="rounded-2xl border-l-4 border-l-warning bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
                   <BookText className="h-5 w-5" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -860,9 +860,9 @@ export default function ArchiveLandingPage() {
             className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="아카이브 관계 그래프 보기"
           >
-            <article className="overflow-hidden rounded-2xl border bg-gradient-to-br from-indigo-50 via-blue-50 to-emerald-50 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md dark:from-indigo-950/40 dark:via-blue-950/40 dark:to-emerald-950/40">
+            <article className="overflow-hidden rounded-2xl border bg-gradient-to-br from-info/5 via-info/5 to-success/5 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70 text-indigo-700 shadow-sm dark:bg-slate-900/60 dark:text-indigo-300">
+                <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70 text-info shadow-sm dark:bg-muted/60">
                   <Network className="h-6 w-6" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -870,7 +870,7 @@ export default function ArchiveLandingPage() {
                     <h3 className="text-lg font-semibold tracking-tight">
                       🕸️ 교육공학 아카이브 관계 그래프
                     </h3>
-                    <Badge variant="outline" className="text-[10px] font-medium border-indigo-300 bg-white/60 text-indigo-700 dark:bg-slate-900/50 dark:text-indigo-300">
+                    <Badge variant="outline" className="text-[10px] font-medium border-info/30 bg-white/60 text-info dark:bg-muted/50">
                       NEW
                     </Badge>
                   </div>
@@ -912,7 +912,7 @@ export default function ArchiveLandingPage() {
                 </li>
                 <li>
                   관심 항목은{" "}
-                  <Star className="inline h-3 w-3 text-amber-500 fill-current" aria-hidden />{" "}
+                  <Star className="inline h-3 w-3 text-warning fill-current" aria-hidden />{" "}
                   관심 저장으로 모아두면 다음 방문 때 상단에서 바로 열어볼 수 있습니다.
                 </li>
               </ol>

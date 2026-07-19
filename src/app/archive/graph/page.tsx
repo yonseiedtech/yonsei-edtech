@@ -602,7 +602,7 @@ export default function ArchiveGraphPage() {
                   />
                 </div>
                 {matchedIds.size > 0 && (
-                  <Badge variant="outline" className="bg-amber-50 text-amber-800 border-amber-200">
+                  <Badge variant="outline" className="bg-warning/5 text-warning border-warning/20">
                     {matchedIds.size}개 일치
                   </Badge>
                 )}
@@ -667,7 +667,7 @@ export default function ArchiveGraphPage() {
                     step={10}
                     value={spacing}
                     onChange={(e) => setSpacing(Number(e.target.value))}
-                    className="flex-1 accent-blue-500"
+                    className="flex-1 accent-info"
                     aria-valuemin={0}
                     aria-valuemax={200}
                     aria-valuenow={spacing}
@@ -698,7 +698,7 @@ export default function ArchiveGraphPage() {
         ) : (
           <Card className="mt-6 overflow-hidden rounded-2xl shadow-sm">
             <CardContent className="p-0">
-              <div className="relative w-full overflow-hidden bg-slate-50/40 dark:bg-slate-900/30">
+              <div className="relative w-full overflow-hidden bg-muted/40">
                 <svg
                   ref={svgRef}
                   viewBox={`0 0 ${SVG_WIDTH} ${SVG_HEIGHT}`}

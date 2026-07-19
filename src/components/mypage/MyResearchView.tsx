@@ -596,8 +596,8 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                               <p className="text-sm truncate">
                                 <span className={`mr-2 inline-block rounded px-1.5 py-0.5 text-[10px] font-medium ${
                                   s.type === "writing"
-                                    ? "bg-blue-50 text-blue-600"
-                                    : "bg-emerald-50 text-emerald-600"
+                                    ? "bg-info/5 text-info"
+                                    : "bg-success/5 text-success"
                                 }`}>
                                   {s.type === "writing" ? "작성" : "읽기"}
                                 </span>
@@ -606,7 +606,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                               <p className="text-[11px] text-muted-foreground">
                                 {date} · {start}~{end}
                                 {s.source === "manual" && (
-                                  <span className="ml-1 text-amber-600">· 수동</span>
+                                  <span className="ml-1 text-warning">· 수동</span>
                                 )}
                               </p>
                             </div>
@@ -629,7 +629,7 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                                 type="button"
                                 onClick={() => handleDeleteSession(s)}
                                 title="세션 삭제"
-                                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-rose-50 hover:text-rose-600"
+                                className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/5 hover:text-destructive"
                               >
                                 <Trash2 size={13} />
                               </button>

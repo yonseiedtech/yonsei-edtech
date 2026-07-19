@@ -484,11 +484,11 @@ export default function StatModelDiagram({ methodName }: { methodName: string })
       </div>
       <p className="mt-2 text-xs text-muted-foreground">{spec.caption}</p>
       {/* 최소 표본 참고 (사용자 요청) — 입증 경로·설계에 따른 통상 권고 + 지도교수 안내 고지 */}
-      <div className="mt-2.5 rounded-lg border border-amber-200/70 bg-amber-50/60 px-3 py-2 dark:border-amber-400/20 dark:bg-amber-950/20">
-        <p className="text-[11px] leading-relaxed text-amber-900 dark:text-amber-200">
+      <div className="mt-2.5 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2">
+        <p className="text-[11px] leading-relaxed text-warning">
           <span className="font-semibold">최소 표본 참고:</span> {spec.sampleGuide}
         </p>
-        <p className="mt-1 text-[10px] text-amber-700/80 dark:text-amber-300/70">
+        <p className="mt-1 text-[10px] text-warning/80">
           ※ 중간 효과크기·α=.05·검정력 .80 등 통상 가정에 따른 참고값입니다. 실제 필요 표본은 효과크기·설계·탈락률에
           따라 달라지므로, 최종 표본 설계는 반드시 지도교수님의 지도를 받으세요.
         </p>

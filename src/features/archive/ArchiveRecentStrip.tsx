@@ -16,14 +16,14 @@ import { cn } from "@/lib/utils";
 
 /** 최근 본 항목의 계열(type)별 라벨·색상 — 즐겨찾기 칩과 톤 일치 */
 const TYPE_META: Record<string, { label: string; className: string }> = {
-  concept: { label: "개념", className: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/40 dark:text-violet-300 dark:border-violet-800" },
-  variable: { label: "변인", className: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-800" },
-  measurement: { label: "측정도구", className: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-800" },
-  "research-method": { label: "연구방법", className: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/40 dark:text-sky-300 dark:border-sky-800" },
-  "statistical-method": { label: "통계방법", className: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800" },
-  "foundation-term": { label: "기초 용어", className: "bg-slate-50 text-slate-700 border-slate-200 dark:bg-slate-900/40 dark:text-slate-300 dark:border-slate-700" },
-  terminology: { label: "AECT", className: "bg-indigo-50 text-indigo-700 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-300 dark:border-indigo-800" },
-  "writing-tip": { label: "글쓰기", className: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-800" },
+  concept: { label: "개념", className: "bg-cat-5/5 text-cat-5 border-cat-5/20" },
+  variable: { label: "변인", className: "bg-info/5 text-info border-info/20" },
+  measurement: { label: "측정도구", className: "bg-success/5 text-success border-success/20" },
+  "research-method": { label: "연구방법", className: "bg-info/5 text-info border-info/20" },
+  "statistical-method": { label: "통계방법", className: "bg-info/5 text-info border-info/20" },
+  "foundation-term": { label: "기초 용어", className: "bg-muted text-muted-foreground border-border" },
+  terminology: { label: "AECT", className: "bg-info/5 text-info border-info/20" },
+  "writing-tip": { label: "글쓰기", className: "bg-destructive/5 text-destructive border-destructive/20" },
 };
 
 function typeMeta(type: string) {

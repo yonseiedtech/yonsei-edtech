@@ -48,14 +48,14 @@ const GROUP_META: Record<
   ArchiveSearchIndexType,
   { label: string; color: string; listHref?: string }
 > = {
-  concept: { label: "개념", color: "text-violet-600", listHref: "/archive/concept" },
-  variable: { label: "변인", color: "text-blue-600", listHref: "/archive/variable" },
-  measurement: { label: "측정도구", color: "text-emerald-600", listHref: "/archive/measurement" },
-  "research-methods": { label: "연구방법", color: "text-indigo-600", listHref: "/archive/research-methods" },
+  concept: { label: "개념", color: "text-cat-5", listHref: "/archive/concept" },
+  variable: { label: "변인", color: "text-info", listHref: "/archive/variable" },
+  measurement: { label: "측정도구", color: "text-success", listHref: "/archive/measurement" },
+  "research-methods": { label: "연구방법", color: "text-info", listHref: "/archive/research-methods" },
   "statistical-methods": { label: "통계방법", color: "text-cyan-600", listHref: "/archive/statistical-methods" },
-  "foundation-terms": { label: "기초용어", color: "text-sky-600", listHref: "/archive/foundation-terms" },
+  "foundation-terms": { label: "기초용어", color: "text-info", listHref: "/archive/foundation-terms" },
   // 글쓰기 리스트는 ?q= 딥링크 미지원 → "모두 보기" 미노출(기존 동작 유지).
-  "writing-tips": { label: "글쓰기", color: "text-rose-600" },
+  "writing-tips": { label: "글쓰기", color: "text-destructive" },
 };
 
 interface ResultItem {
@@ -116,7 +116,7 @@ function highlight(text: string, q: string): ReactNode {
   return (
     <>
       {text.slice(0, idx)}
-      <mark className="rounded bg-amber-200/70 px-0.5 text-inherit dark:bg-amber-500/30">
+      <mark className="rounded bg-warning/20 px-0.5 text-inherit">
         {text.slice(idx, idx + query.length)}
       </mark>
       {text.slice(idx + query.length)}
@@ -185,22 +185,22 @@ export default function ArchiveGlobalSearch() {
       }
     };
 
-    push("개념", "text-violet-600", concepts.data?.data, ["name", "description", "altNames", "tags"], (x) => ({
+    push("개념", "text-cat-5", concepts.data?.data, ["name", "description", "altNames", "tags"], (x) => ({
       id: x.id as string,
       name: x.name as string,
       href: `/archive/concept/${x.id}`,
     }), "/archive/concept");
-    push("변인", "text-blue-600", variables.data?.data, ["name", "description", "altNames", "tags"], (x) => ({
+    push("변인", "text-info", variables.data?.data, ["name", "description", "altNames", "tags"], (x) => ({
       id: x.id as string,
       name: x.name as string,
       href: `/archive/variable/${x.id}`,
     }), "/archive/variable");
-    push("측정도구", "text-emerald-600", measurements.data?.data, ["name", "originalName", "author", "description"], (x) => ({
+    push("측정도구", "text-success", measurements.data?.data, ["name", "originalName", "author", "description"], (x) => ({
       id: x.id as string,
       name: x.name as string,
       href: `/archive/measurement/${x.id}`,
     }), "/archive/measurement");
-    push("연구방법", "text-indigo-600", research.data?.data, ["name", "summary", "accessibleSummary"], (x) => ({
+    push("연구방법", "text-info", research.data?.data, ["name", "summary", "accessibleSummary"], (x) => ({
       id: x.id as string,
       name: x.name as string,
       href: `/archive/research-methods/${x.id}`,
@@ -210,12 +210,12 @@ export default function ArchiveGlobalSearch() {
       name: x.name as string,
       href: `/archive/statistical-methods/${x.id}`,
     }), "/archive/statistical-methods");
-    push("기초용어", "text-sky-600", foundation.data?.data, ["term", "englishName", "summary", "accessibleSummary"], (x) => ({
+    push("기초용어", "text-info", foundation.data?.data, ["term", "englishName", "summary", "accessibleSummary"], (x) => ({
       id: x.id as string,
       name: (x.term as string) ?? (x.name as string),
       href: `/archive/foundation-terms/${x.id}`,
     }), "/archive/foundation-terms");
-    push("글쓰기", "text-rose-600", writing.data?.data, ["title", "explanation", "wrongExample", "correctExample"], (x) => ({
+    push("글쓰기", "text-destructive", writing.data?.data, ["title", "explanation", "wrongExample", "correctExample"], (x) => ({
       id: x.id as string,
       name: (x.title as string) ?? "글쓰기 팁",
       href: `/archive/writing-tips/${x.id as string}`,

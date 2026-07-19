@@ -360,13 +360,13 @@ export default function ResearchMethodDetailPage() {
                 className={cn(
                   "text-xs",
                   RESEARCH_METHOD_KIND_COLORS[method.kind] ??
-                    "border border-slate-200 bg-slate-100 text-slate-700",
+                    "border border-muted-foreground/20 bg-muted text-muted-foreground",
                 )}
               >
                 {RESEARCH_METHOD_KIND_LABELS[method.kind] ?? method.kind} 연구
               </Badge>
               {!method.published && (
-                <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 text-xs">
+                <Badge variant="outline" className="bg-destructive/5 text-destructive border-destructive/20 text-xs">
                   비공개 (draft)
                 </Badge>
               )}
@@ -380,7 +380,7 @@ export default function ResearchMethodDetailPage() {
                 onClick={handleToggleFav}
                 disabled={favPending}
                 className={cn(
-                  isFav && "bg-amber-500 hover:bg-amber-600 border-amber-500",
+                  isFav && "bg-warning hover:bg-warning/80 border-warning",
                 )}
                 aria-pressed={isFav}
               >
@@ -418,10 +418,10 @@ export default function ResearchMethodDetailPage() {
         {method.accessibleSummary && method.accessibleSummary.trim() !== "" && (
           <section id="accessibleSummary" className="mt-8 scroll-mt-24">
             <div
-              className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-emerald-50 p-4 dark:border-sky-900 dark:from-sky-950/30 dark:to-emerald-950/30"
+              className="rounded-xl border border-info/20 bg-gradient-to-br from-info/5 to-success/5 p-4"
               aria-label="쉽게 이해하기"
             >
-              <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-sky-900 dark:text-sky-200">
+              <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-info">
                 <Lightbulb className="h-4 w-4" aria-hidden />
                 쉽게 이해하기
               </h3>
@@ -511,7 +511,7 @@ export default function ResearchMethodDetailPage() {
                         </p>
                       )}
                       {p.example && (
-                        <p className="mt-1.5 rounded-md border-l-2 border-amber-300 bg-amber-50 px-2 py-1 text-[11px] leading-relaxed text-amber-900 dark:border-amber-700 dark:bg-amber-950/30 dark:text-amber-200">
+                        <p className="mt-1.5 rounded-md border-l-2 border-warning/30 bg-warning/5 px-2 py-1 text-[11px] leading-relaxed text-warning">
                           <span className="font-semibold">논문 예시 · </span>
                           {p.example}
                         </p>
@@ -529,9 +529,9 @@ export default function ResearchMethodDetailPage() {
           (method.limitations && method.limitations.length > 0)) && (
           <section className="mt-8 grid grid-cols-1 gap-4 md:grid-cols-2">
             {method.strengths && method.strengths.length > 0 && (
-              <Card className="rounded-xl border-l-4 border-l-emerald-400">
+              <Card className="rounded-xl border-l-4 border-l-success">
                 <CardContent className="py-4">
-                  <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+                  <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-success">
                     <CheckCircle2 className="h-4 w-4" aria-hidden />
                     강점
                   </h3>
@@ -544,9 +544,9 @@ export default function ResearchMethodDetailPage() {
               </Card>
             )}
             {method.limitations && method.limitations.length > 0 && (
-              <Card className="rounded-xl border-l-4 border-l-rose-400">
+              <Card className="rounded-xl border-l-4 border-l-destructive">
                 <CardContent className="py-4">
-                  <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-rose-800 dark:text-rose-300">
+                  <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-destructive">
                     <XCircle className="h-4 w-4" aria-hidden />
                     한계 / 약점
                   </h3>
@@ -707,7 +707,7 @@ export default function ResearchMethodDetailPage() {
                     {!s.published && canManage && (
                       <Badge
                         variant="outline"
-                        className="mt-2 bg-rose-50 text-rose-700 border-rose-200 text-[10px]"
+                        className="mt-2 bg-destructive/5 text-destructive border-destructive/20 text-[10px]"
                       >
                         draft
                       </Badge>
@@ -737,7 +737,7 @@ export default function ResearchMethodDetailPage() {
                     <Link key={c.id} href={`/archive/concept/${c.id}`}>
                       <Badge
                         variant="outline"
-                        className="cursor-pointer border-violet-200 bg-violet-50 text-violet-800 transition-shadow hover:shadow-sm dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300"
+                        className="cursor-pointer border-cat-5/20 bg-cat-5/5 text-cat-5 transition-shadow hover:shadow-sm"
                       >
                         {c.name}
                       </Badge>
@@ -754,7 +754,7 @@ export default function ResearchMethodDetailPage() {
                     <Link key={v.id} href={`/archive/variable/${v.id}`}>
                       <Badge
                         variant="outline"
-                        className="cursor-pointer border-blue-200 bg-blue-50 text-blue-800 transition-shadow hover:shadow-sm dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300"
+                        className="cursor-pointer border-info/20 bg-info/5 text-info transition-shadow hover:shadow-sm"
                       >
                         {v.name}
                       </Badge>
@@ -825,7 +825,7 @@ export default function ResearchMethodDetailPage() {
         </div>
 
         {/* 학술 책임 고지 */}
-        <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mt-10 flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-4 text-xs text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>
             본 가이드는 참고용입니다. 최종 연구설계는 지도교수와 상의하시기 바랍니다.

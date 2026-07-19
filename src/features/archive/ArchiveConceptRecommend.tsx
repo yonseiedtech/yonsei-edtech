@@ -215,23 +215,23 @@ export default function ArchiveConceptRecommend() {
           icon: Target,
           title: "진단 약점 기반 추천 개념",
           desc: "최근 진단에서 보강이 필요했던 개념입니다. 정의를 다시 확인해 보세요.",
-          accent: "text-rose-600 dark:text-rose-400",
-          bg: "bg-rose-50/50 dark:bg-rose-950/20 border-rose-200 dark:border-rose-800",
+          accent: "text-destructive",
+          bg: "bg-destructive/5 border-destructive/20",
         }
       : mode === "interest"
         ? {
             icon: Sparkles,
             title: "관심 주제 기반 추천 개념",
             desc: "프로필 관심 분야와 닿아 있는 개념을 모았습니다.",
-            accent: "text-violet-600 dark:text-violet-400",
-            bg: "bg-violet-50/50 dark:bg-violet-950/20 border-violet-200 dark:border-violet-800",
+            accent: "text-cat-5",
+            bg: "bg-cat-5/5 border-cat-5/20",
           }
         : {
             icon: Compass,
             title: "이 개념부터 살펴보세요",
             desc: "교육공학 연구에서 가장 많이 다루는 핵심 개념입니다.",
-            accent: "text-blue-600 dark:text-blue-400",
-            bg: "bg-blue-50/50 dark:bg-blue-950/20 border-blue-200 dark:border-blue-800",
+            accent: "text-info",
+            bg: "bg-info/5 border-info/20",
           };
   const HeaderIcon = header.icon;
 

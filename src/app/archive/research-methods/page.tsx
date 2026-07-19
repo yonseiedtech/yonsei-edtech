@@ -67,27 +67,27 @@ const KIND_GUIDES: KindGuide[] = [
     title: "양적 연구",
     description: "변인 간 관계·차이·예측을 수치 데이터로 검증합니다. 설문조사·실험·구조방정식 등.",
     icon: BarChart3,
-    borderClass: "border-l-blue-400",
-    iconBg: "bg-blue-100 dark:bg-blue-950/60",
-    iconText: "text-blue-700 dark:text-blue-300",
+    borderClass: "border-l-info",
+    iconBg: "bg-info/10",
+    iconText: "text-info",
   },
   {
     kind: "qualitative",
     title: "질적 연구",
     description: "맥락·의미·과정을 깊이 있게 이해합니다. 사례연구·근거이론·액션리서치 등.",
     icon: MessageCircle,
-    borderClass: "border-l-amber-400",
-    iconBg: "bg-amber-100 dark:bg-amber-950/60",
-    iconText: "text-amber-700 dark:text-amber-300",
+    borderClass: "border-l-warning",
+    iconBg: "bg-warning/10",
+    iconText: "text-warning",
   },
   {
     kind: "mixed",
     title: "혼합 연구",
     description: "양적·질적 자료를 통합해 보완적으로 활용합니다. 순차적 설명·동시 삼각화 등.",
     icon: Layers,
-    borderClass: "border-l-emerald-400",
-    iconBg: "bg-emerald-100 dark:bg-emerald-950/60",
-    iconText: "text-emerald-700 dark:text-emerald-300",
+    borderClass: "border-l-success",
+    iconBg: "bg-success/10",
+    iconText: "text-success",
   },
 ];
 
@@ -104,21 +104,21 @@ const QUESTION_MAPPING: {
     heading: "영향력을 본다 (숫자로 답)",
     lead: "변인 간 영향·차이·관계를 수치로 검증하고 싶을 때.",
     example: "스마트폰 과의존이 학업태도에 미치는 영향은?",
-    borderClass: "border-l-blue-400",
+    borderClass: "border-l-info",
   },
   {
     kind: "qualitative",
     heading: "경험을 이해한다 (이야기로 답)",
     lead: "맥락·의미·과정을 깊이 있게 이해하고 싶을 때.",
     example: "과의존 청소년은 학교생활을 어떻게 경험하는가?",
-    borderClass: "border-l-amber-400",
+    borderClass: "border-l-warning",
   },
   {
     kind: "mixed",
     heading: "둘 다 본다 (수치 + 이야기)",
     lead: "양적·질적 자료를 통합해 보완적으로 답하고 싶을 때(시간·자원 多).",
     example: "영향의 크기와 그 경험의 의미를 함께 살펴보려면?",
-    borderClass: "border-l-emerald-400",
+    borderClass: "border-l-success",
   },
 ];
 
@@ -418,7 +418,7 @@ function ResearchMethodsLandingPageInner() {
                           <h3 className="text-base font-semibold leading-snug">{m.name}</h3>
                           <div className="flex shrink-0 items-center gap-1">
                             {!m.published && canManage && (
-                              <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 text-[10px]">
+                              <Badge variant="outline" className="bg-destructive/5 text-destructive border-destructive/20 text-[10px]">
                                 draft
                               </Badge>
                             )}
@@ -453,7 +453,7 @@ function ResearchMethodsLandingPageInner() {
         })}
 
         {/* 학술 책임 고지 */}
-        <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mt-10 flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-4 text-xs text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>
             본 가이드는 참고용입니다. 최종 연구설계는 지도교수와 상의하시기 바랍니다.

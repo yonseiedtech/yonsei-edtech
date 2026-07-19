@@ -292,7 +292,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                                   {formatSemester(a.year, a.semester)}
                                 </Badge>
                               )}
-                              {role && <Badge variant="secondary" className="bg-sky-50 text-sky-700 text-[10px] dark:bg-sky-950/40 dark:text-sky-300">{role}</Badge>}
+                              {role && <Badge variant="secondary" className="bg-info/5 text-info text-[10px]">{role}</Badge>}
                               {a.leaderId === user?.id && <Badge className={cn("text-[10px]", STATUS_CHIP.warning)}>{a.type === "study" ? "모임장" : "담당자"}</Badge>}
                             </div>
                             <p className="mt-1 truncate font-medium">{a.title}</p>
@@ -449,7 +449,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                           <li key={r.id} className="rounded-2xl border bg-card px-5 py-4 hover:border-primary/40">
                             <div className="min-w-0">
                               <div className="flex items-center gap-2">
-                                <Mic size={14} className="text-blue-600" />
+                                <Mic size={14} className="text-info" />
                                 <Badge variant="secondary" className={cn("text-[10px]", STATUS_CHIP.info)}>인터뷰</Badge>
                                 <Badge
                                   variant="outline"
@@ -503,7 +503,7 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                         <Link href={`/board/${p.id}`} className="flex items-center justify-between">
                           <div className="min-w-0">
                             <div className="flex items-center gap-2">
-                              <Mic size={14} className="text-blue-600" />
+                              <Mic size={14} className="text-info" />
                               <Badge variant="secondary" className={cn("text-[10px]", STATUS_CHIP.info)}>인터뷰</Badge>
                               {p.interview?.deadline && (
                                 <Badge variant="outline" className="text-[10px]">

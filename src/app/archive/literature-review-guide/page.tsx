@@ -284,7 +284,7 @@ export default function LiteratureReviewGuidePage() {
                       {TABLE_COLUMNS.map((c, i) => (
                         <th
                           key={c}
-                          className={`px-3 py-2 font-semibold ${i >= 5 ? "text-rose-700 dark:text-rose-300" : "text-foreground"}`}
+                          className={`px-3 py-2 font-semibold ${i >= 5 ? "text-destructive" : "text-foreground"}`}
                         >
                           {c}
                         </th>
@@ -296,7 +296,7 @@ export default function LiteratureReviewGuidePage() {
                       {TABLE_EXAMPLE_ROW.map((v, i) => (
                         <td
                           key={i}
-                          className={`px-3 py-2.5 align-top leading-relaxed ${i >= 5 ? "bg-rose-50/40 text-rose-900 dark:bg-rose-950/20 dark:text-rose-200" : "text-muted-foreground"}`}
+                          className={`px-3 py-2.5 align-top leading-relaxed ${i >= 5 ? "bg-destructive/5 text-destructive" : "text-muted-foreground"}`}
                         >
                           {v}
                         </td>
@@ -306,7 +306,7 @@ export default function LiteratureReviewGuidePage() {
                 </table>
               </div>
               <p className="text-xs leading-relaxed text-muted-foreground">
-                ※ 마지막 두 컬럼(<span className="text-rose-700 dark:text-rose-300">한계점·연결점</span>)을
+                ※ 마지막 두 컬럼(<span className="text-destructive">한계점·연결점</span>)을
                 비워 두면 30편을 읽어도 글이 써지지 않습니다. 이 두 칸이 연구모형의 씨앗입니다.
               </p>
             </section>
@@ -323,7 +323,7 @@ export default function LiteratureReviewGuidePage() {
                   <div key={s.label} className="rounded-xl border bg-card p-4">
                     <p className="text-sm font-semibold">{s.label}</p>
                     <p className="mt-1 text-sm text-muted-foreground">{s.topic}</p>
-                    <p className="mt-2 inline-flex items-center gap-1 rounded-md bg-rose-50 px-2 py-0.5 text-xs font-medium text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
+                    <p className="mt-2 inline-flex items-center gap-1 rounded-md bg-destructive/5 px-2 py-0.5 text-xs font-medium text-destructive">
                       한계 · {s.missing}
                     </p>
                   </div>
@@ -332,11 +332,11 @@ export default function LiteratureReviewGuidePage() {
               <div className="flex items-center justify-center py-1 text-muted-foreground" aria-hidden>
                 <ArrowRight className="h-5 w-5 rotate-90 sm:rotate-0" />
               </div>
-              <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900 dark:bg-emerald-950/20">
-                <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-300">
+              <div className="rounded-xl border border-success/20 bg-success/5 p-4">
+                <p className="text-sm font-semibold text-success">
                   도출된 연구모형
                 </p>
-                <p className="mt-1 text-sm leading-relaxed text-emerald-900/80 dark:text-emerald-200/80">
+                <p className="mt-1 text-sm leading-relaxed text-success/80">
                   &ldquo;스마트폰 과의존과 자기조절력을 동시에 독립변수로 투입해, 두 요인이 학업태도에
                   미치는 영향을 함께 검증한다&rdquo; — 두 한계의 교집합에서 새 모형이 탄생합니다.
                 </p>
@@ -363,7 +363,7 @@ export default function LiteratureReviewGuidePage() {
                   </li>
                 ))}
               </ol>
-              <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3.5 text-xs leading-relaxed text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+              <div className="flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-3.5 text-xs leading-relaxed text-warning">
                 <AlignLeft className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                 <p>
                   <strong>해설지 비유:</strong> 원문을 옆에 두고 쓰는 것은 해설지를 보며 수학 문제를
@@ -385,19 +385,19 @@ export default function LiteratureReviewGuidePage() {
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground">원문</p>
                   <p className="mt-1 text-sm leading-relaxed">{PARAPHRASE_EXAMPLE.original}</p>
                 </div>
-                <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3.5 dark:border-rose-900 dark:bg-rose-950/20">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-300">
+                <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-destructive">
                     ❌ 표절에 가까운 버전 (단어만 치환)
                   </p>
-                  <p className="mt-1 text-sm leading-relaxed text-rose-900 dark:text-rose-200">{PARAPHRASE_EXAMPLE.plagiarism}</p>
-                  <p className="mt-1.5 text-xs text-rose-700/80 dark:text-rose-300/80">{PARAPHRASE_EXAMPLE.plagiarismWhy}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-destructive">{PARAPHRASE_EXAMPLE.plagiarism}</p>
+                  <p className="mt-1.5 text-xs text-destructive/80">{PARAPHRASE_EXAMPLE.plagiarismWhy}</p>
                 </div>
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 dark:border-emerald-900 dark:bg-emerald-950/20">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">
+                <div className="rounded-xl border border-success/20 bg-success/5 p-3.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-success">
                     ✅ 올바른 간접인용 (문장 전체 재작성)
                   </p>
-                  <p className="mt-1 text-sm leading-relaxed text-emerald-900 dark:text-emerald-200">{PARAPHRASE_EXAMPLE.paraphrase}</p>
-                  <p className="mt-1.5 text-xs text-emerald-700/80 dark:text-emerald-300/80">{PARAPHRASE_EXAMPLE.paraphraseWhy}</p>
+                  <p className="mt-1 text-sm leading-relaxed text-success">{PARAPHRASE_EXAMPLE.paraphrase}</p>
+                  <p className="mt-1.5 text-xs text-success/80">{PARAPHRASE_EXAMPLE.paraphraseWhy}</p>
                 </div>
               </div>
               <p className="text-xs leading-relaxed text-muted-foreground">
@@ -444,15 +444,15 @@ export default function LiteratureReviewGuidePage() {
                 필요한가&rdquo;가 드러나지 않습니다. 공통점·차이·공백으로 엮어야 합니다.
               </p>
               <div className="grid gap-3 sm:grid-cols-2">
-                <div className="rounded-xl border border-rose-200 bg-rose-50/60 p-3.5 dark:border-rose-900 dark:bg-rose-950/20">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-rose-700 dark:text-rose-300">❌ 나열형</p>
-                  <p className="mt-1 text-sm leading-relaxed text-rose-900 dark:text-rose-200">
+                <div className="rounded-xl border border-destructive/20 bg-destructive/5 p-3.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-destructive">❌ 나열형</p>
+                  <p className="mt-1 text-sm leading-relaxed text-destructive">
                     김연구(2020)는 A를 밝혔다. 이학습(2021)은 B를 밝혔다. 박교육(2022)은 C를 밝혔다.
                   </p>
                 </div>
-                <div className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-3.5 dark:border-emerald-900 dark:bg-emerald-950/20">
-                  <p className="text-[11px] font-semibold uppercase tracking-wider text-emerald-700 dark:text-emerald-300">✅ 엮음형</p>
-                  <p className="mt-1 text-sm leading-relaxed text-emerald-900 dark:text-emerald-200">
+                <div className="rounded-xl border border-success/20 bg-success/5 p-3.5">
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-success">✅ 엮음형</p>
+                  <p className="mt-1 text-sm leading-relaxed text-success">
                     여러 연구가 스마트폰 과의존의 부정적 영향을 일관되게 보고하였다(김연구, 2020; 이학습,
                     2021). 그러나 이들은 자기조절력을 함께 고려하지 못하였다. 이에 본 연구는 …
                   </p>
@@ -472,7 +472,7 @@ export default function LiteratureReviewGuidePage() {
                       예) {p.example}
                     </p>
                     {p.note && (
-                      <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-relaxed text-amber-700 dark:text-amber-300">
+                      <p className="mt-1.5 flex items-start gap-1.5 text-xs leading-relaxed text-warning">
                         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
                         {p.note}
                       </p>

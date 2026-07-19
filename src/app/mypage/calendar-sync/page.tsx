@@ -150,7 +150,7 @@ function CalendarSyncContent() {
         {/* ── 개인 캘린더 ── */}
         <section className="rounded-2xl border bg-card p-5">
           <div className="mb-3 flex items-center gap-2">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-violet-100 text-violet-700">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-cat-5/10 text-cat-5">
               <Lock size={18} />
             </div>
             <div>
