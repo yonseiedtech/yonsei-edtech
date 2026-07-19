@@ -74,7 +74,7 @@ export default function InstallPromptBanner() {
         <div className="flex-1 min-w-0">
           <p className="text-sm font-semibold">홈 화면에 추가</p>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            연세교육공학회를 앱처럼 빠르게 사용하세요.
+            홈 화면에서 바로 열고, 오프라인에서도 최근 본 자료를 읽을 수 있어요.
           </p>
           <div className="mt-2 flex gap-2">
             <button

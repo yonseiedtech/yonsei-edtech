@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck, Compass, Layers, Check, ArrowRight, GitFork, BarChart3, BookMarked, ClipboardCheck } from "lucide-react";
+import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck, Compass, Layers, Check, ArrowRight, GitFork, BarChart3, BookMarked, ClipboardCheck, WifiOff } from "lucide-react";
 import { JOURNEY_STAGES } from "@/features/research/ThesisJourney";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -40,6 +40,12 @@ import PageContainer from "@/components/ui/page-container";
 import ConceptLinkedText from "@/components/archive/ConceptLinkedText";
 import ConceptMentionsInMyRecords from "@/components/archive/ConceptMentionsInMyRecords";
 import { recordRecentView } from "@/lib/archive-recent-views";
+import {
+  cacheArchiveDetail,
+  getOfflineArchiveItem,
+  getOfflineArchiveItems,
+  type OfflineArchiveItem,
+} from "@/lib/archive-offline-cache";
 import { normalizeStringItems } from "@/lib/archive-normalize";
 
 export default function ArchiveDetailPage() {
@@ -60,6 +66,10 @@ export default function ArchiveDetailPage() {
     statistical: { id: string; name: string }[];
   }>({ research: [], statistical: [] });
   const [loading, setLoading] = useState(true);
+  // M5(오프라인 읽기): 네트워크 실패 시 로컬 캐시 스냅샷으로 폴백
+  const [offlineItem, setOfflineItem] = useState<OfflineArchiveItem | null>(null);
+  const [offlineList, setOfflineList] = useState<OfflineArchiveItem[]>([]);
+  const [isOffline, setIsOffline] = useState(false);
   const [isFav, setIsFav] = useState(false);
   const [readingPending, setReadingPending] = useState<string | null>(null);
   // 개념 → 암기카드 저장 (개념 상세 한정). 멱등·중복 가드 + idle→saving→saved.
@@ -148,7 +158,16 @@ export default function ArchiveDetailPage() {
         }
       } catch (err) {
         console.error("[archive-detail] load failed", err);
-        toast.error("불러오기 실패");
+        if (cancelled) return;
+        // M5: 오프라인이면 토스트 대신 로컬 캐시 스냅샷으로 폴백
+        const offline = typeof navigator !== "undefined" && !navigator.onLine;
+        if (offline) {
+          setOfflineList(getOfflineArchiveItems());
+          const cached = getOfflineArchiveItem(type, id);
+          if (cached) setOfflineItem(cached);
+        } else {
+          toast.error("불러오기 실패");
+        }
       } finally {
         if (!cancelled) setLoading(false);
       }
@@ -264,10 +283,44 @@ export default function ArchiveDetailPage() {
   }, [relatedTheses]);
 
   // 최근 본 항목 기록 (스프린트1 H3) — 데이터 로드 완료·title 확정 시점에 기록.
+  // M5: 동시에 본문 스냅샷을 오프라인 캐시에 저장(오프라인 읽기용).
   useEffect(() => {
     if (loading || !item?.name) return;
-    recordRecentView({ type, id, title: item.name, href: `/archive/${type}/${id}` });
-  }, [loading, item?.name, type, id]);
+    const href = `/archive/${type}/${id}`;
+    recordRecentView({ type, id, title: item.name, href });
+    const meta: string[] = [];
+    if (type === "measurement") {
+      const m = item as ArchiveMeasurementTool;
+      if (m.originalName) meta.push(`원어명 · ${m.originalName}`);
+      if (m.author) meta.push(`저자 · ${m.author}`);
+    } else if (type === "variable") {
+      const v = item as ArchiveVariable;
+      if (v.type) meta.push(`유형 · ${VARIABLE_TYPE_LABELS[v.type]}`);
+    } else if (type === "concept") {
+      const c = item as ArchiveConcept & { purifiedName?: string };
+      if (c.purifiedName?.trim()) meta.push(`순화어 · ${c.purifiedName.trim()}`);
+    }
+    cacheArchiveDetail({
+      type,
+      id,
+      title: item.name,
+      href,
+      body: item.description ?? "",
+      meta: meta.length > 0 ? meta : undefined,
+    });
+  }, [loading, item, type, id]);
+
+  // M5: 온라인/오프라인 상태 추적 (폴백 안내·목록 노출용)
+  useEffect(() => {
+    const update = () => setIsOffline(typeof navigator !== "undefined" && !navigator.onLine);
+    update();
+    window.addEventListener("online", update);
+    window.addEventListener("offline", update);
+    return () => {
+      window.removeEventListener("online", update);
+      window.removeEventListener("offline", update);
+    };
+  }, []);
 
   const handleToggleReading = async (thesisId: string) => {
     if (!user) {
@@ -378,11 +431,22 @@ export default function ArchiveDetailPage() {
     );
   }
 
+  // M5: 오프라인 + 이 항목의 캐시 스냅샷이 있으면 저장된 본문을 읽기 모드로 표시
+  if (!item && offlineItem) {
+    return <OfflineArchiveView item={offlineItem} others={offlineList} />;
+  }
+
   if (!item) {
+    // M5: 오프라인이면 "최근 읽은 항목"(캐시) 목록을 폴백으로 제공
+    if (isOffline && offlineList.length > 0) {
+      return <OfflineArchiveView item={null} others={offlineList} />;
+    }
     return (
       <PageContainer width="default">
         <div className="py-4 text-center">
-          <p className="text-muted-foreground">항목을 찾을 수 없습니다.</p>
+          <p className="text-muted-foreground">
+            {isOffline ? "오프라인 상태예요. 저장된 항목이 없어 표시할 내용이 없습니다." : "항목을 찾을 수 없습니다."}
+          </p>
           <Link href="/archive">
             <Button variant="outline" className="mt-4">
               <ArrowLeft className="mr-2 h-4 w-4" />
@@ -994,6 +1058,84 @@ export default function ArchiveDetailPage() {
         <ArchiveStickyToc sections={tocSections} />
       </div>
 
+    </PageContainer>
+  );
+}
+
+/**
+ * M5 오프라인 읽기 뷰 — 네트워크 실패 시 로컬 캐시 스냅샷을 읽기 모드로 표시.
+ * item 이 있으면 해당 본문을, 없으면 "최근 읽은 항목" 목록만 노출한다.
+ */
+function OfflineArchiveView({
+  item,
+  others,
+}: {
+  item: OfflineArchiveItem | null;
+  others: OfflineArchiveItem[];
+}) {
+  const rest = others.filter((o) => o.href !== item?.href);
+  return (
+    <PageContainer width="default">
+      <Link href="/archive">
+        <Button variant="ghost" size="sm" className="mb-3">
+          <ArrowLeft className="mr-1 h-4 w-4" />
+          아카이브
+        </Button>
+      </Link>
+
+      <div className="mb-4 flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm text-amber-800 dark:border-amber-400/30 dark:bg-amber-950/30 dark:text-amber-300">
+        <WifiOff className="h-4 w-4 shrink-0" aria-hidden />
+        <span>오프라인 상태입니다 — 기기에 저장된 최근 열람 내용을 표시합니다.</span>
+      </div>
+
+      {item && (
+        <Card className="scroll-mt-24">
+          <CardHeader>
+            <CardTitle className="text-2xl">{item.title}</CardTitle>
+            {item.meta && item.meta.length > 0 && (
+              <p className="mt-1 text-sm text-muted-foreground">{item.meta.join(" · ")}</p>
+            )}
+          </CardHeader>
+          <CardContent>
+            {item.body ? (
+              <p className="max-w-[65ch] whitespace-pre-wrap text-base leading-relaxed text-foreground">
+                {item.body}
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground">저장된 본문이 없습니다.</p>
+            )}
+          </CardContent>
+        </Card>
+      )}
+
+      {rest.length > 0 && (
+        <Card className="mt-6">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <BookText className="h-4 w-4 text-muted-foreground" />
+              오프라인에서 읽을 수 있는 최근 항목
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <ul className="space-y-2">
+              {rest.map((o) => (
+                <li key={o.href}>
+                  <Link
+                    href={o.href}
+                    className="group flex items-center justify-between gap-2 rounded-xl border bg-card px-3 py-2.5 text-sm shadow-sm transition-all hover:-translate-y-0.5 hover:shadow-md"
+                  >
+                    <span className="min-w-0 flex-1 truncate font-medium">{o.title}</span>
+                    <ArrowRight
+                      className="h-3.5 w-3.5 shrink-0 text-primary/50 transition-transform group-hover:translate-x-0.5 group-hover:text-primary"
+                      aria-hidden
+                    />
+                  </Link>
+                </li>
+              ))}
+            </ul>
+          </CardContent>
+        </Card>
+      )}
     </PageContainer>
   );
 }

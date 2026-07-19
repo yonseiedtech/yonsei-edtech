@@ -92,6 +92,10 @@ function isActive(pathname: string, item: NavItem): boolean {
 export default function BottomNav() {
   const pathname = usePathname() ?? "";
   const { user } = useAuthStore();
+  // 현재 경로가 1차 탭에 없고 "더보기" 시트 항목(진단·아카이브·리더보드 등)에 해당하면
+  // 더보기 버튼을 활성으로 표시 — 깊은 표면에서도 위치를 잃지 않게.
+  const primaryActive = ITEMS.some((item) => isActive(pathname, item));
+  const moreActive = !primaryActive && MORE_ITEMS.some((item) => isActive(pathname, item));
   const [moreOpen, setMoreOpen] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
@@ -260,14 +264,22 @@ export default function BottomNav() {
               onClick={() => setMoreOpen((v) => !v)}
               aria-expanded={moreOpen}
               aria-haspopup="dialog"
+              aria-current={moreActive ? "page" : undefined}
               className={cn(
                 "relative flex min-h-[56px] w-full flex-col items-center justify-center gap-0.5 px-1 py-1.5 text-[11px] font-medium transition-all duration-200",
                 "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-inset focus-visible:ring-primary/50",
-                moreOpen ? "text-primary" : "text-muted-foreground hover:text-foreground",
+                moreOpen || moreActive ? "text-primary" : "text-muted-foreground hover:text-foreground",
               )}
             >
-              <MoreHorizontal size={20} />
-              <span className="leading-none">더보기</span>
+              {/* 활성 상태 상단 인디케이터 — 1차 탭과 동일한 시각 규약 */}
+              {moreActive && (
+                <span
+                  aria-hidden
+                  className="absolute top-0 left-1/2 h-0.5 w-8 -translate-x-1/2 rounded-full bg-primary animate-in fade-in slide-in-from-top-1 duration-300"
+                />
+              )}
+              <MoreHorizontal size={20} className={cn("transition-transform duration-200", moreActive && "scale-110")} />
+              <span className={cn("leading-none transition-all", moreActive && "font-semibold")}>더보기</span>
             </button>
           </li>
         </ul>
