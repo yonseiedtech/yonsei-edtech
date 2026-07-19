@@ -1,6 +1,6 @@
-"use client";
-import ActivityList from "@/features/admin/settings/ActivityList";
+// v8-H4 정리: /console/academic/* 단일 정본으로 수렴. 이 라우트는 리다이렉트 스텁이다.
+import { redirect } from "next/navigation";
 
-export default function ExternalAdminPage() {
-  return <ActivityList type="external" typeLabel="대외 학술대회" />;
+export default function Page() {
+  redirect("/console/academic/external");
 }

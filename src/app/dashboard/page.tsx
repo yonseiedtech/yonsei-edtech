@@ -72,10 +72,13 @@ import ProfileSideWidget from "@/features/dashboard/ProfileSideWidget";
 import QuickLinks from "@/features/dashboard/QuickLinks";
 import NewPostsBadge from "@/features/dashboard/NewPostsBadge";
 import SemesterKickoffBanner from "@/features/dashboard/SemesterKickoffBanner";
+import HackathonCtaBanner from "@/features/hackathon/HackathonCtaBanner";
 import LearningStreak from "@/features/mypage/LearningStreak";
 import InactivityCoachingCard from "@/features/dashboard/InactivityCoachingCard";
 import WeeklyGoalCard from "@/features/dashboard/WeeklyGoalCard";
 import StageRecommendationPanel from "@/features/dashboard/StageRecommendationPanel";
+import NewcomerProgressWidget from "@/features/dashboard/NewcomerProgressWidget";
+import KudosWidget from "@/features/dashboard/KudosWidget";
 import {
   useDashboardLayout,
   isWidgetVisible,
@@ -615,8 +618,23 @@ function DashboardContent() {
           <WeeklyGoalCard />
         </div>
 
+        {/* v8-H5: 신입 첫 2주 진행 위젯 — 현재 학기 코호트·가입 14일 이내에만 노출.
+            4단계 전부 완료·창 밖·코호트 미상이면 컴포넌트가 null 렌더로 자동 숨김. */}
+        <div className="mb-6 empty:hidden">
+          <NewcomerProgressWidget />
+        </div>
+
+        {/* v8-H2: 응원(kudos) 위젯 — 이번 주 받은 응원 + 코호트 동기에게 응원 보내기.
+            받은 응원·보낼 대상 모두 없으면 null 렌더로 자동 숨김. */}
+        <div className="mb-6 empty:hidden">
+          <KudosWidget />
+        </div>
+
         {/* C-1: 개강 주간(D-7~D+14) 자동 노출 재활성화 배너 */}
         <SemesterKickoffBanner />
+
+        {/* H6: 해커톤 참가 CTA 배너 — 행사 종료 전까지 1회 노출 (닫기 가능) */}
+        <HackathonCtaBanner />
 
         {/* RT-1: 지난 방문 이후 새 글 뱃지 — 게시판 재방문 트리거 */}
         <NewPostsBadge prevVisit={prevVisitRef.current ?? null} />

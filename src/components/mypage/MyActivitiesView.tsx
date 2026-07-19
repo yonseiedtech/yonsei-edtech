@@ -19,6 +19,7 @@ import { Calendar, X, FileText, Award, ChevronRight, FolderKanban, BookOpen, Glo
 import { useMyInterviewResponses } from "@/features/board/interview-store";
 import MyInterviewAnswersDialog from "@/features/board/MyInterviewAnswersDialog";
 import MyConferenceSessions from "@/features/conference/MyConferenceSessions";
+import ReceivedKudosHistory from "@/features/kudos/ReceivedKudosHistory";
 import EmptyState from "@/components/ui/empty-state";
 import PageHeader from "@/components/ui/page-header";
 import { formatDate } from "@/lib/utils";
@@ -367,6 +368,9 @@ export default function MyActivitiesView({ userId, readOnly = false }: Props) {
                     </ul>
                   </section>
                 )}
+
+                {/* v8-H2: 받은 응원 이력 — 본인 활동 화면에만 노출(rules: 수신자 본인만 read). */}
+                {isSelf && <ReceivedKudosHistory userId={userId} />}
               </div>
             );
           })()}

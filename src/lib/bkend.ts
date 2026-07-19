@@ -2405,6 +2405,14 @@ export const guideProgressApi = {
     });
     return res.data[0] ?? null;
   },
+  /** 한 회원의 모든 트랙 진행 상태 (신입 첫 2주 진행 위젯 — v8-H5, 온보딩 시작 판정용) */
+  listByUser: async (userId: string): Promise<GuideProgress[]> => {
+    const res = await dataApi.list<GuideProgress>("guide_progress", {
+      "filter[userId]": userId,
+      limit: 100,
+    });
+    return res.data;
+  },
   /** 트랙 전체 진행 상태 (코호트 완료율 평균 집계용 — M1) */
   listByTrack: async (trackId: string): Promise<GuideProgress[]> => {
     const res = await dataApi.list<GuideProgress>("guide_progress", {
@@ -3143,6 +3151,12 @@ export const kudosApi = {
   listSentByUser: (fromUserId: string) =>
     dataApi.list<Kudos>("kudos", {
       "filter[fromUserId]": fromUserId,
+      limit: 500,
+    }),
+  /** 내가 받은 응원 목록 — 대시보드·마이페이지 표면(v8-H2). rules: 수신자 본인·운영진만 read. */
+  listReceivedByUser: (toUserId: string) =>
+    dataApi.list<Kudos>("kudos", {
+      "filter[toUserId]": toUserId,
       limit: 500,
     }),
   /**

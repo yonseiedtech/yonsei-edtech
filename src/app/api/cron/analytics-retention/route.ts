@@ -13,6 +13,7 @@ import { requireAuth } from "@/lib/api-auth";
  *   - user_activity_logs : createdAt 180일 초과 삭제
  *   - daily_visits       : date(YYYY-MM-DD) 180일 초과 삭제
  *   - search_misses      : lastAt 365일 초과 삭제
+ *   - cron_runs          : createdAt 90일 초과 삭제 (v8-M6, 2026-07-20)
  *
  * 안전 보장:
  *   - 회원 데이터·기록성 컬렉션(weekly_goal_records·adoption_history·adoption_snapshots 등)은 건드리지 않는다.
@@ -47,9 +48,11 @@ async function _handler(req: NextRequest) {
     // search_misses.lastAt 는 serverTimestamp() → Firestore Timestamp
     // Admin SDK where 절에 Date 전달 시 내부 변환됨
     const cutoff365Date = new Date(now - 365 * 86_400_000);
+    // cron_runs.createdAt 는 ISO 문자열 (cron-observability.ts logCronRun) — v8-M6
+    const cutoff90Iso = new Date(now - 90 * 86_400_000).toISOString();
 
     // ── 후보 쿼리 (병렬) ────────────────────────────────────────────────────
-    const [activitySnap, visitsSnap, missesSnap] = await Promise.all([
+    const [activitySnap, visitsSnap, missesSnap, cronRunsSnap] = await Promise.all([
       db
         .collection("user_activity_logs")
         .where("createdAt", "<", cutoff180Iso)
@@ -65,12 +68,19 @@ async function _handler(req: NextRequest) {
         .where("lastAt", "<", cutoff365Date)
         .limit(BATCH_LIMIT)
         .get(),
+      // v8-M6: cron 관측 컬렉션 — 90일 초과 삭제로 무한 증가 방어
+      db
+        .collection("cron_runs")
+        .where("createdAt", "<", cutoff90Iso)
+        .limit(BATCH_LIMIT)
+        .get(),
     ]);
 
     const counts = {
       user_activity_logs: activitySnap.size,
       daily_visits: visitsSnap.size,
       search_misses: missesSnap.size,
+      cron_runs: cronRunsSnap.size,
     };
 
     console.log(
@@ -80,7 +90,7 @@ async function _handler(req: NextRequest) {
 
     if (!dryRun) {
       // 각 컬렉션을 500건 단위 배치로 삭제
-      for (const snap of [activitySnap, visitsSnap, missesSnap]) {
+      for (const snap of [activitySnap, visitsSnap, missesSnap, cronRunsSnap]) {
         for (let i = 0; i < snap.docs.length; i += CHUNK) {
           const batch = db.batch();
           for (const d of snap.docs.slice(i, i + CHUNK)) batch.delete(d.ref);

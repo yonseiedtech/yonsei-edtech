@@ -1,43 +1,6 @@
-"use client";
+// v8-H4 정리: /console/academic/* 단일 정본으로 수렴. 이 라우트는 리다이렉트 스텁이다.
+import { redirect } from "next/navigation";
 
-import { useState } from "react";
-import { MessageSquare } from "lucide-react";
-import { useSeminars } from "@/features/seminar/useSeminar";
-import ReviewManagement from "@/features/seminar-admin/ReviewManagement";
-import EmptyState from "@/components/ui/empty-state";
-
-export default function SeminarAdminReviewsPage() {
-  const { seminars } = useSeminars();
-  const [selectedId, setSelectedId] = useState<string>("");
-  const seminar = seminars.find((s) => s.id === selectedId);
-
-  return (
-    <div className="space-y-6">
-      <div>
-        <label className="mb-2 block text-sm font-medium">세미나 선택</label>
-        <select
-          value={selectedId}
-          onChange={(e) => setSelectedId(e.target.value)}
-          className="w-full rounded-lg border px-3 py-2 text-sm"
-        >
-          <option value="">-- 세미나를 선택하세요 --</option>
-          {seminars.map((s) => (
-            <option key={s.id} value={s.id}>
-              {s.title} ({s.date})
-            </option>
-          ))}
-        </select>
-      </div>
-
-      {seminar ? (
-        <ReviewManagement seminar={seminar} />
-      ) : (
-        <EmptyState
-          icon={MessageSquare}
-          title="세미나를 선택하세요"
-          description="상단 드롭다운에서 세미나를 선택하면 후기를 관리할 수 있습니다."
-        />
-      )}
-    </div>
-  );
+export default function Page() {
+  redirect("/console/academic/seminars/reviews");
 }

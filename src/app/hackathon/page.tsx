@@ -14,6 +14,7 @@ import { formatDday } from "@/lib/dday";
 import HackathonBoard from "@/features/hackathon/HackathonBoard";
 import HackathonSubmissions from "@/features/hackathon/HackathonSubmissions";
 import HackathonAwards from "@/features/hackathon/HackathonAwards";
+import HackathonPhaseTimeline from "@/features/hackathon/HackathonPhaseTimeline";
 import {
   HACKATHON_EVENT,
   HACKATHON_TIMELINE,
@@ -83,7 +84,10 @@ export default function HackathonHubPage() {
           </ul>
         </section>
 
-        {/* ── 수상작 (행사 후 공개, published 없으면 자동 숨김) ── */}
+        {/* ── 단계별 진행 상태 + D-day 카운트다운 (v8-H6) ── */}
+        <HackathonPhaseTimeline />
+
+        {/* ── 수상작 (행사 전: 예정 안내, 심사 중: 심사 중 안내, 이후: 공개 갤러리) ── */}
         <HackathonAwards />
 
         {/* ── 산출물 제출 ── */}

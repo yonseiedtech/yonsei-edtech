@@ -1,1 +1,7 @@
-export { default } from "@/app/academic-admin/page";
+"use client";
+
+import AcademicDashboard from "@/features/academic-admin/Dashboard";
+
+export default function ConsoleAcademicManagePage() {
+  return <AcademicDashboard />;
+}

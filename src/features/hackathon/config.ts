@@ -98,6 +98,76 @@ export function isHackathonSubmissionClosed(now: Date = new Date()): boolean {
 export const HACKATHON_PORTFOLIO_HINT =
   "수상한 산출물은 마이페이지 › 포트폴리오의 수상 이력으로 직접 추가해 학회 활동 기록으로 남길 수 있어요.";
 
+// ─────────────────────────────────────────────────────────────
+// 단계별 진행 타임라인 (v8-H6, 2026-07-20)
+// 운영진이 날짜 확정 시 startDate 만 갱신하면 전체 UI 에 반영된다.
+// ─────────────────────────────────────────────────────────────
+
+export type HackathonPhaseKey =
+  | "registration"
+  | "submission"
+  | "judging"
+  | "awards";
+
+export interface HackathonPhaseInfo {
+  key: HackathonPhaseKey;
+  label: string;
+  description: string;
+  /** 이 단계가 시작되는 날짜 (YYYY-MM-DD, KST 기준 — 이 날짜 이후 단계로 전환). */
+  startDate: string;
+}
+
+/**
+ * 참가 접수 → 산출물 제출 → 심사 → 수상 발표 타임라인.
+ * getHackathonPhase() 가 오늘 날짜와 비교해 현재 단계를 판정한다.
+ */
+export const HACKATHON_PHASE_TIMELINE: readonly HackathonPhaseInfo[] = [
+  {
+    key: "registration",
+    label: "참가 접수",
+    description:
+      "아이디어 보드에 풀고 싶은 교육 현장의 문제를 등록하고 팀원을 찾으세요.",
+    startDate: "2026-07-20",
+  },
+  {
+    key: "submission",
+    label: "산출물 제출",
+    description: "행사 당일 발표·데모·저장소 링크를 제출합니다.",
+    startDate: "2026-08-22",
+  },
+  {
+    key: "judging",
+    label: "심사",
+    description: "심사위원단이 산출물을 평가합니다.",
+    startDate: "2026-08-23",
+  },
+  {
+    key: "awards",
+    label: "수상 발표",
+    description: "수상작이 발표되고 학회 아카이브로 남습니다.",
+    startDate: "2026-08-29",
+  },
+] as const;
+
+/**
+ * 오늘 날짜 기준 현재 진행 단계 판정.
+ * HACKATHON_PHASE_TIMELINE 의 startDate 와 순서에만 의존한다.
+ */
+export function getHackathonPhase(now: Date = new Date()): HackathonPhaseKey {
+  const ymd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
+  let current: HackathonPhaseKey = "registration";
+  for (const phase of HACKATHON_PHASE_TIMELINE) {
+    if (ymd >= phase.startDate) current = phase.key;
+  }
+  return current;
+}
+
+/**
+ * 수상 발표 예정 날짜 — 행사 전 갤러리 플레이스홀더 표기용 (운영진 확정 시 갱신).
+ * 비어 있으면 "추후 공지"로 표시된다.
+ */
+export const HACKATHON_AWARDS_ANNOUNCE_DATE = "2026-08-29";
+
 /** 자주 묻는 질문 */
 export const HACKATHON_FAQ: readonly { q: string; a: string }[] = [
   {

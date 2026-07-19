@@ -63,7 +63,7 @@ export default function Page({ params }: { params: Promise<{ id: string }> }) {
           <ArrowLeft className="h-4 w-4" /> 활동 상세로 돌아가기
         </Link>
         {isStaff && (
-          <Link href={`/academic-admin/external/${id}/program`}>
+          <Link href={`/console/academic/external/${id}/program`}>
             <Button size="sm" variant="outline" className="gap-1.5">
               <Settings className="h-3.5 w-3.5" />
               프로그램 편집·세션 추가

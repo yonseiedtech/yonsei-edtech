@@ -211,17 +211,19 @@ function kindMeta(k?: string) {
   return KIND_LABELS[k] ?? { label: k, color: "bg-muted text-muted-foreground" };
 }
 
-/** v7-H3 보존 정책 대상·기간과 dry-run 결과 표시 (실제 삭제는 cron 시크릿 전용 — 이 카드는 조회만) */
+/** v7-H3·v8-M6 보존 정책 대상·기간과 dry-run 결과 표시 (실제 삭제는 cron 시크릿 전용 — 이 카드는 조회만) */
 const RETENTION_TARGETS: { collection: keyof RetentionCounts; label: string; period: string }[] = [
   { collection: "user_activity_logs", label: "사용자 활동 로그", period: "180일 초과" },
   { collection: "daily_visits", label: "일일 방문 집계", period: "180일 초과" },
   { collection: "search_misses", label: "검색 실패 질의", period: "365일 초과" },
+  { collection: "cron_runs", label: "cron 실행 기록", period: "90일 초과" },
 ];
 
 interface RetentionCounts {
   user_activity_logs: number;
   daily_visits: number;
   search_misses: number;
+  cron_runs: number;
 }
 
 function RetentionDryRunCard() {

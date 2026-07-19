@@ -1,8 +1,7 @@
-"use client";
-import { use } from "react";
-import ActivityDetail from "@/features/activities/ActivityDetail";
+// v8-H4 정리: /console/academic/* 단일 정본으로 수렴. 이 라우트는 리다이렉트 스텁이다.
+import { redirect } from "next/navigation";
 
-export default function Page({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = use(params);
-  return <ActivityDetail activityId={id} type="external" backHref="/academic-admin/external" backLabel="대외 학술대회 운영 목록" />;
+export default async function Page({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
+  redirect(`/console/academic/external/${id}`);
 }
