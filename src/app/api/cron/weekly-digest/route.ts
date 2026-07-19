@@ -712,6 +712,65 @@ async function loadLastWeekGoalResults(
   return out;
 }
 
+/**
+ * B5: 지난주 목표 달성 여부를 weekly_goal_records 에 영속화(스트릭·추세 원천).
+ *
+ * 기존에는 sendDigest 내부에서만 upsert 되어 (a) 콘텐츠 0건 조기반환 시, (b) 다이제스트를
+ * 끈/조용시간 회원에게 영구 미기록 → computeGoalStreak 이 중간 주 met=undefined 로 연속을
+ * 끊고 recentWeekBars 가 해당 주를 "목표 없음"으로 표시하는 스트릭 과소 문제가 있었다.
+ * 이메일 발송 경로에서 분리해 승인 회원 전원(수신설정·조용시간·콘텐츠 무관) 대상으로 upsert 한다.
+ * loadLastWeekGoalResults 가 지난주 목표를 세운 회원만 반환하므로 자연히 목표 설정자만 기록된다.
+ */
+async function persistWeeklyGoalRecords(
+  db: FirebaseFirestore.Firestore,
+  lastWeekKey: string,
+): Promise<number> {
+  let approvedIds: string[] = [];
+  try {
+    const snap = await db.collection("users").where("approved", "==", true).get();
+    approvedIds = snap.docs.map((d) => d.id);
+  } catch (e) {
+    console.error("[email] weekly-digest goal-record approved-load error:", e);
+    return 0;
+  }
+  if (approvedIds.length === 0) return 0;
+
+  let results: Map<string, LastGoalResult>;
+  try {
+    results = await loadLastWeekGoalResults(db, approvedIds, lastWeekKey);
+  } catch (e) {
+    console.error("[email] weekly-digest goal-record judge error:", e);
+    return 0;
+  }
+
+  const nowIso = new Date().toISOString();
+  let count = 0;
+  for (const [uid, res] of results) {
+    // 주차 마감 기록 upsert — reflection 필드는 미포함(merge 로 기존 회고 보존).
+    try {
+      await db
+        .collection("weekly_goal_records")
+        .doc(`${uid}_${lastWeekKey}`)
+        .set(
+          {
+            userId: uid,
+            weekKey: lastWeekKey,
+            goal: res.target,
+            achieved: res.progress,
+            met: res.achieved,
+            createdAt: nowIso,
+            updatedAt: nowIso,
+          },
+          { merge: true },
+        );
+      count++;
+    } catch (e) {
+      console.error("[email] weekly-digest goal-record upsert error:", e);
+    }
+  }
+  return count;
+}
+
 /** 개인 요약에 표시할 내용이 하나라도 있는지 (없으면 개인 블록 자체 생략) */
 function hasPersonalContent(p: PersonalDigest): boolean {
   return (
@@ -758,7 +817,7 @@ function buildPersonalHtml(p: PersonalDigest): string {
   }
   if (p.onboardingTodo.length > 0) {
     lines.push(
-      `<li>📌 시작하기 미완료: ${p.onboardingTodo.map((t) => escapeHtml(t)).join(" · ")} <a href="${base}/mypage/edit" style="color:#003876;text-decoration:none;font-size:13px">완성하기 →</a></li>`,
+      `<li>📌 시작하기 미완료: ${p.onboardingTodo.map((t) => escapeHtml(t)).join(" · ")} <a href="${base}/mypage?tab=settings" style="color:#003876;text-decoration:none;font-size:13px">완성하기 →</a></li>`,
     );
   }
 
@@ -987,33 +1046,15 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     } catch {
       /* graceful — 회고 인용 없이 진행 */
     }
-    const nowIso = new Date().toISOString();
     for (const [uid, res] of goalResults) {
       const prior = priorReflectionByUser.get(uid);
       if (prior) res.priorReflection = prior;
       const s = suggestionById.get(uid) ?? { diagnosis: null, needsResearchDesign: false };
       s.lastGoal = res;
       suggestionById.set(uid, s);
-      // 주차 마감 기록 upsert — reflection 필드는 미포함(merge 로 기존 회고 보존).
-      try {
-        await db
-          .collection("weekly_goal_records")
-          .doc(`${uid}_${lastWeekKey}`)
-          .set(
-            {
-              userId: uid,
-              weekKey: lastWeekKey,
-              goal: res.target,
-              achieved: res.progress,
-              met: res.achieved,
-              createdAt: nowIso,
-              updatedAt: nowIso,
-            },
-            { merge: true },
-          );
-      } catch (e) {
-        console.error("[email] weekly-digest goal-record upsert error:", e);
-      }
+      // B5: weekly_goal_records 적재는 발송 경로에서 분리(persistWeeklyGoalRecords, _handler
+      //     에서 전 승인회원 대상 실행) — 다이제스트 수신설정·조용시간·콘텐츠 0건 조기반환과
+      //     무관하게 스트릭·추세가 기록되도록. 여기서는 이메일 개인화(회고 인용)만 수행.
     }
   } catch (e) {
     console.error("[email] weekly-digest goal-result merge error:", e);
@@ -1168,9 +1209,12 @@ async function _handler(req: NextRequest) {
     }
 
     try {
+      // B5: 목표 달성 기록은 발송(sendDigest)과 독립적으로 전 승인회원 대상 먼저 적재 —
+      //     콘텐츠 0건 조기반환·수신설정·조용시간과 무관하게 스트릭·추세가 기록되도록.
+      const goalRecords = await persistWeeklyGoalRecords(db, shiftYmd(todayYmd, -7));
       const result = await sendDigest(db, todayYmd);
       await lockRef.update({ status: "sent", sentAt: new Date().toISOString(), recipientCount: result.sent });
-      return Response.json({ ok: true, todayYmd, ...result });
+      return Response.json({ ok: true, todayYmd, goalRecords, ...result });
     } catch (e) {
       // 발송 실패 시 락 해제 — 다음 실행이 재시도할 수 있도록
       await lockRef.delete().catch(() => {});

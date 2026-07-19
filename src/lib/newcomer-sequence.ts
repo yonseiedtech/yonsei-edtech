@@ -18,6 +18,7 @@
  */
 
 import { isoToKstYmd, todayYmdKst } from "./dday";
+import { shiftSemesterKey } from "./semester";
 
 export type NewcomerStepKey = "profile" | "onboarding" | "diagnostic" | "archive";
 
@@ -31,7 +32,7 @@ export interface NewcomerStepMeta {
 }
 
 export const NEWCOMER_STEPS: readonly NewcomerStepMeta[] = [
-  { key: "profile", dayOffset: 1, label: "프로필 완성", href: "/mypage/edit" },
+  { key: "profile", dayOffset: 1, label: "프로필 완성", href: "/mypage?tab=settings" },
   { key: "onboarding", dayOffset: 3, label: "온보딩 시작", href: "/steppingstone/onboarding" },
   { key: "diagnostic", dayOffset: 7, label: "연구 준비도 진단", href: "/diagnosis" },
   { key: "archive", dayOffset: 10, label: "아카이브 즐겨찾기", href: "/archive" },
@@ -91,9 +92,32 @@ export function daysSinceJoinKst(
 }
 
 /**
+ * 신입 코호트 판정 (A3 코호트 경계 오작동 보정 — 위젯·cron 단일 소스).
+ * 다음 중 하나면 신입 시퀀스 대상으로 본다:
+ *  1) 가입 14일 이내 폴백 — 코호트 무관(8월 유입: 2026-2 입학이 8월에 가입하면
+ *     8/31까지 currentSemKey=2026-1 과 불일치해 전체 무동작하던 문제를 제거).
+ *  2) 코호트 키가 현재 학기 또는 다음 학기와 일치 — 개강 전후 유입까지 포함.
+ * 창(14일) 제한은 위젯/cron 각자의 dayOffset·window 로직이 별도로 적용한다.
+ */
+export function isNewcomerCohort(
+  cohortKey: string | null,
+  currentSemKey: string,
+  createdAt: string | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  // (1) 가입 14일 이내면 코호트 무관하게 신입으로 인정
+  const days = daysSinceJoinKst(createdAt, now);
+  if (days != null && days >= 0 && days <= NEWCOMER_WINDOW_DAYS) return true;
+  // (2) 코호트 ∈ {현재 학기, 다음 학기}
+  if (!cohortKey) return false;
+  const nextSemKey = shiftSemesterKey(currentSemKey, 1);
+  return cohortKey === currentSemKey || cohortKey === nextSemKey;
+}
+
+/**
  * 신입 진행 위젯 노출 대상 여부:
- *  - 현재 학기 코호트(cohortKey === currentSemesterKey)이고
- *  - 가입 14일 이내
+ *  - 신입 코호트(isNewcomerCohort — 현재/다음 학기 또는 가입 14일 이내)이고
+ *  - 가입 14일 이내(위젯은 "첫 2주" 장치이므로 창 제한 유지)
  * (전 단계 완료 시 미노출은 위젯이 별도 판정)
  */
 export function isNewcomerWindow(
@@ -102,7 +126,7 @@ export function isNewcomerWindow(
   createdAt: string | null | undefined,
   now: Date = new Date(),
 ): boolean {
-  if (!cohortKey || cohortKey !== currentSemKey) return false;
   const days = daysSinceJoinKst(createdAt, now);
-  return days != null && days >= 0 && days <= NEWCOMER_WINDOW_DAYS;
+  if (days == null || days < 0 || days > NEWCOMER_WINDOW_DAYS) return false;
+  return isNewcomerCohort(cohortKey, currentSemKey, createdAt, now);
 }

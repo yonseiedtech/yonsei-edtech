@@ -90,6 +90,8 @@ const nextConfig: NextConfig = {
       // /mypage/card → /mypage?tab=card (탭 통합)
       { source: "/mypage/card", destination: "/mypage?tab=card", permanent: false },
       { source: "/mypage/card/exchanges", destination: "/mypage?tab=card", permanent: false },
+      // A1(신입 워크스루): 죽은 링크 /mypage/edit → 프로필 편집 표면(설정 탭). 참조처 href 도 교체했으나 이중 안전.
+      { source: "/mypage/edit", destination: "/mypage?tab=settings", permanent: false },
 
       // /staff-admin/* → /console/*
       { source: "/staff-admin", destination: "/console", permanent: false },

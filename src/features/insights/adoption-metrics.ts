@@ -1,6 +1,7 @@
 import { Timestamp } from "firebase-admin/firestore";
 import { currentWeekKey } from "@/lib/weekly-goal";
 import { cohortKeyOf, currentSemesterKey } from "@/lib/semester";
+import { MENTORING_CONTEXT_ID } from "@/features/mentoring/topics";
 
 /**
  * 기능 채택률 집계 (v6-H1) — GET /api/console/adoption 과 주간 스냅샷 cron 공유 소스.
@@ -78,10 +79,14 @@ export async function computeAdoption(
   // dataApi.create 는 createdAt 을 Timestamp 로, 서버 경로는 ISO 문자열로 기록 —
   // 타입 브래키팅 때문에 한쪽 비교만 하면 상시 0. 두 타입을 각각 세어 합산한다.
   const tsCut = (d: number) => Timestamp.fromDate(new Date(Date.now() - d * 86400000));
+  // A1: Firestore 값 타입 정렬은 Timestamp < String 이라, Timestamp 하한(`> tsCut`)
+  //     단일 부등식은 문자열 createdAt 문서를 (날짜 무관) 전부 매칭해 과대집계된다.
+  //     Timestamp 타입 상한(먼 미래)을 함께 걸어 타입 범위를 폐색한다 → 문자열 문서 배제.
+  const tsMax = Timestamp.fromDate(new Date("3000-01-01T00:00:00Z"));
   const cnt2 = async (name: string, field: string, days: number): Promise<number> => {
     const [a, b] = await Promise.all([
       cnt(col(name).where(field, ">", iso(days))),
-      cnt(col(name).where(field, ">", tsCut(days))),
+      cnt(col(name).where(field, ">", tsCut(days)).where(field, "<", tsMax)),
     ]);
     return Math.max(a, 0) + Math.max(b, 0);
   };
@@ -180,19 +185,32 @@ export async function computeAdoption(
   let mUnmatchedNewcomers = -1;
   let mResponseRate: number | null = null;
   try {
-    const boards = await col("comm_boards").where("contextType", "==", "mentoring").get();
+    // B2: 다이제스트 멘토 대기 집계(loadMentorPendingByUser)와 동일 선택자로 통일 —
+    //     단일 전역 보드 contextId==MENTORING_CONTEXT_ID (contextType 태깅 누락 보드로 인한
+    //     콘솔 지표↔이메일 알림 모집단 불일치 방지).
+    const boards = await col("comm_boards").where("contextId", "==", MENTORING_CONTEXT_ID).get();
     const askerIds = new Set<string>();
     let mWithAnswers = 0;
     for (const b of boards.docs) {
-      const qs = await col("comm_questions").where("boardId", "==", b.id).get();
+      // B1: 답변 유무 판정을 정규화 필드 answerCount 가 아니라 comm_answers 의 distinct
+      //     questionId 로 — answerCount 미갱신·누락 시 responseRate 과소집계 방지.
+      const [qs, ans] = await Promise.all([
+        col("comm_questions").where("boardId", "==", b.id).get(),
+        col("comm_answers").where("boardId", "==", b.id).get(),
+      ]);
+      const answeredQ = new Set<string>();
+      for (const ad of ans.docs) {
+        const qid = (ad.data() as { questionId?: string }).questionId;
+        if (qid) answeredQ.add(qid);
+      }
+      mAnswers += ans.size;
       mQuestions += qs.size;
       for (const qd of qs.docs) {
-        const qdata = qd.data() as { resolved?: boolean; authorId?: string; answerCount?: number };
+        const qdata = qd.data() as { resolved?: boolean; authorId?: string };
         if (qdata.resolved === true) mResolved++;
         if (qdata.authorId) askerIds.add(qdata.authorId);
-        if ((qdata.answerCount ?? 0) > 0) mWithAnswers++;
+        if (answeredQ.has(qd.id)) mWithAnswers++;
       }
-      mAnswers += Math.max(await cnt(col("comm_answers").where("boardId", "==", b.id)), 0);
     }
     // 응답률 = 답변 있는 질문 / 전체 질문
     mResponseRate = mQuestions > 0 ? Math.round((mWithAnswers / mQuestions) * 100) : null;
@@ -214,12 +232,13 @@ export async function computeAdoption(
 
   const reviewProcessed = Math.max(reviewApproved, 0) + Math.max(reviewHeld, 0);
 
-  // M4: 4개 검수형 컬렉션 합계 — draft = notPublished - held(보류는 별도 집계)
+  // M4: 4개 검수형 컬렉션 합계.
+  // B3: 이 컬렉션들은 published(boolean) 게이트만 사용 → draft(대기)는 미공개(published==false)
+  //     직접 카운트로 집계한다. held(보류)는 reviewStatus 기반 독립 집계로 유지 —
+  //     기존 `draft = notPublished − held` 뺄셈 추정(held⊂notPublished 가정)이 취약해
+  //     draft 를 음수 클램프로 과소집계하던 문제를 제거.
   const rqDraft =
-    Math.max(0, Math.max(rmNotPub, 0) - Math.max(rmHeld, 0)) +
-    Math.max(0, Math.max(smNotPub, 0) - Math.max(smHeld, 0)) +
-    Math.max(0, Math.max(ftNotPub, 0) - Math.max(ftHeld, 0)) +
-    Math.max(0, Math.max(wtNotPub, 0) - Math.max(wtHeld, 0));
+    Math.max(rmNotPub, 0) + Math.max(smNotPub, 0) + Math.max(ftNotPub, 0) + Math.max(wtNotPub, 0);
   const rqHeld =
     Math.max(rmHeld, 0) + Math.max(smHeld, 0) + Math.max(ftHeld, 0) + Math.max(wtHeld, 0);
 

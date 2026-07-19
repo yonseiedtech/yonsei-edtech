@@ -4,6 +4,7 @@ import { useQuery } from "@tanstack/react-query";
 import {
   collection,
   getCountFromServer,
+  getDocs,
   query,
   where,
 } from "firebase/firestore";
@@ -19,14 +20,13 @@ interface Stats {
 
 async function fetchYonseiStats(): Promise<Stats> {
   const seminarsP = getCountFromServer(collection(db, "seminars"));
-  // 발행된 학회보만 카운트 — 컬렉션명이 환경에 따라 newsletters 또는 newsletter_issues 일 수 있어 둘 다 시도
-  const newslettersP = getCountFromServer(
-    query(collection(db, "newsletter_issues"), where("status", "==", "published")),
-  ).catch(() =>
-    getCountFromServer(
-      query(collection(db, "newsletters"), where("status", "==", "published")),
-    ),
-  );
+  // 발행된 학회보만 카운트. rules 가 문서 조건(resource.data.status)이라 count 집계는
+  // 항상 permission-denied — 쿼리 제약이 조건과 일치하는 getDocs 로 세고, 실패 시 0.
+  const newslettersP = getDocs(
+    query(collection(db, "newsletters"), where("status", "==", "published")),
+  )
+    .then((snap) => ({ data: () => ({ count: snap.size }) }))
+    .catch(() => ({ data: () => ({ count: 0 }) }));
   const thesesP = getCountFromServer(collection(db, "alumni_theses")).catch(
     () => getCountFromServer(collection(db, "alumniTheses")),
   );

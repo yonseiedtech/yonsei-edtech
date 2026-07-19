@@ -27,17 +27,24 @@ import { db } from "@/lib/firebase";
 // ── 최근 N주 weekKey 목록 (KST 기준 가장 최근 월요일 소급) ──
 
 function getRecentWeekKeys(n: number): string[] {
-  const keys: string[] = [];
-  const now = new Date();
-  const dayOfWeek = now.getDay(); // 0=Sun
+  // B6: weekKey 를 KST 고정으로 생성 — 저장 키가 서버 todayYmdKst()(KST 월요일)이므로
+  //     브라우저 로컬(getDay·en-CA)로 계산하면 비-KST 로케일 관리자에서 월요일이 어긋나
+  //     4주 키가 저장 키와 불일치(표 전부 0/"—"). KST 벽시계로 통일한다.
+  const kstNow = new Date(
+    new Date().toLocaleString("en-US", { timeZone: "Asia/Seoul" }),
+  );
+  const dayOfWeek = kstNow.getDay(); // 0=Sun (KST 기준)
   const daysToMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
-  const monday = new Date(now);
+  const monday = new Date(kstNow);
   monday.setDate(monday.getDate() - daysToMonday);
+  monday.setHours(0, 0, 0, 0);
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+  const keys: string[] = [];
   for (let i = 0; i < n; i++) {
     const d = new Date(monday);
     d.setDate(d.getDate() - i * 7);
-    // YYYY-MM-DD (en-CA locale = ISO 날짜 형식)
-    keys.push(d.toLocaleDateString("en-CA"));
+    keys.push(fmt(d));
   }
   return keys;
 }
@@ -343,6 +350,10 @@ export default function DigestStatsSection() {
                 </tbody>
               </table>
             </div>
+            <p className="mt-1.5 text-[11px] text-muted-foreground">
+              ※ 열람·클릭은 픽셀/링크 총 히트 수(고유 수신자 아님) — 한 명이 여러 번
+              열람·클릭하거나 이미지 프록시 재요청 시 CTR·열람률이 100%를 초과할 수 있습니다.
+            </p>
             {!hasRecipientData && (
               <p className="mt-1.5 text-[11px] text-muted-foreground">
                 ※ 열람률은 email_logs 접근 권한 확보 후 자동으로 표시됩니다.

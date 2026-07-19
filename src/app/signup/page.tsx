@@ -39,6 +39,8 @@ function SignupContent() {
       : "/login";
 
     // Sprint 67-AR (온보딩 MVP): 자동승인 시 환영 + 디딤판 진입 안내
+    // B2: 가입 직후 세션이 살아 있으므로 재로그인 강제 없이 대시보드로 바로 진입.
+    const startHref = safeNext || "/dashboard";
     if (done.autoApproved) {
       return (
         <div className="flex min-h-[70vh] items-center justify-center px-4">
@@ -69,25 +71,25 @@ function SignupContent() {
                 </p>
               </div>
 
-              <Link href={loginHref} className="block">
+              <Link href={startHref} className="block">
                 <Button className="mt-6 w-full gap-1.5" size="lg">
-                  지금 로그인하기
+                  바로 시작하기
                   <ArrowRight size={16} />
                 </Button>
               </Link>
 
-              {safeNext && (
-                <p className="mt-3 text-xs text-muted-foreground">
-                  로그인 후 원래 보던 페이지로 이동됩니다.
-                </p>
-              )}
+              <p className="mt-3 text-xs text-muted-foreground">
+                {safeNext
+                  ? "가입한 계정으로 원래 보던 페이지로 이동합니다."
+                  : "가입한 계정으로 바로 이용하실 수 있습니다."}
+              </p>
             </div>
           </div>
         </div>
       );
     }
 
-    // 수동 승인 대기 흐름 (기존 유지)
+    // 수동 승인 대기 흐름 (H5 가시화 강화)
     return (
       <div className="flex min-h-[70vh] items-center justify-center px-4">
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
@@ -99,28 +101,68 @@ function SignupContent() {
               가입 신청 완료
             </h1>
             <p className="mt-3 text-sm leading-relaxed text-muted-foreground sm:text-base">
-              관리자 승인 후 로그인할 수 있습니다.
-              <br />
-              승인까지 1~2일 소요될 수 있습니다.
+              운영진 확인 후 승인됩니다.
             </p>
 
-            <div className="mt-6 rounded-2xl border-2 border-dashed border-amber-300/50 bg-amber-50/60 p-4 text-left dark:border-amber-800/40 dark:bg-amber-950/20">
+            {/* 3단계 승인 절차 진행 표시 */}
+            <div className="mt-6 flex items-center justify-center gap-0">
+              {/* 단계 1: 접수됨 (완료) */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-white">
+                  <CheckCircle size={16} />
+                </div>
+                <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">접수됨</span>
+              </div>
+              <div className="mb-3.5 h-0.5 w-10 bg-amber-300 dark:bg-amber-700" />
+              {/* 단계 2: 검토 중 (진행 중) */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-amber-400 bg-amber-50 text-amber-600 text-xs font-bold dark:bg-amber-950/40 dark:text-amber-300">
+                  2
+                </div>
+                <span className="text-[10px] font-semibold text-amber-500">검토 중</span>
+              </div>
+              <div className="mb-3.5 h-0.5 w-10 bg-muted" />
+              {/* 단계 3: 승인 완료 (대기) */}
+              <div className="flex flex-col items-center gap-1.5">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-muted bg-muted/30 text-muted-foreground text-xs font-medium">
+                  3
+                </div>
+                <span className="text-[10px] text-muted-foreground">승인 완료</span>
+              </div>
+            </div>
+
+            {/* 승인 안내 */}
+            <div className="mt-5 rounded-2xl border-2 border-dashed border-amber-300/50 bg-amber-50/60 p-4 text-left dark:border-amber-800/40 dark:bg-amber-950/20">
               <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
                 <Compass size={12} />
                 승인 안내
               </p>
-              <p className="mt-1.5 text-xs leading-relaxed text-foreground/80">
-                운영진이 가입 정보를 확인 후 승인합니다. 승인 완료 시 로그인이 가능해집니다.
-              </p>
+              <ul className="mt-1.5 space-y-1 text-xs leading-relaxed text-foreground/80">
+                <li>• 운영진이 가입 정보를 확인 후 수동으로 승인합니다.</li>
+                <li>• 평균 <strong>1~2 영업일</strong> 이내 처리됩니다.</li>
+                <li>• 승인 완료 시 로그인이 가능해집니다.</li>
+              </ul>
             </div>
 
+            {/* 문의 경로 */}
+            <p className="mt-4 text-xs text-muted-foreground">
+              처리가 지연되면{" "}
+              <a
+                href="mailto:yonsei.edtech@gmail.com"
+                className="font-medium text-primary hover:underline"
+              >
+                yonsei.edtech@gmail.com
+              </a>
+              으로 문의하세요.
+            </p>
+
             {safeNext && (
-              <p className="mt-4 text-xs text-muted-foreground">
+              <p className="mt-2 text-xs text-muted-foreground">
                 승인 완료 후 로그인하면 원래 보던 페이지로 이동됩니다.
               </p>
             )}
             <Link href={loginHref} className="block">
-              <Button className="mt-6 w-full gap-1.5" size="lg" variant="outline">
+              <Button className="mt-5 w-full gap-1.5" size="lg" variant="outline">
                 로그인 페이지로
                 <ArrowRight size={16} />
               </Button>

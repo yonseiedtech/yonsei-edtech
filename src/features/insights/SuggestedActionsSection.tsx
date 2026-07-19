@@ -93,16 +93,22 @@ interface FunnelRow {
 async function fetchFunnelRows(
   funnelType: "onboarding" | "diagnostic",
 ): Promise<FunnelRow[]> {
-  const q = buildQuery(
-    collection(db, "user_activity_logs"),
-    where("funnelType", "==", funnelType),
-    limit(500),
-  );
-  const snap = await getDocs(q);
-
+  // A2: orderBy 없는 limit(500) 은 문서키 순 앞 500건(과거/임의 표본)만 반환 → 이벤트
+  //     누적이 500 초과 시 최근 이탈을 놓치거나 과거 표본 기준으로 오제안한다.
+  //     서버측 창(cutoff) 하한 + createdAt 내림차순으로 최신부터 잘라온다.
+  //     (복합 인덱스: user_activity_logs funnelType ASC, createdAt DESC)
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - FUNNEL_WINDOW_DAYS);
   const cutoffISO = cutoff.toISOString();
+
+  const q = buildQuery(
+    collection(db, "user_activity_logs"),
+    where("funnelType", "==", funnelType),
+    where("createdAt", ">=", cutoffISO),
+    orderBy("createdAt", "desc"),
+    limit(2000),
+  );
+  const snap = await getDocs(q);
 
   return snap.docs
     .map((d) => {

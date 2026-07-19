@@ -78,7 +78,9 @@ export type NotificationType =
   | "profile_like"          // 내 프로필 좋아요
   | "kudos"                 // 동기가 내 학습 활동에 응원 (v7-H5, 코호트 한정)
   | "newcomer_sequence"    // 신입 첫 2주 활성화 시퀀스 단계별 넛지 (v7-M2, cron)
-  | "mentoring_nudge";    // 멘토링 미참여 신입 주간 넛지 (v8-M3, cron)
+  | "mentoring_nudge"     // 멘토링 미참여 신입 주간 넛지 (v8-M3, cron)
+  | "hackathon_submission_reminder" // 해커톤 산출물 제출 마감 리마인더 (v9-H3, cron)
+  | "pending_signup_nudge"; // 미처리 가입 신청 운영진 알림 (v9-H5, cron)
 
 export interface AppNotification {
   id: string;

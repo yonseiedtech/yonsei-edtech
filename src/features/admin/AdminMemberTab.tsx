@@ -60,6 +60,13 @@ const ONBOARDING_FILTER_LABELS: Record<OnboardingFilter, string> = {
   complete: "완료",
 };
 
+/** 가입 신청 대기 경과일 계산 */
+function waitDays(isoStr: unknown): number {
+  if (typeof isoStr !== "string" || !isoStr) return 0;
+  const ms = Date.now() - new Date(isoStr).getTime();
+  return Math.max(0, Math.floor(ms / (1000 * 60 * 60 * 24)));
+}
+
 const DAY_KO = ["일", "월", "화", "수", "목", "금", "토"];
 function formatLastLogin(iso?: string): string {
   if (!iso) return "-";
@@ -180,7 +187,19 @@ export default function AdminMemberTab() {
   }
 
   // 승인대기 vs 거절 분리
-  const truePending = useMemo(() => pendingMembers.filter((m) => !m.rejected), [pendingMembers]);
+  const rawPending = useMemo(() => pendingMembers.filter((m) => !m.rejected), [pendingMembers]);
+
+  // 대기 목록 정렬 — "oldest" = 오래된 순 (기본: 최신순)
+  const [pendingSortOldest, setPendingSortOldest] = useState(false);
+  const truePending = useMemo(
+    () =>
+      pendingSortOldest
+        ? [...rawPending].sort((a, b) =>
+            (String(a.createdAt ?? "")).localeCompare(String(b.createdAt ?? "")),
+          )
+        : rawPending,
+    [rawPending, pendingSortOldest],
+  );
   const rejectedMembers = useMemo(() => pendingMembers.filter((m) => m.rejected), [pendingMembers]);
 
   // 자동 승인 규칙 평가
@@ -799,11 +818,25 @@ export default function AdminMemberTab() {
           ) : (
             <div>
               <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 flex-wrap">
                   <p className="text-sm text-muted-foreground">
                     {truePending.length}명 대기 중 — 자동 승인 가능{" "}
                     <span className="font-semibold text-green-700">{qualifyingPending.length}명</span>
                   </p>
+                  {/* 오래된 순 정렬 토글 (v9-H5) */}
+                  <button
+                    type="button"
+                    onClick={() => setPendingSortOldest((p) => !p)}
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] transition-colors",
+                      pendingSortOldest
+                        ? "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300"
+                        : "border-border text-muted-foreground hover:text-foreground",
+                    )}
+                    title="대기 기간 기준 정렬 전환"
+                  >
+                    {pendingSortOldest ? "오래된 순" : "최신 순"}
+                  </button>
                   {canApprove && (
                     <button
                       type="button"
@@ -882,6 +915,24 @@ export default function AdminMemberTab() {
                           ) : (
                             <Badge className="bg-red-100 text-red-700 text-[10px]">수동 검토 필요</Badge>
                           )}
+                          {/* v9-H5: 대기 경과일 배지 */}
+                          {(() => {
+                            const d = waitDays(u.createdAt);
+                            if (d === 0) return null;
+                            const isStale = d >= 3;
+                            return (
+                              <span
+                                className={cn(
+                                  "rounded-full px-2 py-0.5 text-[10px] font-semibold",
+                                  isStale
+                                    ? "bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400"
+                                    : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+                                )}
+                              >
+                                {d}일 대기
+                              </span>
+                            );
+                          })()}
                         </div>
                         <div className="mt-1 text-sm text-muted-foreground">@{u.username} · {u.email || "-"}</div>
                         {!eval_.qualifying && eval_.reasons.length > 0 && (

@@ -981,7 +981,7 @@ function EditDialog({
             <Input
               value={form.href}
               onChange={(e) => setForm({ ...form, href: e.target.value })}
-              placeholder="예: /mypage/edit"
+              placeholder="예: /mypage?tab=settings"
             />
           </Field>
           <Field label="아이콘">

@@ -15,6 +15,7 @@ import {
   collection,
   getDocs,
   limit,
+  orderBy,
   query as buildQuery,
   where,
 } from "firebase/firestore";
@@ -51,17 +52,22 @@ interface FunnelRow {
 }
 
 async function fetchFunnelRows(funnelType: "onboarding" | "diagnostic"): Promise<FunnelRow[]> {
-  const q = buildQuery(
-    collection(db, "user_activity_logs"),
-    where("funnelType", "==", funnelType),
-    limit(500),
-  );
-  const snap = await getDocs(q);
-
-  // 최근 30일 클라이언트 필터
+  // A2: orderBy 없는 limit(500) 은 문서키 순 앞 500건(과거/임의 표본)만 반환 → 이벤트
+  //     누적이 500 초과 시 최근 30일 이벤트가 잘려 단계 수가 급감·0 으로 표시된다.
+  //     서버측 30일 하한 + createdAt 내림차순으로 최신부터 잘라온다.
+  //     (복합 인덱스: user_activity_logs funnelType ASC, createdAt DESC)
   const cutoff = new Date();
   cutoff.setDate(cutoff.getDate() - 30);
   const cutoffISO = cutoff.toISOString();
+
+  const q = buildQuery(
+    collection(db, "user_activity_logs"),
+    where("funnelType", "==", funnelType),
+    where("createdAt", ">=", cutoffISO),
+    orderBy("createdAt", "desc"),
+    limit(2000),
+  );
+  const snap = await getDocs(q);
 
   return snap.docs
     .map((d) => {

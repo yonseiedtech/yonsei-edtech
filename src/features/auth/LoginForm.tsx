@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useAuth } from "./useAuth";
 import { useAuthStore } from "./auth-store";
 import { authApi, clearTokens } from "@/lib/bkend";
-import { LogIn, Clock, Mail } from "lucide-react";
+import { LogIn, Clock, Mail, XCircle } from "lucide-react";
 import { toast } from "sonner";
 
 interface LoginFormProps {
@@ -24,6 +24,7 @@ const REMEMBER_KEY = "rememberLoginUsername";
 export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: LoginFormProps = {}) {
   const [loading, setLoading] = useState(false);
   const [pendingApproval, setPendingApproval] = useState(false);
+  const [rejected, setRejected] = useState(false);
   const [pendingEmail, setPendingEmail] = useState("");
   const [rememberUsername, setRememberUsername] = useState(() => {
     if (typeof window === "undefined") return false;
@@ -38,6 +39,7 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
     e.preventDefault();
     setLoading(true);
     setPendingApproval(false);
+    setRejected(false);
 
     const formData = new FormData(e.currentTarget);
     const username = (formData.get("username") as string) ?? "";
@@ -52,6 +54,14 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
         localStorage.removeItem(REMEMBER_KEY);
       }
       const user = await login(username, password);
+      // A5: 반려(rejected) 회원은 승인 대기와 구분된 안내 표시
+      if (user && user.rejected) {
+        try { await authApi.logout(); } catch { /* ignore */ }
+        clearTokens();
+        useAuthStore.getState().logout();
+        setRejected(true);
+        return;
+      }
       if (user && !user.approved) {
         // 비승인 사용자는 즉시 로그아웃 + 승인 대기 UI 표시
         try { await authApi.logout(); } catch { /* ignore */ }
@@ -82,6 +92,39 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
     }
   }
 
+  // A5: 가입 반려(rejected) 상태 UI — 승인 대기와 구분된 안내 + 문의 경로
+  if (rejected) {
+    return (
+      <div className="space-y-4 rounded-2xl border bg-card p-8 shadow-sm">
+        <div className="flex flex-col items-center gap-3 py-4">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-destructive/10">
+            <XCircle size={28} className="text-destructive" />
+          </div>
+          <h2 className="text-lg font-bold">가입 신청이 반려되었습니다</h2>
+          <p className="text-center text-sm text-muted-foreground">
+            제출하신 가입 신청이 승인되지 않았습니다. 자세한 사유 확인이나 재신청은 아래 경로로 문의해 주세요.
+          </p>
+        </div>
+
+        <div className="rounded-lg bg-muted/50 p-4 text-center">
+          <p className="text-sm text-foreground">
+            문의:{" "}
+            <a
+              href="mailto:yonsei.edtech@gmail.com"
+              className="font-medium text-primary hover:underline"
+            >
+              yonsei.edtech@gmail.com
+            </a>
+          </p>
+        </div>
+
+        <Button variant="outline" className="w-full" onClick={() => setRejected(false)}>
+          다른 계정으로 로그인
+        </Button>
+      </div>
+    );
+  }
+
   // 승인 대기 상태 UI
   if (pendingApproval) {
     return (
@@ -105,13 +148,13 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
                 {pendingEmail ? (
                   <span className="font-medium">{pendingEmail}</span>
                 ) : (
-                  "등록하신 이메일"
+                  "이 계정"
                 )}
-                로 안내 드리겠습니다.
+                으로 다시 로그인해 이용하실 수 있습니다. 승인 여부는 로그인 시 확인됩니다.
               </p>
             </div>
             <p className="text-xs text-amber-600">
-              일반적으로 1~2일 이내에 승인이 완료됩니다.
+              일반적으로 1~2 영업일 이내에 승인이 완료됩니다.
             </p>
             {/* RT-3(2026-07-04): 승인 대기 중에도 가치를 맛보게 — 공개 콘텐츠 링크 */}
             <div className="mt-2 border-t border-amber-200 pt-2">
@@ -204,7 +247,7 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
       </div>
 
       <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
-        <p>회원가입 후 관리자 승인을 받아 로그인할 수 있습니다.</p>
+        <p>연세 이메일(@yonsei.ac.kr)로 가입하면 대부분 즉시 이용할 수 있으며, 일부 신청만 운영진 확인 후 승인됩니다.</p>
         <p className="mt-0.5">이메일 형식으로 입력하거나, 아이디만 입력하면 @yonsei.ac.kr이 자동으로 추가됩니다.</p>
       </div>
     </form>

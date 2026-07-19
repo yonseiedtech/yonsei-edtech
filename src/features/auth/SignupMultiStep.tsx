@@ -81,6 +81,30 @@ export default function SignupMultiStep({
     }
   }
 
+  /**
+   * B5(신입 워크스루): Step1 통과 시 학번 중복 확인을 자동·필수화.
+   * 확인 버튼을 누르지 않고 다음으로 넘어가 말단에서야 중복 실패하던 문제를 앞단에서 차단.
+   * API 오류·네트워크 실패 시에는 흐름을 막지 않는다(최종 제출에서 재검증).
+   */
+  async function verifyUsernameAvailable(): Promise<boolean> {
+    const username = (form.getValues("username") || "").trim();
+    if (!/^\d{10}$/.test(username)) return true; // 형식 검증은 validateStep 담당
+    try {
+      const res = await fetch(
+        `/api/auth/check-username?username=${encodeURIComponent(username)}`,
+      );
+      const data = (await res.json()) as { available?: boolean };
+      if (!res.ok) return true;
+      if (data.available === false) {
+        toast.error("이미 가입된 학번입니다. 비밀번호 찾기를 이용해 주세요.");
+        return false;
+      }
+      return true;
+    } catch {
+      return true;
+    }
+  }
+
   async function handleNext() {
     if (step === 4) return;
     const ok = await validateStep(step as 1 | 2 | 3, enrollmentStatus);
@@ -88,7 +112,11 @@ export default function SignupMultiStep({
       toast.error("입력값을 확인해 주세요.");
       return;
     }
-    if (step === 1) void checkGuestHistory();
+    if (step === 1) {
+      const available = await verifyUsernameAvailable();
+      if (!available) return;
+      void checkGuestHistory();
+    }
     setStep((s) => Math.min(4, s + 1) as StepNum);
   }
 

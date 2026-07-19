@@ -29,14 +29,14 @@ export interface SeedChecklistItem {
 export const SEED_ITEMS: SeedChecklistItem[] = [
   {
     label: "자기소개 작성",
-    href: "/mypage/edit",
+    href: "/mypage?tab=settings",
     icon: "PenSquare",
     completionType: "profile.bio",
     enabled: true,
   },
   {
     label: "관심 분야 선택",
-    href: "/mypage/edit",
+    href: "/mypage?tab=settings",
     icon: "Heart",
     completionType: "profile.researchInterests",
     enabled: true,

@@ -52,6 +52,8 @@ const TYPE_ICONS: Record<NotificationType, string> = {
   kudos: "👏",
   newcomer_sequence: "🎓",
   mentoring_nudge: "🤝",
+  hackathon_submission_reminder: "🏆",
+  pending_signup_nudge: "👤",
 };
 
 const TYPE_LABELS: Record<NotificationType, string> = {
@@ -80,6 +82,8 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   kudos: "학습 응원",
   newcomer_sequence: "신입 안내",
   mentoring_nudge: "멘토링 참여 안내",
+  hackathon_submission_reminder: "해커톤 제출 알림",
+  pending_signup_nudge: "가입 신청 알림",
 };
 
 // 필터 탭 정의

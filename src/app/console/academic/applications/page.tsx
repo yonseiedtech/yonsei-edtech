@@ -6,6 +6,7 @@
  * 매칭 분석 GAP #6: 활동(프로젝트·스터디·대외학술대회) 마다 ActivityDetail 안에 신청자
  * 승인이 존재하지만, 운영진이 활동별로 들어가지 않으면 어떤 활동에 처리 대기 중인 신청이
  * 쌓여있는지 파악 어려움. 본 대시보드에서 전체 활동의 pending 신청 누적을 한 화면에서.
+ * v9-H5: 미처리 가입 신청 배너 추가.
  */
 
 import { useMemo } from "react";
@@ -18,11 +19,13 @@ import {
   NotebookPen,
   Users,
   AlertCircle,
+  UserPlus,
 } from "lucide-react";
 import { activitiesApi, activityApplicantsApi } from "@/lib/bkend";
 import type { Activity, ActivityType } from "@/types";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import EmptyState from "@/components/ui/empty-state";
+import { usePendingMembers } from "@/features/member/useMembers";
 
 const TYPE_META: Record<
   ActivityType,
@@ -40,6 +43,13 @@ interface PendingActivity {
 }
 
 export default function ApplicationsConsole() {
+  // v9-H5: 미처리 가입 신청 배지
+  const { pendingMembers } = usePendingMembers();
+  const truePendingMembers = useMemo(
+    () => pendingMembers.filter((m) => !m.rejected),
+    [pendingMembers],
+  );
+
   const { data: activities, isLoading } = useQuery({
     queryKey: ["console", "all-activities"],
     queryFn: async () => {
@@ -97,6 +107,30 @@ export default function ApplicationsConsole() {
         title="신청 승인 통합 대시보드"
         description="모든 학술활동의 처리 대기(pending) 신청자를 한 화면에서 확인. 활동별 진입 → 개별 승인·거절 처리."
       />
+
+      {/* v9-H5: 미처리 가입 신청 배지 */}
+      {truePendingMembers.length > 0 && (
+        <Link
+          href="/console/members"
+          className="flex items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50/70 px-4 py-3 transition-colors hover:bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 dark:hover:bg-amber-950/50"
+        >
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300">
+            <UserPlus size={18} />
+          </div>
+          <div className="min-w-0 flex-1">
+            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+              미처리 가입 신청{" "}
+              <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs text-white">
+                {truePendingMembers.length}건
+              </span>
+            </p>
+            <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
+              승인 대기 중인 회원 가입 신청이 있습니다. 회원 관리에서 처리해주세요.
+            </p>
+          </div>
+          <AlertCircle size={16} className="shrink-0 text-amber-500" />
+        </Link>
+      )}
 
       {/* 통계 카드 */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">

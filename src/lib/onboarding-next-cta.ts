@@ -9,7 +9,7 @@ export interface NextCta {
 export const NEXT_CTA_MAP: Record<ChecklistCompletionType, NextCta | null> = {
   "profile.bio": {
     message: "다음은 관심 분야를 선택해보세요.",
-    href: "/mypage/edit",
+    href: "/mypage?tab=settings",
     label: "관심 분야 설정",
   },
   "profile.researchInterests": {
@@ -19,7 +19,7 @@ export const NEXT_CTA_MAP: Record<ChecklistCompletionType, NextCta | null> = {
   },
   "profile.image": {
     message: "다음은 자기소개를 작성해보세요.",
-    href: "/mypage/edit",
+    href: "/mypage?tab=settings",
     label: "자기소개 작성",
   },
   "visited.activities": {

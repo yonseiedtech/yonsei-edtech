@@ -5,6 +5,7 @@ import { verifyCronAuth } from "@/lib/cron-auth";
 import { sendPushToUsers } from "@/lib/push-admin";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 import { cohortKeyOf, currentSemesterKey } from "@/lib/semester";
+import { isNewcomerCohort } from "@/lib/newcomer-sequence";
 import { todayYmdKst, isoToKstYmd } from "@/lib/dday";
 
 /**
@@ -31,7 +32,7 @@ const STEPS = [
     dayOffset: 1,
     title: "환영합니다! 첫 걸음을 내딛어 볼까요?",
     body: "프로필에 자기소개와 관심 연구 키워드를 등록하면 맞춤 추천을 받을 수 있어요.",
-    link: "/mypage/edit",
+    link: "/mypage?tab=settings",
   },
   {
     step: "d3" as const,
@@ -95,11 +96,12 @@ async function _handler(req: NextRequest) {
     const todayYmd = todayYmdKst();
     const semKey = currentSemesterKey();
 
-    // 승인 회원 전체 조회 → 현재 학기 코호트 필터 (클라이언트 계산, 수십 명 규모)
+    // 승인 회원 전체 조회 → 신입 코호트 필터 (위젯과 동일한 isNewcomerCohort 단일 소스).
+    // A3: 코호트 ∈ {현재, 다음 학기} 또는 가입 14일 이내면 신입으로 인정(8월 유입 경계 오작동 해소).
     const usersSnap = await db.collection("users").where("approved", "==", true).get();
     const newcomers: UserDoc[] = usersSnap.docs
       .map((d) => ({ id: d.id, ...(d.data() as Omit<UserDoc, "id">) }))
-      .filter((u) => cohortKeyOf(u) === semKey);
+      .filter((u) => isNewcomerCohort(cohortKeyOf(u), semKey, u.createdAt));
 
     if (newcomers.length === 0) {
       return Response.json({

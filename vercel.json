@@ -113,8 +113,20 @@
       "schedule": "0 4 * * *"
     },
     {
+      "path": "/api/cron/analytics-retention",
+      "schedule": "0 2 * * 1"
+    },
+    {
       "path": "/api/cron/mentoring-nudge",
       "schedule": "0 3 * * 1"
+    },
+    {
+      "path": "/api/cron/hackathon-submission-reminder",
+      "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/pending-signup-nudge",
+      "schedule": "0 23 * * *"
     }
   ]
 }

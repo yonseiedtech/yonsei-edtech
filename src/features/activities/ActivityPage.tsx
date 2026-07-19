@@ -92,9 +92,11 @@ interface Props {
   title: string;
   subtitle: string;
   color: string;
+  /** 서버 ISR 프리패치 초기 데이터. 제공 시 첫 화면 스켈레톤 없이 즉시 렌더. */
+  initialActivities?: Activity[];
 }
 
-export default function ActivityPage({ type, icon, title, subtitle, color }: Props) {
+export default function ActivityPage({ type, icon, title, subtitle, color, initialActivities }: Props) {
   const { user } = useAuthStore();
   const isStaff = isAtLeast(user, "staff");
   const queryClient = useQueryClient();
@@ -129,6 +131,9 @@ export default function ActivityPage({ type, icon, title, subtitle, color }: Pro
       const json = await res.json();
       return (json.data ?? []) as Activity[];
     },
+    // 서버 ISR 프리패치 데이터가 있으면 첫 렌더에 즉시 사용(스켈레톤 제거).
+    // undefined 이면 기존 클라이언트 로드 경로를 그대로 유지 (WebChannel 낌 환경 폴백).
+    initialData: initialActivities,
   });
 
   const saveMutation = useMutation({

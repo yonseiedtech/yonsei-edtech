@@ -576,6 +576,12 @@ function DashboardContent() {
             영역 카운트는 아래 커맨드센터 담당. 액션 없으면 자동 숨김. */}
         <TodayCard />
 
+        {/* B4(신입 워크스루): 신입 첫 2주 진행 위젯을 상단(TodayCard 직후)으로 승격.
+            현재 학기 코호트·가입 14일 이내에만 노출, 그 외엔 null 렌더로 자동 숨김(비신입 미영향). */}
+        <div className="mt-6 empty:hidden">
+          <NewcomerProgressWidget />
+        </div>
+
         {/* 사이클 104: F-패턴·정보 빈도 기반 상단 재편 (사용자 요청 — Mayer 멀티미디어/마케팅 시선흐름).
             좌상단(최고 시선)에 매일 보는 '오늘의 시간표', 우측 좁은 컬럼에 프로필 요약(정체성·완성도).
             시간표 비대상(졸업생 등)은 프로필 풀폭 폴백. */}
@@ -616,12 +622,6 @@ function DashboardContent() {
             목표 설정 시 진행 바·달성 축하, 미설정 시 프리셋 3종 CTA + 지난주 회고. */}
         <div className="mb-6 empty:hidden">
           <WeeklyGoalCard />
-        </div>
-
-        {/* v8-H5: 신입 첫 2주 진행 위젯 — 현재 학기 코호트·가입 14일 이내에만 노출.
-            4단계 전부 완료·창 밖·코호트 미상이면 컴포넌트가 null 렌더로 자동 숨김. */}
-        <div className="mb-6 empty:hidden">
-          <NewcomerProgressWidget />
         </div>
 
         {/* v8-H2: 응원(kudos) 위젯 — 이번 주 받은 응원 + 코호트 동기에게 응원 보내기.

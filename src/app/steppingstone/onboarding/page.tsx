@@ -230,7 +230,7 @@ const DEFAULT_ONBOARDING_STEPS: {
     icon: PenSquare,
     title: "프로필 완성하기",
     desc: "자기소개·관심 연구 키워드를 등록해 맞춤 추천을 받으세요.",
-    href: "/mypage/edit",
+    href: "/mypage?tab=settings",
     cta: "프로필 편집",
   },
   {
@@ -263,12 +263,95 @@ const DEFAULT_ONBOARDING_STEPS: {
   },
 ];
 
-function DefaultChecklistFallback() {
+/**
+ * B3(신입 워크스루): 발행 트랙이 없을 때도 D+3 "온보딩 시작" 판정(guide_progress.completedItems≥1)을
+ * 충족할 수 있도록, 폴백에도 경량 완료 체크를 저장한다. 위젯·cron 모두 userId 기준으로만 조회하므로
+ * 합성 트랙 키의 guide_progress 문서로 충분하다.
+ */
+const ONBOARDING_FALLBACK_TRACK = "onboarding-fallback";
+
+function FallbackFirstStepCheck({ userId }: { userId: string }) {
+  const [progressId, setProgressId] = useState<string | null>(null);
+  const [checked, setChecked] = useState(false);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    (async () => {
+      try {
+        const p = await guideProgressApi.getByUserAndTrack(
+          userId,
+          ONBOARDING_FALLBACK_TRACK,
+        );
+        if (cancelled) return;
+        if (p) {
+          setProgressId(p.id);
+          setChecked(Object.keys(p.completedItems ?? {}).length > 0);
+        }
+      } catch {
+        // 조회 실패 시 미체크 상태 유지
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [userId]);
+
+  async function toggle() {
+    if (saving) return;
+    setSaving(true);
+    const next = !checked;
+    const now = new Date().toISOString();
+    const completedItems = next ? { started: now } : {};
+    try {
+      if (progressId) {
+        await guideProgressApi.update(progressId, { completedItems, updatedAt: now });
+      } else {
+        const created = await guideProgressApi.create({
+          userId,
+          trackId: ONBOARDING_FALLBACK_TRACK,
+          completedItems,
+          startedAt: now,
+          updatedAt: now,
+        });
+        setProgressId(created.id);
+      }
+      setChecked(next);
+      if (next) logOnboardingEvent(userId, "progress");
+    } catch {
+      // 저장 실패 시 상태 롤백 없이 무시(다음 시도 가능)
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  return (
+    <button
+      type="button"
+      onClick={toggle}
+      disabled={saving}
+      aria-pressed={checked}
+      className="flex w-full items-center gap-2.5 rounded-2xl border bg-card p-4 text-left transition-colors hover:border-primary/40 disabled:opacity-60"
+    >
+      {checked ? (
+        <CheckCircle2 size={18} className="shrink-0 text-primary" aria-hidden="true" />
+      ) : (
+        <Circle size={18} className="shrink-0 text-muted-foreground" aria-hidden="true" />
+      )}
+      <span className="text-sm font-medium">
+        {checked ? "온보딩 첫 걸음을 시작했어요" : "온보딩 첫 걸음 시작 표시하기"}
+      </span>
+    </button>
+  );
+}
+
+function DefaultChecklistFallback({ userId }: { userId?: string }) {
   return (
     <div className="space-y-4">
       <div className="rounded-2xl border border-dashed bg-muted/20 p-4 text-center text-xs text-muted-foreground">
         맞춤 가이드가 준비되는 동안, 아래 기본 첫 단계부터 시작해 보세요.
       </div>
+      {userId && <FallbackFirstStepCheck userId={userId} />}
       <div className="space-y-2">
         {DEFAULT_ONBOARDING_STEPS.map((s) => {
           const Icon = s.icon;
@@ -536,7 +619,7 @@ export default function OnboardingPage() {
           ))}
         </div>
       ) : items.length === 0 ? (
-        <DefaultChecklistFallback />
+        <DefaultChecklistFallback userId={user?.id} />
       ) : (
         <div className="space-y-8">
           {grouped.map(([category, catItems]) => (
