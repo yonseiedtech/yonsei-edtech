@@ -125,7 +125,7 @@ export function LectureReviewItem({
           {courseName}
         </Link>
         {sessionLabel && (
-          <span className="shrink-0 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-700">
+          <span className="shrink-0 rounded bg-info/5 px-1.5 py-0.5 text-[10px] text-info">
             {sessionLabel}
           </span>
         )}
@@ -147,8 +147,8 @@ export function LectureReviewItem({
               className={cn(
                 "h-7 w-7 rounded-full text-xs font-bold transition-colors",
                 rating >= n
-                  ? "bg-amber-400 text-white shadow-sm"
-                  : "bg-card text-muted-foreground hover:bg-amber-50",
+                  ? "bg-warning text-white shadow-sm"
+                  : "bg-card text-muted-foreground hover:bg-warning/10",
               )}
               aria-pressed={rating === n}
               aria-label={`${n}점`}

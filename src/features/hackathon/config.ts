@@ -77,6 +77,27 @@ export const HACKATHON_TIMELINE: readonly { time: string; label: string }[] = [
   { time: "21:30", label: "리뷰 · 마무리" },
 ];
 
+/**
+ * 산출물 제출 마감 (로컬 KST 기준 ISO, 초 생략).
+ * 운영진이 이 상수만 고쳐 마감 시각을 조정한다. 이 시각을 지나면 제출 폼이 잠기고
+ * "제출 마감" 배지가 표시된다. (당일 발표 종료 무렵으로 잠정 설정)
+ */
+export const HACKATHON_SUBMISSION_DEADLINE = "2026-08-22T21:30";
+
+/**
+ * 제출이 마감되었는지 판정 — 마감 시각 이후면 true.
+ * (미래 마감 시각 파싱 실패 시 안전하게 열림 상태 유지)
+ */
+export function isHackathonSubmissionClosed(now: Date = new Date()): boolean {
+  const deadline = new Date(HACKATHON_SUBMISSION_DEADLINE);
+  if (Number.isNaN(deadline.getTime())) return false;
+  return now.getTime() > deadline.getTime();
+}
+
+/** 수상작 포트폴리오 연계 안내 — 수상 팀에게 표기만(자동 적재 아님). */
+export const HACKATHON_PORTFOLIO_HINT =
+  "수상한 산출물은 마이페이지 › 포트폴리오의 수상 이력으로 직접 추가해 학회 활동 기록으로 남길 수 있어요.";
+
 /** 자주 묻는 질문 */
 export const HACKATHON_FAQ: readonly { q: string; a: string }[] = [
   {

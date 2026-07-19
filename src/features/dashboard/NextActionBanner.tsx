@@ -124,9 +124,9 @@ function urgencyClass(diffMs: number): string {
 }
 
 const KIND_META: Record<NextActionKind, { label: string; iconClass: string; Icon: typeof CalendarClock }> = {
-  class: { label: "다음 수업", iconClass: "bg-emerald-100 text-emerald-700", Icon: GraduationCap },
-  seminar: { label: "다음 세미나", iconClass: "bg-blue-100 text-blue-700", Icon: CalendarClock },
-  todo: { label: "마감 임박 할 일", iconClass: "bg-amber-100 text-amber-700", Icon: ListTodo },
+  class: { label: "다음 수업", iconClass: "bg-success/15 text-success", Icon: GraduationCap },
+  seminar: { label: "다음 세미나", iconClass: "bg-info/15 text-info", Icon: CalendarClock },
+  todo: { label: "마감 임박 할 일", iconClass: "bg-warning/15 text-warning", Icon: ListTodo },
 };
 
 /**
@@ -436,10 +436,9 @@ export default function NextActionBanner() {
         badge: "진단",
         subtitle: "5분 진단으로 내 연구 준비도·약점 확인",
         ariaLabel: "연구 준비도 진단 받기 · 진단 페이지로 이동",
-        iconWrapClass: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
-        badgeClass: "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
-        accentClass:
-          "border-blue-200 bg-blue-50/50 hover:bg-blue-50 dark:border-blue-900 dark:bg-blue-950/20 dark:hover:bg-blue-950/30",
+        iconWrapClass: "bg-info/15 text-info",
+        badgeClass: "bg-info/15 text-info",
+        accentClass: "border-info/30 bg-info/5 hover:bg-info/10",
       };
     }
     if (diagnosticCount === undefined) return null; // 아직 로딩 — 넛지 보류
@@ -453,10 +452,9 @@ export default function NextActionBanner() {
         badge: "복습",
         subtitle: "진단 오답 암기카드로 약점 굳히기",
         ariaLabel: `오늘 복습할 암기카드 ${dueCardCount}장 · 암기카드 페이지로 이동`,
-        iconWrapClass: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
-        badgeClass: "bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300",
-        accentClass:
-          "border-indigo-200 bg-indigo-50/50 hover:bg-indigo-50 dark:border-indigo-900 dark:bg-indigo-950/20 dark:hover:bg-indigo-950/30",
+        iconWrapClass: "bg-cat-5/15 text-cat-5",
+        badgeClass: "bg-cat-5/15 text-cat-5",
+        accentClass: "border-cat-5/30 bg-cat-5/5 hover:bg-cat-5/10",
       };
     }
     // 3) 이론 가계도 미열람 (H5) — 진단 후 "연구 첫 걸음" 브리지. 로컬 플래그만 보므로 추가 로드 없음.
@@ -469,10 +467,9 @@ export default function NextActionBanner() {
         badge: "이론",
         subtitle: "교육공학 이론의 뿌리·계보를 한눈에 살펴보기",
         ariaLabel: "이론 가계도 둘러보기 · 아카이브 이론 지도로 이동",
-        iconWrapClass: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
-        badgeClass: "bg-teal-100 text-teal-700 dark:bg-teal-900/40 dark:text-teal-300",
-        accentClass:
-          "border-teal-200 bg-teal-50/50 hover:bg-teal-50 dark:border-teal-900 dark:bg-teal-950/20 dark:hover:bg-teal-950/30",
+        iconWrapClass: "bg-success/15 text-success",
+        badgeClass: "bg-success/15 text-success",
+        accentClass: "border-success/30 bg-success/5 hover:bg-success/10",
         onEngage: () => {
           if (!userId) return;
           try {
@@ -509,10 +506,9 @@ export default function NextActionBanner() {
         badge: "포트폴리오",
         subtitle: "수료증·세미나 발표를 자동으로 모아 정리",
         ariaLabel: "포트폴리오 자동 불러오기 · 포트폴리오 페이지로 이동",
-        iconWrapClass: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
-        badgeClass: "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300",
-        accentClass:
-          "border-violet-200 bg-violet-50/50 hover:bg-violet-50 dark:border-violet-900 dark:bg-violet-950/20 dark:hover:bg-violet-950/30",
+        iconWrapClass: "bg-cat-5/15 text-cat-5",
+        badgeClass: "bg-cat-5/15 text-cat-5",
+        accentClass: "border-cat-5/30 bg-cat-5/5 hover:bg-cat-5/10",
       };
     }
     return null;
@@ -597,7 +593,7 @@ export default function NextActionBanner() {
       <div className="mx-auto max-w-6xl px-4">
         <Link
           href="/mypage#graduation-checklist"
-          className={cn("group flex items-center gap-2 rounded-2xl border px-3 py-1.5 shadow-sm transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/30 sm:gap-3 sm:py-2", SEMANTIC.success.border, SEMANTIC.success.bg)}
+          className={cn("group flex items-center gap-2 rounded-2xl border px-3 py-1.5 shadow-sm transition-colors hover:bg-success/10 sm:gap-3 sm:py-2", SEMANTIC.success.border, SEMANTIC.success.bg)}
           role="status"
           aria-label={`졸업요건 ${remainingCount}개 남음 · 마이페이지 체크표로 이동`}
         >
@@ -648,7 +644,7 @@ export default function NextActionBanner() {
   // ≤30분은 chip-bold 색상, 그 외는 부드러운 muted chip
   const remainChipClass =
     diffMs <= 30 * 60_000
-      ? "bg-rose-600 text-white"
+      ? "bg-destructive text-white"
       : diffMs <= 3 * 60 * 60_000
         ? cn(SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText)
         : "bg-muted text-muted-foreground";

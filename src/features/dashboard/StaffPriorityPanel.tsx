@@ -83,7 +83,7 @@ export default function StaffPriorityPanel({ muted = false }: StaffPriorityPanel
         {pendingCount > 0 && (
           <Link
             href="/console/members"
-            className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 transition-colors hover:bg-amber-50"
+            className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 transition-colors hover:bg-warning/5"
           >
             <span className="flex items-center gap-2">
               <ShieldAlert size={14} className={SEMANTIC.warning.accent} />
@@ -97,7 +97,7 @@ export default function StaffPriorityPanel({ muted = false }: StaffPriorityPanel
         {unansweredCount > 0 && (
           <Link
             href="/console/inquiries"
-            className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 transition-colors hover:bg-amber-50"
+            className="flex items-center justify-between gap-2 rounded-lg border bg-card px-3 py-2 transition-colors hover:bg-warning/5"
           >
             <span className="flex items-center gap-2">
               <HelpCircle size={14} className={SEMANTIC.danger.accent} />
@@ -120,7 +120,7 @@ export default function StaffPriorityPanel({ muted = false }: StaffPriorityPanel
               <li key={t.id}>
                 <Link
                   href="/console/todos"
-                  className="flex items-center justify-between gap-2 rounded-md bg-card px-2.5 py-1.5 text-[12px] hover:bg-amber-50"
+                  className="flex items-center justify-between gap-2 rounded-md bg-card px-2.5 py-1.5 text-[12px] hover:bg-warning/5"
                 >
                   <span className="flex min-w-0 items-center gap-1.5">
                     {t.priority === "high" && (

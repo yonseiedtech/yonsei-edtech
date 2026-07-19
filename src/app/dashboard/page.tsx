@@ -326,14 +326,14 @@ function DashboardContent() {
             icon={FileText}
             label="내 글"
             value={myPosts.length}
-            color="bg-blue-50 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
+            color="bg-info/10 text-info"
             href="/board"
           />
           <StatCard
             icon={Calendar}
             label="신청 세미나"
             value={mySeminars.length}
-            color="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+            color="bg-success/10 text-success"
             href="/seminars"
           />
           {isStaff ? (
@@ -359,7 +359,7 @@ function DashboardContent() {
                 icon={Clock}
                 label="예정 세미나"
                 value={upcomingSeminars.length}
-                color="bg-violet-50 text-violet-600 dark:bg-violet-950/40 dark:text-violet-400"
+                color="bg-cat-5/10 text-cat-5"
                 href="/seminars"
               />
               <StatCard
@@ -370,7 +370,7 @@ function DashboardContent() {
                     ? `제${latestNewsletter.issueNumber}호`
                     : "-"
                 }
-                color="bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400"
+                color="bg-destructive/10 text-destructive"
                 href="/newsletter"
               />
             </>

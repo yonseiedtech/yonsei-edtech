@@ -91,7 +91,7 @@ export default function TodayCard() {
         icon: Layers,
         href: "/flashcards",
         text: `오늘 복습할 암기카드 ${due}장`,
-        accent: "text-blue-700 dark:text-blue-300",
+        accent: "text-info",
       });
     }
 
@@ -110,7 +110,7 @@ export default function TodayCard() {
         href: "/mypage/research?tab=writing",
         // proposal/report 이력의 비표준 lastChapter 라벨 폴백 ("undefined" 노출 방지)
         text: `이어쓰기 — ${FEEDBACK_CHAPTER_LABELS[latest.lastChapter] ?? "논문 초안"}`,
-        accent: "text-violet-700 dark:text-violet-300",
+        accent: "text-cat-5",
       });
     }
 
@@ -122,7 +122,7 @@ export default function TodayCard() {
         icon: ClipboardList,
         href: "/mypage/research?tab=feedback",
         text: `지도 노트 미반영 ${pending}건`,
-        accent: "text-amber-700 dark:text-amber-300",
+        accent: "text-warning",
       });
     }
 
@@ -142,7 +142,7 @@ export default function TodayCard() {
           icon: PartyPopper,
           href: "/gatherings",
           text: `${dday.kind === "today" ? "오늘" : dday.label} · ${nextEvent.title} (참석 예정)`,
-          accent: "text-rose-700 dark:text-rose-300",
+          accent: "text-destructive",
         });
       }
     }

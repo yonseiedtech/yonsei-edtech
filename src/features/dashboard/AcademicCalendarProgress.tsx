@@ -22,7 +22,7 @@ const PHASE_COLORS: Record<SemesterPhase, string> = {
   regular_post_midterm: cn(SEMANTIC.success.chipBg, SEMANTIC.success.chipText),
   final: cn(SEMANTIC.danger.chipBg, SEMANTIC.danger.chipText),
   post_final: cn(SEMANTIC.warning.chipBg, SEMANTIC.warning.chipText),
-  break: "bg-sky-100 text-sky-700 dark:bg-sky-950/50 dark:text-sky-300",
+  break: "bg-info/15 text-info",
   after: "bg-muted text-muted-foreground",
 };
 

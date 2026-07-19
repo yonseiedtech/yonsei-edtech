@@ -182,7 +182,7 @@ export function WeeklyGrid({
                           }}
                           aria-label="변경 기록 삭제 (대면으로 복원)"
                           title="변경 기록 삭제 — 기본 대면으로 복원"
-                          className="absolute right-0.5 top-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-amber-300 bg-card/95 text-amber-700 shadow-sm hover:bg-amber-50"
+                          className="absolute right-0.5 top-0.5 inline-flex h-5 w-5 items-center justify-center rounded-full border border-warning/30 bg-card/95 text-warning shadow-sm hover:bg-warning/5"
                         >
                           <RotateCcw size={10} />
                         </button>
@@ -204,11 +204,11 @@ export function WeeklyGrid({
                       style={{ top: topPx, height: Math.max(heightPx, 40), ...laneStyle(`a-${progress.id}`) }}
                     >
                       <div className="flex items-center gap-1">
-                        <span className="shrink-0 rounded bg-violet-100 px-1 py-0 text-[9px] font-medium text-violet-700">
+                        <span className="shrink-0 rounded bg-cat-5/10 px-1 py-0 text-[9px] font-medium text-cat-5">
                           {ACTIVITY_TYPE_LABEL[activity.type][0]}{progress.week}
                         </span>
                         {isLeader && (
-                          <span className="shrink-0 rounded bg-amber-100 px-1 py-0 text-[9px] font-medium text-amber-700">
+                          <span className="shrink-0 rounded bg-warning/10 px-1 py-0 text-[9px] font-medium text-warning">
                             운영
                           </span>
                         )}

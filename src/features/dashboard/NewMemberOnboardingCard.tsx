@@ -160,7 +160,7 @@ export default function NewMemberOnboardingCard() {
   const progressPct = Math.round((completedCount / total) * 100);
 
   return (
-    <div className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-sky-500/5 to-primary/5 p-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500 sm:p-6">
+    <div className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-info/5 to-primary/5 p-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500 sm:p-6">
       <button
         type="button"
         onClick={handleDismiss}
@@ -214,19 +214,19 @@ export default function NewMemberOnboardingCard() {
             <li key={step.id}>
               {step.completed ? (
                 <div
-                  className="flex h-full items-start gap-2.5 rounded-xl border border-emerald-200/60 bg-emerald-50/60 p-3 dark:border-emerald-800/40 dark:bg-emerald-950/20"
+                  className="flex h-full items-start gap-2.5 rounded-xl border border-success/30 bg-success/10 p-3"
                   aria-label={`${step.label} 완료`}
                 >
                   <StatusIcon
                     size={18}
-                    className="mt-0.5 shrink-0 text-emerald-600 dark:text-emerald-400"
+                    className="mt-0.5 shrink-0 text-success"
                     aria-hidden="true"
                   />
                   <div className="min-w-0">
-                    <p className="text-sm font-semibold text-emerald-800 line-through dark:text-emerald-200">
+                    <p className="text-sm font-semibold text-success line-through">
                       {step.label}
                     </p>
-                    <p className="mt-0.5 text-[11px] text-emerald-700/80 dark:text-emerald-300/70">
+                    <p className="mt-0.5 text-[11px] text-success/70">
                       완료했어요
                     </p>
                   </div>

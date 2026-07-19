@@ -121,7 +121,7 @@ function NotifList({
             )}
           >
             <div className="flex items-center gap-1.5">
-              {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />}
+              {!n.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />}
               <p className="truncate text-xs font-medium text-foreground">{n.title}</p>
               <span className="ml-auto shrink-0 text-[10px] text-muted-foreground/70">
                 {relTime(n.createdAt)}
@@ -168,7 +168,7 @@ function TodoList({
               title="완료 처리"
               disabled={busy}
               onClick={() => onComplete(t.id)}
-              className="mt-0.5 shrink-0 rounded-full border border-emerald-500/60 p-0.5 text-transparent transition-colors hover:bg-emerald-500 hover:text-white disabled:opacity-40 dark:border-emerald-400/60"
+              className="mt-0.5 shrink-0 rounded-full border border-success/40 p-0.5 text-transparent transition-colors hover:bg-success hover:text-white disabled:opacity-40"
             >
               <Check size={9} />
             </button>
@@ -178,7 +178,7 @@ function TodoList({
                 className={cn(
                   "shrink-0 rounded px-1 py-0.5 text-[10px] font-semibold",
                   dday.urgent
-                    ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300"
+                    ? "bg-destructive/10 text-destructive"
                     : "bg-muted text-muted-foreground",
                 )}
               >
@@ -215,7 +215,7 @@ function MessageList({
           )}
         >
           <div className="flex items-center gap-1.5">
-            {!m.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-rose-500" />}
+            {!m.read && <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-destructive" />}
             <p className="truncate text-xs font-semibold text-foreground">{m.fromName}</p>
             <span className="ml-auto shrink-0 text-[10px] text-muted-foreground/70">
               {relTime(m.createdAt)}
@@ -366,7 +366,7 @@ export default function ProfileSideWidget({ userId }: { userId: string }) {
               <t.icon size={14} />
               {t.label}
               {t.count > 0 && (
-                <span className="ml-0.5 rounded-full bg-rose-500 px-1 text-[9px] font-bold leading-tight text-white">
+                <span className="ml-0.5 rounded-full bg-destructive px-1 text-[9px] font-bold leading-tight text-white">
                   {t.count > 99 ? "99+" : t.count}
                 </span>
               )}

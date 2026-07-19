@@ -65,7 +65,7 @@ export default function NewMemberWelcomeBanner() {
   }
 
   return (
-    <div className="relative mb-6 overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-sky-500/5 to-primary/5 p-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
+    <div className="relative mb-6 overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-info/5 to-primary/5 p-5 shadow-sm animate-in fade-in slide-in-from-top-2 duration-500">
       <button
         type="button"
         onClick={handleDismiss}

@@ -48,19 +48,19 @@ const KIND_META: Record<
 > = {
   post: {
     label: "글",
-    iconClass: "bg-blue-100 text-blue-700",
+    iconClass: "bg-info/15 text-info",
     Icon: FileText,
     verb: "글 작성",
   },
   course_review: {
     label: "강의 후기",
-    iconClass: "bg-emerald-100 text-emerald-700",
+    iconClass: "bg-success/15 text-success",
     Icon: GraduationCap,
     verb: "강의 후기 작성",
   },
   seminar_review: {
     label: "세미나 후기",
-    iconClass: "bg-violet-100 text-violet-700",
+    iconClass: "bg-cat-5/15 text-cat-5",
     Icon: FileText,
     verb: "세미나 후기 작성",
   },

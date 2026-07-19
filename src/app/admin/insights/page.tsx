@@ -92,8 +92,18 @@ const InsightsActionPanel = dynamic(
   },
 );
 
+const SuggestedActionsSection = dynamic(
+  () => import("@/features/insights/SuggestedActionsSection"),
+  { ssr: false },
+);
+
 const SearchMissSection = dynamic(
   () => import("@/features/insights/SearchMissSection"),
+  { ssr: false },
+);
+
+const DigestStatsSection = dynamic(
+  () => import("@/features/insights/DigestStatsSection"),
   { ssr: false },
 );
 
@@ -149,8 +159,12 @@ function InsightsInner() {
         <TabsContent value="summary" className="mt-4">
           <WeeklyOperationsSummary />
         </TabsContent>
-        <TabsContent value="actions" className="mt-4">
-          <InsightsActionPanel />
+        <TabsContent value="actions" className="mt-4 space-y-6">
+          {/* v7 H1(2026-07-20): 제안된 운영 액션 — 퍼널·검색실패·비활성 자동 진단 */}
+          <SuggestedActionsSection />
+          <div id="insights-nudge-panel" className="scroll-mt-20">
+            <InsightsActionPanel />
+          </div>
         </TabsContent>
         <TabsContent value="opkpi" className="mt-4 space-y-4">
           {/* C-5(2026-07-04): 기능 채택률 — 개강 채택 전환 사이클 KPI */}
@@ -160,6 +174,9 @@ function InsightsInner() {
 
           {/* M6(2026-07-19): 검색 실패 분석 — 아카이브 콘텐츠 갭 신호 */}
           <SearchMissSection />
+
+          {/* M7(2026-07-20): 다이제스트 열람·CTA 클릭 추적 성과 */}
+          <DigestStatsSection />
 
           {/* M2(2026-07-19): 온보딩·진단 퍼널 전환율 */}
           <FunnelSection />

@@ -68,14 +68,14 @@ interface ArchiveQuickLink {
  * Phase 4 작업 중인 /archive 내부 컴포넌트는 손대지 않고, 라우트 경로만 참조.
  */
 const ARCHIVE_QUICK_LINKS: ReadonlyArray<ArchiveQuickLink> = [
-  { href: "/archive/concept", label: "개념", icon: Lightbulb, tone: "bg-violet-50 text-violet-700 border-violet-200" },
-  { href: "/archive/variable", label: "변인", icon: VariableIcon, tone: "bg-blue-50 text-blue-700 border-blue-200" },
-  { href: "/archive/measurement", label: "측정도구", icon: Ruler, tone: "bg-emerald-50 text-emerald-700 border-emerald-200" },
-  { href: "/archive/research-methods", label: "연구방법", icon: FlaskConical, tone: "bg-sky-50 text-sky-700 border-sky-200" },
-  { href: "/archive/statistical-methods", label: "통계방법", icon: BarChart3, tone: "bg-indigo-50 text-indigo-700 border-indigo-200" },
-  { href: "/archive/foundation-terms", label: "기초 용어", icon: Anchor, tone: "bg-slate-50 text-slate-700 border-slate-200" },
-  { href: "/archive/writing-tips", label: "글쓰기", icon: PenLine, tone: "bg-rose-50 text-rose-700 border-rose-200" },
-  { href: "/archive/apa-style", label: "APA 스타일", icon: BookText, tone: "bg-amber-50 text-amber-700 border-amber-200" },
+  { href: "/archive/concept", label: "개념", icon: Lightbulb, tone: "bg-cat-5/5 text-cat-5 border-cat-5/30" },
+  { href: "/archive/variable", label: "변인", icon: VariableIcon, tone: "bg-info/5 text-info border-info/30" },
+  { href: "/archive/measurement", label: "측정도구", icon: Ruler, tone: "bg-success/5 text-success border-success/30" },
+  { href: "/archive/research-methods", label: "연구방법", icon: FlaskConical, tone: "bg-info/5 text-info border-info/30" },
+  { href: "/archive/statistical-methods", label: "통계방법", icon: BarChart3, tone: "bg-cat-5/5 text-cat-5 border-cat-5/30" },
+  { href: "/archive/foundation-terms", label: "기초 용어", icon: Anchor, tone: "bg-muted text-muted-foreground border-border" },
+  { href: "/archive/writing-tips", label: "글쓰기", icon: PenLine, tone: "bg-destructive/5 text-destructive border-destructive/30" },
+  { href: "/archive/apa-style", label: "APA 스타일", icon: BookText, tone: "bg-warning/5 text-warning border-warning/30" },
 ];
 
 function formatKoreanDate(iso: string): string {
@@ -214,8 +214,8 @@ export default function AlumniHomeWidgets() {
                   <div
                     className={`flex h-8 w-8 shrink-0 items-center justify-center rounded-lg ${
                       evt.kind === "activity"
-                        ? "bg-blue-100 text-blue-700"
-                        : "bg-emerald-100 text-emerald-700"
+                        ? "bg-info/15 text-info"
+                        : "bg-success/15 text-success"
                     }`}
                     aria-hidden="true"
                   >
@@ -268,7 +268,7 @@ export default function AlumniHomeWidgets() {
                   className="flex items-start gap-3 rounded-lg px-2 py-2 transition-colors hover:bg-muted/40"
                 >
                   <div
-                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-700"
+                    className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-warning/15 text-warning"
                     aria-hidden="true"
                   >
                     <GraduationCap size={16} />
@@ -344,7 +344,7 @@ export default function AlumniHomeWidgets() {
         >
           {mentorOpen ? (
             <div className="mt-3">
-              <p className="inline-flex items-center gap-1.5 rounded-full border border-emerald-200 bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <p className="inline-flex items-center gap-1.5 rounded-full border border-success/30 bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
                 <Check size={13} aria-hidden="true" /> 멘토 오픈 중
               </p>
               <p className="mt-2 text-xs text-muted-foreground">

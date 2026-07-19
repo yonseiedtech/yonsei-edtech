@@ -23,7 +23,7 @@ import {
   BarChart3 as BarChart3Icon, PenLine,
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
   ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote, Images, ClipboardCheck, Workflow, LayoutGrid,
-  UserPlus, ListChecks, AlertTriangle, Archive, Map, Bot, Sparkles,
+  UserPlus, ListChecks, AlertTriangle, Archive, Map, Bot, Sparkles, Trophy,
 } from "lucide-react";
 import { fetchPendingDrafts } from "@/features/content-draft/content-draft-store";
 import { useState } from "react";
@@ -281,6 +281,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/academic/projects", label: "프로젝트", icon: FolderKanban },
         { href: "/console/academic/studies", label: "스터디", icon: NotebookPen },
         { href: "/console/academic/external", label: "대외 학술대회", icon: Globe },
+        { href: "/console/hackathon", label: "해커톤 심사", icon: Trophy },
         { href: "/console/grad-life/positions", label: "활동 이력 (전공대표·조교·학회)", icon: GraduationCap },
         { href: "/console/grad-life/thesis-defense", label: "논문 심사 연습", icon: MessageSquareQuote },
         { href: "/console/grad-life/thesis-defense-templates", label: "심사 질문 템플릿", icon: ClipboardList, adminOnly: true },

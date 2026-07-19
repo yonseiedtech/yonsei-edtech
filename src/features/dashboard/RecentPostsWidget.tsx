@@ -18,11 +18,11 @@ import { cn } from "@/lib/utils";
 const COMMUNITY_CATEGORIES: PostCategory[] = ["free", "paper_review", "interview", "seminar", "update"];
 
 const CATEGORY_CHIP: Partial<Record<PostCategory, string>> = {
-  free: "bg-sky-50 text-sky-700 border-sky-200",
-  paper_review: "bg-violet-50 text-violet-700 border-violet-200",
-  interview: "bg-amber-50 text-amber-700 border-amber-200",
-  seminar: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  update: "bg-rose-50 text-rose-700 border-rose-200",
+  free: "bg-info/10 text-info border-info/20",
+  paper_review: "bg-cat-5/10 text-cat-5 border-cat-5/20",
+  interview: "bg-warning/10 text-warning border-warning/20",
+  seminar: "bg-success/10 text-success border-success/20",
+  update: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
 function relativeDate(iso: string): string {

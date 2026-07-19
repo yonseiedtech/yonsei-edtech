@@ -175,7 +175,7 @@ export function DailyGrid({
                 href={`/activities/${typePath}/${activity.id}`}
                 aria-label={`${activity.title} ${progress.week}주차 활동으로 이동`}
                 className={cn(
-                  "absolute block overflow-hidden rounded-2xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/40 cursor-pointer",
+                  "absolute block overflow-hidden rounded-2xl border border-l-4 bg-card p-3 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-5/40 cursor-pointer",
                   ACTIVITY_MODE_BORDER[mode],
                 )}
                 style={{ top: topPx, height: Math.max(heightPx, 64), ...laneStyle(`a-${progress.id}`) }}
@@ -183,7 +183,7 @@ export function DailyGrid({
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0 flex-1">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="shrink-0 rounded bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700">
+                      <span className="shrink-0 rounded bg-cat-5/10 px-1.5 py-0.5 text-[10px] font-medium text-cat-5">
                         {ACTIVITY_TYPE_LABEL[activity.type]} · {progress.week}주차
                       </span>
                       <p className="truncate text-sm font-semibold">
@@ -198,7 +198,7 @@ export function DailyGrid({
                         {ACTIVITY_PROGRESS_MODE_LABELS[mode]}
                       </span>
                       {isLeader && (
-                        <span className="shrink-0 rounded-full bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">
+                        <span className="shrink-0 rounded-full bg-warning/10 px-1.5 py-0.5 text-[10px] font-medium text-warning">
                           운영진
                         </span>
                       )}
@@ -213,7 +213,7 @@ export function DailyGrid({
                       </p>
                     )}
                   </div>
-                  <Users size={14} className="shrink-0 text-violet-600" />
+                  <Users size={14} className="shrink-0 text-cat-5" />
                 </div>
               </Link>
             );

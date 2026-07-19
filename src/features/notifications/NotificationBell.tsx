@@ -30,6 +30,7 @@ const TYPE_ICONS: Record<AppNotification["type"], string> = {
   collab_invite: "🤝",
   reaction: "❤️",
   profile_like: "👍",
+  kudos: "👏",
 };
 
 function timeAgo(dateStr: string): string {

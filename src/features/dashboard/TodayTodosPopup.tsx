@@ -247,7 +247,7 @@ export default function TodayTodosPopup() {
       <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <Sparkles size={18} className="text-amber-500" />
+            <Sparkles size={18} className="text-warning" />
             오늘의 할 일 — {today}
           </DialogTitle>
         </DialogHeader>
@@ -298,7 +298,7 @@ export default function TodayTodosPopup() {
                         {t.content}
                       </span>
                       {dd && (
-                        <span className="shrink-0 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                        <span className="shrink-0 rounded border border-warning/30 bg-warning/10 px-1.5 py-0.5 text-[10px] font-medium text-warning">
                           {dd.label}
                         </span>
                       )}
@@ -337,7 +337,7 @@ export default function TodayTodosPopup() {
                           </p>
                         </div>
                         {dd && (
-                          <span className="shrink-0 rounded border border-amber-200 bg-amber-50 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
+                          <span className="shrink-0 rounded border border-warning/30 bg-warning/10 px-1.5 py-0.5 text-[10px] font-medium text-warning">
                             {dd.label}
                           </span>
                         )}

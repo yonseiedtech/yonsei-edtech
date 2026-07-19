@@ -107,6 +107,16 @@ function escapeHtml(s: string): string {
   return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
 }
 
+/**
+ * M7: 다이제스트 CTA 클릭 추적 래퍼.
+ * 내부 경로를 /r/digest?to=...&c=weekKey 로 감싸 클릭 수를 집계한다.
+ * 리다이렉트 라우트가 Admin SDK 적재 후 302로 최종 목적지로 이동.
+ */
+function wrapCtaUrl(internalPath: string, weekKey: string): string {
+  const base = "https://yonsei-edtech.vercel.app";
+  return `${base}/r/digest?to=${encodeURIComponent(internalPath)}&c=${encodeURIComponent(weekKey)}`;
+}
+
 /** YYYY-MM-DD(KST) 문자열을 일 단위로 가감 — 지난주 경계 계산용 */
 function shiftYmd(ymd: string, deltaDays: number): string {
   const [y, m, d] = ymd.split("-").map(Number);
@@ -767,18 +777,24 @@ function buildSuggestionHtml(s: LearningSuggestion): string {
 `;
 }
 
-function buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest; suggestion?: LearningSuggestion; peersHtml?: string; mentorHtml?: string }): string {
+function buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml, weekKey }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest; suggestion?: LearningSuggestion; peersHtml?: string; mentorHtml?: string; weekKey: string }): string {
   const base = "https://yonsei-edtech.vercel.app";
+  // M7: 주요 CTA 링크는 /r/digest 리다이렉트로 래핑해 클릭 수 집계
+  const cta = (path: string) => wrapCtaUrl(path, weekKey);
+
   const seminarHtml = seminars.length === 0
     ? "<li style=\"color:#888\">예정된 세미나가 없습니다.</li>"
-    : seminars.map((s) => `<li><a href="${base}/seminars/${s.id}" style="color:#003876;text-decoration:none">${escapeHtml(s.title)}</a> <span style="color:#888;font-size:13px">${escapeHtml(s.date)}${s.time ? ` ${escapeHtml(s.time)}` : ""}</span></li>`).join("");
+    : seminars.map((s) => `<li><a href="${cta(`/seminars/${s.id}`)}" style="color:#003876;text-decoration:none">${escapeHtml(s.title)}</a> <span style="color:#888;font-size:13px">${escapeHtml(s.date)}${s.time ? ` ${escapeHtml(s.time)}` : ""}</span></li>`).join("");
   const postHtml = posts.length === 0
     ? "<li style=\"color:#888\">최근 인기 게시글이 없습니다.</li>"
-    : posts.map((p) => `<li><a href="${base}/board/${p.id}" style="color:#003876;text-decoration:none">${escapeHtml(p.title)}</a></li>`).join("");
+    : posts.map((p) => `<li><a href="${cta(`/board/${p.id}`)}" style="color:#003876;text-decoration:none">${escapeHtml(p.title)}</a></li>`).join("");
   const activityRoute = (t: string) => t === "project" ? "projects" : t === "external" ? "external" : "studies";
   const actHtml = activities.length === 0
     ? "<li style=\"color:#888\">예정된 활동이 없습니다.</li>"
-    : activities.map((a) => `<li><a href="${base}/activities/${activityRoute(a.type)}/${a.id}" style="color:#003876;text-decoration:none">${escapeHtml(a.title)}</a> <span style="color:#888;font-size:13px">${escapeHtml(a.date ?? "")}</span></li>`).join("");
+    : activities.map((a) => `<li><a href="${cta(`/activities/${activityRoute(a.type)}/${a.id}`)}" style="color:#003876;text-decoration:none">${escapeHtml(a.title)}</a> <span style="color:#888;font-size:13px">${escapeHtml(a.date ?? "")}</span></li>`).join("");
+
+  // M7: 열람 추적 픽셀 — 이메일 클라이언트 차단 시 미기록 (참고 지표)
+  const openPixel = `<img src="${base}/r/digest-open?c=${encodeURIComponent(weekKey)}" width="1" height="1" style="display:none;border:0;" alt="" />`;
 
   return `
     <div style="font-family: 'Pretendard', sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
@@ -798,15 +814,16 @@ ${peersHtml ?? ""}
       <ul style="line-height: 1.9; padding-left: 20px;">${actHtml}</ul>
 ${questions.length > 0 ? `
       <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">💬 답을 기다리는 질문</h3>
-      <ul style="line-height: 1.9; padding-left: 20px;">${questions.map((q) => `<li><a href="${base}/boards/${q.boardId}" style="color:#003876;text-decoration:none">${escapeHtml(q.body.length > 60 ? `${q.body.slice(0, 60)}…` : q.body)}</a></li>`).join("")}</ul>
+      <ul style="line-height: 1.9; padding-left: 20px;">${questions.map((q) => `<li><a href="${cta(`/boards/${q.boardId}`)}" style="color:#003876;text-decoration:none">${escapeHtml(q.body.length > 60 ? `${q.body.slice(0, 60)}…` : q.body)}</a></li>`).join("")}</ul>
 ` : ""}
-      <p style="margin-top: 32px;"><a href="${base}/dashboard" style="display: inline-block; padding: 10px 20px; background: #003876; color: white; text-decoration: none; border-radius: 6px;">대시보드 가기</a></p>
+      <p style="margin-top: 32px;"><a href="${cta("/dashboard")}" style="display: inline-block; padding: 10px 20px; background: #003876; color: white; text-decoration: none; border-radius: 6px;">대시보드 가기</a></p>
 
       <hr style="border: none; border-top: 1px solid #eee; margin: 32px 0 16px;" />
       <p style="color: #888; font-size: 12px;">
         본 메일은 매주 월요일 발송됩니다. 받지 않으시려면 <a href="${base}/mypage" style="color: #003876;">마이페이지 → 알림 설정</a> 에서 "주간 다이제스트"를 끄세요.
       </p>
       <p style="color: #888; font-size: 12px;">연세교육공학회 | yonsei.edtech@gmail.com</p>
+      ${openPixel}
     </div>
   `;
 }
@@ -971,7 +988,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   const personalRecipients = recipients.filter((r) => isPersonal(r.id));
   const genericEmails = recipients.filter((r) => !isPersonal(r.id)).map((r) => r.email);
 
-  const genericHtml = buildHtml({ seminars, posts, activities, questions, peersHtml });
+  const genericHtml = buildHtml({ seminars, posts, activities, questions, peersHtml, weekKey });
 
   let sent = 0;
 
@@ -997,7 +1014,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     const personal = personalById.get(r.id);
     const suggestion = suggestionById.get(r.id);
     const mentorHtml = buildMentorHtml(mentorPendingById.get(r.id) ?? 0);
-    const html = buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml });
+    const html = buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml, weekKey });
     try {
       await resend.emails.send({
         from: "연세교육공학회 <noreply@yonsei-edtech.vercel.app>",

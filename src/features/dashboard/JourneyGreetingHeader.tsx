@@ -63,7 +63,7 @@ export default function JourneyGreetingHeader({ user }: { user: User }) {
   return (
     <section
       aria-label="여정 인사"
-      className="relative overflow-hidden rounded-2xl border bg-gradient-to-r from-primary/10 via-sky-500/5 to-transparent p-4 sm:p-5"
+      className="relative overflow-hidden rounded-2xl border bg-gradient-to-r from-primary/10 via-info/5 to-transparent p-4 sm:p-5"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">
@@ -73,7 +73,7 @@ export default function JourneyGreetingHeader({ user }: { user: User }) {
           {stage ? (
             <p className="mt-1 text-base font-bold tracking-tight sm:text-lg">
               지금은{" "}
-              <span className="bg-gradient-to-r from-primary to-sky-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary to-info bg-clip-text text-transparent">
                 {stage.semesterLabel} · {stage.title}
               </span>{" "}
               단계 — {stage.goal}
@@ -92,7 +92,7 @@ export default function JourneyGreetingHeader({ user }: { user: User }) {
                   논문 진행률 <span className="font-semibold tabular-nums text-foreground">{writingPercent}%</span>
                   <span className="inline-block h-1.5 w-24 overflow-hidden rounded-full bg-muted align-middle">
                     <span
-                      className="block h-full rounded-full bg-gradient-to-r from-primary to-sky-500"
+                      className="block h-full rounded-full bg-gradient-to-r from-primary to-info"
                       style={{ width: `${writingPercent}%` }}
                     />
                   </span>
@@ -101,7 +101,7 @@ export default function JourneyGreetingHeader({ user }: { user: User }) {
               {pendingAdvisor > 0 && (
                 <Link
                   href="/mypage/research?tab=feedback"
-                  className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-50 px-2 py-0.5 font-medium text-amber-700 transition-colors hover:bg-amber-100 dark:border-amber-400/30 dark:bg-amber-500/10 dark:text-amber-400"
+                  className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 font-medium text-warning transition-colors hover:bg-warning/15"
                 >
                   <MessageSquareWarning size={11} />
                   미반영 지도 {pendingAdvisor}건

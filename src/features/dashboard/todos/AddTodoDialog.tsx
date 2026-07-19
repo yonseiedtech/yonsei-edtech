@@ -340,7 +340,7 @@ export function AddTodoDialog({
               }}
               className="flex flex-col items-center justify-center gap-1 rounded-2xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
             >
-              <BookOpen size={20} className="text-blue-600" />
+              <BookOpen size={20} className="text-info" />
               수업
             </button>
             {myActivityTodos.length > 0 && (
@@ -352,7 +352,7 @@ export function AddTodoDialog({
                 }}
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <UsersIcon size={20} className="text-emerald-600" />
+                <UsersIcon size={20} className="text-success" />
                 학술활동
               </button>
             )}
@@ -365,7 +365,7 @@ export function AddTodoDialog({
                 }}
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <Mic size={20} className="text-violet-600" />
+                <Mic size={20} className="text-cat-5" />
                 세미나
               </button>
             )}
@@ -378,7 +378,7 @@ export function AddTodoDialog({
                 }}
                 className="flex flex-col items-center justify-center gap-1 rounded-2xl border bg-card p-4 text-sm font-medium transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
               >
-                <ShieldAlert size={20} className="text-amber-600" />
+                <ShieldAlert size={20} className="text-warning" />
                 운영 업무
               </button>
             )}

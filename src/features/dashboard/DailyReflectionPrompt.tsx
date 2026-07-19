@@ -104,7 +104,7 @@ export default function DailyReflectionPrompt() {
   const writeHref = `/board/write?category=free&title=${reflectTitle}&content=${reflectBody}`;
 
   return (
-    <div className="rounded-2xl border-2 border-primary/15 bg-gradient-to-br from-primary/5 via-sky-500/3 to-card p-5 shadow-sm">
+    <div className="rounded-2xl border-2 border-primary/15 bg-gradient-to-br from-primary/5 via-info/3 to-card p-5 shadow-sm">
       <div className="mb-3 flex items-center gap-2">
         <div
           className="flex h-8 w-8 items-center justify-center rounded-lg bg-primary/15 text-primary"

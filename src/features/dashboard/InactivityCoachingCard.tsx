@@ -51,18 +51,18 @@ export default function InactivityCoachingCard() {
   return (
     <Link
       href={suggestion.href}
-      className="group flex items-center gap-3 rounded-2xl border border-emerald-200/70 bg-emerald-50/60 p-4 shadow-sm transition-colors hover:border-emerald-300 hover:bg-emerald-50 dark:border-emerald-800/40 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30"
+      className="group flex items-center gap-3 rounded-2xl border border-success/30 bg-success/10 p-4 shadow-sm transition-colors hover:border-success/50 hover:bg-success/15"
     >
-      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-900/40 dark:text-emerald-400">
+      <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/15 text-success">
         <Sprout size={18} aria-hidden="true" />
       </div>
       <div className="min-w-0 flex-1">
-        <p className="text-xs font-semibold text-emerald-800 dark:text-emerald-300">
+        <p className="text-xs font-semibold text-success">
           {suggestion.area} 코칭
         </p>
         <p className="mt-0.5 text-sm text-foreground/90">{suggestion.message}</p>
       </div>
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-emerald-600 px-3 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-emerald-700">
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-lg bg-success px-3 py-1.5 text-xs font-semibold text-white transition-colors group-hover:bg-success/90">
         {suggestion.cta}
         <ArrowRight size={12} aria-hidden="true" />
       </span>

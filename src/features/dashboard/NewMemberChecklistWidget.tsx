@@ -676,7 +676,7 @@ export default function NewMemberChecklistWidget() {
                   className={cn(
                     "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground transition-all",
                     justCompleted &&
-                      cn("animate-pulse ring-2 ring-emerald-300 dark:ring-emerald-700/50", SEMANTIC.success.chipBg, SEMANTIC.success.chipText),
+                      cn("animate-pulse ring-2 ring-success/50", SEMANTIC.success.chipBg, SEMANTIC.success.chipText),
                   )}
                   aria-label={`${it.label} 완료`}
                 >
@@ -696,7 +696,7 @@ export default function NewMemberChecklistWidget() {
                   {justCompleted && (
                     <Sparkles
                       size={14}
-                      className="shrink-0 text-emerald-500 animate-spin"
+                      className="shrink-0 text-success animate-spin"
                       aria-hidden="true"
                     />
                   )}
@@ -707,7 +707,7 @@ export default function NewMemberChecklistWidget() {
                   className={cn(
                     "flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-muted/40",
                     it.priority === "high" &&
-                      cn("border-l-2 border-rose-400 hover:bg-rose-100 dark:hover:bg-rose-950/50", SEMANTIC.danger.bg),
+                      cn("border-l-2 border-destructive/70 hover:bg-destructive/10", SEMANTIC.danger.bg),
                     it.priority === "low" && "text-muted-foreground",
                   )}
                   aria-label={`${it.label} 시작하기${it.priority === "high" ? " (우선)" : ""}`}

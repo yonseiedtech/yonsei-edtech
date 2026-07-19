@@ -110,7 +110,7 @@ export function CourseTodoItem({
         {courseName}
       </Link>
       {sessionLabel && (
-        <span className="shrink-0 rounded bg-blue-50 px-1.5 py-0.5 text-[10px] text-blue-700">
+        <span className="shrink-0 rounded bg-info/5 px-1.5 py-0.5 text-[10px] text-info">
           {sessionLabel}
         </span>
       )}
@@ -150,7 +150,7 @@ export function CourseTodoItem({
               : dd.kind === "today"
                 ? cn("border", STATUS_CHIP.warning)
                 : dd.diffDays <= 3
-                  ? "bg-orange-50 text-orange-700 border border-orange-200"
+                  ? "bg-warning/5 text-warning border border-warning/20"
                   : "bg-muted/60 text-muted-foreground border";
           return (
             <span
@@ -169,7 +169,7 @@ export function CourseTodoItem({
           <button
             type="button"
             onClick={() => void onSaveEdit(t)}
-            className={cn("rounded p-1 hover:bg-emerald-50", SEMANTIC.success.accent)}
+            className={cn("rounded p-1 hover:bg-success/10", SEMANTIC.success.accent)}
             title="저장 (Enter)"
             aria-label="저장"
           >
@@ -199,7 +199,7 @@ export function CourseTodoItem({
           <button
             type="button"
             onClick={() => void onDelete(t)}
-            className="rounded p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600"
+            className="rounded p-1 text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
             title="삭제"
             aria-label="삭제"
           >

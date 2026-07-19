@@ -75,7 +75,8 @@ export type NotificationType =
   | "mentoring_question"    // 멘토 분야에 새 멘토링 Q&A 질문 도착 (v6-H4)
   | "collab_invite"         // 공동 연구 초대 수신
   | "reaction"              // 내 글에 이모지 공감
-  | "profile_like";         // 내 프로필 좋아요
+  | "profile_like"          // 내 프로필 좋아요
+  | "kudos";                // 동기가 내 학습 활동에 응원 (v7-H5, 코호트 한정)
 
 export interface AppNotification {
   id: string;

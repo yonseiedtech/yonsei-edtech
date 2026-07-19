@@ -49,6 +49,7 @@ const TYPE_ICONS: Record<NotificationType, string> = {
   collab_invite: "🤝",
   reaction: "❤️",
   profile_like: "👍",
+  kudos: "👏",
 };
 
 const TYPE_LABELS: Record<NotificationType, string> = {
@@ -74,6 +75,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   collab_invite: "연구 초대",
   reaction: "공감",
   profile_like: "프로필 좋아요",
+  kudos: "학습 응원",
 };
 
 // 필터 탭 정의

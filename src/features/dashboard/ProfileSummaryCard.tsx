@@ -133,7 +133,7 @@ export default function ProfileSummaryCard({ user }: { user: User }) {
               className="h-12 w-12 rounded-full object-cover ring-2 ring-primary/15 sm:h-14 sm:w-14"
             />
           ) : (
-            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary/15 to-sky-500/10 text-lg font-bold text-primary ring-2 ring-primary/15 sm:h-14 sm:w-14">
+            <div className="flex h-12 w-12 items-center justify-center rounded-full bg-gradient-to-br from-primary/15 to-info/10 text-lg font-bold text-primary ring-2 ring-primary/15 sm:h-14 sm:w-14">
               {initial}
             </div>
           )}
@@ -220,7 +220,7 @@ export default function ProfileSummaryCard({ user }: { user: User }) {
               </div>
               <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-gradient-to-r from-primary to-sky-500 transition-all"
+                  className="h-full rounded-full bg-gradient-to-r from-primary to-info transition-all"
                   style={{ width: `${completion.percent}%` }}
                 />
               </div>
@@ -244,7 +244,7 @@ export default function ProfileSummaryCard({ user }: { user: User }) {
           </div>
         ) : (
           <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">
-            <Sparkles size={12} className="text-amber-500" />
+            <Sparkles size={12} className="text-warning" />
             프로필이 모두 채워져 있어요. 변동이 생기면{" "}
             <Link href="/mypage" className="font-medium text-primary hover:underline">
               마이페이지

@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw, FlaskConical, BarChart3, BookOpen, PenLine, AlertTriangle, ClipboardCheck, ArrowRight, Link2 } from "lucide-react";
+import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw, FlaskConical, BarChart3, BookOpen, PenLine, AlertTriangle, ClipboardCheck, ArrowRight, Link2, TrendingUp } from "lucide-react";
 import { importArchiveSeed, refreshArchiveSeedReferences } from "@/lib/archive-seed";
 import { auth } from "@/lib/firebase";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -79,6 +79,12 @@ const REVIEW_QUEUE_COLLECTIONS = [
 
 type ReviewQueueCounts = Record<(typeof REVIEW_QUEUE_COLLECTIONS)[number]["key"], number>;
 
+/** M4 검수 추세용 — adoption_snapshots 문서의 최소 형태 */
+type ReviewTrendRow = {
+  weekKey: string;
+  reviewQueueDetail?: { draft: number; held: number };
+};
+
 type AnyItem = ArchiveConcept | ArchiveVariable | ArchiveMeasurementTool;
 
 export default function ConsoleArchivePage() {
@@ -96,6 +102,8 @@ export default function ConsoleArchivePage() {
   const [backfilling, setBackfilling] = useState(false);
   const [reviewQueue, setReviewQueue] = useState<ReviewQueueCounts | null>(null);
   const [queueLoading, setQueueLoading] = useState(true);
+  const [reviewTrend, setReviewTrend] = useState<ReviewTrendRow[]>([]);
+  const [trendLoading, setTrendLoading] = useState(false);
 
   const allowed = isAtLeast(user, "staff");
 
@@ -260,10 +268,30 @@ export default function ConsoleArchivePage() {
     }
   };
 
+  // M4 검수 추세 — adoption_snapshots 최근 6주 로드 (조용히 실패 — 보조 정보)
+  const loadTrend = async () => {
+    setTrendLoading(true);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) return;
+      const res = await fetch("/api/console/adoption/history?weeks=6", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) return;
+      const d = await res.json();
+      setReviewTrend((d.rows ?? []) as ReviewTrendRow[]);
+    } catch {
+      // 추세는 보조 정보 — 실패 시 미노출
+    } finally {
+      setTrendLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (allowed) {
       load();
       loadReviewQueue();
+      loadTrend();
     }
   }, [allowed]);
 
@@ -423,6 +451,9 @@ export default function ConsoleArchivePage() {
         loading={queueLoading}
         onRefresh={loadReviewQueue}
       />
+
+      {/* M4 — 검수 품질 추세 (adoption_snapshots 기반 미니 차트) */}
+      <ReviewTrendMiniSection rows={reviewTrend} loading={trendLoading} />
 
       {/* Phase 3 — 시드 데이터 학술 신뢰도 경고 + 확인 체크박스 */}
       <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-xs leading-relaxed text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
@@ -987,6 +1018,139 @@ function ReviewQueueSection({
           );
         })}
       </div>
+    </div>
+  );
+}
+
+/** M4 — 순수 SVG 스파크라인 (AdoptionTrendSection 패턴 재사용) */
+function MiniSparkline({ values, label }: { values: number[]; label: string }) {
+  const W = 96;
+  const H = 22;
+  const clean = values.map((v) => (v < 0 ? 0 : v));
+  const n = clean.length;
+  const max = Math.max(1, ...clean);
+  const xAt = (i: number) => (n <= 1 ? W / 2 : (W * i) / (n - 1));
+  const yAt = (v: number) => H - 2 - (v / max) * (H - 4);
+  const points = clean.map((v, i) => `${xAt(i)},${yAt(v)}`).join(" ");
+  return (
+    <svg
+      viewBox={`0 0 ${W} ${H}`}
+      className="w-24"
+      role="img"
+      aria-label={label}
+      preserveAspectRatio="none"
+    >
+      {n > 1 && (
+        <polyline
+          points={points}
+          fill="none"
+          className="stroke-primary"
+          strokeWidth={1.5}
+          strokeLinejoin="round"
+          strokeLinecap="round"
+        />
+      )}
+      {clean.map((v, i) => (
+        <circle
+          key={i}
+          cx={xAt(i)}
+          cy={yAt(v)}
+          r={i === n - 1 ? 2 : 1.3}
+          className={i === n - 1 ? "fill-primary" : "fill-primary/50"}
+        />
+      ))}
+    </svg>
+  );
+}
+
+/**
+ * M4 검수 품질 추세 미니 섹션 — adoption_snapshots 최근 N주의 대기·보류 수 추이.
+ * 데이터(reviewQueueDetail)가 없는 구 스냅샷만 있으면 미노출.
+ */
+function ReviewTrendMiniSection({
+  rows,
+  loading,
+}: {
+  rows: ReviewTrendRow[];
+  loading: boolean;
+}) {
+  const hasData = rows.some((r) => r.reviewQueueDetail != null);
+
+  if (!loading && !hasData) return null;
+
+  const shortWk = (k: string) => {
+    const [, m, d] = k.split("-");
+    return `${Number(m)}/${Number(d)}`;
+  };
+
+  const draftVals = rows.map((r) => r.reviewQueueDetail?.draft ?? 0);
+  const heldVals = rows.map((r) => r.reviewQueueDetail?.held ?? 0);
+
+  return (
+    <div className="mt-3 rounded-lg border bg-card/50 p-3">
+      <div className="mb-2 flex items-center gap-1.5">
+        <TrendingUp className="h-3.5 w-3.5 text-muted-foreground" aria-hidden />
+        <p className="text-xs font-semibold">검수 추세</p>
+        {!loading && rows.length > 0 && (
+          <span className="text-[10px] text-muted-foreground">최근 {rows.length}주 스냅샷</span>
+        )}
+      </div>
+      {loading ? (
+        <div className="h-12 animate-pulse rounded bg-muted/40" />
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="w-full min-w-[380px] border-collapse text-xs">
+            <thead>
+              <tr className="text-muted-foreground">
+                <th className="px-2 py-1 text-left font-medium">구분</th>
+                <th className="px-2 py-1 text-left font-medium">추세</th>
+                {rows.map((r) => (
+                  <th key={r.weekKey} className="px-2 py-1 text-right font-medium tabular-nums">
+                    {shortWk(r.weekKey)}
+                  </th>
+                ))}
+              </tr>
+            </thead>
+            <tbody>
+              <tr className="border-t">
+                <td className="whitespace-nowrap px-2 py-1 text-muted-foreground">대기</td>
+                <td className="px-2 py-1">
+                  <MiniSparkline values={draftVals} label="검수 대기 추세" />
+                </td>
+                {draftVals.map((v, i) => (
+                  <td
+                    key={i}
+                    className={`px-2 py-1 text-right tabular-nums ${
+                      i === draftVals.length - 1 ? "font-bold text-primary" : ""
+                    }`}
+                  >
+                    {v}
+                  </td>
+                ))}
+              </tr>
+              <tr className="border-t">
+                <td className="whitespace-nowrap px-2 py-1 text-muted-foreground">보류</td>
+                <td className="px-2 py-1">
+                  <MiniSparkline values={heldVals} label="보류 추세" />
+                </td>
+                {heldVals.map((v, i) => (
+                  <td
+                    key={i}
+                    className={`px-2 py-1 text-right tabular-nums ${
+                      i === heldVals.length - 1 ? "font-bold text-primary" : ""
+                    }`}
+                  >
+                    {v}
+                  </td>
+                ))}
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      )}
+      <p className="mt-1.5 text-[10px] text-muted-foreground">
+        4개 검수형 컬렉션(연구방법·통계방법·기초용어·학술글쓰기) 합계 · 주 1회 스냅샷 기반
+      </p>
     </div>
   );
 }

@@ -1112,6 +1112,27 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
+    // ─── 학습 활동 kudos — 코호트 한정 응원 (v7-H5) ───
+    // 코호트 동기의 "이번 주 학습 활동"에 보내는 가벼운 양성 전용 응원 1건.
+    // 프라이버시: 발신자·수신자·운영진만 read(코호트 전체 공개 아님).
+    // 주 1회 중복 방지는 결정적 docId(`{from}_{to}_{weekKey}`)로 강제 —
+    //   같은 주 재전송은 create 가 아닌 update 로 판정되어 update:false 로 거부된다.
+    match /kudos/{docId} {
+      allow read, list: if isAuthenticated()
+        && (resource == null
+          || resource.data.fromUserId == request.auth.uid
+          || resource.data.toUserId == request.auth.uid
+          || isStaffOrAbove());
+      allow create: if isAuthenticated()
+        && request.resource.data.fromUserId == request.auth.uid
+        && request.resource.data.fromUserId != request.resource.data.toUserId
+        && docId == request.auth.uid + '_' + request.resource.data.toUserId + '_' + request.resource.data.weekKey;
+      // 응원은 append-only — 같은 주 재전송(중복 가산) 차단.
+      allow update: if false;
+      allow delete: if isAuthenticated()
+        && (resource.data.fromUserId == request.auth.uid || isStaffOrAbove());
+    }
+
     // ─── Sprint 67-AJ: 학술대회 자원봉사자 배정 ───
     // 운영진(staff+)이 write, 본인은 read 가능. 모든 인증 사용자가 list 가능 (참여자 봉사 명단 확인용)
     match /volunteer_assignments/{docId} {
@@ -1566,6 +1587,40 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
+    // ─── 에듀테크 해커톤 산출물 제출·심사·수상 (v7-M1) ───
+    // hackathon_submissions: 팀별 산출물 1건. 제출은 로그인 회원 본인 소유로만,
+    //   수상(award)·공개(published) 필드는 제출자가 스스로 부여할 수 없고 운영진만 지정.
+    //   공개(published)된 수상작은 누구나 단건 read, 목록·미공개는 로그인 회원 전용.
+    match /hackathon_submissions/{docId} {
+      allow get: if isAuthenticated() || resource.data.published == true;
+      allow list: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.ownerId == request.auth.uid
+        && !request.resource.data.keys().hasAny(['award'])
+        && request.resource.data.get('published', false) == false;
+      allow update: if isAuthenticated() && (
+        // 제출자 본인: 내용만 수정 — 수상·공개·소유자 필드 불변
+        (resource.data.ownerId == request.auth.uid
+          && request.resource.data.ownerId == request.auth.uid
+          && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['award', 'published', 'ownerId']))
+        // 운영진: 수상 등급·공개 여부 지정 가능
+        || isStaffOrAbove()
+      );
+      allow delete: if isAuthenticated()
+        && (resource.data.ownerId == request.auth.uid || isStaffOrAbove());
+    }
+
+    // hackathon_judgings: 심사위원별 루브릭 점수. doc id = `${submissionId}_${judgeId}`.
+    //   심사는 운영진(staff+)만 — 각 심사위원은 자기 doc 만 기록(judgeId == uid 강제).
+    match /hackathon_judgings/{docId} {
+      allow read, list: if isStaffOrAbove();
+      allow create, update: if isStaffOrAbove()
+        && request.resource.data.judgeId == request.auth.uid
+        && docId == request.resource.data.submissionId + '_' + request.auth.uid;
+      allow delete: if isStaffOrAbove()
+        && (resource.data.judgeId == request.auth.uid || isAdmin());
+    }
+
     // ─── User Notes (사용자 개인 메모) ───
     // read/write: 본인(userId 일치)만. admin 은 감사 목적으로 read 허용.
     match /user_notes/{docId} {
@@ -1868,6 +1923,20 @@ service cloud.firestore {
       allow delete: if isAuthenticated() && (
         isCollabLeader(resource.data.researchId) || isAdmin()
       );
+    }
+
+    // ─── 다이제스트 추적 (M7, 2026-07-20) ───
+    // Admin SDK 전용 write — 클라이언트 write 불필요.
+    // Read 는 운영진(staff 이상)만 허용 (콘솔 인사이트 탭 표시용).
+
+    match /digest_link_clicks/{docId} {
+      allow read: if isAuthenticated() && isStaffOrAbove();
+      allow write: if false;
+    }
+
+    match /digest_opens/{docId} {
+      allow read: if isAuthenticated() && isStaffOrAbove();
+      allow write: if false;
     }
   }
 }

@@ -38,6 +38,8 @@ export interface AdoptionMetrics {
   weeklyGoals: { setThisWeek: number };
   mentoring: { questions: number; answers: number; resolved: number };
   reviewQueue: { processed: number; pending: number };
+  // M4 검수 품질 추세 — 4개 검수형 컬렉션(연구방법·통계방법·기초용어·학술글쓰기) 합계
+  reviewQueueDetail: { draft: number; held: number };
 }
 
 /**
@@ -102,6 +104,11 @@ export async function computeAdoption(
     reviewApproved,
     reviewHeld,
     reviewDraft,
+    // M4 — 4개 검수형 컬렉션
+    rmNotPub, rmHeld,
+    smNotPub, smHeld,
+    ftNotPub, ftHeld,
+    wtNotPub, wtHeld,
   ] = await Promise.all([
     cnt(col("users").where("approved", "==", true)),
     cnt(col("users").where("lastVisitAt", ">", iso(7))),
@@ -132,6 +139,15 @@ export async function computeAdoption(
     cnt(col("archive_concepts").where("reviewStatus", "==", "approved")),
     cnt(col("archive_concepts").where("reviewStatus", "==", "held")),
     cnt(col("archive_concepts").where("reviewStatus", "==", "draft")),
+    // M4 — 4개 검수형 컬렉션 draft(미공개)/held 스냅샷
+    cnt(col("archive_research_methods").where("published", "==", false)),
+    cnt(col("archive_research_methods").where("reviewStatus", "==", "held")),
+    cnt(col("archive_statistical_methods").where("published", "==", false)),
+    cnt(col("archive_statistical_methods").where("reviewStatus", "==", "held")),
+    cnt(col("archive_foundation_terms").where("published", "==", false)),
+    cnt(col("archive_foundation_terms").where("reviewStatus", "==", "held")),
+    cnt(col("archive_writing_tips").where("published", "==", false)),
+    cnt(col("archive_writing_tips").where("reviewStatus", "==", "held")),
   ]);
 
   // streak_events 타입 분포 (신규 기능 사용 신호 — matrix/model/studio/mirror)
@@ -165,6 +181,15 @@ export async function computeAdoption(
 
   const reviewProcessed = Math.max(reviewApproved, 0) + Math.max(reviewHeld, 0);
 
+  // M4: 4개 검수형 컬렉션 합계 — draft = notPublished - held(보류는 별도 집계)
+  const rqDraft =
+    Math.max(0, Math.max(rmNotPub, 0) - Math.max(rmHeld, 0)) +
+    Math.max(0, Math.max(smNotPub, 0) - Math.max(smHeld, 0)) +
+    Math.max(0, Math.max(ftNotPub, 0) - Math.max(ftHeld, 0)) +
+    Math.max(0, Math.max(wtNotPub, 0) - Math.max(wtHeld, 0));
+  const rqHeld =
+    Math.max(rmHeld, 0) + Math.max(smHeld, 0) + Math.max(ftHeld, 0) + Math.max(wtHeld, 0);
+
   return {
     at: new Date().toISOString(),
     members: { approved, active7d, active30d },
@@ -192,5 +217,6 @@ export async function computeAdoption(
     weeklyGoals: { setThisWeek: weeklyGoalsSet },
     mentoring: { questions: mQuestions, answers: mAnswers, resolved: mResolved },
     reviewQueue: { processed: reviewProcessed, pending: reviewDraft },
+    reviewQueueDetail: { draft: rqDraft, held: rqHeld },
   };
 }

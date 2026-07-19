@@ -34,6 +34,7 @@ import {
   type QueryConstraint,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
+import type { HackathonSubmission, HackathonJudging } from "@/types/hackathon";
 import type {
   User, Post, Comment, Seminar, SeminarSession, SeminarAttendee,
   SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
@@ -74,6 +75,8 @@ import type {
   OnboardingChecklistItem,
   StreakEvent,
   StreakEventType,
+  Kudos,
+  KudosType,
   UserFeedback,
   UserNote,
   WeeklyGoal,
@@ -3076,6 +3079,21 @@ export const streakEventsApi = {
       limit: 1000,
     }),
   /**
+   * sinceYmd(포함) 이후 활동 이벤트 — 코호트 kudos(v7-H5)에서 "이번 주 학습 활동" 판정용.
+   * ymd 범위 쿼리(단일 필드 index)로 전 회원 이번 주 이벤트만 좁혀 읽는다(전체 fetch 회피).
+   * "활동 사실"만 필요하므로 호출부는 존재 여부(userId 집합)만 사용하고 점수는 노출하지 않는다.
+   */
+  listSince: async (sinceYmd: string, max = 3000): Promise<StreakEvent[]> => {
+    const q = query(
+      collection(db, "streak_events"),
+      where("ymd", ">=", sinceYmd),
+      orderBy("ymd", "desc"),
+      firestoreLimit(max),
+    );
+    const snap = await getDocs(q);
+    return snap.docs.map((d) => serializeDoc(d) as unknown as StreakEvent);
+  },
+  /**
    * 보상 원장 통일(2026-07-04): 도메인 활동의 리더보드 반영용 이중 기록.
    * refSuffix 미지정 시 오늘(로컬 ymd)로 day-bucket — 같은 소스·날짜는 1회만.
    * 실패는 조용히 무시(주 기능 비차단).
@@ -3106,6 +3124,47 @@ export const streakEventsApi = {
       points,
       ymd,
       occurredAt: now.toISOString(),
+    });
+  },
+};
+
+// ─────────────────────────────────────────────────────────────
+// kudosApi — 학습 활동 kudos (코호트 한정 응원, v7-H5)
+//
+// post_reactions 의 결정적 docId + setDoc 패턴을 재사용한다.
+//  - docId = `${fromUserId}_${toUserId}_${weekKey}` → 주 1회 중복 방지(rules 와 이중 게이트).
+//  - listSentByUser 는 본인 발신분만 조회(rules: 발신자·수신자·운영진 read).
+// firestore.rules 의 kudos 블록과 양쪽 게이트.
+// ─────────────────────────────────────────────────────────────
+export const kudosApi = {
+  makeId: (fromUserId: string, toUserId: string, weekKey: string) =>
+    `${fromUserId}_${toUserId}_${weekKey}`,
+  /** 내가 보낸 응원 목록 — 이미 응원한 대상 표시용. weekKey 필터는 호출부에서 client-side. */
+  listSentByUser: (fromUserId: string) =>
+    dataApi.list<Kudos>("kudos", {
+      "filter[fromUserId]": fromUserId,
+      limit: 500,
+    }),
+  /**
+   * 응원 1건 전송(멱등) — 같은 (from,to,weekKey) 는 docId 로 1회만.
+   * 이미 보냈다면 rules 의 update:false 로 조용히 거부되므로 호출부에서 선차단한다.
+   */
+  send: async (
+    fromUserId: string,
+    fromName: string,
+    toUserId: string,
+    weekKey: string,
+    type: KudosType = "cheer",
+  ): Promise<void> => {
+    const id = `${fromUserId}_${toUserId}_${weekKey}`;
+    await setDoc(doc(db, "kudos", id), {
+      id,
+      fromUserId,
+      fromName,
+      toUserId,
+      weekKey,
+      type,
+      createdAt: serverTimestamp(),
     });
   },
 };
@@ -4429,4 +4488,39 @@ export const commLikesApi = {
       return true;
     });
   },
+};
+
+// ── 에듀테크 해커톤 산출물 제출·심사·수상 (v7-M1) ──
+export const hackathonSubmissionsApi = {
+  /** 한 회차의 모든 산출물 (심사·공개 목록용) */
+  listByContext: (contextId: string) =>
+    dataApi.list<HackathonSubmission>("hackathon_submissions", {
+      "filter[contextId]": contextId,
+      limit: 500,
+    }),
+  get: (id: string) =>
+    dataApi.get<HackathonSubmission>("hackathon_submissions", id),
+  create: (data: Record<string, unknown>) =>
+    dataApi.create<HackathonSubmission>("hackathon_submissions", data),
+  update: (id: string, data: Record<string, unknown>) =>
+    dataApi.update<HackathonSubmission>("hackathon_submissions", id, data),
+  delete: (id: string) => dataApi.delete("hackathon_submissions", id),
+};
+
+export const hackathonJudgingsApi = {
+  /** 한 회차의 모든 심사 점수 (집계용) */
+  listByContext: (contextId: string) =>
+    dataApi.list<HackathonJudging>("hackathon_judgings", {
+      "filter[contextId]": contextId,
+      limit: 2000,
+    }),
+  /** 심사위원별 입력 분리 — doc id = `${submissionId}_${judgeId}` 로 멱등 upsert */
+  upsert: (submissionId: string, judgeId: string, data: Record<string, unknown>) =>
+    dataApi.upsert<HackathonJudging>(
+      "hackathon_judgings",
+      `${submissionId}_${judgeId}`,
+      data,
+    ),
+  delete: (submissionId: string, judgeId: string) =>
+    dataApi.delete("hackathon_judgings", `${submissionId}_${judgeId}`),
 };

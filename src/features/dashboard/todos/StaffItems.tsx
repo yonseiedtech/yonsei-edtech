@@ -32,7 +32,7 @@ export function StaffItems({
         <li>
           <Link
             href="/console/members"
-            className="flex items-center justify-between rounded-md bg-card px-2.5 py-2 text-[12px] hover:bg-amber-50"
+            className="flex items-center justify-between rounded-md bg-card px-2.5 py-2 text-[12px] hover:bg-warning/5"
           >
             <span className="font-medium">
               승인 대기 회원 {pendingMembersCount}명
@@ -45,7 +45,7 @@ export function StaffItems({
         <li>
           <Link
             href="/console/inquiries"
-            className="flex items-center justify-between rounded-md bg-card px-2.5 py-2 text-[12px] hover:bg-amber-50"
+            className="flex items-center justify-between rounded-md bg-card px-2.5 py-2 text-[12px] hover:bg-warning/5"
           >
             <span className="font-medium">
               미답변 문의 {unansweredInquiriesCount}건

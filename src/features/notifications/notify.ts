@@ -313,6 +313,20 @@ export function notifyReaction(authorId: string, reactorName: string, postId: st
   );
 }
 
+/**
+ * 학습 활동 kudos — 코호트 동기가 내 이번 주 학습 활동에 응원 (v7-H5).
+ * 동일 발신자 주 1회(docId 제약)로 자연히 과알림 방지. 학습 세부 수치는 담지 않는다.
+ */
+export function notifyKudos(recipientId: string, senderName: string) {
+  return create(
+    recipientId,
+    "kudos",
+    "동기가 응원을 보냈어요 👏",
+    `${senderName}님이 이번 주 학습 활동에 응원을 보냈어요.`,
+    "/steppingstone/onboarding",
+  );
+}
+
 /** 프로필 좋아요 — 상호 방문 유도 */
 export function notifyProfileLike(profileOwnerId: string, likerName: string, likerId: string) {
   return create(

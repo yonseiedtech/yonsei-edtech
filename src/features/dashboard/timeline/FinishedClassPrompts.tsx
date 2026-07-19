@@ -98,7 +98,7 @@ export function FinishedClassPrompts({
             </div>
 
             {/* 다음주 수업 형태 편집 */}
-            <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-emerald-200/60 pt-2">
+            <div className="mt-3 flex flex-wrap items-center gap-1.5 border-t border-success/30 pt-2">
               <span className={cn("text-[11px] font-medium", SEMANTIC.success.titleStrong)}>
                 다음주 {nextWeekday}요일 ({nextWeekDate}) 수업 형태:
               </span>
@@ -119,7 +119,7 @@ export function FinishedClassPrompts({
                               MODE_BADGE[m],
                               "border-current/30 ring-1 ring-current/30 font-medium",
                             )
-                          : "border-emerald-200 bg-card text-emerald-700/70 hover:border-emerald-300 hover:bg-emerald-50",
+                          : "border-success/30 bg-card text-success/70 hover:border-success/50 hover:bg-success/5",
                         isSavingThis && !saving && "opacity-50",
                       )}
                     >
@@ -129,7 +129,7 @@ export function FinishedClassPrompts({
                 },
               )}
               {!nextSession && (
-                <span className="text-[10px] text-emerald-700/60">
+                <span className="text-[10px] text-success/60">
                   (기본: 대면 — 변경하려면 클릭)
                 </span>
               )}

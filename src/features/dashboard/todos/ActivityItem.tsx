@@ -21,7 +21,7 @@ export function ActivityItem({ a }: { a: ActivityFlat }) {
       : dd.kind === "today"
         ? cn("border", STATUS_CHIP.warning)
         : dd.diffDays <= 3
-          ? "bg-orange-50 text-orange-700 border border-orange-200"
+          ? "bg-warning/5 text-warning border border-warning/20"
           : "bg-muted/60 text-muted-foreground border"
     : "";
   return (

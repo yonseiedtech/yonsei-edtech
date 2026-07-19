@@ -64,7 +64,7 @@ export default function SemesterKickoffBanner() {
   }
 
   return (
-    <div className="relative mb-4 overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-sky-500/5 to-primary/5 p-4">
+    <div className="relative mb-4 overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-info/5 to-primary/5 p-4">
       <button
         type="button"
         onClick={dismiss}

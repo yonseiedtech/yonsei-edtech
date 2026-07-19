@@ -165,7 +165,7 @@ export default function PushPermissionPrompt() {
           <button
             type="button"
             onClick={dismiss}
-            className={`inline-flex h-9 items-center gap-1 rounded-lg px-2 text-xs hover:bg-blue-100 dark:hover:bg-blue-900/40 ${tone.accent}`}
+            className={`inline-flex h-9 items-center gap-1 rounded-lg px-2 text-xs hover:bg-info/10 ${tone.accent}`}
             aria-label="14일 동안 다시 보지 않기"
           >
             <X size={14} />

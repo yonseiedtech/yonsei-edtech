@@ -108,7 +108,7 @@ export default function StageRecommendationPanel({ user }: { user: User }) {
       {/* Phase 3: 진단 약점 개념 보완 추천 (최신 진단 기반, 있을 때만) */}
       {weakConcepts.length > 0 && (
         <div className="mt-2.5 flex flex-wrap items-center gap-1.5 text-[11px]">
-          <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-amber-700 dark:text-amber-300">
+          <span className="inline-flex shrink-0 items-center gap-1 font-semibold text-warning">
             <Target size={11} />
             진단 기반 보완
           </span>
@@ -116,7 +116,7 @@ export default function StageRecommendationPanel({ user }: { user: User }) {
             <Link
               key={c.id}
               href={`/archive/concept/${c.id}`}
-              className="rounded-full border border-amber-300/60 bg-amber-50 px-2 py-0.5 text-amber-800 transition-colors hover:bg-amber-100 dark:border-amber-800/50 dark:bg-amber-950/30 dark:text-amber-200"
+              className="rounded-full border border-warning/30 bg-warning/10 px-2 py-0.5 text-warning transition-colors hover:bg-warning/15"
             >
               {c.name}
             </Link>

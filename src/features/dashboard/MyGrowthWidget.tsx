@@ -151,7 +151,7 @@ export default function MyGrowthWidget() {
   return (
     <div className="rounded-2xl border bg-card p-4 shadow-sm sm:p-5">
       <div className="flex items-center gap-2">
-        <Sprout size={18} className="text-emerald-600 dark:text-emerald-400" aria-hidden="true" />
+        <Sprout size={18} className="text-success" aria-hidden="true" />
         <h2 className="font-bold">나의 성장</h2>
         <Link
           href="/mypage"
@@ -174,19 +174,19 @@ export default function MyGrowthWidget() {
             value={`${readiness}`}
             sub="/ 100"
             pct={readiness}
-            color="text-violet-600 dark:text-violet-400"
+            color="text-cat-5"
             href="/mypage"
           />
         ) : (
           <Link
             href="/diagnosis"
-            className="group flex flex-col justify-center gap-1 rounded-xl border-2 border-dashed border-violet-200/70 bg-violet-50/50 p-3 transition-colors hover:border-violet-300 dark:border-violet-800/40 dark:bg-violet-950/20"
+            className="group flex flex-col justify-center gap-1 rounded-xl border-2 border-dashed border-cat-5/30 bg-cat-5/5 p-3 transition-colors hover:border-cat-5/50 dark:bg-cat-5/10"
           >
             <div className="flex items-center gap-1.5">
-              <ClipboardCheck size={14} className="text-violet-600 dark:text-violet-400" />
+              <ClipboardCheck size={14} className="text-cat-5" />
               <span className="text-[11px] font-medium text-muted-foreground">연구 준비도</span>
             </div>
-            <span className="text-xs font-semibold text-violet-700 dark:text-violet-300">
+            <span className="text-xs font-semibold text-cat-5">
               진단 시작 →
             </span>
           </Link>
@@ -198,7 +198,7 @@ export default function MyGrowthWidget() {
           label="이번 학기 활동"
           value={`${timer.semActiveDays}`}
           sub="일"
-          color="text-emerald-600 dark:text-emerald-400"
+          color="text-success"
           href="/mypage"
         />
 
@@ -208,7 +208,7 @@ export default function MyGrowthWidget() {
           label="타이머 누적"
           value={formatMinutes(timer.totalMin)}
           sub={timer.sessionCount > 0 ? `· ${timer.sessionCount}회` : undefined}
-          color="text-blue-600 dark:text-blue-400"
+          color="text-info"
           href="/mypage/research?tab=report&focus=timer"
         />
 
@@ -218,7 +218,7 @@ export default function MyGrowthWidget() {
           label="연구 진행도"
           value={`${thesis.percent}%`}
           pct={thesis.percent}
-          color="text-amber-600 dark:text-amber-400"
+          color="text-warning"
           href="/mypage/research?tab=writing"
         />
       </div>

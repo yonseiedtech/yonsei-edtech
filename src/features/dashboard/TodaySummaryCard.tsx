@@ -213,12 +213,12 @@ export default function TodaySummaryCard({ variant = "card" }: { variant?: "card
               <Link
                 href={todayClass.href}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg border bg-emerald-50/50 px-2.5 py-1.5",
-                  "text-[12px] transition-colors hover:bg-emerald-50",
+                  "flex items-center gap-2 rounded-lg border bg-success/10 px-2.5 py-1.5",
+                  "text-[12px] transition-colors hover:bg-success/15",
                 )}
               >
-                <GraduationCap size={14} className="shrink-0 text-emerald-700" />
-                <span className="shrink-0 font-mono text-[11px] tabular-nums text-emerald-800">
+                <GraduationCap size={14} className="shrink-0 text-success" />
+                <span className="shrink-0 font-mono text-[11px] tabular-nums text-success">
                   {todayClass.startLabel}
                 </span>
                 <span className="flex-1 truncate font-medium">{todayClass.name}</span>
@@ -235,13 +235,13 @@ export default function TodaySummaryCard({ variant = "card" }: { variant?: "card
               <Link
                 href={todaySeminar.href}
                 className={cn(
-                  "flex items-center gap-2 rounded-lg border bg-blue-50/50 px-2.5 py-1.5",
-                  "text-[12px] transition-colors hover:bg-blue-50",
+                  "flex items-center gap-2 rounded-lg border bg-info/10 px-2.5 py-1.5",
+                  "text-[12px] transition-colors hover:bg-info/15",
                 )}
               >
-                <CalendarClock size={14} className="shrink-0 text-blue-700" />
+                <CalendarClock size={14} className="shrink-0 text-info" />
                 {todaySeminar.startLabel && (
-                  <span className="shrink-0 font-mono text-[11px] tabular-nums text-blue-800">
+                  <span className="shrink-0 font-mono text-[11px] tabular-nums text-info">
                     {todaySeminar.startLabel}
                   </span>
                 )}
@@ -259,13 +259,13 @@ export default function TodaySummaryCard({ variant = "card" }: { variant?: "card
               <Link
                 href="/dashboard"
                 className={cn(
-                  "flex items-center gap-2 rounded-lg border bg-amber-50/50 px-2.5 py-1.5",
-                  "text-[12px] transition-colors hover:bg-amber-50",
+                  "flex items-center gap-2 rounded-lg border bg-warning/10 px-2.5 py-1.5",
+                  "text-[12px] transition-colors hover:bg-warning/15",
                 )}
                 aria-label={`오늘 마감 할 일: ${todayDueTodo.content}`}
               >
-                <ListTodo size={14} className="shrink-0 text-amber-700" />
-                <span className="shrink-0 text-[10px] font-semibold text-amber-800">
+                <ListTodo size={14} className="shrink-0 text-warning" />
+                <span className="shrink-0 text-[10px] font-semibold text-warning">
                   오늘 마감
                 </span>
                 <span className="flex-1 truncate font-medium">{todayDueTodo.content}</span>

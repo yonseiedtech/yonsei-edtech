@@ -65,6 +65,12 @@ export * from "./speaker";
 // 게시글 공감 reaction (Sprint 67-AO)
 export * from "./post-reaction";
 
+// 학습 활동 kudos — 코호트 한정 응원 (v7-H5)
+export * from "./kudos";
+
+// 에듀테크 해커톤 산출물 제출·심사·수상 (v7-M1)
+export * from "./hackathon";
+
 // AI 포럼 (Sprint 67-AR — AI 자율 토론 게시판)
 export * from "./ai-forum";
 

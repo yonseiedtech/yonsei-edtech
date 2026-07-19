@@ -133,7 +133,7 @@ export function MonthlyGrid({
       {/* 요일 헤더 */}
       <div className="grid grid-cols-7 text-center text-[11px] font-medium text-muted-foreground">
         {WD.map((w, i) => (
-          <div key={w} className={cn(i === 0 && "text-rose-500", i === 6 && "text-blue-500")}>
+          <div key={w} className={cn(i === 0 && "text-destructive", i === 6 && "text-info")}>
             {w}
           </div>
         ))}
@@ -194,8 +194,8 @@ export function MonthlyGrid({
                 <span
                   className={cn(
                     "font-medium",
-                    c.wd === 0 && c.inMonth && "text-rose-500",
-                    c.wd === 6 && c.inMonth && "text-blue-500",
+                    c.wd === 0 && c.inMonth && "text-destructive",
+                    c.wd === 6 && c.inMonth && "text-info",
                     isToday && "text-primary",
                   )}
                 >
@@ -206,7 +206,7 @@ export function MonthlyGrid({
                     <span className="h-1.5 w-1.5 rounded-full bg-primary" aria-label="수업" />
                   )}
                   {hasSeminar && (
-                    <span className="h-1.5 w-1.5 rounded-full bg-violet-500" aria-label="세미나" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-cat-5" aria-label="세미나" />
                   )}
                 </span>
               </button>
@@ -233,7 +233,7 @@ export function MonthlyGrid({
                   {hasSeminar &&
                     seminars!.map((s) => (
                       <div key={s.id} className="flex items-center gap-1 py-0.5">
-                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-violet-500" />
+                        <span className="h-1.5 w-1.5 shrink-0 rounded-full bg-cat-5" />
                         <span className="truncate text-[11px] text-foreground" title={s.title}>
                           {s.title}
                         </span>
@@ -265,7 +265,7 @@ export function MonthlyGrid({
           <span className="h-1.5 w-1.5 rounded-full bg-primary" /> 수업
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="h-1.5 w-1.5 rounded-full bg-violet-500" /> 세미나
+          <span className="h-1.5 w-1.5 rounded-full bg-cat-5" /> 세미나
         </span>
         <span className="inline-flex items-center gap-1">
           <span className={cn("rounded-full px-1.5 py-0.5 text-[9px] font-medium", SEMINAR_MODE_BADGE.online)}>

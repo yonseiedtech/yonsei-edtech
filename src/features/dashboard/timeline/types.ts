@@ -32,21 +32,21 @@ export const HOUR_RANGE_STORAGE_KEY = "dashboard.classTimeline.hourRange";
 export type ViewMode = "daily" | "weekly" | "monthly";
 
 export const MODE_BORDER: Record<ClassSessionMode, string> = {
-  in_person: "border-l-emerald-400 bg-emerald-50/40",
-  zoom: "border-l-blue-400 bg-blue-50/40",
-  assignment: "border-l-amber-400 bg-amber-50/40",
-  cancelled: "border-l-rose-400 bg-rose-50/40",
-  field: "border-l-purple-400 bg-purple-50/40",
-  exam: "border-l-rose-500 bg-rose-50/60",
+  in_person: "border-l-success/70 bg-success/5",
+  zoom: "border-l-info/70 bg-info/5",
+  assignment: "border-l-warning/70 bg-warning/5",
+  cancelled: "border-l-destructive/70 bg-destructive/5",
+  field: "border-l-cat-5/70 bg-cat-5/5",
+  exam: "border-l-destructive bg-destructive/5",
 };
 
 export const MODE_BADGE: Record<ClassSessionMode, string> = {
-  in_person: "bg-emerald-100 text-emerald-700",
-  zoom: "bg-blue-100 text-blue-700",
-  assignment: "bg-amber-100 text-amber-700",
-  cancelled: "bg-rose-100 text-rose-700",
-  field: "bg-purple-100 text-purple-700",
-  exam: "bg-rose-100 text-rose-700",
+  in_person: "bg-success/10 text-success",
+  zoom: "bg-info/10 text-info",
+  assignment: "bg-warning/10 text-warning",
+  cancelled: "bg-destructive/10 text-destructive",
+  field: "bg-cat-5/10 text-cat-5",
+  exam: "bg-destructive/10 text-destructive",
 };
 
 export const ACTIVITY_TYPE_PATH = {
@@ -62,13 +62,13 @@ export const ACTIVITY_TYPE_LABEL = {
 } as const;
 
 export const ACTIVITY_MODE_BORDER: Record<ActivityProgressMode, string> = {
-  in_person: "border-l-violet-400 bg-violet-50/50",
-  zoom: "border-l-indigo-400 bg-indigo-50/50",
+  in_person: "border-l-cat-5/70 bg-cat-5/5",
+  zoom: "border-l-info/70 bg-info/5",
 };
 
 export const ACTIVITY_MODE_BADGE: Record<ActivityProgressMode, string> = {
-  in_person: "bg-violet-100 text-violet-700",
-  zoom: "bg-indigo-100 text-indigo-700",
+  in_person: "bg-cat-5/10 text-cat-5",
+  zoom: "bg-info/10 text-info",
 };
 
 export interface PlacedClass {
@@ -167,8 +167,8 @@ export const SEMINAR_MODE_LABEL: Record<SeminarMode, string> = {
 };
 
 export const SEMINAR_MODE_BADGE: Record<SeminarMode, string> = {
-  online: "bg-sky-100 text-sky-700",
-  offline: "bg-emerald-100 text-emerald-700",
+  online: "bg-info/10 text-info",
+  offline: "bg-success/10 text-success",
 };
 
 /** 월간 그리드에 넘기는 세미나 항목 (제목 + 온/오프 모드) */
