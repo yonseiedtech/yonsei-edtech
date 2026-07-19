@@ -21,6 +21,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { dataApi } from "@/lib/bkend";
+import { auth } from "@/lib/firebase";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -52,6 +53,84 @@ const KIND_LABELS: Record<string, { label: string; color: string }> = {
 function kindMeta(k?: string) {
   if (!k) return { label: "(unknown)", color: "bg-muted text-muted-foreground" };
   return KIND_LABELS[k] ?? { label: k, color: "bg-muted text-muted-foreground" };
+}
+
+/** v7-H3 보존 정책 대상·기간과 dry-run 결과 표시 (실제 삭제는 cron 시크릿 전용 — 이 카드는 조회만) */
+const RETENTION_TARGETS: { collection: keyof RetentionCounts; label: string; period: string }[] = [
+  { collection: "user_activity_logs", label: "사용자 활동 로그", period: "180일 초과" },
+  { collection: "daily_visits", label: "일일 방문 집계", period: "180일 초과" },
+  { collection: "search_misses", label: "검색 실패 질의", period: "365일 초과" },
+];
+
+interface RetentionCounts {
+  user_activity_logs: number;
+  daily_visits: number;
+  search_misses: number;
+}
+
+function RetentionDryRunCard() {
+  const [running, setRunning] = useState(false);
+  const [counts, setCounts] = useState<RetentionCounts | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setRunning(true);
+    setError(null);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("로그인이 필요합니다.");
+      const res = await fetch("/api/cron/analytics-retention?dryRun=true", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`dry-run 실패 (${res.status})`);
+      const json = (await res.json()) as { deleted: RetentionCounts };
+      setCounts(json.deleted);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "dry-run 실패");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-dashed bg-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="text-xs font-semibold">로그 보존 정리 — 삭제 예정 규모 확인 (dry-run)</h2>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            조회만 수행하며 아무것도 삭제하지 않습니다. 자동 정리 스케줄은 현재 꺼져 있습니다.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={run} disabled={running} className="h-7 gap-1 px-2 text-[11px]">
+          {running ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
+          dry-run 실행
+        </Button>
+      </div>
+      {error && <p className="mt-2 text-[11px] text-destructive">{error}</p>}
+      {counts && (
+        <table className="mt-3 w-full text-[11px]">
+          <thead>
+            <tr className="border-b text-left text-muted-foreground">
+              <th className="py-1 font-medium">컬렉션</th>
+              <th className="py-1 font-medium">보존 기준</th>
+              <th className="py-1 text-right font-medium">삭제 예정</th>
+            </tr>
+          </thead>
+          <tbody>
+            {RETENTION_TARGETS.map((t) => (
+              <tr key={t.collection} className="border-b last:border-0">
+                <td className="py-1">{t.label}</td>
+                <td className="py-1 text-muted-foreground">{t.period}</td>
+                <td className="py-1 text-right font-semibold">
+                  {counts[t.collection] >= 2000 ? "2,000+ (회당 상한)" : `${counts[t.collection]}건`}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      )}
+    </div>
+  );
 }
 
 export default function CronLogsPage() {
@@ -136,6 +215,10 @@ export default function CronLogsPage() {
           새로고침
         </Button>
       </div>
+
+      {/* v7-H3 — 로그 보존 정리 dry-run (조회 전용, 삭제 없음).
+          자동 스케줄은 vercel.json 미등록(휴면) — 여기서 삭제 예정 규모를 확인한 뒤 활성화를 결정한다. */}
+      <RetentionDryRunCard />
 
       {/* 요약 카드 */}
       <div className="rounded-2xl border bg-card p-4">
