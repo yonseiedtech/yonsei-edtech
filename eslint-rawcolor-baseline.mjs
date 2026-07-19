@@ -7,7 +7,7 @@
 export default [
   "src/app/about/greeting/page.tsx",
   "src/app/about/page.tsx",
-  "src/app/academic-admin/external/\\[id\\]/workbook/page.tsx",
+  "src/app/console/academic/external/\\[id\\]/workbook/page.tsx",
   "src/app/activities/external/\\[id\\]/my-volunteer/page.tsx",
   "src/app/activities/external/\\[id\\]/program/notes/\\[planId\\]/page.tsx",
   "src/app/activities/external/\\[id\\]/review/page.tsx",

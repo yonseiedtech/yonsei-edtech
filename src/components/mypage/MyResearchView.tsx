@@ -23,7 +23,7 @@ import type { User, StudySession } from "@/types";
 import {
   BookOpen, FileText, BookOpenCheck, FileBarChart2,
   X, CalendarRange, Printer, FileEdit, ClipboardList,
-  Clock, Plus, Pencil, Trash2, GraduationCap, Lightbulb, DraftingCompass,
+  Clock, Plus, Pencil, Trash2, GraduationCap, Lightbulb, DraftingCompass, Wrench,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -285,6 +285,13 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                 {isSelf && !readOnly && (
                   <ResearchTemplateGallery userId={userId} />
                 )}
+                <Link
+                  href="/mypage/research/tools"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                >
+                  <Wrench size={12} />
+                  논문 도구 모아보기
+                </Link>
                 <Link
                   href="/mypage"
                   className="text-xs text-muted-foreground hover:text-foreground"

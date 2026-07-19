@@ -143,6 +143,7 @@ const PUBLIC_NAV: NavGroup[] = [
         sectionLabel: "📖 나의 연구",
         links: [
           { href: "/mypage/research", label: "내 연구활동 · 논문 여정" },
+          { href: "/mypage/research/tools", label: "논문 도구 모아보기" },
           { href: "/diagnosis", label: "연구 준비도 진단평가" },
           { href: "/collab", label: "공동 연구" },
         ],

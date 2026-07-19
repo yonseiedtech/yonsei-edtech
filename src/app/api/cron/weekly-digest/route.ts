@@ -295,6 +295,58 @@ function buildMentorHtml(pendingCount: number): string {
 `;
 }
 
+/* ────────────────────────── H3 v8: 콘텐츠 갭 요약 (운영진 전용) ────────────────────────── */
+
+/**
+ * 운영진 다이제스트 블록용 갭 요약 집계.
+ * - content_drafts(contentGapSource=seminar_qna, status=pending) 건수
+ * - search_misses 상위 3개 검색어
+ * 실패해도 발송 차단 없음(graceful).
+ */
+async function loadContentGapSummary(db: FirebaseFirestore.Firestore): Promise<{
+  pendingQnaDrafts: number;
+  topSearchMisses: string[];
+}> {
+  try {
+    const [qnaSnap, missesSnap] = await Promise.all([
+      // 단일 필드 쿼리 — 복합 인덱스 불필요. status 는 클라이언트 필터.
+      db.collection("content_drafts").where("contentGapSource", "==", "seminar_qna").get(),
+      db.collection("search_misses").orderBy("count", "desc").limit(3).get(),
+    ]);
+    const pendingQnaDrafts = qnaSnap.docs.filter(
+      (d) => (d.data() as { status?: string }).status === "pending",
+    ).length;
+    const topSearchMisses = missesSnap.docs
+      .map((d) => (d.data() as { query?: string }).query ?? d.id)
+      .filter(Boolean);
+    return { pendingQnaDrafts, topSearchMisses };
+  } catch {
+    return { pendingQnaDrafts: 0, topSearchMisses: [] };
+  }
+}
+
+/** 운영진 전용 "콘텐츠 갭 하이라이트" HTML 블록 (내용 없으면 빈 문자열) */
+function buildStaffGapHtml(pendingQnaDrafts: number, topSearchMisses: string[]): string {
+  if (pendingQnaDrafts === 0 && topSearchMisses.length === 0) return "";
+  const base = "https://yonsei-edtech.vercel.app";
+  const lines: string[] = [];
+  if (pendingQnaDrafts > 0) {
+    lines.push(
+      `<li>📝 자동 Q&amp;A 초안 <b>${pendingQnaDrafts}건</b> 검수 대기 <a href="${base}/console/content-drafts" style="color:#003876;text-decoration:none;font-size:13px">검수하러 가기 →</a></li>`,
+    );
+  }
+  if (topSearchMisses.length > 0) {
+    const terms = topSearchMisses.map((q) => `<b>${escapeHtml(q)}</b>`).join(" · ");
+    lines.push(
+      `<li>🔍 검색 실패 상위 — ${terms} <a href="${base}/console/archive/content-gaps" style="color:#003876;text-decoration:none;font-size:13px">갭 대시보드 →</a></li>`,
+    );
+  }
+  return `
+      <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">📊 콘텐츠 갭 하이라이트 (운영진)</h3>
+      <ul style="line-height: 1.9; padding-left: 20px;">${lines.join("")}</ul>
+`;
+}
+
 /* ────────────────────────── 개인화 집계 (R2 — 나의 한 주) ────────────────────────── */
 
 /**
@@ -778,7 +830,7 @@ function buildSuggestionHtml(s: LearningSuggestion): string {
 `;
 }
 
-function buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml, weekKey }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest; suggestion?: LearningSuggestion; peersHtml?: string; mentorHtml?: string; weekKey: string }): string {
+function buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml, staffGapHtml, weekKey }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest; suggestion?: LearningSuggestion; peersHtml?: string; mentorHtml?: string; staffGapHtml?: string; weekKey: string }): string {
   const base = "https://yonsei-edtech.vercel.app";
   // M7: 주요 CTA 링크는 /r/digest 리다이렉트로 래핑해 클릭 수 집계
   const cta = (path: string) => wrapCtaUrl(path, weekKey);
@@ -803,6 +855,7 @@ function buildHtml({ seminars, posts, activities, questions, personal, suggestio
       <p style="color: #666; margin: 0 0 24px;">이번 주 학회 활동을 한눈에 확인하세요.</p>
 ${personal ? buildPersonalHtml(personal) : ""}
 ${suggestion ? buildSuggestionHtml(suggestion) : ""}
+${staffGapHtml ?? ""}
 ${mentorHtml ?? ""}
 ${peersHtml ?? ""}
       <h3 style="color: #003876; border-left: 4px solid #003876; padding-left: 8px; margin: 24px 0 8px;">📅 다가오는 세미나</h3>
@@ -853,7 +906,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   const userIds: string[] = [];
   const usersById = new Map<
     string,
-    { bio?: string; researchInterests?: string[]; interestKeywords?: string[]; name?: string; showInLeaderboard?: boolean; mentorOpen?: boolean; mentorTopics?: string[] }
+    { bio?: string; researchInterests?: string[]; interestKeywords?: string[]; name?: string; showInLeaderboard?: boolean; mentorOpen?: boolean; mentorTopics?: string[]; role?: string }
   >();
   for (const u of usersSnap.docs) {
     const d = u.data() as {
@@ -867,6 +920,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
       showInLeaderboard?: boolean;
       mentorOpen?: boolean;
       mentorTopics?: string[];
+      role?: string;
     };
     if (d.notificationPrefs?.weeklyDigest === false) continue;
     // H6: 조용한 시간 구간이면 이메일 발송 스킵 (기본 22–08 KST 는 09:00 발송과 무겹침 → 무회귀)
@@ -880,6 +934,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
       showInLeaderboard: d.showInLeaderboard,
       mentorOpen: d.mentorOpen,
       mentorTopics: d.mentorTopics,
+      role: d.role,
     });
     const email = d.email || d.contactEmail;
     if (email) recipients.push({ id: u.id, email });
@@ -972,6 +1027,17 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     console.error("[email] weekly-digest mentor-pending error:", e);
   }
 
+  // H3 v8: 콘텐츠 갭 요약 — 운영진 다이제스트 블록 (실패 시 블록 생략, 발송은 계속)
+  const STAFF_ROLES = new Set(["staff", "president", "admin", "sysadmin"]);
+  let gapSummary = { pendingQnaDrafts: 0, topSearchMisses: [] as string[] };
+  try {
+    gapSummary = await loadContentGapSummary(db);
+  } catch {
+    // graceful — 갭 블록 없이 발송
+  }
+  const gapHtmlForStaff = buildStaffGapHtml(gapSummary.pendingQnaDrafts, gapSummary.topSearchMisses);
+  const hasGapContent = gapHtmlForStaff !== "";
+
   const resend = new Resend(key);
   const subject = `[연세교육공학회] 주간 다이제스트 (${weekKey})`;
 
@@ -987,7 +1053,13 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     );
   };
   const personalRecipients = recipients.filter((r) => isPersonal(r.id));
-  const genericEmails = recipients.filter((r) => !isPersonal(r.id)).map((r) => r.email);
+  const nonPersonalRecipients = recipients.filter((r) => !isPersonal(r.id));
+  // H3 v8: 비개인화 staff → 갭 블록 포함 개별 발송으로 전환
+  const staffGapRecipients = hasGapContent
+    ? nonPersonalRecipients.filter((r) => STAFF_ROLES.has(usersById.get(r.id)?.role ?? ""))
+    : [];
+  const staffGapIds = new Set(staffGapRecipients.map((r) => r.id));
+  const genericEmails = nonPersonalRecipients.filter((r) => !staffGapIds.has(r.id)).map((r) => r.email);
 
   const genericHtml = buildHtml({ seminars, posts, activities, questions, peersHtml, weekKey });
 
@@ -1015,7 +1087,9 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     const personal = personalById.get(r.id);
     const suggestion = suggestionById.get(r.id);
     const mentorHtml = buildMentorHtml(mentorPendingById.get(r.id) ?? 0);
-    const html = buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml, weekKey });
+    // H3 v8: staff 수신자에게 갭 블록 추가
+    const staffGapHtml = hasGapContent && STAFF_ROLES.has(usersById.get(r.id)?.role ?? "") ? gapHtmlForStaff : undefined;
+    const html = buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml, staffGapHtml, weekKey });
     try {
       await resend.emails.send({
         from: "연세교육공학회 <noreply@yonsei-edtech.vercel.app>",
@@ -1026,6 +1100,22 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
       sent += 1;
     } catch (e) {
       console.error("[email] weekly-digest personal send error:", e);
+    }
+  }
+
+  // (c) H3 v8: 비개인화 staff — 갭 블록 포함 개별 발송
+  for (const r of staffGapRecipients) {
+    const html = buildHtml({ seminars, posts, activities, questions, peersHtml, staffGapHtml: gapHtmlForStaff, weekKey });
+    try {
+      await resend.emails.send({
+        from: "연세교육공학회 <noreply@yonsei-edtech.vercel.app>",
+        to: r.email,
+        subject,
+        html,
+      });
+      sent += 1;
+    } catch (e) {
+      console.error("[email] weekly-digest staff-gap send error:", e);
     }
   }
 

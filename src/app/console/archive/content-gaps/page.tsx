@@ -32,6 +32,7 @@ import {
   limit as fbLimit,
   orderBy,
   query as buildQuery,
+  where,
 } from "firebase/firestore";
 import {
   PackageSearch,
@@ -337,6 +338,22 @@ export default function ConsoleContentGapsPage() {
     enabled: allowed,
   });
 
+  // H3 v8: 자동 Q&A 초안 검수 대기 건수 — content_drafts(contentGapSource=seminar_qna)
+  // 단일 필드 쿼리(복합 인덱스 불필요), status 는 클라이언트 필터
+  const qnaDraftQ = useQuery({
+    queryKey: ["content-gaps", "qna-draft-count"],
+    staleTime: 5 * 60_000,
+    queryFn: async () => {
+      const q = buildQuery(
+        collection(db, "content_drafts"),
+        where("contentGapSource", "==", "seminar_qna"),
+      );
+      const snap = await getDocs(q);
+      return snap.docs.filter((d) => (d.data() as { status?: string }).status === "pending").length;
+    },
+    enabled: allowed,
+  });
+
   const searchRows = useMemo(
     () => (searchQ.data ?? []).filter((r) => r.count >= SEARCH_MISS_MIN_COUNT),
     [searchQ.data],
@@ -469,6 +486,21 @@ export default function ConsoleContentGapsPage() {
         title="세미나 우수 Q&A"
         hint="채택·좋아요 상위 질문 (comm_boards · seminar)"
       >
+        {/* H3 v8: 자동 Q&A 초안 생성 상태 배지 */}
+        {(qnaDraftQ.data ?? 0) > 0 && (
+          <div className={cn("mb-3 flex items-center gap-2 rounded-lg border border-primary/30 bg-primary/5 px-3 py-2 text-xs")}>
+            <ClipboardCheck size={12} className="shrink-0 text-primary" />
+            <span>
+              자동 초안 <strong>{qnaDraftQ.data}건</strong> 검수 대기
+            </span>
+            <a
+              href="/console/content-drafts"
+              className="ml-auto font-semibold text-primary underline-offset-2 hover:underline"
+            >
+              콘텐츠 초안함 →
+            </a>
+          </div>
+        )}
         {qnaQ.isLoading ? (
           <LoadingBlock />
         ) : qnaQ.isError ? (

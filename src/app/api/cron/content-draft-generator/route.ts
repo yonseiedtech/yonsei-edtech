@@ -27,6 +27,12 @@ const DATE_WINDOW_DAYS = 21;
 const MAX_PER_RUN = 8;
 const MAX_QUOTES = 3;
 
+// ── Q&A 초안 블록 상수 (H3 v8) ──────────────────────────────────────────────
+const QNA_BOARD_SCAN = 20;          // 세미나 보드 스캔 상한 (읽기 비용 방어)
+const QNA_TOP_PER_BOARD = 5;        // 보드당 우수 질문 상한
+const QNA_MAX_BOARDS_PER_RUN = 5;   // 실행당 최대 처리 보드 수
+const QNA_MIN_LIKES = 1;            // 채택 또는 최소 좋아요
+
 function kstTodayStr(): string {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split("T")[0];
 }
@@ -180,7 +186,81 @@ async function _handler(req: NextRequest) {
       }
     }
 
-    return Response.json({ ok: true, generated, seminars: generatedSeminars });
+    // ── 세미나 Q&A 초안 블록 (H3 v8, 2026-07-20) ────────────────────────────
+    // comm_boards(contextType=seminar) 우수 Q&A → content_drafts(kind=newsletter) 자동 초안
+    // docId: ${boardId}__qna-newsletter  (멱등 — 보드당 1회)
+    // contentGapSource: "seminar_qna" — 갭 대시보드 배지·다이제스트 집계용
+
+    let qnaGenerated = 0;
+    const qnaBoards: string[] = [];
+
+    const boardsSnap = await db
+      .collection("comm_boards")
+      .where("contextType", "==", "seminar")
+      .limit(QNA_BOARD_SCAN)
+      .get();
+
+    for (const boardDoc of boardsSnap.docs) {
+      if (qnaGenerated >= QNA_MAX_BOARDS_PER_RUN) break;
+      const boardId = boardDoc.id;
+      const bd = boardDoc.data() as { title?: string; contextId?: string };
+
+      // 멱등 가드 — 보드당 1회 초안 생성
+      const qnaDocId = `${boardId}__qna-newsletter`;
+      const existingQna = await db.collection("content_drafts").doc(qnaDocId).get();
+      if (existingQna.exists) continue;
+
+      // 우수 질문 조회 (채택 or 좋아요 ≥ QNA_MIN_LIKES)
+      const qsSnap = await db.collection("comm_questions").where("boardId", "==", boardId).get();
+      const goodQs = qsSnap.docs
+        .map((d) => d.data() as { body?: string; likeCount?: number; resolved?: boolean })
+        .filter((q) => q.resolved === true || (q.likeCount ?? 0) >= QNA_MIN_LIKES)
+        .sort(
+          (a, b) =>
+            Number(b.resolved ?? false) - Number(a.resolved ?? false) ||
+            (b.likeCount ?? 0) - (a.likeCount ?? 0),
+        )
+        .slice(0, QNA_TOP_PER_BOARD);
+
+      if (goodQs.length === 0) continue;
+
+      // 뉴스레터 섹션 초안 조립 (결정적 · AI 미사용)
+      const qnaStamp = Date.now();
+      const qContent = goodQs
+        .map((q, i) => `Q${i + 1}. ${(q.body ?? "").replace(/\s+/g, " ").trim()}`)
+        .join("\n\n");
+      const qnaSections = [
+        {
+          id: `draft-${qnaStamp}-qna`,
+          postId: undefined as unknown as string,
+          title: `세미나 Q&A 정리 — ${bd.title ?? boardId}`,
+          content: `[세미나 Q&A 우수 질문 정리 — 검수 시 정의·해설 추가 필요]\n\n${qContent}`,
+          authorName: "편집팀",
+          authorType: "staff" as const,
+          authorEnrollment: "",
+          type: "feature",
+          order: 1,
+        },
+      ];
+
+      const qnaNowIso = new Date().toISOString();
+      await db.collection("content_drafts").doc(qnaDocId).set({
+        seminarId: bd.contextId ?? boardId,
+        seminarTitle: bd.title ?? "",
+        kind: "newsletter" as const,
+        status: "pending" as const,
+        source: "cron" as const,
+        contentGapSource: "seminar_qna",
+        payload: JSON.stringify(qnaSections),
+        createdAt: qnaNowIso,
+        updatedAt: qnaNowIso,
+      });
+
+      qnaGenerated++;
+      qnaBoards.push(boardId);
+    }
+
+    return Response.json({ ok: true, generated, seminars: generatedSeminars, qnaGenerated, qnaBoards });
   } catch (err) {
     console.error("[cron/content-draft-generator]", err);
     return Response.json({ error: "Internal error" }, { status: 500 });
