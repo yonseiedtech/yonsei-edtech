@@ -30,6 +30,7 @@ import {
   FLASHCARDS_HREF,
 } from "@/features/diagnosis/weak-concept-links";
 import { thesisMethodTags } from "@/lib/alumni-thesis-crosslink";
+import EmptyState from "@/components/ui/empty-state";
 
 const MAX_THESES = 4;
 
@@ -206,15 +207,12 @@ export default function DiagnosticWeakConceptPath({
                       aria-label="추천 학습 경로 불러오는 중"
                     />
                   ) : measurementCount === 0 && thesisCount === 0 ? (
-                    <p className="text-[11px] text-muted-foreground">
-                      아직 연결된 측정도구·논문이 없습니다.{" "}
-                      <Link
-                        href={`/archive/concept/${cid}`}
-                        className="font-medium text-cat-5 underline-offset-2 hover:underline"
-                      >
-                        아카이브에서 개념 정의 보기
-                      </Link>
-                    </p>
+                    <EmptyState
+                      compact
+                      title="아직 연결된 측정도구·논문이 없습니다."
+                      actionLabel="아카이브에서 개념 정의 보기"
+                      actionHref={`/archive/concept/${cid}`}
+                    />
                   ) : (
                     <div className="space-y-3">
                       {/* 측정도구 */}

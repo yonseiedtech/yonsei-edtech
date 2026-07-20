@@ -15,6 +15,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import type { Comment } from "@/types";
+import EmptyState from "@/components/ui/empty-state";
 
 interface Props {
   comments: Comment[];
@@ -117,9 +118,7 @@ export default function CommentList({ comments, currentUserId, isAdmin, onDelete
         </div>
       ))}
       {comments.length === 0 && (
-        <p className="py-4 text-center text-sm text-muted-foreground">
-          아직 댓글이 없습니다.
-        </p>
+        <EmptyState compact title="아직 댓글이 없습니다." className="py-2" />
       )}
 
       <AlertDialog open={!!deleteTargetId} onOpenChange={(open) => !open && setDeleteTargetId(null)}>

@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { BookOpen, ChevronRight, Crown, FolderKanban, Globe, Mic, Sparkles, Tag, CalendarRange, HandHeart, MessageSquare, Users } from "lucide-react";
 import { formatDate, cn } from "@/lib/utils";
 import { formatSemester, inferCurrentSemester, type Semester } from "@/lib/semester";
+import EmptyState from "@/components/ui/empty-state";
 
 interface Props {
   owner: User;
@@ -310,7 +311,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
       {isLoading ? (
         <p className="py-6 text-center text-xs text-muted-foreground">불러오는 중…</p>
       ) : totalCount === 0 ? (
-        <p className="py-6 text-center text-xs text-muted-foreground">표시할 항목이 없습니다.</p>
+        <EmptyState compact title="표시할 항목이 없습니다." className="py-2" />
       ) : (
         <div className="space-y-5">
           {visibleGroups.map((group) => {

@@ -4,7 +4,7 @@
   "private": true,
   "scripts": {
     "dev": "next dev",
-    "prebuild": "eslint",
+    "prebuild": "node scripts/check-rawcolor-ratchet.mjs && eslint",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",

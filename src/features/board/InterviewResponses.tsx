@@ -30,6 +30,7 @@ import { formatDate } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import InterviewResponseReactions from "./InterviewResponseReactions";
 import InterviewResponseComments from "./InterviewResponseComments";
+import EmptyState from "@/components/ui/empty-state";
 
 interface Props {
   postId: string;
@@ -180,13 +181,14 @@ export default function InterviewResponses({ postId, meta, storedResponseCount }
       {isLoading ? (
         <p className="mt-4 text-sm text-muted-foreground">응답을 불러오는 중...</p>
       ) : visibleResponses.length === 0 ? (
-        <div className="mt-4 rounded-2xl border border-dashed bg-muted/40 p-8 text-center text-sm text-muted-foreground">
-          {isStaffPlus
+        <EmptyState
+          title={isStaffPlus
             ? "아직 제출된 응답이 없습니다."
             : user
               ? "아직 본인이 제출한 응답이 없습니다. 참여해 보세요!"
               : "로그인 후 인터뷰에 참여해 보세요."}
-        </div>
+          className="mt-4"
+        />
       ) : (
         <div className="mt-4 space-y-4">
           {visibleResponses.map((r: InterviewResponse) => (

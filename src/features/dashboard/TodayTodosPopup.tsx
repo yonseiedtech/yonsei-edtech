@@ -37,6 +37,7 @@ import {
   releaseActiveModal,
   subscribeActiveModalChange,
 } from "@/features/dashboard/notification-orchestrator";
+import EmptyState from "@/components/ui/empty-state";
 
 const POPUP_PREF_KEY = "dashboard_today_popup_enabled";
 const SESSION_GATE_PREFIX = "dashboard_today_popup_shown_";
@@ -350,9 +351,7 @@ export default function TodayTodosPopup() {
           )}
 
           {totalCount === 0 && (
-            <p className="rounded-md bg-muted/30 px-3 py-6 text-center text-sm text-muted-foreground">
-              오늘 마감인 할 일이 없습니다.
-            </p>
+            <EmptyState compact title="오늘 마감인 할 일이 없습니다." className="py-4" />
           )}
         </div>
 

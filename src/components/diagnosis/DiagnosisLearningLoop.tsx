@@ -48,6 +48,7 @@ import {
   type ConceptTrend,
 } from "@/features/diagnosis/learning-loop";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 
 interface DiagnosisLearningLoopProps {
   /** 로그인 사용자 id */
@@ -202,10 +203,12 @@ function ReviewImpactCard({
             </Link>
           </div>
         ) : improved.length === 0 && reviewing.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            복습한 암기카드와 약점 개념이 아직 연결되지 않았어요. 약점 개념의 오답 카드를 복습하면
-            학습효과가 분석됩니다.
-          </p>
+          <EmptyState
+            compact
+            title="복습한 암기카드와 약점 개념이 아직 연결되지 않았어요."
+            description="약점 개념의 오답 카드를 복습하면 학습효과가 분석됩니다."
+            className="py-2"
+          />
         ) : (
           <div className="space-y-4">
             {improved.length > 0 && (
@@ -279,9 +282,7 @@ function ConceptTrendCard({
       </CardHeader>
       <CardContent>
         {conceptTrends.length === 0 ? (
-          <p className="py-4 text-center text-sm text-muted-foreground">
-            약점으로 잡힌 개념이 없어요. 잘하고 있습니다!
-          </p>
+          <EmptyState compact title="약점으로 잡힌 개념이 없어요. 잘하고 있습니다!" className="py-2" />
         ) : (
           <>
             <p className="mb-3 text-xs text-muted-foreground">

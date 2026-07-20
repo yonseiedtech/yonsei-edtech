@@ -37,6 +37,7 @@ import {
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { getComputedStatus } from "@/lib/seminar-utils";
+import EmptyState from "@/components/ui/empty-state";
 import { DEFAULT_REGISTRATION_FIELDS } from "@/types";
 import type { Seminar, SeminarStatus, RegistrationFieldConfig } from "@/types";
 
@@ -179,7 +180,7 @@ function ReviewsSection({ seminarId, isStaff, speakerInfo }: { seminarId: string
           참석자 후기
         </h3>
         {attendeeReviews.length === 0 ? (
-          <p className="text-sm text-muted-foreground text-center py-4">아직 작성된 후기가 없습니다.</p>
+          <EmptyState compact title="아직 작성된 후기가 없습니다." className="py-2" />
         ) : (
           <div className="space-y-3">
             {attendeeReviews.map((r) => <ReviewCard key={r.id} review={r} />)}

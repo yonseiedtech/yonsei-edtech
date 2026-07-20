@@ -550,13 +550,13 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
               onAction={readOnly ? undefined : openNew}
             />
           ) : published.length === 0 ? (
-            <p className="rounded-2xl border border-dashed bg-muted/30 py-8 text-center text-sm text-muted-foreground">
-              아직 발행된 논문이 없습니다. 임시 저장된 항목을 마저 작성해보세요.
-            </p>
+            <EmptyState
+              icon={BookOpen}
+              title="아직 발행된 논문이 없습니다."
+              description="임시 저장된 항목을 마저 작성해보세요."
+            />
           ) : filtered.length === 0 ? (
-            <p className="rounded-2xl border border-dashed bg-muted/30 py-8 text-center text-sm text-muted-foreground">
-              검색 조건에 맞는 논문이 없습니다.
-            </p>
+            <EmptyState icon={Search} title="검색 조건에 맞는 논문이 없습니다." />
           ) : (
             <div className="grid gap-3 sm:grid-cols-2">
               {filtered.map((p) => (

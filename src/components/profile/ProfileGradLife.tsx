@@ -26,6 +26,7 @@ import {
 import { Badge } from "@/components/ui/badge";
 import { GraduationCap, Crown, Briefcase, UserCog, Star, ShieldCheck, Plus } from "lucide-react";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 
 interface Props {
   owner: User;
@@ -119,13 +120,12 @@ export default function ProfileGradLife({ owner, isStaff = false }: Props) {
             </Link>
           )}
         </header>
-        <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-4 text-center text-xs text-muted-foreground">
-          등록된 활동 이력이 없습니다.
-          <br />
-          <span className="text-[11px] text-muted-foreground/70">
-            전공대표·조교·학회·재학생 자문위원 등 학기 단위 활동 이력이 추가되면 이 영역에 표시됩니다.
-          </span>
-        </p>
+        <EmptyState
+          compact
+          icon={GraduationCap}
+          title="등록된 활동 이력이 없습니다."
+          description="전공대표·조교·학회·재학생 자문위원 등 학기 단위 활동 이력이 추가되면 이 영역에 표시됩니다."
+        />
       </section>
     );
   }

@@ -37,6 +37,7 @@ import { cn } from "@/lib/utils";
 import ArchiveStickyToc, { type ArchiveTocSection } from "@/components/archive/ArchiveStickyToc";
 import ArchiveMobileToc from "@/components/archive/ArchiveMobileToc";
 import PageContainer from "@/components/ui/page-container";
+import EmptyState from "@/components/ui/empty-state";
 import ConceptLinkedText from "@/components/archive/ConceptLinkedText";
 import ConceptMentionsInMyRecords from "@/components/archive/ConceptMentionsInMyRecords";
 import { recordRecentView } from "@/lib/archive-recent-views";
@@ -443,17 +444,12 @@ export default function ArchiveDetailPage() {
     }
     return (
       <PageContainer width="default">
-        <div className="py-4 text-center">
-          <p className="text-muted-foreground">
-            {isOffline ? "오프라인 상태예요. 저장된 항목이 없어 표시할 내용이 없습니다." : "항목을 찾을 수 없습니다."}
-          </p>
-          <Link href="/archive">
-            <Button variant="outline" className="mt-4">
-              <ArrowLeft className="mr-2 h-4 w-4" />
-              아카이브로 돌아가기
-            </Button>
-          </Link>
-        </div>
+        <EmptyState
+          title={isOffline ? "오프라인 상태예요. 저장된 항목이 없어 표시할 내용이 없습니다." : "항목을 찾을 수 없습니다."}
+          actionLabel="아카이브로 돌아가기"
+          actionHref="/archive"
+          className="py-8"
+        />
       </PageContainer>
     );
   }
@@ -842,7 +838,7 @@ export default function ArchiveDetailPage() {
             />
           )}
           {concepts.length === 0 && variables.length === 0 && measurements.length === 0 && (
-            <p className="text-sm text-muted-foreground">아직 연결된 항목이 없습니다.</p>
+            <EmptyState compact title="아직 연결된 항목이 없습니다." />
           )}
         </CardContent>
       </Card>
@@ -911,9 +907,11 @@ export default function ArchiveDetailPage() {
         </CardHeader>
         <CardContent>
           {relatedTheses.length === 0 ? (
-            <p className="text-sm text-muted-foreground">
-              아직 이 {ARCHIVE_ITEM_TYPE_LABELS[type]}과(와) 연결된 졸업생 논문이 없습니다.
-            </p>
+            <EmptyState
+              compact
+              icon={GraduationCap}
+              title={`아직 이 ${ARCHIVE_ITEM_TYPE_LABELS[type]}과(와) 연결된 졸업생 논문이 없습니다.`}
+            />
           ) : (
             <ul className="space-y-2">
               {relatedTheses.map((t) => {

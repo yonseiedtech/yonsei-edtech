@@ -43,6 +43,7 @@ import type {
   ContentCreationType,
 } from "@/types";
 import { todayYmdLocal } from "@/lib/dday";
+import EmptyState from "@/components/ui/empty-state";
 
 type TabKey = "award" | "external" | "content";
 
@@ -566,11 +567,7 @@ function ItemList({
   busy: boolean;
 }) {
   if (items.length === 0) {
-    return (
-      <p className="rounded-2xl border border-dashed bg-card p-6 text-center text-xs text-muted-foreground">
-        {emptyText}
-      </p>
-    );
+    return <EmptyState compact title={emptyText} />;
   }
   return (
     <ul className="space-y-2">

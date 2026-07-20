@@ -9,6 +9,7 @@ import {
   TrendingUp, TrendingDown, Minus,
 } from "lucide-react";
 import { defensePracticesApi, defenseQuestionTemplatesApi } from "@/lib/bkend";
+import EmptyState from "@/components/ui/empty-state";
 import { computeDefenseScoreTrend } from "@/lib/reading-defense-loop";
 import { useAuthStore } from "@/features/auth/auth-store";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
@@ -587,9 +588,7 @@ function PracticeSetEditor({
                 관리자가 등록한 표준 질문 세트입니다. 가져온 후 자유롭게 편집·삭제할 수 있습니다.
               </p>
               {templates.length === 0 ? (
-                <p className="py-8 text-center text-sm text-muted-foreground">
-                  등록된 템플릿이 없습니다.
-                </p>
+                <EmptyState compact title="등록된 템플릿이 없습니다." className="py-4" />
               ) : (
                 <ul className="space-y-2">
                   {templates.map((t) => (

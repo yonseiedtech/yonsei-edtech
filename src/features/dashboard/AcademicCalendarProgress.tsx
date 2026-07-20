@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 import { SEMANTIC } from "@/lib/design-tokens";
 import WidgetCard from "@/components/ui/widget-card";
 import SkeletonWidget from "@/components/ui/skeleton-widget";
+import EmptyState from "@/components/ui/empty-state";
 
 const PHASE_COLORS: Record<SemesterPhase, string> = {
   before: "bg-muted text-muted-foreground",
@@ -75,11 +76,13 @@ export default function AcademicCalendarProgress() {
         priority="primary"
         actions={editAction ?? undefined}
       >
-        <p className="mt-4 text-sm text-muted-foreground">
-          {canEdit
-            ? "학사일정이 등록되지 않았습니다. 운영콘솔에서 입력해 주세요."
-            : "학사일정이 아직 등록되지 않았습니다."}
-        </p>
+        <EmptyState
+          compact
+          icon={CalendarDays}
+          title={canEdit ? "학사일정이 등록되지 않았습니다." : "학사일정이 아직 등록되지 않았습니다."}
+          description={canEdit ? "운영콘솔에서 입력해 주세요." : undefined}
+          className="mt-4"
+        />
       </WidgetCard>
     );
   }

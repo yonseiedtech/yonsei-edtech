@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Trash2, Star, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 import type { Seminar, SeminarReview } from "@/types";
 
 type ReviewSubTab = "speaker" | "staff" | "attendee";
@@ -193,9 +194,7 @@ export default function SeminarReviews({ seminar }: Props) {
 
       {/* 후기 목록 */}
       {filteredReviews.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          등록된 후기가 없습니다.
-        </p>
+        <EmptyState title="등록된 후기가 없습니다." className="py-4" />
       ) : (
         <div className="space-y-3">
           {filteredReviews.map((r) => (

@@ -2,6 +2,7 @@
 
 import { Plus, Trash2 } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import EmptyState from "@/components/ui/empty-state";
 import type { SocialLink, SocialPlatform } from "@/types";
 import { SOCIAL_PLATFORM_LABELS } from "@/types";
 
@@ -56,9 +57,7 @@ export default function ProfileSocialsEditor({ value, onChange, disabled }: Prop
         </button>
       </div>
       {list.length === 0 ? (
-        <p className="rounded-lg border border-dashed py-6 text-center text-xs text-muted-foreground">
-          등록된 링크가 없습니다.
-        </p>
+        <EmptyState compact title="등록된 링크가 없습니다." className="py-2" />
       ) : (
         <ul className="space-y-2">
           {list.map((s, i) => (
