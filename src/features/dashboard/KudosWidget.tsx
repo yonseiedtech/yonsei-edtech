@@ -18,6 +18,7 @@ import { useCohortPeers } from "@/features/kudos/useCohortPeers";
 import { useCohortKudos } from "@/features/kudos/useCohortKudos";
 import { useReceivedKudos } from "@/features/kudos/useReceivedKudos";
 import CohortKudosButtons from "@/features/kudos/CohortKudosButtons";
+import EmptyState from "@/components/ui/empty-state";
 
 export default function KudosWidget() {
   const { user } = useAuthStore();
@@ -48,9 +49,13 @@ export default function KudosWidget() {
           )}
         </div>
       ) : (
-        <p className="mt-3 text-xs text-muted-foreground">
-          아직 이번 주 받은 응원이 없어요. 먼저 동기를 응원해보는 건 어때요?
-        </p>
+        <EmptyState
+          compact
+          icon={PartyPopper}
+          title="아직 이번 주 받은 응원이 없어요"
+          description="먼저 동기를 응원해보는 건 어때요?"
+          className="mt-3 bg-transparent"
+        />
       )}
 
       {kudosTargets.length > 0 && (

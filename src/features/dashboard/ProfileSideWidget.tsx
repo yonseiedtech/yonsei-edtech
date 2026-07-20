@@ -27,6 +27,7 @@ import { toast } from "sonner";
 import { notificationsApi, courseTodosApi, messagesApi } from "@/lib/bkend";
 import type { AppNotification, CourseTodo, DirectMessage } from "@/types";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 
 type SideTab = "notif" | "todo" | "message";
 
@@ -54,7 +55,7 @@ function ddayLabel(due: string): { label: string; urgent: boolean } {
 }
 
 function Empty({ text }: { text: string }) {
-  return <p className="px-2 py-6 text-center text-xs text-muted-foreground">{text}</p>;
+  return <EmptyState compact title={text} className="bg-transparent" />;
 }
 
 /** 행 우측 액션 아이콘 버튼 (읽음·완료·삭제) */

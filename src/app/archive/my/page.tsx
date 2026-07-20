@@ -36,6 +36,7 @@ import {
   type RecentArchiveView,
 } from "@/lib/archive-recent-views";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 import { toast } from "sonner";
 
 /** 즐겨찾기 칩 라벨 — 7개 동적 아카이브 타입 (랜딩과 동일 규약). */
@@ -174,27 +175,21 @@ export default function MyArchivePage() {
         </h2>
 
         {!user ? (
-          <Card className="rounded-2xl border-dashed">
-            <CardContent className="flex flex-col items-center gap-3 py-10 text-center">
-              <LogIn className="h-8 w-8 text-muted-foreground" aria-hidden />
-              <p className="text-sm text-muted-foreground">
-                로그인하면 저장한 관심 항목을 여기에서 모아볼 수 있습니다.
-              </p>
-              <Link href="/login">
-                <Button size="sm">로그인하고 즐겨찾기 보기</Button>
-              </Link>
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={LogIn}
+            title="로그인이 필요합니다"
+            description="로그인하면 저장한 관심 항목을 여기에서 모아볼 수 있습니다."
+            actionLabel="로그인하고 즐겨찾기 보기"
+            actionHref="/login"
+          />
         ) : favLoading ? (
           <p className="text-sm text-muted-foreground">불러오는 중...</p>
         ) : groupedFavorites.length === 0 ? (
-          <Card className="rounded-2xl border-dashed">
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              아직 저장한 관심 항목이 없습니다. 각 아카이브 리스트·상세에서{" "}
-              <Star className="inline h-3.5 w-3.5 text-warning" aria-hidden /> 별을 눌러
-              저장해 보세요.
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={Star}
+            title="아직 저장한 관심 항목이 없습니다"
+            description="각 아카이브 리스트·상세에서 별(★)을 눌러 저장해 보세요."
+          />
         ) : (
           <div className="space-y-5">
             {groupedFavorites.map(({ type, items }) => (
@@ -267,11 +262,11 @@ export default function MyArchivePage() {
         </div>
 
         {recent.length === 0 ? (
-          <Card className="rounded-2xl border-dashed">
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              최근 본 아카이브 항목이 여기에 쌓입니다. (이 기기에만 저장)
-            </CardContent>
-          </Card>
+          <EmptyState
+            icon={History}
+            title="최근 본 아카이브 항목이 여기에 쌓입니다"
+            description="이 기기에만 저장됩니다."
+          />
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {recent.map((r) => (

@@ -18,6 +18,7 @@ import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import PageContainer from "@/components/ui/page-container";
+import EmptyState from "@/components/ui/empty-state";
 import ArchiveListToolbar, {
   type ArchiveListSortOption,
 } from "@/components/archive/ArchiveListToolbar";
@@ -490,11 +491,10 @@ function ArchiveTypeListClientInner({ type, initialItems, initialTotal, prefetch
             <Skeleton key={i} className="h-32 w-full" />
           ))
         ) : filtered.length === 0 ? (
-          <Card className="md:col-span-2">
-            <CardContent className="py-10 text-center text-sm text-muted-foreground">
-              {needsFullLoad ? "검색 결과가 없습니다." : "아직 등록된 항목이 없습니다."}
-            </CardContent>
-          </Card>
+          <EmptyState
+            className="md:col-span-2"
+            title={needsFullLoad ? "검색 결과가 없습니다" : "아직 등록된 항목이 없습니다"}
+          />
         ) : (
           filtered.map((it) => (
             <ArchiveCard

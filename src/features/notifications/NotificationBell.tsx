@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
-import { Bell, Check, CheckCheck } from "lucide-react";
+import { Bell, Check, CheckCheck, Inbox } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
 import { cn } from "@/lib/utils";
 import { useNotifications, useMarkRead, useMarkAllRead } from "./useNotifications";
 import type { AppNotification } from "@/types";
@@ -108,7 +109,7 @@ export default function NotificationBell() {
           {/* List */}
           <div className="max-h-72 overflow-y-auto">
             {notifications.length === 0 ? (
-              <p className="py-8 text-center text-sm text-muted-foreground">알림이 없습니다.</p>
+              <EmptyState compact icon={Inbox} title="알림이 없습니다" className="my-2" />
             ) : (
               notifications.slice(0, 20).map((n) => {
                 const content = (

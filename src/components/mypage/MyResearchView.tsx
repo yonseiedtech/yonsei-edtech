@@ -8,6 +8,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { profilesApi } from "@/lib/bkend";
 import dynamic from "next/dynamic";
 import { Skeleton } from "@/components/ui/skeleton";
+import EmptyState from "@/components/ui/empty-state";
 import WritingHeatmap from "@/features/research/WritingHeatmap";
 import WritingHistoryList from "@/features/research/WritingHistoryList";
 import ManualSessionDialog from "@/features/research/study-timer/ManualSessionDialog";
@@ -570,9 +571,13 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
                 <div className="rounded-2xl border bg-card p-4">
                   <h3 className="text-sm font-semibold text-foreground mb-3">최근 세션</h3>
                   {studySessions.length === 0 ? (
-                    <p className="text-xs text-muted-foreground py-6 text-center">
-                      아직 기록된 세션이 없습니다. 수동 추가 또는 논문 화면에서 타이머를 시작해보세요.
-                    </p>
+                    <EmptyState
+                      compact
+                      icon={Clock}
+                      title="아직 기록된 세션이 없습니다"
+                      description="수동 추가 또는 논문 화면에서 타이머를 시작해보세요."
+                      className="bg-transparent"
+                    />
                   ) : (
                     <ul className="divide-y divide-border">
                       {studySessions.slice(0, 20).map((s) => {

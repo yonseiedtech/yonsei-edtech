@@ -36,6 +36,7 @@ import { drag } from "d3-drag";
 import { zoom, zoomIdentity, type ZoomBehavior } from "d3-zoom";
 import PageHeader from "@/components/ui/page-header";
 import PageContainer from "@/components/ui/page-container";
+import EmptyState from "@/components/ui/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -685,16 +686,12 @@ export default function ArchiveGraphPage() {
         {loading ? (
           <Skeleton className="mt-6 h-[600px] w-full rounded-2xl" />
         ) : isEmpty ? (
-          <Card className="mt-6 rounded-2xl border-dashed">
-            <CardContent className="flex flex-col items-center gap-2 py-16 text-center">
-              <Network className="h-10 w-10 text-muted-foreground" aria-hidden />
-              <h2 className="text-base font-semibold">표시할 항목이 없습니다</h2>
-              <p className="max-w-md text-sm text-muted-foreground">
-                공개된 개념·변인·측정도구·연구방법·통계방법·기초 용어가 아직 없습니다.
-                운영진이 검수를 마치면 자동으로 그래프에 반영됩니다.
-              </p>
-            </CardContent>
-          </Card>
+          <EmptyState
+            className="mt-6"
+            icon={Network}
+            title="표시할 항목이 없습니다"
+            description="공개된 개념·변인·측정도구·연구방법·통계방법·기초 용어가 아직 없습니다. 운영진이 검수를 마치면 자동으로 그래프에 반영됩니다."
+          />
         ) : (
           <Card className="mt-6 overflow-hidden rounded-2xl shadow-sm">
             <CardContent className="p-0">

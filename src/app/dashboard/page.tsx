@@ -77,6 +77,7 @@ import LearningStreak from "@/features/mypage/LearningStreak";
 import InactivityCoachingCard from "@/features/dashboard/InactivityCoachingCard";
 import WeeklyGoalCard from "@/features/dashboard/WeeklyGoalCard";
 import StageRecommendationPanel from "@/features/dashboard/StageRecommendationPanel";
+import EmptyState from "@/components/ui/empty-state";
 import NewcomerProgressWidget from "@/features/dashboard/NewcomerProgressWidget";
 import KudosWidget from "@/features/dashboard/KudosWidget";
 import {
@@ -820,22 +821,13 @@ function DashboardContent() {
       {layout !== null &&
         DASHBOARD_WIDGET_KEYS.every((k) => !isWidgetVisible(layout, k)) && (
           <section className="mx-auto mt-12 max-w-6xl px-4">
-            <div className="rounded-2xl border border-dashed bg-card p-10 text-center">
-              <LayoutDashboard size={32} className="mx-auto mb-4 text-muted-foreground/50" />
-              <p className="text-base font-semibold text-foreground">
-                표시할 위젯이 없습니다.
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                마이페이지 → 대시보드 설정에서 위젯을 켜세요.
-              </p>
-              <Link
-                href="/mypage/dashboard-settings"
-                className="mt-4 inline-flex items-center gap-1.5 rounded-lg border bg-card px-4 py-2 text-sm font-medium hover:bg-muted"
-              >
-                <LayoutDashboard size={15} />
-                대시보드 설정 열기
-              </Link>
-            </div>
+            <EmptyState
+              icon={LayoutDashboard}
+              title="표시할 위젯이 없습니다"
+              description="마이페이지 → 대시보드 설정에서 위젯을 켜세요."
+              actionLabel="대시보드 설정 열기"
+              actionHref="/mypage/dashboard-settings"
+            />
           </section>
         )}
     </div>

@@ -15,6 +15,7 @@ import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Trophy, Medal, Flame, ChevronDown, ArrowLeft } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { dataApi, profilesApi } from "@/lib/bkend";
@@ -328,10 +329,10 @@ function LeaderboardContent() {
             ))}
           </div>
         ) : ranked.length === 0 ? (
-          <div className="flex flex-col items-center gap-3 py-16 text-center text-sm text-muted-foreground">
-            <Medal size={36} className="text-muted-foreground/40" />
-            <p>이 기간에 아직 기록이 없습니다.</p>
-          </div>
+          <EmptyState
+            icon={Medal}
+            title="이 기간에 아직 기록이 없습니다"
+          />
         ) : (
           <>
             {/* 헤더 */}

@@ -22,6 +22,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageHeader from "@/components/ui/page-header";
 import PageContainer from "@/components/ui/page-container";
+import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import {
@@ -421,9 +422,7 @@ export default function MethodFinderPage() {
                     ))}
                   </div>
                 ) : linkedTheses.length === 0 ? (
-                  <p className="mt-3 text-sm text-muted-foreground">
-                    아직 연결된 졸업생 논문이 없습니다.
-                  </p>
+                  <EmptyState compact icon={GraduationCap} title="아직 연결된 졸업생 논문이 없습니다" className="mt-3 bg-transparent" />
                 ) : (
                   <ul className="mt-3 space-y-2">
                     {linkedTheses.map((t) => {

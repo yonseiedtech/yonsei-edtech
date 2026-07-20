@@ -23,6 +23,7 @@ import { isAdminOrSysadmin } from "@/lib/permissions";
 import AuthGuard from "@/features/auth/AuthGuard";
 import { Skeleton } from "@/components/ui/skeleton";
 import PageContainer from "@/components/ui/page-container";
+import EmptyState from "@/components/ui/empty-state";
 import type { AppNotification, NotificationType } from "@/types";
 
 // ── 타입별 아이콘 매핑 ──
@@ -499,34 +500,26 @@ function NotificationsContent() {
           </div>
         ) : visible.length === 0 ? (
           // 빈 상태
-          <div className="flex flex-col items-center gap-4 px-6 py-14 text-center">
-            <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-muted text-muted-foreground">
-              <Inbox size={28} />
-            </div>
-            <div>
-              <p className="font-semibold">
-                {searchQuery.trim()
-                  ? "검색 결과가 없습니다"
-                  : filter === "unread"
-                    ? "읽지 않은 알림이 없습니다"
-                    : "새 알림이 없습니다"}
-              </p>
-              <p className="mt-1 text-sm text-muted-foreground">
-                {searchQuery.trim()
-                  ? "다른 키워드로 검색해보세요."
-                  : "중요한 소식이 생기면 여기서 알려드릴게요."}
-              </p>
-            </div>
-            {!searchQuery.trim() && (
-              <Link
-                href="/mypage?tab=settings"
-                className="flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
-              >
-                <Bell size={14} />
-                알림 설정 변경하기
-              </Link>
-            )}
-          </div>
+          <EmptyState
+            icon={Inbox}
+            title={
+              searchQuery.trim()
+                ? "검색 결과가 없습니다"
+                : filter === "unread"
+                  ? "읽지 않은 알림이 없습니다"
+                  : "새 알림이 없습니다"
+            }
+            description={
+              searchQuery.trim()
+                ? "다른 키워드로 검색해보세요."
+                : "중요한 소식이 생기면 여기서 알려드릴게요."
+            }
+            actions={
+              !searchQuery.trim()
+                ? [{ label: "알림 설정 변경하기", href: "/mypage?tab=settings", variant: "outline" as const }]
+                : []
+            }
+          />
         ) : (
           <div className="divide-y">
             {visible.map((n) => (
