@@ -11,7 +11,7 @@ import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import type { Seminar } from "@/types";
-import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2, Globe, ClipboardCheck, MessageSquareQuote, HeartHandshake, BarChart3, ListChecks, Inbox, ArrowRight } from "lucide-react";
+import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2, Globe, ClipboardCheck, MessageSquareQuote, HeartHandshake, BarChart3, ListChecks, Inbox, ArrowRight, CalendarDays, CheckCircle2, Circle } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { auth as firebaseAuth } from "@/lib/firebase";
@@ -19,6 +19,302 @@ import { Button } from "@/components/ui/button";
 import AdminTodoTab from "@/features/admin/AdminTodoTab";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import ActionableBanner from "@/components/ui/actionable-banner";
+import { getHackathonPhase } from "@/features/hackathon/config";
+import { useAcademicCalendar } from "@/features/site-settings/useAcademicCalendar";
+import { todayYmdKst } from "@/lib/dday";
+
+// ── H1: 다가오는 시즌 카운트다운 ──
+
+function calcDdayDiff(targetYmd: string): number {
+  const today = todayYmdKst();
+  const [ty, tm, td] = today.split("-").map(Number);
+  const [ey, em, ed] = targetYmd.split("-").map(Number);
+  return Math.round(
+    (Date.UTC(ey, em - 1, ed) - Date.UTC(ty, tm - 1, td)) / 86400000,
+  );
+}
+
+function ddayBadge(diff: number): string {
+  if (diff > 0) return `D-${diff}`;
+  if (diff === 0) return "D-day";
+  return `D+${-diff} 지남`;
+}
+
+type SeasonItem = {
+  key: string;
+  label: string;
+  /** null = 수동 체크, true/false = 자동 판정 */
+  auto: boolean | null;
+  href?: string;
+};
+
+type SeasonEventDef = {
+  key: string;
+  label: string;
+  dateLabel: string;
+  diff: number;
+  consoleHref: string;
+  toneClass: string;
+  iconClass: string;
+  badgeClass: string;
+  items: SeasonItem[];
+};
+
+function UpcomingSeasonCard({
+  pendingMemberCount,
+  hasCalendar2ndSemester,
+}: {
+  /** undefined = 로딩 중 */
+  pendingMemberCount: number | undefined;
+  hasCalendar2ndSemester: boolean;
+}) {
+  const now = new Date();
+  const hackathonDiff = calcDdayDiff("2026-08-22");
+  const semesterDiff = calcDdayDiff("2026-09-01");
+  const hackathonPhase = getHackathonPhase(now);
+
+  const events: SeasonEventDef[] = [
+    ...(hackathonDiff > -8 && hackathonDiff <= 120
+      ? [
+          {
+            key: "hackathon",
+            label: "에듀테크 해커톤",
+            dateLabel: "2026-08-22 (토)",
+            diff: hackathonDiff,
+            consoleHref: "/console/hackathon",
+            toneClass: "border-info/30 bg-info/5",
+            iconClass: "text-info",
+            badgeClass: "bg-info/10 text-info",
+            items: [
+              {
+                key: "reg_open",
+                label: "참가 접수 오픈",
+                auto: hackathonPhase === "registration",
+                href: "/hackathon",
+              },
+              {
+                key: "board_notice",
+                label: "아이디어 보드 공지 게시",
+                auto: null,
+                href: "/console/hackathon",
+              },
+              { key: "judge_assign", label: "심사위원 배정 완료", auto: null },
+              {
+                key: "console_ready",
+                label: "당일 콘솔 세팅 점검",
+                auto: null,
+                href: "/console/hackathon",
+              },
+            ] as SeasonItem[],
+          },
+        ]
+      : []),
+    ...(semesterDiff > -8 && semesterDiff <= 120
+      ? [
+          {
+            key: "semester",
+            label: "2026년 후기 개강",
+            dateLabel: "2026-09-01 (화)",
+            diff: semesterDiff,
+            consoleHref: "/console/academic-calendar",
+            toneClass: "border-success/30 bg-success/5",
+            iconClass: "text-success",
+            badgeClass: "bg-success/10 text-success",
+            items: [
+              {
+                key: "calendar_set",
+                label: "학사일정(2학기) 등록",
+                auto: hasCalendar2ndSemester,
+                href: "/console/academic-calendar",
+              },
+              {
+                key: "pending_clear",
+                label: "신규 가입 승인 큐 비움",
+                auto:
+                  pendingMemberCount !== undefined
+                    ? pendingMemberCount === 0
+                    : null,
+                href: "/console/members",
+              },
+              {
+                key: "onboarding",
+                label: "온보딩 시퀀스 활성화 확인",
+                auto: null,
+                href: "/console/members",
+              },
+              {
+                key: "welcome_post",
+                label: "신입 환영 게시글 준비",
+                auto: null,
+                href: "/console/posts",
+              },
+            ] as SeasonItem[],
+          },
+        ]
+      : []),
+  ];
+
+  const [manualChecks, setManualChecks] = useState<Record<string, boolean>>(
+    () => {
+      if (typeof window === "undefined") return {};
+      const result: Record<string, boolean> = {};
+      for (const ev of events) {
+        for (const item of ev.items) {
+          if (item.auto === null) {
+            const k = `yedu_season_chk_${ev.key}_${item.key}`;
+            result[k] = window.localStorage.getItem(k) === "1";
+          }
+        }
+      }
+      return result;
+    },
+  );
+
+  if (events.length === 0) return null;
+
+  function toggleManual(evKey: string, itemKey: string) {
+    const k = `yedu_season_chk_${evKey}_${itemKey}`;
+    const next = !manualChecks[k];
+    try {
+      window.localStorage.setItem(k, next ? "1" : "0");
+    } catch {
+      // ignore
+    }
+    setManualChecks((prev) => ({ ...prev, [k]: next }));
+  }
+
+  function isChecked(evKey: string, item: SeasonItem): boolean {
+    if (item.auto !== null) return item.auto;
+    return manualChecks[`yedu_season_chk_${evKey}_${item.key}`] ?? false;
+  }
+
+  return (
+    <div className="rounded-2xl border bg-card p-4">
+      <div className="mb-3 flex items-center gap-2">
+        <CalendarDays size={16} className="text-muted-foreground" />
+        <h2 className="text-sm font-semibold">다가오는 시즌</h2>
+        <span className="ml-auto text-[11px] text-muted-foreground">
+          준비 항목 역산
+        </span>
+      </div>
+      <div className="grid gap-3 sm:grid-cols-2">
+        {events.map((ev) => {
+          const checkedCount = ev.items.filter((item) =>
+            isChecked(ev.key, item),
+          ).length;
+          const allDone = checkedCount === ev.items.length;
+
+          return (
+            <div
+              key={ev.key}
+              className={`rounded-xl border p-3 ${ev.toneClass}`}
+            >
+              {/* 이벤트 헤더 */}
+              <div className="mb-2 flex items-start gap-2">
+                <div className="min-w-0 flex-1">
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <p className="text-sm font-bold">{ev.label}</p>
+                    <span
+                      className={`rounded-full px-2 py-0.5 text-[11px] font-bold ${ev.badgeClass}`}
+                    >
+                      {ddayBadge(ev.diff)}
+                    </span>
+                  </div>
+                  <p className="text-[11px] text-muted-foreground">
+                    {ev.dateLabel}
+                  </p>
+                </div>
+                <Link
+                  href={ev.consoleHref}
+                  className={`flex shrink-0 items-center gap-0.5 text-[11px] font-medium ${ev.iconClass} hover:underline`}
+                >
+                  콘솔 <ArrowRight size={11} />
+                </Link>
+              </div>
+
+              {/* 진행도 */}
+              <div className="mb-2 flex items-center justify-between">
+                <span className="text-[11px] text-muted-foreground">
+                  {checkedCount}/{ev.items.length} 완료
+                </span>
+                {allDone && (
+                  <span
+                    className={`text-[11px] font-semibold ${ev.iconClass}`}
+                  >
+                    준비 완료!
+                  </span>
+                )}
+              </div>
+
+              {/* 체크리스트 */}
+              <ul className="space-y-1.5">
+                {ev.items.map((item) => {
+                  const checked = isChecked(ev.key, item);
+                  return (
+                    <li key={item.key} className="flex items-center gap-2">
+                      {item.auto === null ? (
+                        <button
+                          type="button"
+                          onClick={() => toggleManual(ev.key, item.key)}
+                          className="shrink-0 text-muted-foreground transition-colors hover:text-foreground"
+                          aria-label={
+                            checked
+                              ? `${item.label} 완료 취소`
+                              : `${item.label} 완료 표시`
+                          }
+                        >
+                          {checked ? (
+                            <CheckCircle2 size={13} className={ev.iconClass} />
+                          ) : (
+                            <Circle size={13} />
+                          )}
+                        </button>
+                      ) : (
+                        <span className="shrink-0">
+                          {checked ? (
+                            <CheckCircle2 size={13} className={ev.iconClass} />
+                          ) : (
+                            <Circle
+                              size={13}
+                              className="text-muted-foreground/40"
+                            />
+                          )}
+                        </span>
+                      )}
+                      <span
+                        className={`flex-1 text-xs ${
+                          checked ? "text-muted-foreground line-through" : ""
+                        }`}
+                      >
+                        {item.label}
+                      </span>
+                      <span className="ml-auto flex shrink-0 items-center gap-1">
+                        {item.auto !== null && (
+                          <span className="text-[10px] text-muted-foreground">
+                            자동
+                          </span>
+                        )}
+                        {item.href && (
+                          <Link
+                            href={item.href}
+                            className="text-muted-foreground hover:text-foreground"
+                            aria-label={`${item.label} 바로가기`}
+                          >
+                            <ArrowRight size={11} />
+                          </Link>
+                        )}
+                      </span>
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 /** H3: 처리 대기 통합 큐 — 가장 오래된 항목 경과일 표시 */
 function oldestElapsedLabel(items: { createdAt?: string }[]): string | null {
@@ -68,6 +364,12 @@ export default function ConsoleDashboardPage() {
   const { user } = useAuthStore();
   const { inquiries } = useInquiries();
   const { posts } = usePosts("all");
+
+  // H1: 다가오는 시즌 — 학사일정 2학기 등록 여부 자동 판정
+  const { value: calendarData } = useAcademicCalendar();
+  const hasCalendar2ndSemester = calendarData.entries.some(
+    (e) => e.year === 2026 && e.semester === "second" && !!e.semesterStart,
+  );
   const unansweredCount = inquiries.filter((i) => i.status === "pending").length;
   const [seeding, setSeeding] = useState(false);
   // 시드 완료 상태 (localStorage 영속 + 세션 내 즉시 반영)
@@ -259,6 +561,12 @@ export default function ConsoleDashboardPage() {
           action={{ label: "학술 대시보드 확인", href: "/console/academic/manage" }}
         />
       )}
+
+      {/* H1: 다가오는 시즌 카운트다운 — 해커톤/개강 준비 역산 */}
+      <UpcomingSeasonCard
+        pendingMemberCount={pendingData?.total}
+        hasCalendar2ndSemester={hasCalendar2ndSemester}
+      />
 
       {/* H3: 처리 대기 통합 큐 — 침묵하는 수동 백로그 수확 */}
       {totalManualQueueCount > 0 && (

@@ -89,12 +89,33 @@ function categoryRank(c: CourseCategory): number {
 
 // QA-v2: 1~2월(겨울방학)은 "작년 2학기" — inferCurrentSemester 와 로직 단일화
 // (기존 구현은 1~2월에 존재하지 않는 "올해 2학기"를 기본값으로 삼아 필터·수강계획이 어긋났다)
+//
+// B-2: D-1~D-14 개강 윈도에서 신학기를 기본값으로 승격
+// (리마인더·배너가 "신학기 확인"을 안내하는데 landing이 구학기로 열리는 어긋남 해소)
+function defaultSemesterForToday(): { year: number; term: SemesterTerm } {
+  const cur = inferCurrentSemester();
+  const curTerm: SemesterTerm = cur.semester === "first" ? "spring" : "fall";
+
+  // 다음 학기 개강일 (전기→그해 9/1, 후기→다음해 3/1)
+  const nextYear = cur.semester === "first" ? cur.year : cur.year + 1;
+  const nextTerm: SemesterTerm = cur.semester === "first" ? "fall" : "spring";
+  const nextStart = new Date(
+    cur.semester === "first" ? `${nextYear}-09-01` : `${nextYear}-03-01`,
+  );
+  const diffDays = Math.ceil((nextStart.getTime() - new Date().getTime()) / 86400000);
+
+  if (diffDays >= 1 && diffDays <= 14) {
+    return { year: nextYear, term: nextTerm };
+  }
+  return { year: cur.year, term: curTerm };
+}
+
 function nowYear() {
-  return inferCurrentSemester().year;
+  return defaultSemesterForToday().year;
 }
 
 function defaultTermForToday(): SemesterTerm {
-  return inferCurrentSemester().semester === "first" ? "spring" : "fall";
+  return defaultSemesterForToday().term;
 }
 
 type EnrollMode = "none" | "student" | "auditor";

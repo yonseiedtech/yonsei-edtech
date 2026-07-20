@@ -9,6 +9,7 @@ import { useAcademicStatusCampaign } from "@/features/site-settings/useAcademicS
 import {
   ACADEMIC_STATUS_COPY,
   ACADEMIC_STATUS_PATH,
+  compareSemesterKeyDesc,
   getStatusForSemester,
   isCampaignLive,
 } from "@/lib/academic-status";
@@ -37,7 +38,22 @@ export default function AcademicStatusCampaignGate() {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
 
-  const live = isCampaignLive(campaign);
+  // B-3: 개강 D-14~D+14 윈도는 수동 설정 없어도 자동 활성 폴백 (수동 설정이 있으면 수동 우선)
+  const autoLive = useMemo(() => {
+    const now = new Date();
+    const y = now.getFullYear();
+    const candidates = [
+      new Date(`${y}-03-01`),
+      new Date(`${y}-09-01`),
+      new Date(`${y + 1}-03-01`),
+    ];
+    return candidates.some((d) => {
+      const diff = Math.round((d.getTime() - now.getTime()) / 86400000);
+      return diff >= -14 && diff <= 14;
+    });
+  }, []);
+
+  const live = isCampaignLive(campaign) || autoLive;
   const targetSemester = campaign.targetSemester;
   const dismissKey = DISMISS_PREFIX + targetSemester;
 
@@ -45,6 +61,17 @@ export default function AcademicStatusCampaignGate() {
     const history = (user?.academicStatusHistory as AcademicStatusEntry[] | undefined) ?? undefined;
     return !!getStatusForSemester(history, targetSemester);
   }, [user, targetSemester]);
+
+  // B-3: 졸업생·alumni 는 학사정보 최신화 팝업 영구 미노출
+  const isGraduatedOrAlumni = useMemo(() => {
+    if (!user) return false;
+    const u = user as { role?: string; academicStatusHistory?: AcademicStatusEntry[] };
+    if (u.role === "alumni") return true;
+    const history = u.academicStatusHistory ?? [];
+    if (history.length === 0) return false;
+    const sorted = [...history].sort((a, b) => compareSemesterKeyDesc(a.semester, b.semester));
+    return sorted[0]?.status === "graduated";
+  }, [user]);
 
   // NotificationOrchestrator — 더 높은 우선순위 모달이 활성이면 보류
   const [modalSuppressed, setModalSuppressed] = useState(false);
@@ -56,7 +83,7 @@ export default function AcademicStatusCampaignGate() {
   }, []);
 
   useEffect(() => {
-    if (!initialized || !user || !live || alreadyUpdated) {
+    if (!initialized || !user || !live || alreadyUpdated || isGraduatedOrAlumni) {
       setOpen(false);
       return;
     }
@@ -69,7 +96,7 @@ export default function AcademicStatusCampaignGate() {
       return;
     }
     setOpen(true);
-  }, [initialized, user, live, alreadyUpdated, pathname, dismissKey]);
+  }, [initialized, user, live, alreadyUpdated, isGraduatedOrAlumni, pathname, dismissKey]);
 
   // modal slot 점유 발행 (open 시)
   useEffect(() => {

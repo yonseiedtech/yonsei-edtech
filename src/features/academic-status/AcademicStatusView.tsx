@@ -22,6 +22,7 @@ import {
   ACADEMIC_SEMESTER_STATUS_LABELS,
   type AcademicSemesterStatus,
   type AcademicStatusEntry,
+  type EnrollmentStatus,
   type User,
 } from "@/types";
 
@@ -70,12 +71,25 @@ export default function AcademicStatusView({ userId }: { userId: string }) {
     setStatus(getStatusForSemester(history, next)?.status ?? "enrolled");
   }
 
-  async function persist(nextHistory: AcademicStatusEntry[], successMsg: string) {
+  // A-1: AcademicSemesterStatus → EnrollmentStatus 매핑 (세분 상태 → 시스템 상태)
+  const STATUS_TO_ENROLLMENT: Record<AcademicSemesterStatus, EnrollmentStatus> = {
+    enrolled: "enrolled",
+    on_leave: "on_leave",
+    expected_graduation: "enrolled",
+    completed: "graduated",
+    graduated: "graduated",
+  };
+
+  async function persist(
+    nextHistory: AcademicStatusEntry[],
+    syncFields: Partial<Pick<User, "enrollmentStatus">>,
+    successMsg: string,
+  ) {
     if (!user) return;
     setSaving(true);
     try {
-      await profilesApi.update(userId, { academicStatusHistory: nextHistory });
-      setUser({ ...(user as User), academicStatusHistory: nextHistory });
+      await profilesApi.update(userId, { academicStatusHistory: nextHistory, ...syncFields });
+      setUser({ ...(user as User), academicStatusHistory: nextHistory, ...syncFields });
       qc.invalidateQueries({ queryKey: ["mypage-user", userId] });
       const { toast } = await import("sonner");
       toast.success(successMsg);
@@ -93,8 +107,12 @@ export default function AcademicStatusView({ userId }: { userId: string }) {
       status,
       updatedAt: new Date().toISOString(),
     };
+    // A-1: 현재 학기 저장 시 enrollmentStatus 동기화 — semester-advance cron 참조 필드와 정합
+    const syncFields: Partial<Pick<User, "enrollmentStatus">> =
+      semester === cur ? { enrollmentStatus: STATUS_TO_ENROLLMENT[status] } : {};
     await persist(
       upsertStatusEntry(history, entry),
+      syncFields,
       `${formatSemesterKey(semester)} 학사 상태를 저장했습니다.`,
     );
   }
@@ -102,6 +120,7 @@ export default function AcademicStatusView({ userId }: { userId: string }) {
   async function onDelete(target: string) {
     await persist(
       history.filter((e) => e.semester !== target),
+      {},
       `${formatSemesterKey(target)} 이력을 삭제했습니다.`,
     );
   }

@@ -24,6 +24,8 @@ import {
   XCircle,
   Activity,
   Clock,
+  TrendingUp,
+  TrendingDown,
 } from "lucide-react";
 import { dataApi } from "@/lib/bkend";
 import { auth } from "@/lib/firebase";
@@ -166,6 +168,241 @@ interface KindStatus {
   lastSummary: Record<string, number>;
   /** v9-M1: 기대 주기 × 2 초과 침묵 여부 */
   isStale?: boolean;
+}
+
+/** v12-H2: cron 추세 — 일별 집계 버킷 */
+interface DayBucket {
+  date: string;
+  total: number;
+  success: number;
+  /** 0~100, -1 = 실행 없음 */
+  successRate: number;
+  avgMs: number;
+}
+
+/** v12-H2: kind별 성공률 시계열 */
+interface KindTrend {
+  kind: string;
+  days: DayBucket[];
+  /** 전체 기간 성공률 0~100, -1 = 데이터없음 */
+  overallSuccessRate: number;
+  /** 후반 절반이 전반보다 10%p 이상 하락 시 true */
+  degraded: boolean;
+}
+
+/** v12-H2: kind별 스파크라인 행 */
+function KindTrendRow({ trend, days }: { trend: KindTrend; days: number }) {
+  const { kind, days: buckets, overallSuccessRate, degraded } = trend;
+  const barW = 10;
+  const barGap = 2;
+  const barH = 32;
+  const svgW = buckets.length * (barW + barGap) - barGap;
+
+  return (
+    <div
+      className={cn(
+        "flex flex-wrap items-center gap-3 rounded-lg border p-2.5",
+        degraded && "border-warning/40 bg-warning/5",
+      )}
+    >
+      {/* kind 레이블 */}
+      <div className="flex min-w-[160px] items-center gap-1.5">
+        <code className="rounded bg-muted px-1 text-[10px]">{kind}</code>
+        {degraded && (
+          <Badge variant="outline" className="border-warning/40 text-[9px] text-warning">
+            하락
+          </Badge>
+        )}
+      </div>
+
+      {/* SVG 스파크라인: 일별 성공률 막대 */}
+      <svg
+        width={svgW}
+        height={barH}
+        aria-label={`${kind} 성공률 추세`}
+        className="shrink-0"
+      >
+        {buckets.map((b, i) => {
+          const x = i * (barW + barGap);
+          const filledH =
+            b.total === 0
+              ? 2
+              : Math.max(2, Math.round((Math.max(0, b.successRate) / 100) * barH));
+          const colorClass =
+            b.total === 0
+              ? "fill-muted-foreground/20"
+              : b.successRate === 100
+                ? "fill-success/80"
+                : b.successRate >= 80
+                  ? "fill-warning/70"
+                  : "fill-destructive/70";
+          return (
+            <rect
+              key={b.date}
+              x={x}
+              y={barH - filledH}
+              width={barW}
+              height={filledH}
+              rx={2}
+              className={colorClass}
+            >
+              <title>
+                {b.date}:{" "}
+                {b.total === 0
+                  ? "실행없음"
+                  : `${b.successRate}% (성공 ${b.success}/${b.total})`}
+              </title>
+            </rect>
+          );
+        })}
+      </svg>
+
+      {/* 전체 성공률 수치 */}
+      <div className="ml-auto flex items-center gap-2 text-[11px]">
+        <span
+          className={cn(
+            "font-semibold tabular-nums",
+            overallSuccessRate < 0
+              ? "text-muted-foreground"
+              : overallSuccessRate === 100
+                ? "text-success"
+                : overallSuccessRate >= 80
+                  ? "text-warning"
+                  : "text-destructive",
+          )}
+        >
+          {overallSuccessRate < 0 ? "—" : `${overallSuccessRate}%`}
+        </span>
+        <span className="text-muted-foreground">{days}일 성공률</span>
+      </div>
+    </div>
+  );
+}
+
+/** v12-H2: cron 안정성 추세 섹션 — kind별 일별 성공률 시계열 스파크라인 */
+function CronTrendSection() {
+  const [windowDays, setWindowDays] = useState<14 | 30>(14);
+
+  const { data, isLoading, refetch, isRefetching } = useQuery({
+    queryKey: ["console", "cron-trend", windowDays],
+    queryFn: async () => {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("로그인 필요");
+      const res = await fetch(`/api/console/cron-runs/trend?days=${windowDays}`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`조회 실패 (${res.status})`);
+      const json = (await res.json()) as { trends: KindTrend[] };
+      return json.trends ?? [];
+    },
+    staleTime: 120_000,
+  });
+
+  const trends = data ?? [];
+  const degradedKinds = trends.filter((t) => t.degraded);
+
+  return (
+    <div className="space-y-2">
+      {/* 성공률 하락 경보 배너 */}
+      {degradedKinds.length > 0 && (
+        <div className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/5 px-3 py-2.5 text-[11px] text-warning">
+          <TrendingDown size={13} className="mt-0.5 shrink-0" />
+          <div>
+            <span className="font-semibold">성공률 하락 감지 — </span>
+            {degradedKinds.map((k) => (
+              <span key={k.kind} className="mr-2">
+                <code className="rounded bg-warning/10 px-1">{k.kind}</code>{" "}
+                <span>전체 {k.overallSuccessRate}%</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 추세 카드 */}
+      <div className="rounded-2xl border bg-card p-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="flex items-center gap-1 text-xs font-semibold">
+            <TrendingUp size={12} />
+            cron 안정성 추세
+            <Badge variant="outline" className="text-[10px]">
+              cron_runs · 일별 성공률
+            </Badge>
+          </h2>
+          <div className="flex items-center gap-2">
+            {/* 기간 선택 */}
+            <div className="flex items-center gap-0.5 text-[10px]">
+              {([14, 30] as const).map((d) => (
+                <button
+                  key={d}
+                  onClick={() => setWindowDays(d)}
+                  className={cn(
+                    "rounded px-1.5 py-0.5 transition-colors",
+                    windowDays === d
+                      ? "bg-primary text-primary-foreground"
+                      : "text-muted-foreground hover:bg-muted",
+                  )}
+                >
+                  {d}일
+                </button>
+              ))}
+            </div>
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() => refetch()}
+              disabled={isRefetching}
+              className="h-7 gap-1 px-2 text-[11px]"
+            >
+              {isRefetching ? (
+                <Loader2 size={11} className="animate-spin" />
+              ) : (
+                <RefreshCw size={11} />
+              )}
+              새로고침
+            </Button>
+          </div>
+        </div>
+
+        {/* 범례 */}
+        <div className="mb-2 flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-success/80" />
+            100%
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-warning/70" />
+            80~99%
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-destructive/70" />
+            &lt;80%
+          </span>
+          <span className="flex items-center gap-1">
+            <span className="inline-block h-2.5 w-2.5 rounded-sm bg-muted-foreground/20" />
+            실행없음
+          </span>
+          <span className="ml-auto">M5(임계 경보)는 8월초 데이터 관찰 후</span>
+        </div>
+
+        {isLoading ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">
+            <Loader2 size={12} className="mx-auto mb-1 animate-spin" /> 불러오는 중…
+          </p>
+        ) : trends.length === 0 ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">
+            아직 추세를 분석할 cron 실행 기록이 없습니다.
+          </p>
+        ) : (
+          <div className="space-y-1.5">
+            {trends.map((t) => (
+              <KindTrendRow key={t.kind} trend={t} days={windowDays} />
+            ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
 }
 
 /** v7-M6: cron 실행 상태 섹션 — cron_runs 최근 실행을 kind별 표 + 연속 실패 배너 */
@@ -516,6 +753,9 @@ export default function CronLogsPage() {
 
       {/* v7-M6 — cron 실행 상태 (cron_runs 컬렉션 · kind별 최신 + 연속 실패 배너) */}
       <CronStatusSection />
+
+      {/* H2(v12) — cron 안정성 추세 (cron_runs 일별 성공률 시계열 스파크라인) */}
+      <CronTrendSection />
 
       {/* M4(v11) — 신입 첫 2주 시퀀스 단계별 발송 현황 (push_logs 재사용) */}
       <NewcomerSequenceStatusSection logs={logs} isLoading={isLoading} />

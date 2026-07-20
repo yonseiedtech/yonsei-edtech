@@ -72,7 +72,14 @@ async function _handler(req: NextRequest) {
     const sent = new Set(existing.docs.map((d) => (d.data() as { userId?: string }).userId));
 
     const usersSnap = await db.collection("users").where("approved", "==", true).get();
-    const targets = usersSnap.docs.map((d) => d.id).filter((id) => !sent.has(id));
+    // B-1: 졸업생·alumni 는 수강 시간표 안내와 무관 — KickoffBanner 와 동일 기준으로 필터
+    const targets = usersSnap.docs
+      .filter((d) => {
+        const data = d.data() as { role?: string; enrollmentStatus?: string };
+        return data.role !== "alumni" && data.enrollmentStatus !== "graduated";
+      })
+      .map((d) => d.id)
+      .filter((id) => !sent.has(id));
 
     const nowIso = new Date().toISOString();
     let notifCount = 0;

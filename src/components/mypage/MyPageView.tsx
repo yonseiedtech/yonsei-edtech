@@ -680,13 +680,16 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                 </Link>
               )}
 
-              {/* H2: 학기 Wrapped 진입 — 학기 말(≤6주) + 활동 데이터 충분 시에만 노출(과밀 방지, 본인만) */}
-              {isSelf && !readOnly && isWrappedSeason() &&
-                (diagnosticCount > 0 ||
+              {/* H4(v12): 나의 여정 — 상시 진입점. 학기 말 게이트 해방: 시즌엔 full wrapped, 시즌 밖엔 축소형 "진행 중" 카드, 신입(0활동)엔 "첫 학기" 프레이밍. 신규 컬렉션 없음 — isWrappedSeason() + 기존 카운트 재사용. */}
+              {isSelf && !readOnly && (() => {
+                const inSeason = isWrappedSeason();
+                const hasActivity =
+                  diagnosticCount > 0 ||
                   flashcardTotal > 0 ||
                   publishedPaperCount > 0 ||
                   myPosts.length > 0 ||
-                  myActivities.length + mySeminars.length > 0) && (
+                  myActivities.length + mySeminars.length > 0;
+                return (
                   <Link
                     href="/mypage/wrapped"
                     className="block overflow-hidden rounded-2xl border-2 border-primary/30 bg-primary p-5 text-primary-foreground transition hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
@@ -696,15 +699,34 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                         <Sparkles size={22} />
                       </div>
                       <div className="min-w-0 flex-1">
-                        <h3 className="text-base font-bold">이번 학기 나의 학회 발자취</h3>
-                        <p className="mt-0.5 text-sm text-primary-foreground/80">
-                          학습·읽기·집필·진단·세미나를 모아 이번 학기의 성장 이야기로 되돌려 드려요.
-                        </p>
+                        {inSeason ? (
+                          <>
+                            <h3 className="text-base font-bold">이번 학기 나의 학회 발자취</h3>
+                            <p className="mt-0.5 text-sm text-primary-foreground/80">
+                              학습·읽기·집필·진단·세미나를 모아 이번 학기의 성장 이야기로 되돌려 드려요.
+                            </p>
+                          </>
+                        ) : hasActivity ? (
+                          <>
+                            <h3 className="text-base font-bold">나의 여정 — 지금까지 쌓인 기록</h3>
+                            <p className="mt-0.5 text-sm text-primary-foreground/80">
+                              이번 학기 현재까지 누적을 확인하세요. 학기 말에 전체 결산을 드릴게요.
+                            </p>
+                          </>
+                        ) : (
+                          <>
+                            <h3 className="text-base font-bold">첫 학기 여정을 시작해요</h3>
+                            <p className="mt-0.5 text-sm text-primary-foreground/80">
+                              세미나·논문·진단평가가 쌓이면 이번 학기의 성장 이야기로 되돌려 드릴게요.
+                            </p>
+                          </>
+                        )}
                       </div>
                       <ArrowRight size={18} className="shrink-0 self-center" />
                     </div>
                   </Link>
-                )}
+                );
+              })()}
 
               {(() => {
                 const today = todayYmdLocal();

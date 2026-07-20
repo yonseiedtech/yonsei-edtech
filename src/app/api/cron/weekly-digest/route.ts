@@ -954,9 +954,12 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     loadUnansweredQuestions(db),
   ]);
 
-  // 콘텐츠 0건이면 발송 스킵 (무의미한 메일 방지)
+  // 콘텐츠 0건이면 발송 스킵 — 단 승인 회원이 있으면 개인 재유입 블록으로 계속 발송 (B-4)
+  // 방학 저콘텐츠기(세미나·글·활동·질문 0건)에도 개인화 재유입 제안·미읽음 카운트 전달 유지
   if (seminars.length === 0 && posts.length === 0 && activities.length === 0 && questions.length === 0) {
-    return { sent: 0, recipients: 0 };
+    const sample = await db.collection("users").where("approved", "==", true).limit(1).get();
+    if (sample.empty) return { sent: 0, recipients: 0 };
+    // 승인 회원 있음 → 개인 블록(재유입 제안)으로 발송 계속
   }
 
   // 회원 이메일 + userId 수집 (개인화 집계·온보딩 판정에 회원 doc 보존)
