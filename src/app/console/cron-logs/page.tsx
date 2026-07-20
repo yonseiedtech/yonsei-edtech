@@ -23,6 +23,7 @@ import {
   CheckCircle2,
   XCircle,
   Activity,
+  Clock,
 } from "lucide-react";
 import { dataApi } from "@/lib/bkend";
 import { auth } from "@/lib/firebase";
@@ -55,6 +56,8 @@ interface KindStatus {
   consecutiveFailures: number;
   lastErrorMessage?: string;
   lastSummary: Record<string, number>;
+  /** v9-M1: 기대 주기 × 2 초과 침묵 여부 */
+  isStale?: boolean;
 }
 
 /** v7-M6: cron 실행 상태 섹션 — cron_runs 최근 실행을 kind별 표 + 연속 실패 배너 */
@@ -76,6 +79,8 @@ function CronStatusSection() {
 
   const statuses = data ?? [];
   const failingKinds = statuses.filter((s) => s.consecutiveFailures >= 2);
+  // v9-M1: stale이면서 연속 실패로 이미 경보된 kind는 별도 배너 불필요
+  const staleKinds = statuses.filter((s) => s.isStale && s.consecutiveFailures < 2);
 
   const fmtDuration = (ms: number) =>
     ms >= 60_000
@@ -100,6 +105,23 @@ function CronStatusSection() {
                 {k.lastErrorMessage && (
                   <span className="ml-1 opacity-70">({k.lastErrorMessage.slice(0, 60)})</span>
                 )}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* v9-M1: stale(침묵) 경고 배너 */}
+      {staleKinds.length > 0 && (
+        <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-50 px-3 py-2.5 text-[11px] text-amber-800 dark:bg-amber-900/10 dark:text-amber-300">
+          <Clock size={13} className="mt-0.5 shrink-0" />
+          <div>
+            <span className="font-semibold">침묵(stale) 감지 — </span>
+            {staleKinds.map((k) => (
+              <span key={k.kind} className="mr-2">
+                <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/20">{k.kind}</code>
+                {" "}
+                <span>마지막 실행: {k.lastRunAt ? new Date(k.lastRunAt).toLocaleString("ko-KR") : "—"}</span>
               </span>
             ))}
           </div>
@@ -155,9 +177,19 @@ function CronStatusSection() {
                       <code className="rounded bg-muted px-1 text-[10px]">{s.kind}</code>
                     </td>
                     <td className="py-1.5 px-2 text-muted-foreground">
-                      {s.lastRunAt
-                        ? new Date(s.lastRunAt).toLocaleString("ko-KR")
-                        : "—"}
+                      {s.lastRunAt ? (
+                        <span className="inline-flex items-center gap-1">
+                          {new Date(s.lastRunAt).toLocaleString("ko-KR")}
+                          {s.isStale && (
+                            <Badge
+                              variant="outline"
+                              className="border-amber-400 bg-amber-50 text-[9px] text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+                            >
+                              stale
+                            </Badge>
+                          )}
+                        </span>
+                      ) : "—"}
                     </td>
                     <td className="py-1.5 px-2">
                       {s.lastSuccess ? (

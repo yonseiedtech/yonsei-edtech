@@ -1,15 +1,16 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { requireAuth } from "@/lib/api-auth";
+import { isStaleKind } from "@/lib/cron-stale";
 import type { CronRunMeta } from "@/lib/cron-observability";
 
 /**
- * cron_runs 컬렉션 조회 API (admin 전용) — v7-M6
+ * cron_runs 컬렉션 조회 API (admin 전용) — v7-M6 + v9-M1
  *
  * cron_runs 는 Admin SDK 로만 적재되므로 클라이언트 Firestore SDK 대신
  * 이 서버 라우트를 통해 읽는다 (보안 규칙 변경 불필요).
  *
- * 반환: kind별 최신 실행 상태 + 연속 실패 수
+ * 반환: kind별 최신 실행 상태 + 연속 실패 수 + stale 여부(v9-M1)
  */
 
 export interface KindStatus {
@@ -20,6 +21,8 @@ export interface KindStatus {
   consecutiveFailures: number;
   lastErrorMessage?: string;
   lastSummary: Record<string, number>;
+  /** v9-M1: 기대 주기 × 2 초과 침묵 여부 */
+  isStale: boolean;
 }
 
 export async function GET(req: NextRequest) {
@@ -64,6 +67,7 @@ export async function GET(req: NextRequest) {
         consecutiveFailures,
         lastErrorMessage: latest.errorMessage,
         lastSummary: latest.summary ?? {},
+        isStale: isStaleKind(kind, latest.startedAt),
       });
     }
 

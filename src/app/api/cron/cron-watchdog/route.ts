@@ -2,26 +2,30 @@ import { NextRequest } from "next/server";
 import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { CRON_KIND_INTERVALS, isStaleKind } from "@/lib/cron-stale";
 import type { CronRunMeta } from "@/lib/cron-observability";
 
 /**
- * cron 실패 능동 경보 (v8-H1, 2026-07-20) — 일 1회 04:00 UTC (13:00 KST).
+ * cron 실패 능동 경보 + stale(침묵) 감지 — v8-H1 + v9-M1 (2026-07-20).
  *
- * cron_runs 를 kind별로 스캔해 **연속 2회+ 실패** kind를 감지하고
- * admin/sysadmin 역할 회원에게 인앱 알림을 발송한다.
+ * [v8-H1] 연속 2회+ 실패 kind 감지 → admin/sysadmin 인앱 알림.
+ * [v9-M1] 기대 주기(vercel.json) × 2 초과 침묵 kind 감지 → 동일 채널 stale 알림.
  *
- * 소비 완결: v7-M6 이 cron_runs 적재·조회·콘솔 배너까지만 구축한 상태에서
- * "운영진이 콘솔을 열어야만 발견"하는 수동 의존을 능동 알림으로 대체한다.
+ * ## stale 판정 규칙
+ * - CRON_KIND_INTERVALS(vercel.json 기반)에서 kind별 최대 기대 간격을 가져온다.
+ * - cron_runs 최신 실행이 기대 간격 × 2 초과 → stale 경보.
+ * - cron_runs 기록이 아예 없는 kind → 오탐 방지로 스킵 (관측 도입 전 케이스).
+ * - 자기 자신(cron-watchdog)은 stale 체크에서 제외.
  *
- * dedup: notifications 컬렉션 refId = `watchdog_{kind}_{ymd}` 로 kind별 1일 1회 보장.
- * 자체도 withCronLog 로 래핑되어 cron_runs 에 실행 기록이 남는다.
- *
- * stale(침묵) 감지 — vercel.json 스케줄 파싱이 복잡해 이번 구현에서는 생략.
- * 연속 실패(consecutive ≥ 2)만 경보 대상. (계획서 §H1 "(b) ... 어려우면 (a)만" 명시)
+ * ## dedup
+ * - 연속 실패: refId = `watchdog_{kind}_{ymd}` (kind별 1일 1회)
+ * - stale 침묵: refId = `stale_{kind}_{ymd}` (kind별 1일 1회)
  */
 
 const CONSECUTIVE_THRESHOLD = 2;
 const MAX_RUNS_SCAN = 500;
+/** stale 자기 자신 체크 제외 — watchdog이 실행 중이라면 스스로를 stale로 보고할 수 없음 */
+const SELF_KIND = "cron-watchdog";
 
 function kstYmd(): string {
   return new Date(Date.now() + 9 * 60 * 60 * 1000).toISOString().split("T")[0];
@@ -52,8 +56,9 @@ async function _handler(req: NextRequest) {
       byKind.get(kind)!.push(data);
     }
 
-    // 연속 2회+ 실패 kind 감지
+    // ── [v8-H1] 연속 2회+ 실패 감지 ─────────────────────────────────────
     const failingKinds: {
+      alertType: "failure";
       kind: string;
       consecutiveFailures: number;
       lastErrorMessage?: string;
@@ -67,6 +72,7 @@ async function _handler(req: NextRequest) {
       }
       if (consecutive >= CONSECUTIVE_THRESHOLD) {
         failingKinds.push({
+          alertType: "failure",
           kind,
           consecutiveFailures: consecutive,
           lastErrorMessage: runs[0]?.errorMessage,
@@ -74,8 +80,32 @@ async function _handler(req: NextRequest) {
       }
     }
 
-    if (failingKinds.length === 0) {
-      return Response.json({ ok: true, ymd, alerted: 0, reason: "no failing kinds" });
+    // ── [v9-M1] stale(침묵) 감지: 기대 주기 × 2 초과 kind ───────────────
+    const staleKinds: {
+      alertType: "stale";
+      kind: string;
+      elapsedH: number;
+    }[] = [];
+
+    for (const [kind] of CRON_KIND_INTERVALS) {
+      if (kind === SELF_KIND) continue; // 자기 자신 제외
+      const runs = byKind.get(kind);
+      if (!runs || runs.length === 0) continue; // 기록 없음 → 오탐 방지 스킵
+      const latestRunAt = runs[0]?.startedAt;
+      if (!latestRunAt) continue;
+      if (isStaleKind(kind, latestRunAt)) {
+        const elapsedMs = Date.now() - new Date(latestRunAt).getTime();
+        staleKinds.push({
+          alertType: "stale",
+          kind,
+          elapsedH: Math.floor(elapsedMs / 3_600_000),
+        });
+      }
+    }
+
+    // 이상 없으면 조기 종료
+    if (failingKinds.length === 0 && staleKinds.length === 0) {
+      return Response.json({ ok: true, ymd, alerted: 0, reason: "no issues detected" });
     }
 
     // ── admin/sysadmin 수신자 조회 ────────────────────────────────────────
@@ -94,8 +124,16 @@ async function _handler(req: NextRequest) {
 
     const nowIso = new Date().toISOString();
 
-    // ── dedup: 오늘 이미 발송된 kind 제외 ────────────────────────────────
-    const refIds = failingKinds.map((f) => `watchdog_${f.kind}_${ymd}`);
+    // ── dedup 확인 (failing + stale 통합) ─────────────────────────────────
+    type AlertItem = (typeof failingKinds)[number] | (typeof staleKinds)[number];
+    const allAlerts: AlertItem[] = [...failingKinds, ...staleKinds];
+
+    const refIds = allAlerts.map((a) =>
+      a.alertType === "failure"
+        ? `watchdog_${a.kind}_${ymd}`
+        : `stale_${a.kind}_${ymd}`,
+    );
+
     const existingSnaps = await Promise.all(
       refIds.map((refId) =>
         db
@@ -110,9 +148,7 @@ async function _handler(req: NextRequest) {
       refIds.filter((_, i) => !existingSnaps[i].empty),
     );
 
-    const toAlert = failingKinds.filter(
-      (f) => !alreadySentRefIds.has(`watchdog_${f.kind}_${ymd}`),
-    );
+    const toAlert = allAlerts.filter((_, i) => !alreadySentRefIds.has(refIds[i]));
 
     if (toAlert.length === 0) {
       return Response.json({ ok: true, ymd, alerted: 0, reason: "all already sent today" });
@@ -120,11 +156,23 @@ async function _handler(req: NextRequest) {
 
     // ── 알림 배치 발송 (kind × admin) ────────────────────────────────────
     let alerted = 0;
-    for (const { kind, consecutiveFailures, lastErrorMessage } of toAlert) {
-      const refId = `watchdog_${kind}_${ymd}`;
-      const message = `${kind} cron이 ${consecutiveFailures}회 연속 실패했습니다.${
-        lastErrorMessage ? ` 오류: ${lastErrorMessage.slice(0, 80)}` : ""
-      } 콘솔에서 확인해 주세요.`;
+    for (const alert of toAlert) {
+      const refId =
+        alert.alertType === "failure"
+          ? `watchdog_${alert.kind}_${ymd}`
+          : `stale_${alert.kind}_${ymd}`;
+
+      const title =
+        alert.alertType === "failure"
+          ? `cron 실패 경보: ${alert.kind}`
+          : `cron 침묵 경보: ${alert.kind}`;
+
+      const message =
+        alert.alertType === "failure"
+          ? `${alert.kind} cron이 ${alert.consecutiveFailures}회 연속 실패했습니다.${
+              alert.lastErrorMessage ? ` 오류: ${alert.lastErrorMessage.slice(0, 80)}` : ""
+            } 콘솔에서 확인해 주세요.`
+          : `${alert.kind} cron이 ${alert.elapsedH}시간째 실행 기록이 없습니다(침묵). 콘솔에서 확인해 주세요.`;
 
       for (let i = 0; i < adminIds.length; i += 400) {
         const batch = db.batch();
@@ -133,7 +181,7 @@ async function _handler(req: NextRequest) {
           batch.set(ref, {
             userId,
             type: "cron_watchdog",
-            title: `cron 실패 경보: ${kind}`,
+            title,
             message,
             link: "/console/cron-logs",
             refId,
@@ -147,14 +195,23 @@ async function _handler(req: NextRequest) {
     }
 
     const summary = toAlert
-      .map((f) => `${f.kind}(${f.consecutiveFailures}회)`)
+      .map((a) =>
+        a.alertType === "failure"
+          ? `${a.kind}(${a.consecutiveFailures}회 실패)`
+          : `${a.kind}(침묵 ${a.elapsedH}h)`,
+      )
       .join(", ");
 
-    console.log(
-      `[cron/cron-watchdog] ${ymd} alerted=${alerted} kinds=${summary}`,
-    );
+    console.log(`[cron/cron-watchdog] ${ymd} alerted=${alerted} ${summary}`);
 
-    return Response.json({ ok: true, ymd, alerted, failingKinds: toAlert, summary });
+    return Response.json({
+      ok: true,
+      ymd,
+      alerted,
+      failingKinds: toAlert.filter((a) => a.alertType === "failure"),
+      staleKinds: toAlert.filter((a) => a.alertType === "stale"),
+      summary,
+    });
   } catch (err) {
     console.error("[cron/cron-watchdog]", err);
     return Response.json({ error: "Internal error" }, { status: 500 });
