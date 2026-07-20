@@ -107,12 +107,24 @@ export default function SignupMultiStep({
 
   async function handleNext() {
     if (step === 4) return;
-    const ok = await validateStep(step as 1 | 2 | 3, enrollmentStatus);
+    // Step 1(약관 동의): 필수 약관에 모두 동의해야 다음 단계로 진행 가능
+    if (step === 1) {
+      if (!canProceed) {
+        toast.error("필수 약관에 모두 동의해 주세요.");
+        return;
+      }
+      setStep((s) => Math.min(4, s + 1) as StepNum);
+      return;
+    }
+    // Step 2~4(입력 단계): UI 단계(2·3·4) → 폼 검증 단계(1·2·3) 로 매핑
+    const formStep = (step - 1) as 1 | 2 | 3;
+    const ok = await validateStep(formStep, enrollmentStatus);
     if (!ok) {
       toast.error("입력값을 확인해 주세요.");
       return;
     }
-    if (step === 1) {
+    // 계정 정보 단계(UI Step 2 = 폼 Step 1) 통과 시 학번 중복·게스트 이력 확인
+    if (step === 2) {
       const available = await verifyUsernameAvailable();
       if (!available) return;
       void checkGuestHistory();
@@ -131,6 +143,12 @@ export default function SignupMultiStep({
   );
 
   async function handleSubmit() {
+    // 마지막 단계(선택 정보) 입력 검증 — UI Step 4 = 폼 Step 3
+    const ok = await validateStep(3, enrollmentStatus);
+    if (!ok) {
+      toast.error("입력값을 확인해 주세요.");
+      return;
+    }
     if (!canProceed) {
       toast.error("필수 약관에 모두 동의해 주세요.");
       return;
@@ -166,22 +184,23 @@ export default function SignupMultiStep({
       <StepProgress current={step} total={4} />
 
       <div key={step} className="animate-in fade-in slide-in-from-bottom-2 duration-300">
-        {step === 1 && <Step1AccountInfo form={form} />}
-        {step === 2 && (
+        {step === 1 && (
+          <Step5Consents consents={consents} setConsents={setConsents} />
+        )}
+        {step === 2 && <Step1AccountInfo form={form} />}
+        {step === 3 && (
           <Step2Academic
             form={form}
             enrollmentStatus={enrollmentStatus}
             setEnrollmentStatus={setEnrollmentStatus}
           />
         )}
-        {step === 3 && <Step4Optional form={form} />}
-        {step === 4 && (
-          <Step5Consents consents={consents} setConsents={setConsents} />
-        )}
+        {step === 4 && <Step4Optional form={form} />}
       </div>
 
       <StepNavigation
         step={step}
+        total={4}
         onPrev={handlePrev}
         onNext={handleNext}
         onSubmit={handleSubmit}

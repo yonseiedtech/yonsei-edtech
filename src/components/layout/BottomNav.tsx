@@ -159,7 +159,7 @@ export default function BottomNav() {
   if (!user) return null;
 
   // 콘솔/관리자 페이지에서는 숨김 (자체 사이드바가 있음)
-  if (pathname.startsWith("/console") || pathname.startsWith("/admin") || pathname.startsWith("/academic-admin") || pathname.startsWith("/staff-admin")) {
+  if (pathname.startsWith("/console") || pathname.startsWith("/admin") || pathname.startsWith("/staff-admin")) {
     return null;
   }
 

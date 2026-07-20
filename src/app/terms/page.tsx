@@ -42,7 +42,7 @@ export default function TermsPage() {
       <div className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
         <InlineNotification
           kind="info"
-          title={`현행 버전 ${TERMS_VERSION} · 시행일: 2026년 4월 15일`}
+          title={`현행 버전 ${TERMS_VERSION} · 시행일: 2026년 7월 21일`}
           description="본 약관은 서비스 이용에 관한 권리·의무 및 책임사항을 규정합니다. 회원가입 또는 서비스 이용 시 본 약관에 동의한 것으로 간주됩니다."
         />
       </div>
@@ -169,8 +169,9 @@ export default function TermsPage() {
               <p className="mb-3 text-muted-foreground">학회는 다음과 같은 서비스를 제공합니다.</p>
               <ul className="ml-4 list-disc space-y-1.5 text-foreground/90 marker:text-primary/60">
                 <li>세미나·학술활동 안내 및 신청</li>
-                <li>회원 간 커뮤니티 및 자료실</li>
-                <li>수료증·감사장 발급</li>
+                <li>연구 자료 아카이브·검색 및 소통 보드</li>
+                <li>학습 지원 도구(학습 잔디·논문 읽기 타이머·진단평가)</li>
+                <li>수료증·감사장 발급 및 회원 명함</li>
                 <li>학회 운영 관련 제반 업무</li>
               </ul>
             </section>
@@ -260,7 +261,11 @@ export default function TermsPage() {
                 </span>
                 부칙
               </h2>
-              <p className="text-foreground/90">본 약관은 2026년 4월 15일부터 시행됩니다.</p>
+              <p className="text-foreground/90">본 약관은 2026년 7월 21일부터 시행됩니다.</p>
+              <ul className="mt-2 ml-4 list-disc space-y-1 text-xs text-muted-foreground marker:text-primary/60">
+                <li>2026년 7월 21일: 현행 서비스(아카이브·학습 지원 도구 등) 반영 및 제공 서비스 조항 현행화 (v1.1.0)</li>
+                <li>2026년 4월 15일: 제정 (v1.0.0)</li>
+              </ul>
             </section>
           </div>
         </main>

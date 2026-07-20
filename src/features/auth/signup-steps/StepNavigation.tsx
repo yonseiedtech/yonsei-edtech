@@ -5,16 +5,19 @@ import { Button } from "@/components/ui/button";
 
 interface StepNavigationProps {
   step: 1 | 2 | 3 | 4 | 5;
+  /** 전체 단계 수 — 마지막 단계(제출) 판별. 현재 가입 플로우는 4단계. */
+  total?: number;
   onPrev: () => void;
   onNext: () => Promise<void> | void;
   onSubmit: () => Promise<void> | void;
-  /** Step 5에서 필수 약관 체크되었는지 */
+  /** 마지막 단계 제출 버튼 활성화 여부(필수 약관 동의 완료) */
   canProceed: boolean;
   isSubmitting: boolean;
 }
 
 export default function StepNavigation({
   step,
+  total = 5,
   onPrev,
   onNext,
   onSubmit,
@@ -22,7 +25,7 @@ export default function StepNavigation({
   isSubmitting,
 }: StepNavigationProps) {
   const isFirst = step === 1;
-  const isLast = step === 5;
+  const isLast = step === total;
 
   return (
     <div

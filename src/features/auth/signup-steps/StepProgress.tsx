@@ -2,12 +2,12 @@
 
 import { cn } from "@/lib/utils";
 
+// 가입 플로우 단계 순서 (약관 동의를 최초 단계로 이동, Sprint: 2026-07-21)
 const STEP_LABELS = [
+  "약관 동의",
   "계정 정보",
   "학적 정보",
-  "계정 보안",
   "선택 정보",
-  "약관 동의",
 ] as const;
 
 interface StepProgressProps {

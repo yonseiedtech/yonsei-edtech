@@ -42,7 +42,7 @@ export default function PrivacyPage() {
       <div className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
         <InlineNotification
           kind="info"
-          title={`현행 버전 ${PRIVACY_VERSION} · 시행일: 2026년 4월 15일`}
+          title={`현행 버전 ${PRIVACY_VERSION} · 시행일: 2026년 7월 21일`}
           description="본 방침은 「개인정보 보호법」 제30조 및 「정보통신망 이용촉진 및 정보보호 등에 관한 법률」에 따라 공개됩니다. 변경 시 시행 7일 전 공지합니다."
         />
       </div>
@@ -99,8 +99,10 @@ export default function PrivacyPage() {
               <ul className="ml-4 list-disc space-y-1.5 text-foreground/90 marker:text-primary/60">
                 <li>회원 가입 및 관리, 본인 확인, 회원자격 유지·관리</li>
                 <li>세미나·학술활동 참가 접수 및 안내</li>
+                <li>학습 지원 도구(학습 잔디·논문 읽기·진단평가) 제공 및 맞춤 안내</li>
                 <li>수료증·감사장 발급 및 이력 관리</li>
                 <li>공지사항·뉴스레터 등 학회 운영 관련 소통</li>
+                <li>서비스 품질 및 이용 편의 개선(익명 통계 분석)</li>
                 <li>민원·문의 응대 및 분쟁 조정</li>
               </ul>
             </section>
@@ -118,9 +120,10 @@ export default function PrivacyPage() {
                 수집하는 개인정보 항목
               </h2>
               <ul className="ml-4 list-disc space-y-1.5 text-foreground/90 marker:text-primary/60">
-                <li><strong className="font-semibold text-foreground">필수</strong>: 이름, 이메일, 학번(아이디), 비밀번호, 생년월일, 입학 시점</li>
+                <li><strong className="font-semibold text-foreground">필수</strong>: 이름, 이메일, 학번(아이디), 비밀번호, 생년월일, 입학 시점, 학부 정보, 보안질문·답변</li>
                 <li><strong className="font-semibold text-foreground">선택</strong>: 연락처(휴대폰), 소속, 직책, 관심분야, 프로필 이미지</li>
-                <li><strong className="font-semibold text-foreground">자동 수집</strong>: 서비스 이용기록, 접속 로그, 쿠키, IP 주소</li>
+                <li><strong className="font-semibold text-foreground">서비스 이용 중 생성</strong>: 학습활동 기록(학습 잔디, 논문 읽기, 진단평가), 세미나·활동 참여 이력, 후기</li>
+                <li><strong className="font-semibold text-foreground">자동 수집</strong>: 서비스 이용기록, 접속 로그, 쿠키, IP 주소, 익명 웹 성능 지표(약 10% 표본, 이용자 식별정보 미포함), 익명 검색 무결과 질의(이용자 식별정보 미포함)</li>
               </ul>
             </section>
 
@@ -140,6 +143,7 @@ export default function PrivacyPage() {
                 <li>회원정보: 회원 탈퇴 시까지. 다만 관계 법령에서 정한 기간 동안은 별도 보관합니다.</li>
                 <li>세미나·활동 참여 기록: 회원 자격 유지 기간 + 학술 이력 관리를 위한 추가 3년</li>
                 <li>수료증·감사장 발급 기록: 발급일로부터 5년</li>
+                <li>익명 통계 데이터(웹 성능 지표·검색 무결과 질의): 수집일로부터 1년 후 자동 삭제</li>
                 <li>부정 이용 기록: 1년 (재발 방지 목적)</li>
               </ol>
             </section>
@@ -291,6 +295,10 @@ export default function PrivacyPage() {
                 본 방침은 시행일부터 적용되며, 법령 및 방침에 따른 변경내용의 추가, 삭제 및 정정이
                 있는 경우 변경사항의 시행 7일 전부터 공지사항을 통하여 고지합니다.
               </p>
+              <ul className="mt-3 ml-4 list-disc space-y-1 text-xs text-muted-foreground marker:text-primary/60">
+                <li>2026년 7월 21일: 현행 서비스 반영 — 학습활동 기록·익명 통계(웹 성능·검색 무결과) 수집 항목 명시 및 제3자 미제공 명확화 (v1.1.0)</li>
+                <li>2026년 4월 15일: 제정 (v1.0.0)</li>
+              </ul>
             </section>
           </div>
         </main>

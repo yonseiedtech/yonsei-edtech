@@ -917,7 +917,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               )}
               {/* Sprint 70: 운영자 통합 박스 — 5개 운영 진입 버튼 시각적 강조 */}
               {/* 운영 도구 — 대외 학술대회는 운영진(staff+)이면 접속 경로와 무관하게 노출 */}
-              {isStaff && (type === "external" || backHref.includes("academic-admin") || backHref.includes("/console/academic")) && (
+              {isStaff && (type === "external" || backHref.includes("/console/academic")) && (
                 <div className="basis-full rounded-2xl border-2 border-primary/30 bg-primary/5 p-3">
                   <div className="mb-2 flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wider text-primary">
                     <UserCog size={12} /> 운영 도구 {type === "external" && "(대외 학술대회)"}

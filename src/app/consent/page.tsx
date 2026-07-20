@@ -38,7 +38,7 @@ export default function ConsentPage() {
       <div className="mt-4 animate-in fade-in slide-in-from-bottom-2 duration-500">
         <InlineNotification
           kind="info"
-          title={`현행 버전 ${CONSENT_VERSION} · 시행일: 2026년 4월 15일`}
+          title={`현행 버전 ${CONSENT_VERSION} · 시행일: 2026년 7월 21일`}
           description="「개인정보 보호법」 제15조 및 제22조에 따라 개인정보를 수집·이용합니다. 내용을 자세히 읽으신 후 동의 여부를 결정해 주시기 바랍니다."
         />
       </div>
@@ -135,20 +135,20 @@ export default function ConsentPage() {
                         <td className="px-4 py-3 align-top text-foreground/80">회원 탈퇴 시까지</td>
                       </tr>
                       <tr className="transition-colors hover:bg-muted/20">
-                        <td className="px-4 py-3 align-top font-medium text-foreground">학술활동</td>
+                        <td className="px-4 py-3 align-top font-medium text-foreground">학술·학습활동</td>
                         <td className="px-4 py-3 align-top text-foreground/80">
-                          세미나·활동 참여 이력, 후기
+                          세미나·활동 참여 이력, 후기, 학습활동 기록(학습 잔디·논문 읽기·진단평가)
                         </td>
-                        <td className="px-4 py-3 align-top text-foreground/80">수료증 발급, 이력 관리</td>
+                        <td className="px-4 py-3 align-top text-foreground/80">수료증 발급, 학습 지원, 이력 관리</td>
                         <td className="px-4 py-3 align-top text-foreground/80">회원 자격 종료 + 3년</td>
                       </tr>
                       <tr className="transition-colors hover:bg-muted/20">
-                        <td className="px-4 py-3 align-top font-medium text-foreground">서비스 운영</td>
+                        <td className="px-4 py-3 align-top font-medium text-foreground">서비스 운영·개선</td>
                         <td className="px-4 py-3 align-top text-foreground/80">
-                          접속 로그, IP 주소, 쿠키
+                          접속 로그, IP 주소, 쿠키, 익명 웹 성능 지표(약 10% 표본), 익명 검색 무결과 질의
                         </td>
                         <td className="px-4 py-3 align-top text-foreground/80">
-                          부정 이용 분석, 서비스 품질 개선
+                          부정 이용 분석, 서비스 품질·이용 편의 개선
                         </td>
                         <td className="px-4 py-3 align-top text-foreground/80">1년</td>
                       </tr>
@@ -300,6 +300,10 @@ export default function ConsentPage() {
                   </a>
                 </p>
               </div>
+              <ul className="mt-4 ml-4 list-disc space-y-1 text-xs text-muted-foreground marker:text-primary/60">
+                <li>2026년 7월 21일: 현행 서비스 반영 — 학습활동 기록·익명 통계 수집 항목 명시 (v1.1.0)</li>
+                <li>2026년 4월 15일: 제정 (v1.0.0)</li>
+              </ul>
             </section>
           </div>
         </main>
