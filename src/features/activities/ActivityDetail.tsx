@@ -23,7 +23,7 @@ import {
   Plus, Trash2, ListChecks, Timer, UserCog,
   ChevronDown, ChevronUp, ChevronRight,
   Upload, Paperclip, FileText, Download, CalendarPlus,
-  MessageSquare, MessageSquareQuote, HeartHandshake, BarChart3, Search, Presentation,
+  MessageSquare, MessageSquareQuote, HeartHandshake, BarChart3, Search, Presentation, Wand2,
 } from "lucide-react";
 import InlineMeetingTimer from "./InlineMeetingTimer";
 import ActivityConnectedTodos from "./ActivityConnectedTodos";
@@ -33,6 +33,7 @@ import StudySessionPreClassCard from "./StudySessionPreClassCard";
 import StudySessionNotesCard from "./StudySessionNotesCard";
 import StudyMaterialArchive from "./StudyMaterialArchive";
 import StudyParticipationReport from "./StudyParticipationReport";
+import StudyCurriculumWizard from "./StudyCurriculumWizard";
 import MyActivitySessionsTab from "@/features/conference/MyActivitySessionsTab";
 import AttendeeReviewsSection from "@/features/conference/AttendeeReviewsSection";
 import ActivityInfoEditor from "./ActivityInfoEditor";
@@ -162,6 +163,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [bulkEnd, setBulkEnd] = useState("21:00");
   const [bulkMode, setBulkMode] = useState<ActivityProgressMode>("in_person");
   const [bulking, setBulking] = useState(false);
+  // 교수설계 마법사 (조건 기반 커리큘럼 스캐폴딩)
+  const [wizardOpen, setWizardOpen] = useState(false);
 
   const toggleTimer = (pid: string) => {
     setExpandedTimers((prev) => {
@@ -1170,15 +1173,28 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   <div className="flex items-center justify-between">
                     <h3 className="text-sm font-semibold flex items-center gap-1"><ListChecks size={14} />주차 추가</h3>
                     {(type === "study" || type === "project") && (
-                      <Button
-                        size="sm"
-                        variant={bulkOpen ? "default" : "outline"}
-                        onClick={() => setBulkOpen((v) => !v)}
-                        className="h-7 gap-1 px-2 text-[11px]"
-                      >
-                        <CalendarPlus size={12} />
-                        {bulkOpen ? "일괄 생성 닫기" : "주 단위 일괄 생성"}
-                      </Button>
+                      <div className="flex items-center gap-1.5">
+                        {type === "study" && (
+                          <Button
+                            size="sm"
+                            variant="outline"
+                            onClick={() => setWizardOpen(true)}
+                            className="h-7 gap-1 px-2 text-[11px]"
+                          >
+                            <Wand2 size={12} />
+                            교수설계 마법사
+                          </Button>
+                        )}
+                        <Button
+                          size="sm"
+                          variant={bulkOpen ? "default" : "outline"}
+                          onClick={() => setBulkOpen((v) => !v)}
+                          className="h-7 gap-1 px-2 text-[11px]"
+                        >
+                          <CalendarPlus size={12} />
+                          {bulkOpen ? "일괄 생성 닫기" : "주 단위 일괄 생성"}
+                        </Button>
+                      </div>
                     )}
                   </div>
                   <Input value={progressTitle} onChange={(e) => setProgressTitle(e.target.value)} placeholder="활동 내용 (예: 논문 리뷰 #1)" />
@@ -1315,6 +1331,17 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     </div>
                   )}
                 </div>
+              )}
+
+              {/* 교수설계 마법사 — 조건 기반 커리큘럼 스캐폴딩 (스터디만) */}
+              {type === "study" && (isStaff || isLeader) && (
+                <StudyCurriculumWizard
+                  activityId={activityId}
+                  existingWeekCount={progressList.length}
+                  defaultStartDate={activity?.date as string | undefined}
+                  open={wizardOpen}
+                  onOpenChange={setWizardOpen}
+                />
               )}
 
               {/* 주차별 기록 */}

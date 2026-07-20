@@ -17,6 +17,8 @@ import {
   Paperclip,
   Pencil,
   Save,
+  Target,
+  ClipboardList,
   Trash2,
   Upload,
   Users,
@@ -39,6 +41,7 @@ import StudySessionPreClassCard from "./StudySessionPreClassCard";
 import StudySessionReflectionCard from "./StudySessionReflectionCard";
 import StudySessionAssignmentsCard from "./StudySessionAssignmentsCard";
 import StudySessionNotesCard from "./StudySessionNotesCard";
+import StudyCurriculumGoalCheck from "./StudyCurriculumGoalCheck";
 import CommBoardSection from "@/features/comm-board/CommBoardSection";
 import type { CommContextType } from "@/types";
 
@@ -453,6 +456,65 @@ export default function ActivityWeekDetailPage({
           )}
         </CardContent>
       </Card>
+
+      {/* 교수설계 마법사 소비 — 이번 회차 목표·활동·과제 (마법사로 스캐폴딩된 회차만) */}
+      {(type === "study" || type === "project") &&
+        (week.objective || week.activityPlan || week.assignment) && (
+          <Card className="border-primary/20">
+            <CardContent className="space-y-3 py-4">
+              <h2 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+                <Target size={14} className="text-primary" /> 이번 회차 목표
+              </h2>
+              {week.objective && (
+                <p className="rounded-lg border bg-primary/5 p-3 text-sm leading-relaxed text-foreground">
+                  {week.objective}
+                </p>
+              )}
+              {week.activityPlan && (
+                <div>
+                  <p className="mb-1 flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                    <ClipboardList size={12} /> 활동 구성
+                  </p>
+                  <ul className="space-y-1">
+                    {week.activityPlan.split("\n").filter(Boolean).map((line, i) => (
+                      <li key={i} className="flex gap-1.5 text-sm text-foreground">
+                        <span className="text-primary">·</span>
+                        <span>{line}</span>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              {week.assignment && (
+                <div>
+                  <p className="mb-1 text-xs font-medium text-muted-foreground">과제</p>
+                  <p className="whitespace-pre-wrap rounded-lg border bg-muted/30 p-2.5 text-sm text-foreground">
+                    {week.assignment}
+                  </p>
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        )}
+
+      {/* 교수설계 마법사 소비 — 마지막 회차: 회차별 목표 달성 점검 */}
+      {(type === "study" || type === "project") &&
+        weekNumber === progressList.length &&
+        progressList.some((p) => (p.objective ?? "").trim()) && (
+          <Card>
+            <CardContent className="py-4">
+              <StudyCurriculumGoalCheck
+                activityId={activityId}
+                sessions={progressList}
+                initial={
+                  (activity as { curriculumGoalCheck?: Record<string, "met" | "partial" | "unmet"> })
+                    .curriculumGoalCheck
+                }
+                canEdit={canEdit}
+              />
+            </CardContent>
+          </Card>
+        )}
 
       <Card>
         <CardContent className="space-y-3 py-4">

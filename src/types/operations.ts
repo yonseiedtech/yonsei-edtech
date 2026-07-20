@@ -167,6 +167,17 @@ export interface ActivityProgress {
   preReadMaterials?: { url: string; name: string; size?: number; type?: string }[];
   /** Sprint 3 — 사전에 공유하는 핵심 토론 질문 (회원이 미리 생각해 오도록). */
   discussionQuestions?: string[];
+  /**
+   * 교수설계 마법사 — 이 회차의 학습목표 문장 (Bloom 동사).
+   * 마법사로 스캐폴딩된 회차만 채워지며, 주차 페이지 "이번 회차 목표" 카드로 노출.
+   */
+  objective?: string;
+  /** 교수설계 마법사 — 이 회차의 활동 구성(줄바꿈 구분). */
+  activityPlan?: string;
+  /** 교수설계 마법사 — 이 회차의 과제 제안. */
+  assignment?: string;
+  /** 교수설계 마법사 — 회차 단계(오리엔테이션/전개/통합·평가). */
+  designPhase?: "orientation" | "development" | "integration";
   createdAt: string;
 }
 
