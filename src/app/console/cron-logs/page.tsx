@@ -45,6 +45,114 @@ interface PushLog {
   seminarId?: string;
   userId?: string;
   date?: string;
+  /** newcomer_sequence 전용 — 단계 키 (d1/d3/d7/d10/d14) */
+  step?: string;
+  /** newcomer_sequence 전용 — 발송 대상 학기 키 */
+  semKey?: string;
+}
+
+/** M4(v11): 신입 시퀀스 단계 메타 */
+const NEWCOMER_SEQ_STEPS: { step: string; label: string }[] = [
+  { step: "d1",  label: "D+1 프로필 완성" },
+  { step: "d3",  label: "D+3 온보딩 시작" },
+  { step: "d7",  label: "D+7 연구 준비도 진단" },
+  { step: "d10", label: "D+10 아카이브 즐겨찾기" },
+  { step: "d14", label: "D+14 첫 2주 회고" },
+];
+
+/**
+ * M4(v11): 신입 첫 2주 시퀀스 단계별 발송 현황 소표면.
+ * 부모 `CronLogsPage` 가 이미 fetch 한 push_logs 200건을 props 로 받아
+ * kind=newcomer_sequence 인 레코드를 step 별로 집계한다 — 신규 쿼리·컬렉션 없음.
+ */
+function NewcomerSequenceStatusSection({ logs, isLoading }: { logs: PushLog[]; isLoading: boolean }) {
+  const seqLogs = useMemo(
+    () => logs.filter((l) => l.kind === "newcomer_sequence"),
+    [logs],
+  );
+
+  const byStep = useMemo(() => {
+    const map = new Map<string, { count: number; lastSentAt: string; semKey: string }>();
+    for (const l of seqLogs) {
+      const s = l.step ?? "(unknown)";
+      const prev = map.get(s) ?? { count: 0, lastSentAt: "", semKey: "" };
+      const sentAt = l.sentAt ?? "";
+      map.set(s, {
+        count: prev.count + 1,
+        lastSentAt: sentAt > prev.lastSentAt ? sentAt : prev.lastSentAt,
+        semKey: sentAt > prev.lastSentAt ? (l.semKey ?? "") : prev.semKey,
+      });
+    }
+    return NEWCOMER_SEQ_STEPS.map(({ step, label }) => ({
+      step,
+      label,
+      ...(map.get(step) ?? { count: 0, lastSentAt: "", semKey: "" }),
+    }));
+  }, [seqLogs]);
+
+  const total = seqLogs.length;
+
+  return (
+    <div className="rounded-2xl border bg-card p-4">
+      <h2 className="mb-2 flex flex-wrap items-center gap-1 text-xs font-semibold">
+        <Mail size={12} />
+        신입 첫 2주 시퀀스 발송 현황
+        <Badge variant="outline" className="text-[10px]">
+          push_logs · newcomer_sequence
+        </Badge>
+        <span className="ml-auto text-[10px] text-muted-foreground">
+          {total > 0 ? `총 ${total}건 (최근 200건 기준)` : "발송 이력 없음"}
+        </span>
+      </h2>
+      {isLoading ? (
+        <p className="py-3 text-center text-xs text-muted-foreground">
+          <Loader2 size={12} className="mx-auto mb-1 animate-spin" /> 불러오는 중…
+        </p>
+      ) : total === 0 ? (
+        <p className="py-3 text-center text-xs text-muted-foreground">
+          신입 시퀀스 발송 이력이 없습니다. cron 이 실행되면 자동 집계됩니다.
+        </p>
+      ) : (
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-[11px]">
+            <thead>
+              <tr className="border-b text-left text-muted-foreground">
+                <th className="py-1 pr-2 font-medium">단계</th>
+                <th className="py-1 px-2 text-right font-medium">발송 건수</th>
+                <th className="py-1 px-2 font-medium">최근 발송</th>
+                <th className="py-1 pl-2 font-medium">학기</th>
+              </tr>
+            </thead>
+            <tbody>
+              {byStep.map((r) => (
+                <tr key={r.step} className="border-b last:border-b-0">
+                  <td className="py-1.5 pr-2">
+                    <code className="rounded bg-muted px-1 text-[10px]">{r.step}</code>
+                    <span className="ml-1.5 text-muted-foreground">{r.label}</span>
+                  </td>
+                  <td className="py-1.5 px-2 text-right font-medium">
+                    {r.count > 0 ? (
+                      <span className="text-foreground">{r.count}</span>
+                    ) : (
+                      <span className="text-muted-foreground">—</span>
+                    )}
+                  </td>
+                  <td className="py-1.5 px-2 text-muted-foreground">
+                    {r.lastSentAt
+                      ? new Date(r.lastSentAt).toLocaleString("ko-KR")
+                      : "—"}
+                  </td>
+                  <td className="py-1.5 pl-2 text-muted-foreground">
+                    {r.semKey || "—"}
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      )}
+    </div>
+  );
 }
 
 /** cron_runs 컬렉션 kind별 집계 (서버 /api/console/cron-runs 반환) */
@@ -408,6 +516,9 @@ export default function CronLogsPage() {
 
       {/* v7-M6 — cron 실행 상태 (cron_runs 컬렉션 · kind별 최신 + 연속 실패 배너) */}
       <CronStatusSection />
+
+      {/* M4(v11) — 신입 첫 2주 시퀀스 단계별 발송 현황 (push_logs 재사용) */}
+      <NewcomerSequenceStatusSection logs={logs} isLoading={isLoading} />
 
       {/* v7-H3 — 로그 보존 정리 dry-run (조회 전용, 삭제 없음).
           자동 스케줄은 vercel.json 미등록(휴면) — 여기서 삭제 예정 규모를 확인한 뒤 활성화를 결정한다. */}

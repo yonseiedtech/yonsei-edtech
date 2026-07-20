@@ -768,6 +768,15 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const progressDone = progressList.filter((p) => p.status === "completed").length;
   const progressPct = progressList.length > 0 ? Math.round((progressDone / progressList.length) * 100) : 0;
 
+  // M3: 커리큘럼 설계 메타 (스터디 전용 · 표시만 · 신규 쿼리 없음)
+  type CurriculumDesignBrief = { models: { id: string; name: string }[] };
+  const curriculumDesign = type === "study"
+    ? (activity as { curriculumDesign?: CurriculumDesignBrief }).curriculumDesign
+    : undefined;
+  const nextSessionWithObjective = progressList.find(
+    (p) => p.status !== "completed" && (p.objective ?? "").trim(),
+  );
+
   const staffPids = participants.filter((pid) => leaderId === pid || !!participantRoles[pid]);
   const regularPids = participants.filter((pid) => !staffPids.includes(pid));
 
@@ -1138,6 +1147,42 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   {activity.tags && activity.tags.length > 0 && (
                     <div className="flex flex-wrap gap-1">
                       {activity.tags.map((t) => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}
+                    </div>
+                  )}
+                  {/* M3: 커리큘럼 설계 요약 카드 — 마법사 산출 데이터 소비 · 설계 없으면 미노출 */}
+                  {curriculumDesign && (
+                    <div className="rounded-2xl border bg-card p-4 space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <Wand2 size={13} className="text-primary" />
+                        <h3 className="text-sm font-semibold">커리큘럼 설계</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {curriculumDesign.models.map((m) => (
+                          <Badge
+                            key={m.id}
+                            variant="secondary"
+                            className="bg-primary/10 text-primary text-[10px]"
+                          >
+                            {m.name}
+                          </Badge>
+                        ))}
+                      </div>
+                      {progressList.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          회차 진행{" "}
+                          <span className="font-medium text-foreground">
+                            {progressDone} / {progressList.length}
+                          </span>
+                        </p>
+                      )}
+                      {nextSessionWithObjective && (
+                        <p className="line-clamp-1 text-xs text-muted-foreground">
+                          다음 회차 목표:{" "}
+                          <span className="text-foreground">
+                            {nextSessionWithObjective.objective}
+                          </span>
+                        </p>
+                      )}
                     </div>
                   )}
                   {/* Sprint 67-Z/QA-H2: 학술대회 참석자 후기 섹션 — isStaff 만 (leader 제외, regrets 권한 정확화) */}

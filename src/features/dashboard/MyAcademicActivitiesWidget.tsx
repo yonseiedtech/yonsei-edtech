@@ -3,7 +3,7 @@
 import { useMemo } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { ClipboardList, Users, ArrowRight } from "lucide-react";
+import { ClipboardList, Users, ArrowRight, Wand2 } from "lucide-react";
 import { activitiesApi } from "@/lib/bkend";
 import type { Activity, ActivityType } from "@/types";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -113,6 +113,20 @@ export default function MyAcademicActivitiesWidget() {
                   {a.endDate && a.endDate !== a.date ? ` ~ ${a.endDate}` : ""}
                   {a.leader ? ` · ${a.leader}` : ""}
                 </p>
+                {/* M3: 스터디 커리큘럼 설계 모형 1줄 표시 — 쿼리 없음(activity 문서 재사용) */}
+                {a.type === "study" &&
+                  (() => {
+                    const models = (
+                      a as { curriculumDesign?: { models: { name: string }[] } }
+                    ).curriculumDesign?.models;
+                    if (!models?.length) return null;
+                    return (
+                      <p className="mt-0.5 flex items-center gap-0.5 text-[10px] text-primary">
+                        <Wand2 size={9} className="shrink-0" />
+                        {models.map((m) => m.name).join(" · ")}
+                      </p>
+                    );
+                  })()}
               </div>
               <span className="shrink-0 rounded-md bg-muted px-1.5 py-0.5 text-[10px] text-muted-foreground">
                 {a.status === "ongoing" ? "진행중" : "예정"}
