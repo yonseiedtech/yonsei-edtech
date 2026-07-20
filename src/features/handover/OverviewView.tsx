@@ -60,7 +60,10 @@ export default function OverviewView() {
     const rows = positions
       .filter((p) => (p.userName ?? "").trim().length > 0)
       .map((p) => {
-        const notes = handoverDocs.filter((d) => d.role === p.title);
+        // roles[] 배열 포함 여부로 집계 (없으면 단일 role 폴백)
+        const notes = handoverDocs.filter((d) =>
+          (d.roles && d.roles.length > 0 ? d.roles : [d.role]).includes(p.title),
+        );
         const hasMemo = (p.handover ?? "").trim().length > 0;
         const latestNoteDays = notes.length
           ? notes.reduce<number | null>((min, d) => {
@@ -164,7 +167,7 @@ export default function OverviewView() {
                         : `업무노트 ${r.latestNoteDays}일째 미갱신`}
                     </span>
                     <Link
-                      href={`/console/handover?tab=worklog&role=${encodeURIComponent(r.title)}&compose=1`}
+                      href={`/console/handover/worklog/new?role=${encodeURIComponent(r.title)}`}
                       className="rounded-md border bg-card px-2 py-0.5 font-medium text-primary hover:bg-muted"
                     >
                       노트 작성 →

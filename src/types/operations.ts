@@ -6,7 +6,9 @@
 // ── 운영진 업무수행철 (인수인계철) ──
 export interface HandoverDocument {
   id: string;
-  role: string;          // 직책명 (회장, 부회장, 총무 등)
+  role: string;          // 직책명 (회장, 부회장, 총무 등) — 하위호환용 단일 직책
+  /** 참고 대상 직책 복수 태그 (wiki 통합 이후). 없으면 [role] 로 폴백. */
+  roles?: string[];
   authorId: string;
   authorName: string;
   term: string;          // 임기 (예: "2026-1")
