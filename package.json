@@ -11,7 +11,8 @@
     "test": "vitest run",
     "test:watch": "vitest",
     "deploy:vercel": "node scripts/deploy-vercel.js",
-    "sync:master": "git push origin master && node scripts/deploy-vercel.js"
+    "sync:master": "git push origin master && node scripts/deploy-vercel.js",
+    "analyze": "next build --webpack"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.43",
@@ -60,11 +61,13 @@
     "sonner": "^2.0.7",
     "tailwind-merge": "^3.5.0",
     "tw-animate-css": "^1.4.0",
+    "web-vitals": "^5.3.0",
     "xlsx": "^0.18.5",
     "zod": "^4.3.6",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.2.10",
     "@tailwindcss/postcss": "^4",
     "@types/canvas-confetti": "^1.9.0",
     "@types/d3-drag": "^3.0.7",

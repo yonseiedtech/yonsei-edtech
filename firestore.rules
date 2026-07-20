@@ -1621,6 +1621,19 @@ service cloud.firestore {
         && (resource.data.judgeId == request.auth.uid || isAdmin());
     }
 
+    // hackathon_team_joins: 아이디어 카드 합류 희망 표시 (M6-v9).
+    //   doc id = `${questionId}_${userId}` (결정적 — 멱등 upsert).
+    //   읽기: 로그인 회원 전체(팀 현황 뷰). 작성: 본인 uid 강제. 수정: 불가(토글은 delete+create).
+    match /hackathon_team_joins/{docId} {
+      allow read, list: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && docId == request.resource.data.questionId + '_' + request.auth.uid;
+      allow update: if false;
+      allow delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
+    }
+
     // ─── User Notes (사용자 개인 메모) ───
     // read/write: 본인(userId 일치)만. admin 은 감사 목적으로 read 허용.
     match /user_notes/{docId} {
@@ -1937,6 +1950,18 @@ service cloud.firestore {
     match /digest_opens/{docId} {
       allow read: if isAuthenticated() && isStaffOrAbove();
       allow write: if false;
+    }
+
+    // ─── Web Vitals (H6 성능 계측 기준선 — 2026-07-20) ───
+    // 클라이언트가 LCP·CLS·INP 메트릭을 익명으로 적재 (10% 샘플링).
+    // create: 인증 불필요(익명 텔레메트리), 필수 필드·허용 메트릭명 검증.
+    // read: 운영진(staff 이상)만 — 콘솔 성능 현황 표시용.
+    match /web_vitals/{docId} {
+      allow create: if request.resource.data.keys().hasAll(['metric', 'value', 'route', 'timestamp'])
+        && request.resource.data.metric in ['LCP', 'CLS', 'INP']
+        && request.resource.data.value is number;
+      allow read: if isAuthenticated() && isStaffOrAbove();
+      allow update, delete: if false;
     }
   }
 }

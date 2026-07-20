@@ -20,6 +20,7 @@ import InstallPromptBanner from "@/components/pwa/InstallPromptBanner";
 import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import ScrollToTopOnNav from "@/components/layout/ScrollToTopOnNav";
 import VisitTracker from "@/components/layout/VisitTracker";
+import WebVitalsTracker from "@/components/layout/WebVitalsTracker";
 import "./globals.css";
 
 const pretendard = localFont({
@@ -159,6 +160,7 @@ export default function RootLayout({
           <AuthProvider>
             <ScrollToTopOnNav />
             <VisitTracker />
+            <WebVitalsTracker />
             <div className="flex min-h-screen flex-col pb-[calc(56px+env(safe-area-inset-bottom))] sm:pb-0">
               <ImpersonationBanner />
               <Header />
