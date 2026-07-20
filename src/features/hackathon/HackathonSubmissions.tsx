@@ -39,10 +39,8 @@ import {
   HACKATHON_AWARD_LABELS,
   type HackathonSubmission,
 } from "@/types";
-import {
-  HACKATHON_CONTEXT_ID,
-  isHackathonSubmissionClosed,
-} from "./config";
+import { HACKATHON_CONTEXT_ID } from "./config";
+import { useHackathonOps } from "./useHackathonOps";
 
 const MAX_TITLE = 80;
 const MAX_DESC = 600;
@@ -82,7 +80,7 @@ function toForm(s: HackathonSubmission): FormState {
 export default function HackathonSubmissions() {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
-  const closed = isHackathonSubmissionClosed();
+  const { submissionClosed: closed } = useHackathonOps();
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [editing, setEditing] = useState(false);

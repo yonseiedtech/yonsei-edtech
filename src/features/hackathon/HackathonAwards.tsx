@@ -27,13 +27,13 @@ import {
   HACKATHON_CONTEXT_ID,
   HACKATHON_PORTFOLIO_HINT,
   HACKATHON_AWARDS_ANNOUNCE_DATE,
-  getHackathonPhase,
 } from "./config";
+import { useHackathonOps } from "./useHackathonOps";
 import { SubmissionLinks } from "./HackathonSubmissions";
 
 export default function HackathonAwards() {
   const user = useAuthStore((s) => s.user);
-  const phase = getHackathonPhase();
+  const { phase } = useHackathonOps();
   const isPostEvent = phase === "judging" || phase === "awards";
 
   const { data: submissions = [] } = useQuery({

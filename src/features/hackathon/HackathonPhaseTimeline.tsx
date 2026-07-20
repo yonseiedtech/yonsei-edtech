@@ -11,11 +11,8 @@
 
 import { useEffect, useState } from "react";
 import { CheckCircle2, Circle, ChevronRight } from "lucide-react";
-import {
-  HACKATHON_PHASE_TIMELINE,
-  HACKATHON_EVENT,
-  getHackathonPhase,
-} from "./config";
+import { HACKATHON_PHASE_TIMELINE, HACKATHON_EVENT } from "./config";
+import { useHackathonOps } from "./useHackathonOps";
 
 /** 행사 시작 시각 UTC ms (2026-08-22 10:00 KST = 01:00 UTC) */
 function getEventStartMs(): number {
@@ -45,7 +42,7 @@ function calcCountdown(): Countdown {
 }
 
 export default function HackathonPhaseTimeline() {
-  const phase = getHackathonPhase();
+  const { phase } = useHackathonOps();
   const currentIdx = HACKATHON_PHASE_TIMELINE.findIndex((p) => p.key === phase);
   const currentPhase = HACKATHON_PHASE_TIMELINE[currentIdx];
 

@@ -168,6 +168,45 @@ export function getHackathonPhase(now: Date = new Date()): HackathonPhaseKey {
  */
 export const HACKATHON_AWARDS_ANNOUNCE_DATE = "2026-08-29";
 
+// ─────────────────────────────────────────────────────────────
+// 당일 운영 수동 오버라이드 (H3-v10, 2026-07-20)
+// 운영진이 콘솔에서 단계 전환을 수동으로 덮어쓸 수 있게 한다.
+// 저장은 site_settings(key = HACKATHON_OPS_SETTINGS_KEY) 재사용 — 신규 컬렉션 없음.
+// 수동 값이 있으면 우선, 없으면(null) 하드코딩 날짜 기준 자동 폴백(수동 우선·자동 폴백).
+// ─────────────────────────────────────────────────────────────
+
+/** 당일 운영 오버라이드 site_settings 저장 키 */
+export const HACKATHON_OPS_SETTINGS_KEY = "hackathon_ops";
+
+/** 운영진 수동 오버라이드 — 각 필드 null 이면 자동(날짜) 폴백 */
+export interface HackathonOpsOverride {
+  /** 진행 단계 수동 지정 (null = getHackathonPhase 자동) */
+  phase: HackathonPhaseKey | null;
+  /** 제출 마감 수동 지정 (null = isHackathonSubmissionClosed 자동) */
+  submissionClosed: boolean | null;
+}
+
+export const HACKATHON_OPS_DEFAULT: HackathonOpsOverride = {
+  phase: null,
+  submissionClosed: null,
+};
+
+/** 수동 우선·자동 폴백으로 현재 진행 단계 판정. */
+export function resolveHackathonPhase(
+  override: HackathonOpsOverride | null | undefined,
+  now: Date = new Date(),
+): HackathonPhaseKey {
+  return override?.phase ?? getHackathonPhase(now);
+}
+
+/** 수동 우선·자동 폴백으로 제출 마감 여부 판정. */
+export function resolveHackathonSubmissionClosed(
+  override: HackathonOpsOverride | null | undefined,
+  now: Date = new Date(),
+): boolean {
+  return override?.submissionClosed ?? isHackathonSubmissionClosed(now);
+}
+
 /** 자주 묻는 질문 */
 export const HACKATHON_FAQ: readonly { q: string; a: string }[] = [
   {

@@ -25,6 +25,8 @@ import { toast } from "sonner";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import HackathonDdayConsole from "@/features/hackathon/HackathonDdayConsole";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { hackathonSubmissionsApi, hackathonJudgingsApi } from "@/lib/bkend";
 import {
@@ -82,41 +84,50 @@ export default function HackathonJudgingConsolePage() {
     qc.invalidateQueries({ queryKey: ["console-hackathon-judgings"] });
   }
 
-  if (subsLoading) {
-    return (
-      <div className="p-6">
-        <Loader2 className="animate-spin text-muted-foreground" />
-      </div>
-    );
-  }
-
   return (
     <div className="space-y-5">
       <ConsolePageHeader
         icon={Trophy}
-        title="해커톤 심사"
-        description={`${HACKATHON_EVENT.title} — 루브릭 점수 입력·집계 및 수상작 지정`}
+        title="해커톤 운영"
+        description={`${HACKATHON_EVENT.title} — 당일 단계 전환·현황과 루브릭 심사`}
       />
 
-      {sorted.length === 0 ? (
-        <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed py-16 text-muted-foreground">
-          <Inbox size={28} />
-          <p className="text-sm">아직 제출된 산출물이 없습니다.</p>
-        </div>
-      ) : (
-        <ul className="space-y-4">
-          {sorted.map((s) => (
-            <JudgingCard
-              key={s.id}
-              submission={s}
-              judgings={judgings.filter((j) => j.submissionId === s.id)}
-              judgeId={user?.id ?? ""}
-              judgeName={user?.name ?? "운영진"}
-              onChanged={refresh}
-            />
-          ))}
-        </ul>
-      )}
+      <Tabs defaultValue="dday">
+        <TabsList>
+          <TabsTrigger value="dday">당일 운영</TabsTrigger>
+          <TabsTrigger value="judging">심사</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="dday" className="mt-5">
+          <HackathonDdayConsole />
+        </TabsContent>
+
+        <TabsContent value="judging" className="mt-5">
+          {subsLoading ? (
+            <div className="p-6">
+              <Loader2 className="animate-spin text-muted-foreground" />
+            </div>
+          ) : sorted.length === 0 ? (
+            <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed py-16 text-muted-foreground">
+              <Inbox size={28} />
+              <p className="text-sm">아직 제출된 산출물이 없습니다.</p>
+            </div>
+          ) : (
+            <ul className="space-y-4">
+              {sorted.map((s) => (
+                <JudgingCard
+                  key={s.id}
+                  submission={s}
+                  judgings={judgings.filter((j) => j.submissionId === s.id)}
+                  judgeId={user?.id ?? ""}
+                  judgeName={user?.name ?? "운영진"}
+                  onChanged={refresh}
+                />
+              ))}
+            </ul>
+          )}
+        </TabsContent>
+      </Tabs>
     </div>
   );
 }

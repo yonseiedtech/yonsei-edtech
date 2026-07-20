@@ -282,7 +282,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/academic/projects", label: "프로젝트", icon: FolderKanban },
         { href: "/console/academic/studies", label: "스터디", icon: NotebookPen },
         { href: "/console/academic/external", label: "대외 학술대회", icon: Globe },
-        { href: "/console/hackathon", label: "해커톤 심사", icon: Trophy },
+        { href: "/console/hackathon", label: "해커톤 운영", icon: Trophy },
         { href: "/console/grad-life/positions", label: "활동 이력 (전공대표·조교·학회)", icon: GraduationCap },
         { href: "/console/grad-life/thesis-defense", label: "논문 심사 연습", icon: MessageSquareQuote },
         { href: "/console/grad-life/thesis-defense-templates", label: "심사 질문 템플릿", icon: ClipboardList, adminOnly: true },
