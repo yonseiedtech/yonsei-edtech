@@ -21,6 +21,7 @@ import ServiceWorkerRegister from "@/components/pwa/ServiceWorkerRegister";
 import ScrollToTopOnNav from "@/components/layout/ScrollToTopOnNav";
 import VisitTracker from "@/components/layout/VisitTracker";
 import WebVitalsTracker from "@/components/layout/WebVitalsTracker";
+import MotionProvider from "@/components/layout/MotionProvider";
 import "./globals.css";
 
 const pretendard = localFont({
@@ -156,6 +157,7 @@ export default function RootLayout({
       <body
         className={`${pretendard.variable} ${notoSerifKR.variable} ${hahmlet.variable} font-sans antialiased`}
       >
+        <MotionProvider>
         <QueryProvider>
           <AuthProvider>
             <ScrollToTopOnNav />
@@ -179,6 +181,7 @@ export default function RootLayout({
             <Toaster richColors position="top-center" />
           </AuthProvider>
         </QueryProvider>
+        </MotionProvider>
       </body>
     </html>
   );
