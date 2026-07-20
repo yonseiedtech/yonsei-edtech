@@ -341,6 +341,9 @@ export default function OrgChartEditor() {
   // 저장 전 이탈 경고용 dirty 플래그(#11)
   const [dirty, setDirty] = useState(false);
 
+  // 학기 전환 시 이전 학기 데이터 flash 방지 — 선택 즉시 빈 상태로 초기화.
+  // positions/isLoading 이 새 학기 데이터로 교체되기 전에 실행되도록 먼저 선언.
+  useEffect(() => { setItems([]); }, [selectedSemester]);
   useEffect(() => { if (!isLoading) setItems(positions); }, [isLoading, positions]);
 
   // 저장되지 않은 편집이 있으면 브라우저 이탈·새로고침 시 경고(#11)

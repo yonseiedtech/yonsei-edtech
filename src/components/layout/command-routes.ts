@@ -138,6 +138,8 @@ export const COMMAND_ROUTES: CommandRoute[] = [
   { key: "r:members", group: "커뮤니티", label: "회원", href: "/members", icon: Users, keywords: "회원 멤버 members 재학생 졸업생 명단", visibility: "auth" },
   { key: "r:directory", group: "커뮤니티", label: "구성원 디렉토리", href: "/directory", icon: Users, keywords: "디렉토리 구성원 directory 명부", visibility: "auth" },
   { key: "r:network", group: "커뮤니티", label: "회원 관계망 Map", href: "/network", icon: Network, keywords: "관계망 네트워크 network map 맵", visibility: "auth" },
+  // F2: 멘토링 라우트 추가 — 커맨드팔레트 발견성 확보
+  { key: "r:mentoring", group: "커뮤니티", label: "졸업생 멘토링 Q&A", href: "/mentoring", icon: MessageSquare, keywords: "멘토링 mentoring 졸업생 선배 질문 답변 q&a 멘토", visibility: "auth" },
 
   // ── 콘텐츠 ──
   { key: "r:newsletter", group: "콘텐츠", label: "학회보", href: "/newsletter", icon: Newspaper, keywords: "학회보 뉴스레터 newsletter 소식", visibility: "both" },

@@ -41,7 +41,12 @@ import {
   type HackathonRubricKey,
   type HackathonAwardGrade,
 } from "@/types";
-import { HACKATHON_CONTEXT_ID, HACKATHON_EVENT } from "@/features/hackathon/config";
+import { HACKATHON_CONTEXT_ID } from "@/features/hackathon/config";
+import {
+  INTERNAL_CONFERENCES,
+  getConferenceByContextId,
+  getCurrentConference,
+} from "@/features/internal-conference/conferences";
 
 type ScoreDraft = Record<HackathonRubricKey, number>;
 
@@ -56,18 +61,25 @@ export default function HackathonJudgingConsolePage() {
   const user = useAuthStore((s) => s.user);
   const qc = useQueryClient();
 
+  // 행사 선택 — 대내 학술대회가 여러 개면 드롭다운, 1개면 자동 선택.
+  const [contextId, setContextId] = useState(
+    () => getCurrentConference()?.contextId ?? HACKATHON_CONTEXT_ID,
+  );
+  const selectedConference = getConferenceByContextId(contextId);
+  const showEventPicker = INTERNAL_CONFERENCES.length > 1;
+
   const { data: submissions = [], isLoading: subsLoading } = useQuery({
-    queryKey: ["console-hackathon-submissions"],
+    queryKey: ["console-hackathon-submissions", contextId],
     queryFn: async () => {
-      const res = await hackathonSubmissionsApi.listByContext(HACKATHON_CONTEXT_ID);
+      const res = await hackathonSubmissionsApi.listByContext(contextId);
       return res.data as HackathonSubmission[];
     },
   });
 
   const { data: judgings = [] } = useQuery({
-    queryKey: ["console-hackathon-judgings"],
+    queryKey: ["console-hackathon-judgings", contextId],
     queryFn: async () => {
-      const res = await hackathonJudgingsApi.listByContext(HACKATHON_CONTEXT_ID);
+      const res = await hackathonJudgingsApi.listByContext(contextId);
       return res.data as HackathonJudging[];
     },
   });
@@ -112,9 +124,29 @@ export default function HackathonJudgingConsolePage() {
     <div className="space-y-5">
       <ConsolePageHeader
         icon={Trophy}
-        title="해커톤 운영"
-        description={`${HACKATHON_EVENT.title} — 당일 단계 전환·현황과 루브릭 심사`}
+        title="대내 학술대회 운영"
+        description={`${selectedConference?.title ?? "행사"} — 당일 단계 전환·현황과 루브릭 심사`}
       />
+
+      {showEventPicker && (
+        <div className="flex flex-wrap items-center gap-2">
+          <label htmlFor="conference-picker" className="text-sm font-medium text-muted-foreground">
+            행사 선택
+          </label>
+          <select
+            id="conference-picker"
+            value={contextId}
+            onChange={(e) => setContextId(e.target.value)}
+            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          >
+            {INTERNAL_CONFERENCES.map((c) => (
+              <option key={c.contextId} value={c.contextId}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
 
       <Tabs defaultValue="dday">
         <TabsList>

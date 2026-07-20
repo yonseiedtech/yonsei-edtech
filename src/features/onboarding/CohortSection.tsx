@@ -204,6 +204,15 @@ export default function CohortSection({ me, onboardingTrackId, totalItems }: Pro
         </div>
       )}
 
+      {/* F7: 관계망 Map 크로스링크 — 코호트 엣지 시각화로 연결 */}
+      {peers.length > 0 && (
+        <div className="mt-2 flex justify-end">
+          <Link href="/network" className="text-[11px] text-primary hover:underline">
+            관계망 Map에서 우리 기수 연결 보기 →
+          </Link>
+        </div>
+      )}
+
       {/* 버디 추천 (관심분야 겹침) */}
       {buddies.length > 0 && (
         <div className="mt-5">

@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useEffect } from "react";
-import { BookOpen, FolderKanban, Users, Globe, Calendar, ArrowRight } from "lucide-react";
+import { BookOpen, FolderKanban, Users, Globe, Calendar, ArrowRight, Trophy } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useSeminars } from "@/features/seminar/useSeminar";
@@ -50,6 +50,15 @@ const activities = [
     schedule: "수시",
     color: "bg-amber-50 text-amber-700",
     href: "/activities/external",
+  },
+  {
+    icon: Trophy,
+    category: "대내활동",
+    title: "대내 학술대회",
+    desc: "해커톤·심포지엄 등 학회가 주최하는 미니 학술대회에서 문제를 정의하고 해법을 나눕니다.",
+    schedule: "수시",
+    color: "bg-primary/10 text-primary",
+    href: "/activities/internal",
   },
 ];
 

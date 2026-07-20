@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import Link from "next/link";
 import { useQueryClient } from "@tanstack/react-query";
 import { CheckCircle2, ChevronDown, ChevronUp, MessageSquare, ThumbsUp, Trash2 } from "lucide-react";
 import { toast } from "sonner";
@@ -65,7 +66,12 @@ export default function QuestionItem({ board, question, user, likedSet, onChange
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex items-center gap-1.5">
             {question.resolved && <CheckCircle2 size={14} className="text-emerald-600" />}
-            <span className="text-[11px] text-muted-foreground">{name}</span>
+            {/* F1: 익명 아님 && authorId 있을 때만 프로필 링크 */}
+            {!question.anonymous && question.authorId ? (
+              <Link href={`/profile/${question.authorId}`} className="text-[11px] text-muted-foreground hover:text-primary hover:underline">{name}</Link>
+            ) : (
+              <span className="text-[11px] text-muted-foreground">{name}</span>
+            )}
             {question.resolved && (
               <Badge variant="outline" className="border-emerald-400 text-[9px] text-emerald-700">
                 해결됨

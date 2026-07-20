@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
+import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Check, Loader2, Pencil, Send, ThumbsUp, Trash2, X } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -197,7 +198,12 @@ export default function AnswerThread({
             >
               <div className="flex items-center justify-between gap-1">
                 <span className="flex items-center gap-1 text-[10px] text-muted-foreground">
-                  {name}
+                  {/* F1: 익명 아님 && authorId 있을 때만 프로필 링크 */}
+                  {!a.anonymous && a.authorId ? (
+                    <Link href={`/profile/${a.authorId}`} className="hover:text-primary hover:underline">{name}</Link>
+                  ) : (
+                    name
+                  )}
                   {accepted && (
                     <Badge variant="outline" className="border-emerald-400 text-[9px] text-emerald-700">
                       채택됨

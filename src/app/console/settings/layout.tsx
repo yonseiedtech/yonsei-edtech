@@ -20,7 +20,6 @@ const SETTINGS_GROUPS = [
     label: "구성원",
     tabs: [
       { href: "/console/settings/professor", label: "주임교수" },
-      { href: "/console/settings/org-chart", label: "운영진 설정" },
       { href: "/console/settings/presidents", label: "역대 회장" },
     ],
   },

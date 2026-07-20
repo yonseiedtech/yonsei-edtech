@@ -7,15 +7,25 @@
  * 개인 학습 수치는 노출하지 않는다("활동 사실"에 대한 응원만). 받은 응원이 없으면 null 렌더.
  */
 
+import Link from "next/link";
 import { PartyPopper } from "lucide-react";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { useReceivedKudos } from "./useReceivedKudos";
+import type { KudosContext } from "@/types/kudos";
 
 /** 주차 키(월요일 YYYY-MM-DD) → "M월 D일 주" 라벨 */
 function weekLabel(weekKey: string): string {
   const m = /^(\d{4})-(\d{2})-(\d{2})$/.exec(weekKey);
   if (!m) return weekKey;
   return `${Number(m[2])}월 ${Number(m[3])}일 주`;
+}
+
+/** F4: context 필드 → 표시 라벨 ("cohort" 하위호환 포함) */
+function contextLabel(ctx?: KudosContext): string {
+  if (ctx === "mentoring") return "멘토링 감사";
+  if (ctx === "study") return "스터디 동료";
+  if (ctx === "hackathon") return "해커톤 팀원";
+  return "학습 활동";
 }
 
 export default function ReceivedKudosHistory({ userId }: { userId: string }) {
@@ -40,11 +50,14 @@ export default function ReceivedKudosHistory({ userId }: { userId: string }) {
             </Avatar>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm">
-                <span className="font-semibold">{k.fromName}</span>
+                {/* F4: fromUserId → 프로필 링크 */}
+                <Link href={`/profile/${k.fromUserId}`} className="font-semibold hover:text-primary hover:underline">
+                  {k.fromName}
+                </Link>
                 <span className="text-muted-foreground">님이 응원을 보냈어요 👏</span>
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
-                {weekLabel(k.weekKey)} 학습 활동
+                {weekLabel(k.weekKey)} {contextLabel(k.context)}
               </p>
             </div>
           </li>

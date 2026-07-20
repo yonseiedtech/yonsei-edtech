@@ -1,6 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import AuthGuard from "@/features/auth/AuthGuard";
@@ -284,6 +285,14 @@ export function DirectoryContent({
           }
         />
 
+        {/* F8: 사람 찾기 3표면 크로스링크 (공개 변형만) */}
+        {!isConsole && (
+          <div className="mt-3 flex flex-wrap gap-2">
+            <Link href="/members" className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors">구성원</Link>
+            <Link href="/network" className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors">관계망 Map</Link>
+          </div>
+        )}
+
         <Separator className="mt-6" />
 
         {/* Tabs */}
@@ -419,7 +428,10 @@ export function DirectoryContent({
                           <td className="px-2 py-2 sm:px-4 sm:py-3 text-muted-foreground">
                             {formatEnrollment(m.enrollmentYear, m.enrollmentHalf)}
                           </td>
-                          <td className="px-2 py-2 sm:px-4 sm:py-3 font-medium">{m.name}</td>
+                          {/* F3: 이름 셀 → 프로필 링크 */}
+                          <td className="px-2 py-2 sm:px-4 sm:py-3 font-medium">
+                            <Link href={`/profile/${m.id}`} className="hover:text-primary hover:underline">{m.name}</Link>
+                          </td>
                           <td className="px-2 py-2 sm:px-4 sm:py-3 font-mono text-[11px] text-muted-foreground">
                             {m.studentId ?? "—"}
                           </td>

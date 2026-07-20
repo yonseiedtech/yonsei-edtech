@@ -20,6 +20,7 @@ import {
   HelpCircle,
   Images,
   ClipboardCheck,
+  Rocket,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -73,6 +74,7 @@ const MORE_ITEMS: NavItem[] = [
   { href: "/diagnosis", label: "진단평가", icon: ClipboardCheck },
   { href: "/calendar", label: "캘린더", icon: Calendar },
   { href: "/seminars", label: "세미나", icon: Presentation },
+  { href: "/activities/internal", label: "대내 학술대회", icon: Rocket },
   { href: "/archive", label: "아카이브", icon: Library },
   { href: "/leaderboard", label: "리더보드", icon: Trophy },
   { href: "/newsletter", label: "뉴스레터", icon: Newspaper },

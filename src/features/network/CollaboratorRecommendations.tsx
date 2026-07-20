@@ -190,6 +190,13 @@ export default function CollaboratorRecommendations({
           )}
         </div>
       )}
+
+      {/* F6: 공동 연구 개설 링크 — 추천→실행 퍼널 연결 */}
+      <div className="mt-4 flex justify-end">
+        <Link href="/collab/new" className="text-xs text-primary hover:underline">
+          마음 맞는 회원을 찾았다면 → 공동 연구 시작하기
+        </Link>
+      </div>
     </section>
   );
 }

@@ -24,7 +24,7 @@ import {
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
   ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote, Images, ClipboardCheck, Workflow, LayoutGrid,
   UserPlus, ListChecks, AlertTriangle, Archive, Map, Bot, Sparkles, Trophy,
-  PackageSearch,
+  PackageSearch, Network,
 } from "lucide-react";
 import { fetchPendingDrafts } from "@/features/content-draft/content-draft-store";
 import { useState } from "react";
@@ -244,6 +244,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/members/migrate-teacher-affiliation", label: "교사 affiliation 분리", icon: GraduationCap, adminOnly: true },
         { href: "/console/inquiries", label: "문의 답변", icon: MessageSquare, badge: unansweredCount },
         { href: "/console/feedback", label: "피드백", icon: MessageCircle, badge: feedbackNewCount },
+        { href: "/console/org", label: "운영진 설정", icon: Network },
       ],
     },
     // ── 콘텐츠 ──────────────────────────────────────────────────

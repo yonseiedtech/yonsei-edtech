@@ -7,6 +7,7 @@
  * legacy URL ?tab=professor / ?tab=staff 는 /about/leadership 으로 자동 이동.
  */
 
+import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect, useMemo, Suspense } from "react";
 import { cn } from "@/lib/utils";
@@ -144,6 +145,12 @@ function MembersContent() {
           title="구성원"
           description="대학원에서 함께 공부하는 재학생·졸업생 회원입니다."
         />
+
+        {/* F8: 사람 찾기 3표면 크로스링크 */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link href="/network" className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors">관계망 Map</Link>
+          <Link href="/directory" className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors">연락망</Link>
+        </div>
 
         <Separator className="mt-6" />
 

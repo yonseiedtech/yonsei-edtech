@@ -207,6 +207,13 @@ export default function SimilarResearchersSection({ me, limit = 4 }: Props) {
           </p>
         </div>
       )}
+
+      {/* F6: 관계망 Map 크로스링크 — 추천 엔진 ↔ 관계망 시각화 상호 연결 */}
+      <div className="mt-4 flex justify-end">
+        <Link href="/network" className="text-xs text-primary hover:underline">
+          관계망 Map에서 연결망 보기 →
+        </Link>
+      </div>
     </section>
   );
 }

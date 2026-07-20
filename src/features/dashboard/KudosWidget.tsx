@@ -11,6 +11,7 @@
  * 모두 없으면 null 렌더(데이터 없으면 미노출).
  */
 
+import Link from "next/link";
 import { PartyPopper } from "lucide-react";
 import WidgetCard from "@/components/ui/widget-card";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -71,6 +72,13 @@ export default function KudosWidget() {
           />
         </div>
       )}
+
+      {/* F5: 받은 응원 이력 페이지 링크 */}
+      <div className="mt-3 flex justify-end">
+        <Link href="/mypage/activities" className="text-[11px] text-primary hover:underline">
+          받은 응원 전체 보기 →
+        </Link>
+      </div>
     </WidgetCard>
   );
 }

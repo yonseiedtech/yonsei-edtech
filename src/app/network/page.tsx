@@ -9,6 +9,7 @@
  */
 
 import { useMemo, useState } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { Network as NetworkIcon, BarChart3, Network as NetworkTabIcon, AlertTriangle, BookOpen } from "lucide-react";
 import { profilesApi } from "@/lib/bkend";
@@ -95,6 +96,12 @@ function NetworkPageContent() {
           title="회원 관계망 Map"
           description="동기·신분 유형 기반으로 회원 간 연결망을 시각화합니다. 노드 클릭 시 회원 정보 미니 카드가 표시됩니다. (모임·행사 신청은 '모임·행사' 페이지에서 진행합니다.)"
         />
+
+        {/* F8: 사람 찾기 3표면 크로스링크 */}
+        <div className="mt-3 flex flex-wrap gap-2">
+          <Link href="/members" className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors">구성원</Link>
+          <Link href="/directory" className="inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs text-muted-foreground hover:border-primary/40 hover:text-primary transition-colors">연락망</Link>
+        </div>
 
         <Separator className="mt-6" />
 
