@@ -224,7 +224,7 @@ function HistorySection() {
             <Input value={item.year} onChange={(e) => updateItem(i, "year", e.target.value)} className="w-20" placeholder="연도" />
             <Input value={item.title} onChange={(e) => updateItem(i, "title", e.target.value)} className="flex-1" placeholder="제목" />
             <Input value={item.desc} onChange={(e) => updateItem(i, "desc", e.target.value)} className="flex-[2]" placeholder="설명" />
-            <button onClick={() => removeItem(i)} className="mt-2 text-red-400 hover:text-red-600"><Trash2 size={16} /></button>
+            <button onClick={() => removeItem(i)} className="mt-2 text-destructive/60 hover:text-destructive"><Trash2 size={16} /></button>
           </div>
         ))}
       </div>
@@ -268,7 +268,7 @@ function FieldsSection() {
           <div key={i} className="flex items-start gap-2">
             <Input value={item.title} onChange={(e) => updateItem(i, "title", e.target.value)} className="w-32" placeholder="분야명" />
             <Input value={item.desc} onChange={(e) => updateItem(i, "desc", e.target.value)} className="flex-1" placeholder="설명" />
-            <button onClick={() => removeItem(i)} className="mt-2 text-red-400 hover:text-red-600"><Trash2 size={16} /></button>
+            <button onClick={() => removeItem(i)} className="mt-2 text-destructive/60 hover:text-destructive"><Trash2 size={16} /></button>
           </div>
         ))}
       </div>
@@ -354,7 +354,7 @@ function PastPresidentsSection() {
             <Input value={item.name} onChange={(e) => updateItem(i, "name", e.target.value)} className="w-24" placeholder="이름" />
             <Input value={item.term} onChange={(e) => updateItem(i, "term", e.target.value)} className="w-40" placeholder="임기 (예: 2024~2025)" />
             <Input value={item.affiliation} onChange={(e) => updateItem(i, "affiliation", e.target.value)} className="flex-1" placeholder="소속" />
-            <button onClick={() => removeItem(i)} className="mt-2 text-red-400 hover:text-red-600"><Trash2 size={16} /></button>
+            <button onClick={() => removeItem(i)} className="mt-2 text-destructive/60 hover:text-destructive"><Trash2 size={16} /></button>
           </div>
         ))}
       </div>

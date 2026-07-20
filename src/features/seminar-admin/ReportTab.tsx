@@ -539,7 +539,7 @@ export function SeminarReport({ seminarId, seminarTitle, seminarDate }: { semina
       const res = await fetch(`/api/sheets?url=${encodeURIComponent(csvUrl)}`);
       if (!res.ok) { const err = await res.json(); toast.error(err.error || "불러오기 실패"); return; }
       const text = await res.text();
-      const raw = parseCSVText(text, FORM_COLUMNS);
+      const raw = await parseCSVText(text, FORM_COLUMNS);
       await registerFromData(rowsFromParsed(raw));
       setSheetOpen(false);
       setSheetUrl("");

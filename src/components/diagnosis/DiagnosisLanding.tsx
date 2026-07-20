@@ -28,8 +28,26 @@ import {
   type DiagnosticQuestionType,
 } from "@/types";
 import { cn } from "@/lib/utils";
-import DiagnosisHistorySection from "./DiagnosisHistorySection";
-import DiagnosisLearningLoop from "./DiagnosisLearningLoop";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
+
+// 진단 이력·학습효과 섹션은 recharts(레이더·라인 차트)를 포함하는 무거운 컴포넌트다.
+// 로그인 사용자에게만·본문 하단에 렌더되므로, 정적 import 하면 recharts 가 /diagnosis
+// 첫 진입 번들에 포함된다. 지연 로딩으로 초기 번들에서 제외한다(표시 내용·동작 불변).
+const chartSectionFallback = () => (
+  <div className="mt-12 space-y-4">
+    <Skeleton className="h-7 w-48 rounded-lg" />
+    <Skeleton className="h-64 w-full rounded-2xl" />
+  </div>
+);
+const DiagnosisHistorySection = dynamic(() => import("./DiagnosisHistorySection"), {
+  ssr: false,
+  loading: chartSectionFallback,
+});
+const DiagnosisLearningLoop = dynamic(() => import("./DiagnosisLearningLoop"), {
+  ssr: false,
+  loading: chartSectionFallback,
+});
 
 /** 개인화 진단 설정 — 사용자가 직접 구성한 진단 조건 */
 export interface CustomDiagnosisConfig {

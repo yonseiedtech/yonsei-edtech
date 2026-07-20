@@ -287,15 +287,15 @@ export const ROLE_ORDER: VolunteerRoleKey[] = [
 
 export const ROLE_COLORS: Record<VolunteerRoleKey, string> = {
   track_runner:
-    "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/30 dark:text-blue-200 dark:border-blue-800",
+    "bg-info/5 text-info border-info/20",
   registration:
-    "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-200 dark:border-emerald-800",
+    "bg-success/5 text-success border-success/20",
   guide:
-    "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/30 dark:text-purple-200 dark:border-purple-800",
+    "bg-cat-5/5 text-cat-5 border-cat-5/20",
   media:
-    "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/30 dark:text-rose-200 dark:border-rose-800",
+    "bg-destructive/5 text-destructive border-destructive/20",
   poster_manager:
-    "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-800",
+    "bg-warning/5 text-warning border-warning/20",
   other:
-    "bg-slate-100 text-slate-700 border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700",
+    "bg-muted text-muted-foreground border-muted-foreground/20",
 };

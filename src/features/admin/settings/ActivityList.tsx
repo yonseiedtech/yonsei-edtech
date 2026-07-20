@@ -30,8 +30,8 @@ const STATUS_LABELS: Record<string, string> = {
 };
 
 const STATUS_COLORS: Record<string, string> = {
-  upcoming: "bg-blue-50 text-blue-700",
-  ongoing: "bg-amber-50 text-amber-700",
+  upcoming: "bg-info/5 text-info",
+  ongoing: "bg-warning/5 text-warning",
   completed: "bg-muted text-muted-foreground",
 };
 
@@ -207,7 +207,7 @@ export default function ActivityList({ type, typeLabel, icon, description }: Pro
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
                     <span className="flex items-center gap-1"><Calendar size={12} />{a.date}{a.endDate ? ` ~ ${a.endDate}` : ""}</span>
                     {(a.year || a.semester) && (
-                      <Badge variant="secondary" className="bg-blue-50 text-[10px] text-blue-700">
+                      <Badge variant="secondary" className="bg-info/5 text-[10px] text-info">
                         {formatSemester(a.year, a.semester)}
                       </Badge>
                     )}

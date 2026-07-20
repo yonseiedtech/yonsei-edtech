@@ -96,19 +96,19 @@ export default function ExternalActivityReviewsConsole({
           icon={Star}
           label="평균 별점"
           value={stats.avgRating != null ? stats.avgRating.toFixed(2) : "—"}
-          color="text-amber-600 bg-amber-50 dark:bg-amber-950/30"
+          color="text-warning bg-warning/5"
         />
         <StatCard
           icon={RefreshCcw}
           label="재참석 의사 (yes/maybe/no)"
           value={`${stats.attendAgain.yes} / ${stats.attendAgain.maybe} / ${stats.attendAgain.no}`}
-          color="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"
+          color="text-success bg-success/5"
         />
         <StatCard
           icon={Award}
           label="연구 시사점 기재"
           value={`${stats.withTakeaway} / ${stats.total}`}
-          color="text-blue-600 bg-blue-50 dark:bg-blue-950/30"
+          color="text-info bg-info/5"
         />
       </div>
 
@@ -142,7 +142,7 @@ export default function ExternalActivityReviewsConsole({
                     </div>
                     <div className="flex items-center gap-3 text-[11px]">
                       {r.overallRating != null && r.overallRating > 0 && (
-                        <span className="inline-flex items-center gap-0.5 text-amber-600">
+                        <span className="inline-flex items-center gap-0.5 text-warning">
                           <Star size={11} className="fill-current" />
                           {r.overallRating.toFixed(1)}
                         </span>

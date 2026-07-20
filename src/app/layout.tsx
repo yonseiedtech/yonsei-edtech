@@ -112,9 +112,7 @@ export const metadata: Metadata = {
       "max-snippet": -1,
     },
   },
-  alternates: {
-    canonical: SITE_URL,
-  },
+  alternates: {},
   verification: {
     // Google Search Console 등록 후 여기에 추가
     // google: "your-verification-code",

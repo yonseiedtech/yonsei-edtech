@@ -87,7 +87,7 @@ function SidebarGroup({
                   <item.icon size={15} className="shrink-0" />
                   <span className="flex-1">{item.label}</span>
                   {item.badge != null && item.badge > 0 && (
-                    <span className="rounded-full bg-red-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                    <span className="rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-white">
                       {item.badge}
                     </span>
                   )}
@@ -109,28 +109,28 @@ function ReviewQueueBanner({ items }: { items: ReviewItem[] }) {
   if (total === 0) return null;
 
   return (
-    <div className="rounded-lg border border-amber-300 bg-amber-50 text-amber-900">
+    <div className="rounded-lg border border-warning/30 bg-warning/5 text-warning">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         className="flex w-full items-center gap-2 px-3 py-2 text-xs font-semibold"
       >
-        <AlertTriangle size={13} className="shrink-0 text-amber-600" />
+        <AlertTriangle size={13} className="shrink-0 text-warning" />
         <span className="flex-1 text-left">검수 대기 {total}건</span>
         {open ? <ChevronDown size={12} /> : <ChevronRight size={12} />}
       </button>
       {open && (
-        <ul className="border-t border-amber-200 px-2 py-1 space-y-0.5">
+        <ul className="border-t border-warning/20 px-2 py-1 space-y-0.5">
           {items
             .filter((i) => i.count > 0)
             .map((i) => (
               <li key={i.href}>
                 <Link
                   href={i.href}
-                  className="flex items-center justify-between rounded px-2 py-1 text-xs hover:bg-amber-100"
+                  className="flex items-center justify-between rounded px-2 py-1 text-xs hover:bg-warning/5"
                 >
                   <span>{i.label}</span>
-                  <span className="rounded-full bg-amber-600 px-1.5 py-0.5 text-[10px] font-bold text-white">
+                  <span className="rounded-full bg-warning px-1.5 py-0.5 text-[10px] font-bold text-white">
                     {i.count}
                   </span>
                 </Link>
@@ -375,7 +375,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
                     <item.icon size={13} />
                     {item.label}
                     {item.badge != null && item.badge > 0 && (
-                      <span className="rounded-full bg-red-500 px-1 text-[9px] font-bold text-white">
+                      <span className="rounded-full bg-destructive px-1 text-[9px] font-bold text-white">
                         {item.badge}
                       </span>
                     )}

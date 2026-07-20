@@ -488,7 +488,7 @@ export default function NametagGenerator() {
       const res = await fetch(`/api/sheets?url=${encodeURIComponent(csvUrl)}`);
       if (!res.ok) { const err = await res.json(); toast.error(err.error || "불러오기 실패"); return; }
       const text = await res.text();
-      const rows = parseCSVText(text, ["이름", "학번"]);
+      const rows = await parseCSVText(text, ["이름", "학번"]);
       if (rows.length === 0) { toast.error("데이터가 없습니다."); return; }
       setNames(rows.map((r) => ({ name: r["이름"], studentId: r["학번"] || "", role: "참가자" as NametagRole })));
       toast.success(`${rows.length}명을 불러왔습니다.`);

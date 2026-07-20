@@ -806,7 +806,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                       <div className="mt-3 flex gap-2">
                         {currentAnswer!.imageUrls!.map((url, i) => (
                           <div key={url} className="relative">
-                            <img src={url} alt="" className="h-24 w-24 rounded-lg border object-cover" />
+                            <img src={url} alt={`첨부 사진 ${i + 1}`} className="h-24 w-24 rounded-lg border object-cover" />
                             <button
                               type="button"
                               onClick={() =>

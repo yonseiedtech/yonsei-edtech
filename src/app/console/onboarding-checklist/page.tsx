@@ -215,7 +215,7 @@ export default function OnboardingChecklistConsolePage() {
         </TabsList>
 
         <TabsContent value="edit" className="space-y-4">
-          <div className="rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs leading-relaxed text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+          <div className="rounded-lg border border-info/20 bg-info/5 p-3 text-xs leading-relaxed text-info">
             <p>
               <strong>위젯 노출 조건:</strong> <code>enabled=true</code> 항목만 위젯에 표시되며,
               {" "}<code>order</code> asc 순으로 정렬됩니다. 항목이 0개면 위젯은 자동으로 숨겨집니다.
@@ -360,7 +360,7 @@ export default function OnboardingChecklistConsolePage() {
                                 });
                             }}
                             title="삭제"
-                            className="rounded-md p-1.5 text-red-500 hover:bg-red-50"
+                            className="rounded-md p-1.5 text-destructive hover:bg-destructive/5"
                           >
                             <Trash2 size={14} />
                           </button>
@@ -610,7 +610,7 @@ function ChecklistStatsTab() {
 
   if (hasError) {
     return (
-      <div className="rounded-2xl border border-dashed border-red-200 bg-red-50/40 p-8 text-center text-sm text-red-700 dark:border-red-900 dark:bg-red-950/30 dark:text-red-200">
+      <div className="rounded-2xl border border-dashed border-destructive/20 bg-destructive/5 p-8 text-center text-sm text-destructive">
         통계 데이터를 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.
       </div>
     );
@@ -805,9 +805,9 @@ function StatCard({
 }) {
   const accentClass =
     accent === "emerald"
-      ? "text-emerald-600 dark:text-emerald-300"
+      ? "text-success"
       : accent === "rose"
-        ? "text-rose-600 dark:text-rose-300"
+        ? "text-destructive"
         : "text-foreground";
   return (
     <div className="rounded-2xl border bg-card p-4">
@@ -1074,10 +1074,10 @@ function Field({ label, children }: { label: string; children: React.ReactNode }
 function PriorityBadge({ priority }: { priority: ChecklistPriority }) {
   const cls =
     priority === "high"
-      ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-200"
+      ? "bg-destructive/10 text-destructive"
       : priority === "low"
         ? "bg-muted text-muted-foreground"
-        : "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200";
+        : "bg-info/10 text-info";
   return (
     <span className={`inline-flex items-center rounded-md px-1.5 py-0.5 text-[11px] font-medium ${cls}`}>
       {CHECKLIST_PRIORITY_LABELS[priority]}

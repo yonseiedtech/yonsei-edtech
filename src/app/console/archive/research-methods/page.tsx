@@ -244,11 +244,11 @@ export default function ConsoleResearchMethodsPage() {
                           {RESEARCH_METHOD_KIND_LABELS[m.kind]}
                         </Badge>
                         {m.published ? (
-                          <Badge variant="outline" className="bg-emerald-50 text-emerald-700 border-emerald-200 text-[10px]">
+                          <Badge variant="outline" className="bg-success/5 text-success border-success/20 text-[10px]">
                             공개
                           </Badge>
                         ) : (
-                          <Badge variant="outline" className="bg-rose-50 text-rose-700 border-rose-200 text-[10px]">
+                          <Badge variant="outline" className="bg-destructive/5 text-destructive border-destructive/20 text-[10px]">
                             draft
                           </Badge>
                         )}

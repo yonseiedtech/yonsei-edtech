@@ -13,7 +13,7 @@
  */
 
 import { useMemo } from "react";
-import { motion } from "framer-motion";
+import { motion, useReducedMotion } from "framer-motion";
 import { CheckIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
 
@@ -110,6 +110,7 @@ function DailyChart({
   /** 이번 달 안에 오늘이 있으면 1-based day, 아니면 null(전부 과거 or 전부 미래) */
   todayDay: number | null;
 }) {
+  const reduce = useReducedMotion(); // a11y: SVG SMIL 펄스 가드 (M2-v10)
   const W = 960; // 가로로 길게 (달력 통합으로 확보한 전체폭 사용)
   const H = 150;
   const PAD_L = 10;
@@ -287,27 +288,12 @@ function DailyChart({
           <g>
             {/* 펄스 링 */}
             <circle cx={todayInfo.x} cy={todayInfo.y} r={6} fill={TREND_COLOR[todayInfo.trend]} opacity={0.25}>
-              <animate
-                attributeName="r"
-                values="5;11;5"
-                dur="1.4s"
-                repeatCount="indefinite"
-              />
-              <animate
-                attributeName="opacity"
-                values="0.35;0;0.35"
-                dur="1.4s"
-                repeatCount="indefinite"
-              />
+              {!reduce && <animate attributeName="r" values="5;11;5" dur="1.4s" repeatCount="indefinite" />}
+              {!reduce && <animate attributeName="opacity" values="0.35;0;0.35" dur="1.4s" repeatCount="indefinite" />}
             </circle>
             {/* 코어 점 (깜박임) */}
             <circle cx={todayInfo.x} cy={todayInfo.y} r={4.2} fill={TREND_COLOR[todayInfo.trend]} stroke="white" strokeWidth={1.2}>
-              <animate
-                attributeName="opacity"
-                values="1;0.35;1"
-                dur="1.4s"
-                repeatCount="indefinite"
-              />
+              {!reduce && <animate attributeName="opacity" values="1;0.35;1" dur="1.4s" repeatCount="indefinite" />}
             </circle>
             <text
               x={todayInfo.x}

@@ -6,7 +6,7 @@ import EmptyState from "@/components/ui/empty-state";
 import PageContainer from "@/components/ui/page-container";
 
 export const metadata = {
-  title: "카드뉴스 — 연세교육공학회",
+  title: "카드뉴스",
   description:
     "학회 운영·연구·활동 소식을 카드뉴스 형식으로 소개합니다. 각 시리즈를 클릭하면 전체 카드를 확인할 수 있습니다.",
 };

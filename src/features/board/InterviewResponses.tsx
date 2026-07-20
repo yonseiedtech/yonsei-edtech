@@ -298,9 +298,9 @@ export default function InterviewResponses({ postId, meta, storedResponseCount }
                         )}
                         {a.imageUrls && a.imageUrls.length > 0 && (
                           <div className="mt-2 flex flex-wrap gap-2">
-                            {a.imageUrls.map((u) => (
+                            {a.imageUrls.map((u, i) => (
                               <a key={u} href={u} target="_blank" rel="noreferrer">
-                                <img src={u} alt="" className="h-24 w-24 rounded-lg border object-cover" />
+                                <img src={u} alt={`첨부 사진 ${i + 1}`} className="h-24 w-24 rounded-lg border object-cover" />
                               </a>
                             ))}
                           </div>

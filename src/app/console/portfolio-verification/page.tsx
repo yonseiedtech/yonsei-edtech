@@ -90,14 +90,14 @@ function VerifyActions({ kind, itemId }: VerifyActionsProps) {
             <button
               type="button"
               onClick={approve}
-              className="inline-flex items-center gap-1 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-100"
+              className="inline-flex items-center gap-1 rounded-md border border-success/20 bg-success/5 px-2 py-1 text-xs font-medium text-success hover:bg-success/10"
             >
               <Check size={12} /> 승인
             </button>
             <button
               type="button"
               onClick={() => setOpen((v) => !v)}
-              className="inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-xs font-medium text-rose-700 hover:bg-rose-100"
+              className="inline-flex items-center gap-1 rounded-md border border-destructive/20 bg-destructive/5 px-2 py-1 text-xs font-medium text-destructive hover:bg-destructive/10"
             >
               <X size={12} /> 반려
             </button>
@@ -128,7 +128,7 @@ function VerifyActions({ kind, itemId }: VerifyActionsProps) {
               type="button"
               onClick={reject}
               disabled={update.isPending}
-              className="rounded bg-rose-600 px-2 py-1 text-[11px] font-medium text-white hover:bg-rose-700 disabled:opacity-60"
+              className="rounded bg-destructive px-2 py-1 text-[11px] font-medium text-white hover:bg-destructive/90 disabled:opacity-60"
             >
               반려 확정
             </button>
@@ -216,7 +216,7 @@ export default function PortfolioVerificationPage() {
           <TabsTrigger value="externals">
             대외 학술활동
             {externalCount > 0 && (
-              <span className="ml-1.5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+              <span className="ml-1.5 rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-white">
                 {externalCount}
               </span>
             )}
@@ -224,7 +224,7 @@ export default function PortfolioVerificationPage() {
           <TabsTrigger value="awards">
             수상
             {awardCount > 0 && (
-              <span className="ml-1.5 rounded-full bg-rose-500 px-1.5 py-0.5 text-[10px] font-bold text-white">
+              <span className="ml-1.5 rounded-full bg-destructive px-1.5 py-0.5 text-[10px] font-bold text-white">
                 {awardCount}
               </span>
             )}
@@ -267,7 +267,7 @@ export default function PortfolioVerificationPage() {
                       {x.endDate && ` ~ ${x.endDate}`}
                     </p>
                     {x.description && (
-                      <p className="mt-2 whitespace-pre-wrap text-xs text-slate-700">
+                      <p className="mt-2 whitespace-pre-wrap text-xs text-foreground">
                         {x.description}
                       </p>
                     )}
@@ -323,7 +323,7 @@ export default function PortfolioVerificationPage() {
                       {x.organization} · {x.date}
                     </p>
                     {x.description && (
-                      <p className="mt-2 whitespace-pre-wrap text-xs text-slate-700">
+                      <p className="mt-2 whitespace-pre-wrap text-xs text-foreground">
                         {x.description}
                       </p>
                     )}

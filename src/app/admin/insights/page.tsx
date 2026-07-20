@@ -112,6 +112,11 @@ const FunnelSection = dynamic(
   { ssr: false },
 );
 
+const WebVitalsSection = dynamic(
+  () => import("@/features/insights/WebVitalsSection"),
+  { ssr: false },
+);
+
 type SubTab =
   | "summary"
   | "actions"
@@ -180,6 +185,9 @@ function InsightsInner() {
 
           {/* M2(2026-07-19): 온보딩·진단 퍼널 전환율 */}
           <FunnelSection />
+
+          {/* H1(2026-07-20): web_vitals 성능 관측 — 라우트별 LCP/CLS/INP p75 */}
+          <WebVitalsSection />
         </TabsContent>
         <TabsContent value="dashboard" className="mt-4">
           <AnalyticsView />

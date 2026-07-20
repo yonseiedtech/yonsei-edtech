@@ -19,10 +19,10 @@ const STATUS_LABEL: Record<LabStatus, string> = {
 };
 
 const STATUS_COLOR: Record<LabStatus, string> = {
-  draft: "bg-slate-100 text-slate-700",
-  testing: "bg-amber-100 text-amber-700",
-  feedback: "bg-sky-100 text-sky-700",
-  approved: "bg-emerald-100 text-emerald-700",
+  draft: "bg-muted text-muted-foreground",
+  testing: "bg-warning/10 text-warning",
+  feedback: "bg-info/10 text-info",
+  approved: "bg-success/10 text-success",
   archived: "bg-zinc-100 text-zinc-500",
 };
 
@@ -109,7 +109,7 @@ export default function LabsPage() {
                   // eslint-disable-next-line @next/next/no-img-element
                   <img src={l.thumbnailUrl} alt={l.title} className="h-40 w-full object-cover" />
                 ) : (
-                  <div className="flex h-40 w-full items-center justify-center bg-gradient-to-br from-primary/5 via-sky-50 to-indigo-50 text-primary/50">
+                  <div className="flex h-40 w-full items-center justify-center bg-gradient-to-br from-primary/5 via-info/5 to-info/5 text-primary/50">
                     <FlaskConical size={42} />
                   </div>
                 )}

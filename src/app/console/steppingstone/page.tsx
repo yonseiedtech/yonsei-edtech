@@ -320,7 +320,7 @@ function ConsoleSteppingStoneContent() {
       )}
 
       {duplicateKeys.length > 0 && (
-        <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+        <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-sm text-warning">
           <div className="font-semibold">⚠️ 중복 트랙이 있습니다</div>
           <div className="mt-1 text-xs">
             아래 키가 둘 이상의 트랙으로 등록되어 있습니다 — 회원 페이지는 모든 중복 트랙의 항목을 합쳐 보여주지만,
@@ -340,7 +340,7 @@ function ConsoleSteppingStoneContent() {
         const unpublishedItems = items.filter((i) => !i.published).length;
         if (t.published && unpublishedItems === 0) return null;
         return (
-          <div className="rounded-lg border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+          <div className="rounded-lg border border-warning/30 bg-warning/5 p-3 text-xs text-warning">
             {!t.published && (
               <div>
                 <span className="font-semibold">⚠️ 비공개 트랙</span> — 이 트랙은 공개 페이지(/steppingstone/{t.key})에 표시되지 않습니다.

@@ -286,7 +286,7 @@ export default function AssignmentDialog({
                     onClick={() => toggleTask(t.id)}
                     className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
                       t.checked
-                        ? "border-emerald-500 bg-emerald-500 text-white"
+                        ? "border-success bg-success text-white"
                         : "border-input bg-card"
                     }`}
                     aria-label={t.checked ? "체크 해제" : "체크"}
@@ -394,8 +394,8 @@ function PaperDetailsForm({
     onChange({ ...value, [k]: v });
   }
   return (
-    <div className="rounded-lg border border-violet-200 bg-violet-50/30 p-3 dark:border-violet-900 dark:bg-violet-950/20">
-      <p className="mb-2 text-[11px] font-semibold text-violet-800 dark:text-violet-200">
+    <div className="rounded-lg border border-cat-5/20 bg-cat-5/5 p-3">
+      <p className="mb-2 text-[11px] font-semibold text-cat-5">
         논문 발표 세부 정보
       </p>
       <div className="grid grid-cols-2 gap-1.5">
@@ -469,8 +469,8 @@ function PosterDetailsForm({
     onChange({ ...value, [k]: v });
   }
   return (
-    <div className="rounded-lg border border-amber-200 bg-amber-50/30 p-3 dark:border-amber-900 dark:bg-amber-950/20">
-      <p className="mb-2 text-[11px] font-semibold text-amber-800 dark:text-amber-200">
+    <div className="rounded-lg border border-warning/20 bg-warning/5 p-3">
+      <p className="mb-2 text-[11px] font-semibold text-warning">
         포스터 세부 정보
       </p>
       <div className="grid grid-cols-2 gap-1.5">
@@ -519,8 +519,8 @@ function MediaDetailsForm({
     onChange({ ...value, [k]: v });
   }
   return (
-    <div className="rounded-lg border border-rose-200 bg-rose-50/30 p-3 dark:border-rose-900 dark:bg-rose-950/20">
-      <p className="mb-2 text-[11px] font-semibold text-rose-800 dark:text-rose-200">
+    <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-3">
+      <p className="mb-2 text-[11px] font-semibold text-destructive">
         미디어전 세부 정보
       </p>
       <input

@@ -370,7 +370,7 @@ function TaskCard({
               {WORKBOOK_TASK_TYPE_LABELS[task.type]}
             </Badge>
             {task.required && (
-              <Badge variant="secondary" className="bg-red-50 text-red-700 text-[10px]">
+              <Badge variant="secondary" className="bg-destructive/5 text-destructive text-[10px]">
                 필수
               </Badge>
             )}

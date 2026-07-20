@@ -34,10 +34,10 @@ import type { SeminarSpeaker } from "@/types";
 
 const STATUS_COLORS: Record<SeminarStatus, string> = {
   draft: "bg-gray-50 text-gray-500",
-  upcoming: "bg-blue-50 text-blue-700",
-  ongoing: "bg-amber-50 text-amber-700",
+  upcoming: "bg-info/5 text-info",
+  ongoing: "bg-warning/5 text-warning",
   completed: "bg-green-50 text-green-700",
-  cancelled: "bg-red-50 text-red-700",
+  cancelled: "bg-destructive/5 text-destructive",
 };
 
 type EditSeminar = {
@@ -257,7 +257,7 @@ export default function AdminSeminarTab() {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         <div className="rounded-2xl border bg-card p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <CalendarDays size={16} className="text-blue-500" />
+            <CalendarDays size={16} className="text-info" />
             <span>예정</span>
           </div>
           <p className="mt-1 text-2xl font-bold">{stats.upcoming}<span className="ml-1 text-sm font-normal text-muted-foreground">건</span></p>
@@ -287,7 +287,7 @@ export default function AdminSeminarTab() {
 
       {/* 다가오는 세미나 하이라이트 */}
       {upcomingSeminars.length > 0 && (
-        <div className="rounded-2xl border bg-gradient-to-r from-primary/5 to-blue-50 p-4">
+        <div className="rounded-2xl border bg-gradient-to-r from-primary/5 to-info/5 p-4">
           <h3 className="text-sm font-semibold text-primary">다가오는 세미나</h3>
           <div className="mt-2 space-y-2">
             {upcomingSeminars.map((s) => {
@@ -298,7 +298,7 @@ export default function AdminSeminarTab() {
               const dDay = Math.round((new Date(s.date).getTime() - Date.now()) / (1000 * 60 * 60 * 24));
               return (
                 <div key={s.id} className="flex items-center gap-3 rounded-lg bg-card/80 px-3 py-2 text-sm">
-                  <Badge variant="secondary" className="shrink-0 bg-blue-50 text-blue-700">D{dDay <= 0 ? "" : "-"}{Math.abs(dDay)}</Badge>
+                  <Badge variant="secondary" className="shrink-0 bg-info/5 text-info">D{dDay <= 0 ? "" : "-"}{Math.abs(dDay)}</Badge>
                   <div className="min-w-0 flex-1">
                     <span className="font-medium line-clamp-1">{s.title}</span>
                     <span className="ml-2 text-xs text-muted-foreground">{s.speaker} | {s.date} {s.time}</span>
@@ -371,9 +371,9 @@ export default function AdminSeminarTab() {
             {progressPct >= 0 ? (
               <div className="flex flex-col gap-0.5" title={`${doneTasks}/${totalTasks} 완료${overdue.length > 0 ? ` (지연 ${overdue.length}건)` : ""}`}>
                 <div className="h-1.5 w-full rounded-full bg-muted">
-                  <div className={cn("h-full rounded-full transition-all", progressPct === 100 ? "bg-green-500" : overdue.length > 0 ? "bg-red-400" : "bg-primary")} style={{ width: `${progressPct}%` }} />
+                  <div className={cn("h-full rounded-full transition-all", progressPct === 100 ? "bg-green-500" : overdue.length > 0 ? "bg-destructive/60" : "bg-primary")} style={{ width: `${progressPct}%` }} />
                 </div>
-                <span className={cn("text-[10px]", overdue.length > 0 ? "text-red-500" : "text-muted-foreground")}>{progressPct}%</span>
+                <span className={cn("text-[10px]", overdue.length > 0 ? "text-destructive" : "text-muted-foreground")}>{progressPct}%</span>
               </div>
             ) : (
               <span className="text-xs text-muted-foreground">-</span>
@@ -417,9 +417,9 @@ export default function AdminSeminarTab() {
               {progressPct >= 0 && (
                 <div className="mt-1.5 flex items-center gap-2">
                   <div className="h-1.5 flex-1 rounded-full bg-muted">
-                    <div className={cn("h-full rounded-full", progressPct === 100 ? "bg-green-500" : overdue.length > 0 ? "bg-red-400" : "bg-primary")} style={{ width: `${progressPct}%` }} />
+                    <div className={cn("h-full rounded-full", progressPct === 100 ? "bg-green-500" : overdue.length > 0 ? "bg-destructive/60" : "bg-primary")} style={{ width: `${progressPct}%` }} />
                   </div>
-                  <span className={cn("text-[10px] shrink-0", overdue.length > 0 ? "text-red-500" : "text-muted-foreground")}>{progressPct}% ({doneTasks}/{totalTasks})</span>
+                  <span className={cn("text-[10px] shrink-0", overdue.length > 0 ? "text-destructive" : "text-muted-foreground")}>{progressPct}% ({doneTasks}/{totalTasks})</span>
                 </div>
               )}
               <div className="mt-2 flex items-center gap-2">
@@ -496,7 +496,7 @@ export default function AdminSeminarTab() {
                       }
                       className="h-3.5 w-3.5 rounded border-gray-300"
                     />
-                    <Video size={12} className="text-blue-500" />
+                    <Video size={12} className="text-info" />
                     온라인 (ZOOM)
                   </label>
                 </div>
@@ -591,13 +591,13 @@ export default function AdminSeminarTab() {
             const sem = seminars.find((s) => s.id === editSeminar.id);
             if (!sem) return null;
             return sem.status === "cancelled" ? (
-              <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
-                <div className="flex items-center gap-2 text-sm font-medium text-amber-800">
+              <div className="rounded-lg border border-warning/20 bg-warning/5 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-warning">
                   <AlertTriangle size={16} />
                   이 세미나는 취소된 상태입니다
                 </div>
                 {sem.cancelReason && (
-                  <p className="mt-1 text-xs text-amber-600">사유: {sem.cancelReason}</p>
+                  <p className="mt-1 text-xs text-warning">사유: {sem.cancelReason}</p>
                 )}
                 <Button
                   variant="outline"
@@ -609,8 +609,8 @@ export default function AdminSeminarTab() {
                 </Button>
               </div>
             ) : (
-              <div className="rounded-lg border border-red-200 bg-red-50 p-4">
-                <div className="flex items-center gap-2 text-sm font-medium text-red-800">
+              <div className="rounded-lg border border-destructive/20 bg-destructive/5 p-4">
+                <div className="flex items-center gap-2 text-sm font-medium text-destructive">
                   <AlertTriangle size={16} />
                   세미나 취소
                 </div>

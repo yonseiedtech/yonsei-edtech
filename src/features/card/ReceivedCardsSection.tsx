@@ -133,7 +133,7 @@ function CardFormDialog({
             <div className="relative h-24 w-24 overflow-hidden rounded-full border-2 border-dashed border-border bg-muted">
               {form.photoUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={form.photoUrl} alt="명함 사진" className="h-full w-full object-cover" />
+                <img src={form.photoUrl} alt="명함 사진 미리보기" className="h-full w-full object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center text-muted-foreground">
                   <User size={32} />

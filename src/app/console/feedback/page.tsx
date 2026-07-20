@@ -52,18 +52,18 @@ const STATUS_META: Record<
   NonNullable<UserFeedback["status"]>,
   { label: string; color: string }
 > = {
-  new: { label: "신규", color: "bg-blue-50 text-blue-700" },
-  reviewed: { label: "검토됨", color: "bg-purple-50 text-purple-700" },
-  "in-progress": { label: "처리중", color: "bg-amber-50 text-amber-700" },
+  new: { label: "신규", color: "bg-info/5 text-info" },
+  reviewed: { label: "검토됨", color: "bg-cat-5/5 text-cat-5" },
+  "in-progress": { label: "처리중", color: "bg-warning/5 text-warning" },
   resolved: { label: "완료", color: "bg-green-50 text-green-700" },
 };
 
 const CATEGORY_COLORS: Record<FeedbackCategory, string> = {
-  bug: "bg-red-50 text-red-700",
-  ui: "bg-sky-50 text-sky-700",
-  "feature-request": "bg-violet-50 text-violet-700",
-  performance: "bg-orange-50 text-orange-700",
-  other: "bg-slate-50 text-slate-600",
+  bug: "bg-destructive/5 text-destructive",
+  ui: "bg-info/5 text-info",
+  "feature-request": "bg-cat-5/5 text-cat-5",
+  performance: "bg-warning/5 text-warning",
+  other: "bg-muted/50 text-muted-foreground",
 };
 
 const STATUS_OPTIONS = ["all", "new", "reviewed", "in-progress", "resolved"] as const;
@@ -265,7 +265,7 @@ export default function ConsoleFeedbackPage() {
                     >
                       {CATEGORY_LABELS[fb.category] ?? fb.category}
                     </span>
-                    <span className="rounded-full bg-slate-100 px-2 py-0.5 text-xs text-slate-600">
+                    <span className="rounded-full bg-muted px-2 py-0.5 text-xs text-muted-foreground">
                       {AREA_LABELS[fb.area] ?? fb.area}
                     </span>
                     <span

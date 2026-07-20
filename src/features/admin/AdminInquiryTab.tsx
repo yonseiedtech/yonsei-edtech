@@ -145,7 +145,7 @@ export default function AdminInquiryTab() {
                     className={cn(
                       "text-[10px]",
                       inq.status === "pending"
-                        ? "bg-amber-50 text-amber-700"
+                        ? "bg-warning/5 text-warning"
                         : "bg-green-50 text-green-700"
                     )}
                   >
@@ -202,7 +202,7 @@ export default function AdminInquiryTab() {
                     variant="secondary"
                     className={
                       inq.status === "pending"
-                        ? "bg-amber-50 text-amber-700"
+                        ? "bg-warning/5 text-warning"
                         : "bg-green-50 text-green-700"
                     }
                   >

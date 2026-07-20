@@ -39,7 +39,7 @@ export default function HistorySection() {
             <Input value={item.year} onChange={(e) => updateItem(i, "year", e.target.value)} className="w-20" placeholder="연도" />
             <Input value={item.title} onChange={(e) => updateItem(i, "title", e.target.value)} className="flex-1" placeholder="제목" />
             <Input value={item.desc} onChange={(e) => updateItem(i, "desc", e.target.value)} className="flex-[2]" placeholder="설명" />
-            <button onClick={() => removeItem(i)} className="mt-2 text-red-400 hover:text-red-600"><Trash2 size={16} /></button>
+            <button onClick={() => removeItem(i)} className="mt-2 text-destructive/60 hover:text-destructive"><Trash2 size={16} /></button>
           </div>
         ))}
       </div>

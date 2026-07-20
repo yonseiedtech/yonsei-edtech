@@ -1805,7 +1805,10 @@ export const SEED_CONCEPTS: SeedConcept[] = [
     seedKey: "concept:self-regulation",
     name: "자기조절",
     aectTerm: "자기조절",
-    altNames: ["Self-Regulation", "자기조절학습"],
+    // H5-v10 감사 핫픽스(2026-07-21): altName "자기조절학습" 제거 —
+    // 별개 개념 concept:self-regulated-learning 의 정식명과 완전 일치해
+    // 위키 링크(splitTextByConcepts) 가 "자기조절학습" 본문을 이 개념으로 오연결하던 문제.
+    altNames: ["Self-Regulation"],
     description:
       "학습자가 자신의 목표 달성을 위해 인지·정서·행동을 스스로 계획하고 점검하며 조절하는 과정을 의미한다. Zimmerman은 이를 예견·수행·자기성찰의 순환 국면으로 모형화했으며, 목표 설정과 전략 사용, 자기점검, 자기평가가 핵심 구성 요소로 다뤄진다. 자기조절학습(SRL)은 테크놀로지 기반의 자기주도적 학습 환경에서 특히 중요하게 강조된다.",
     tags: ["학습자 특성", "자기조절학습", "메타인지"],
@@ -2785,6 +2788,60 @@ export const SEED_VARIABLES: SeedVariable[] = [
       "Ragu-Nathan, T. S., Tarafdar, M., Ragu-Nathan, B. S., & Tu, Q. (2008). The consequences of technostress for end users in organizations: Conceptual development and empirical validation. Information Systems Research, 19(4), 417-433.",
       "Brod, C. (1984). Technostress: The human cost of the computer revolution. Addison-Wesley.",
     ],
+  },
+  // ─── H5-v10 감사 핫픽스(2026-07-21) ───────────────────────────
+  // SEED_CONCEPT_VARIABLE_LINKS(2026-07-19 보강)가 참조하나 SEED_VARIABLES 에
+  // 누락돼 있던 5개 변인 — 링크가 이름 해석 실패로 무음(no-op)되던 죽은 링크를 살림.
+  // 표준 결과 변인이므로 최소 메타(설명·유형·태그)만; 특정 척도 인용은 운영진 검증 후 보강.
+  {
+    seedKey: "variable:critical-thinking",
+    name: "비판적 사고",
+    altNames: ["Critical Thinking"],
+    description:
+      "정보·주장·근거를 분석·평가하고 합리적 판단에 이르는 고차원 인지 능력. 문제 기반 학습·탐구 기반 학습의 대표적 인지적 성과 변인으로, 논증·추론·해석·평가의 하위 기능으로 측정된다.",
+    type: "cognitive",
+    tags: ["고차사고", "결과 변인"],
+    references: [],
+  },
+  {
+    seedKey: "variable:creativity",
+    name: "창의성",
+    altNames: ["Creativity"],
+    description:
+      "새롭고 유용한 아이디어·산출물을 생성하는 능력. 유창성·융통성·독창성·정교성의 하위 요인으로 조작화되며, 프로젝트 기반 학습·발견학습의 인지적 성과 변인으로 자주 사용된다.",
+    type: "cognitive",
+    tags: ["고차사고", "결과 변인"],
+    references: [],
+  },
+  {
+    seedKey: "variable:knowledge-retention",
+    name: "지식 파지",
+    altNames: ["Knowledge Retention", "파지"],
+    description:
+      "학습한 지식을 시간이 지난 뒤에도 기억·인출할 수 있는 정도. 지연 사후검사로 측정되며, 정보처리이론·기억술 연구에서 학습 효과의 지속성을 나타내는 핵심 종속 변인.",
+    type: "cognitive",
+    tags: ["기억", "결과 변인"],
+    references: [],
+  },
+  {
+    seedKey: "variable:learning-interest",
+    name: "학습 흥미",
+    altNames: ["Learning Interest", "흥미"],
+    description:
+      "학습 대상·활동에 대한 긍정적 관심과 몰두 경향. 상황적 흥미와 개인적 흥미로 구분되며, 게이미피케이션·디지털 게임 기반 학습의 정의적 성과 변인으로 사용된다.",
+    type: "affective",
+    tags: ["동기", "정의적 영역"],
+    references: [],
+  },
+  {
+    seedKey: "variable:learning-anxiety",
+    name: "학습 불안",
+    altNames: ["Learning Anxiety"],
+    description:
+      "학습 상황·과제·평가에서 느끼는 긴장·염려·두려움의 정서 상태. 테크놀로지 수용·원격교육 맥락에서 학습 지속을 저해하는 부적 정의적 변인으로 다뤄진다.",
+    type: "affective",
+    tags: ["정의적 영역", "부적 변인"],
+    references: [],
   },
 ];
 

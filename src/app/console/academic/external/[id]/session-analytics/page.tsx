@@ -247,21 +247,21 @@ export default function ExternalActivitySessionAnalyticsConsole({
               label="평균 출석률"
               value={overall.attendanceRate != null ? `${Math.round(overall.attendanceRate * 100)}%` : "—"}
               hint={`${overall.totalAttended} / ${overall.totalPlanned}`}
-              color="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"
+              color="text-success bg-success/5"
             />
             <StatCard
               icon={Star}
               label="평균 별점"
               value={overall.avgOverallRating != null ? overall.avgOverallRating.toFixed(2) : "—"}
               hint="회원이 기록한 별점"
-              color="text-amber-600 bg-amber-50 dark:bg-amber-950/30"
+              color="text-warning bg-warning/5"
             />
             <StatCard
               icon={NotebookPen}
               label="노트 작성률"
               value={overall.noteRate != null ? `${Math.round(overall.noteRate * 100)}%` : "—"}
               hint="분석 노트·회고 보유"
-              color="text-blue-600 bg-blue-50 dark:bg-blue-950/30"
+              color="text-info bg-info/5"
             />
           </div>
 
@@ -299,7 +299,7 @@ export default function ExternalActivitySessionAnalyticsConsole({
                           {s.attendanceRate != null && ` (${Math.round(s.attendanceRate * 100)}%)`}
                         </p>
                         {s.avgRating != null && (
-                          <p className="inline-flex items-center gap-0.5 text-amber-600">
+                          <p className="inline-flex items-center gap-0.5 text-warning">
                             <Star size={9} className="fill-current" />
                             {s.avgRating.toFixed(1)}
                           </p>
@@ -347,7 +347,7 @@ export default function ExternalActivitySessionAnalyticsConsole({
                   <span className="w-28 shrink-0 text-muted-foreground">{r.reason}</span>
                   <div className="flex-1 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-2 rounded-full bg-emerald-500"
+                      className="h-2 rounded-full bg-success"
                       style={{ width: `${(r.count / maxReasonCount) * 100}%` }}
                     />
                   </div>

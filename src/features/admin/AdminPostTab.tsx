@@ -182,9 +182,9 @@ export default function AdminPostTab() {
                       post.category === "notice"
                         ? "bg-primary/10 text-primary"
                         : post.category === "seminar"
-                        ? "bg-secondary/15 text-amber-700"
+                        ? "bg-secondary/15 text-warning"
                         : post.category === "promotion"
-                        ? "bg-emerald-50 text-emerald-700"
+                        ? "bg-success/5 text-success"
                         : ""
                     )}
                   >
@@ -250,9 +250,9 @@ export default function AdminPostTab() {
                       post.category === "notice"
                         ? "bg-primary/10 text-primary"
                         : post.category === "seminar"
-                        ? "bg-secondary/15 text-amber-700"
+                        ? "bg-secondary/15 text-warning"
                         : post.category === "promotion"
-                        ? "bg-emerald-50 text-emerald-700"
+                        ? "bg-success/5 text-success"
                         : ""
                     )}
                   >

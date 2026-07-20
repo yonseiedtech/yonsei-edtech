@@ -430,18 +430,18 @@ export default function ConsoleArchivePage() {
       />
 
       {/* Phase 0 공개 정책 안내 — 검수형 vs 상시 공개 구분 명시 */}
-      <div className="mt-4 rounded-lg border border-blue-200 bg-blue-50 p-3 text-xs leading-relaxed text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+      <div className="mt-4 rounded-lg border border-info/20 bg-info/5 p-3 text-xs leading-relaxed text-info">
         <p>
           <strong>개념·변인·측정도구</strong>는 등록 즉시 공개됩니다. (
-          <code className="rounded bg-blue-100 px-1 py-0.5 text-[10px] dark:bg-blue-900/50">archive_concepts</code>{" "}
+          <code className="rounded bg-info/10 px-1 py-0.5 text-[10px]">archive_concepts</code>{" "}
           ·{" "}
-          <code className="rounded bg-blue-100 px-1 py-0.5 text-[10px] dark:bg-blue-900/50">archive_variables</code>{" "}
+          <code className="rounded bg-info/10 px-1 py-0.5 text-[10px]">archive_variables</code>{" "}
           ·{" "}
-          <code className="rounded bg-blue-100 px-1 py-0.5 text-[10px] dark:bg-blue-900/50">archive_measurements</code>
+          <code className="rounded bg-info/10 px-1 py-0.5 text-[10px]">archive_measurements</code>
           {" "}— published 게이트 없음)
         </p>
         <p className="mt-1">
-          <strong>연구방법·통계방법·기초 용어·학술 글쓰기</strong>는 검수(<code className="rounded bg-blue-100 px-1 py-0.5 text-[10px] dark:bg-blue-900/50">published</code>) 후 공개됩니다.
+          <strong>연구방법·통계방법·기초 용어·학술 글쓰기</strong>는 검수(<code className="rounded bg-info/10 px-1 py-0.5 text-[10px]">published</code>) 후 공개됩니다.
         </p>
       </div>
 
@@ -456,7 +456,7 @@ export default function ConsoleArchivePage() {
       <ReviewTrendMiniSection rows={reviewTrend} loading={trendLoading} />
 
       {/* Phase 3 — 시드 데이터 학술 신뢰도 경고 + 확인 체크박스 */}
-      <div className="mt-4 rounded-lg border border-amber-200 bg-amber-50 p-4 text-xs leading-relaxed text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+      <div className="mt-4 rounded-lg border border-warning/20 bg-warning/5 p-4 text-xs leading-relaxed text-warning">
         <div className="flex items-start gap-2">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <div className="flex-1 space-y-1">
@@ -465,7 +465,7 @@ export default function ConsoleArchivePage() {
               시드 데이터는 LLM 자동 작성 가능성이 있어 RISS·국립중앙도서관 등에서 검증 후 published 토글을 권장합니다.
             </p>
             <p>
-              특히 <code className="rounded bg-amber-100 px-1 py-0.5 text-[10px] dark:bg-amber-900/50">references</code> 필드는 hallucination 위험이 있으므로 운영진 직접 작성/검증이 필요합니다.
+              특히 <code className="rounded bg-warning/10 px-1 py-0.5 text-[10px]">references</code> 필드는 hallucination 위험이 있으므로 운영진 직접 작성/검증이 필요합니다.
             </p>
           </div>
         </div>
@@ -474,7 +474,7 @@ export default function ConsoleArchivePage() {
             type="checkbox"
             checked={seedAcknowledged}
             onChange={(e) => setSeedAcknowledged(e.target.checked)}
-            className="h-4 w-4 rounded border-amber-400"
+            className="h-4 w-4 rounded border-warning/40"
             aria-label="시드 데이터 학술 신뢰도 안내 확인"
           />
           <span className="text-xs font-medium">위 안내를 확인했습니다 (시드/메타데이터 갱신 실행 활성화)</span>
@@ -940,7 +940,7 @@ function ReviewQueueSection({
               <ClipboardCheck className="mr-1 h-3.5 w-3.5" />
               통합 검수 큐 열기
               {!loading && counts && total > 0 && (
-                <Badge variant="outline" className="ml-1.5 border-rose-200 bg-rose-50 text-rose-700 text-[10px] dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
+                <Badge variant="outline" className="ml-1.5 border-destructive/20 bg-destructive/5 text-destructive text-[10px]">
                   {total}
                 </Badge>
               )}
@@ -997,7 +997,7 @@ function ReviewQueueSection({
                     className={`text-[10px] ${
                       isEmpty
                         ? ""
-                        : "border-rose-200 bg-rose-50 text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200"
+                        : "border-destructive/20 bg-destructive/5 text-destructive"
                     }`}
                   >
                     draft {draftCount}
@@ -1178,7 +1178,7 @@ function Picker({
             onClick={() => onToggle(it.id)}
             className={`rounded-full border px-2.5 py-0.5 text-xs transition-colors ${
               isOn
-                ? "bg-blue-100 border-blue-300 text-blue-800"
+                ? "bg-info/10 border-info/30 text-info"
                 : "bg-background hover:bg-muted"
             }`}
           >

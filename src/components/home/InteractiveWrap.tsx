@@ -1,7 +1,7 @@
 "use client";
 
 import { Children, useRef, type ReactNode } from "react";
-import { motion, useScroll, useTransform, useInView, useMotionValue, useSpring, useAnimationFrame } from "framer-motion";
+import { motion, useScroll, useTransform, useInView, useMotionValue, useSpring, useAnimationFrame, useReducedMotion } from "framer-motion";
 
 /** 스크롤에 따라 등장하는 섹션 래퍼. */
 export function Reveal({ children, delay = 0 }: { children: ReactNode; delay?: number }) {
@@ -28,8 +28,10 @@ export function InteractiveBackdrop() {
 
   const mx = useSpring(useMotionValue(0), { stiffness: 50, damping: 20 });
   const my = useSpring(useMotionValue(0), { stiffness: 50, damping: 20 });
+  const reduce = useReducedMotion();
 
   useAnimationFrame((t) => {
+    if (reduce) return; // a11y: prefers-reduced-motion 시 블롭 드리프트 중단
     const s = t / 1000;
     mx.set(Math.sin(s * 0.15) * 60);
     my.set(Math.cos(s * 0.2) * 40);

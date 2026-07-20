@@ -40,7 +40,7 @@ export default function PastPresidentsSection() {
             <Input value={item.name} onChange={(e) => updateItem(i, "name", e.target.value)} className="w-24" placeholder="이름" />
             <Input value={item.term} onChange={(e) => updateItem(i, "term", e.target.value)} className="w-40" placeholder="임기" />
             <Input value={item.affiliation} onChange={(e) => updateItem(i, "affiliation", e.target.value)} className="flex-1" placeholder="소속" />
-            <button onClick={() => removeItem(i)} className="mt-2 text-red-400 hover:text-red-600"><Trash2 size={16} /></button>
+            <button onClick={() => removeItem(i)} className="mt-2 text-destructive/60 hover:text-destructive"><Trash2 size={16} /></button>
           </div>
         ))}
       </div>

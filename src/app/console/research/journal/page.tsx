@@ -54,8 +54,8 @@ function Content() {
     return (
       <PageContainer>
         <PageHeader title="연구지 콘솔" />
-        <Card className="border-red-200 bg-red-50">
-          <CardContent className="p-6 text-sm text-red-700">
+        <Card className="border-destructive/20 bg-destructive/5">
+          <CardContent className="p-6 text-sm text-destructive">
             연구지 콘솔은 학회 운영진(staff·운영진·회장·관리자)만 접근할 수 있습니다.
           </CardContent>
         </Card>
@@ -297,8 +297,8 @@ function AcceptedArticlesSection() {
   return (
     <section className="mb-10">
       <h2 className="mb-3 text-lg font-semibold">승인 완료 — 호수 배정 대기</h2>
-      <Card className="border-blue-200 bg-blue-50">
-        <CardContent className="p-4 text-sm text-blue-900">
+      <Card className="border-info/20 bg-info/5">
+        <CardContent className="p-4 text-sm text-info">
           승인(accepted) 된 정식 연구지 논문은 각 논문의 출판 페이지
           (/collab/[id]/publish/[articleId])에서 호수·페이지 정보를 입력 후 발간할 수 있습니다.
           (호수 배정 일괄 워크플로우는 Phase 4 에서 콘솔에 통합 예정.)

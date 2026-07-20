@@ -107,7 +107,7 @@ export default function VolunteerCard({
               </span>
             )}
             {!v.userId && (
-              <span className="ml-2 rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+              <span className="ml-2 rounded bg-warning/10 px-1.5 py-0.5 text-[9px] font-medium text-warning">
                 비회원
               </span>
             )}
@@ -190,7 +190,7 @@ export default function VolunteerCard({
                   disabled={busy}
                   className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
                     d.checked
-                      ? "border-emerald-500 bg-emerald-500 text-white"
+                      ? "border-success bg-success text-white"
                       : "border-input bg-card"
                   }`}
                   aria-label={d.checked ? "체크 해제" : "체크"}
@@ -213,7 +213,7 @@ export default function VolunteerCard({
                     <button
                       type="button"
                       onClick={commitEditDuty}
-                      className="text-emerald-600 hover:text-emerald-700"
+                      className="text-success hover:text-success/80"
                       aria-label="저장"
                     >
                       <Check size={13} />

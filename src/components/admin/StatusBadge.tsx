@@ -4,12 +4,12 @@ import { STATUS_CHIP, type StatusVariant } from "@/lib/design-tokens";
 
 /* ── 역할 ── */
 const ROLE_COLORS: Record<string, string> = {
-  sysadmin: "bg-rose-100 text-rose-700 border-rose-200 dark:bg-rose-950/50 dark:text-rose-300 dark:border-rose-900",
-  admin: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900",
-  president: "bg-blue-100 text-blue-700 border-blue-200 dark:bg-blue-950/50 dark:text-blue-300 dark:border-blue-900",
-  staff: "bg-sky-100 text-sky-700 border-sky-200 dark:bg-sky-950/50 dark:text-sky-300 dark:border-sky-900",
+  sysadmin: "bg-destructive/10 text-destructive border-destructive/20",
+  admin: "bg-info/10 text-info border-info/20",
+  president: "bg-info/10 text-info border-info/20",
+  staff: "bg-info/10 text-info border-info/20",
   advisor: "bg-teal-100 text-teal-700 border-teal-200 dark:bg-teal-950/50 dark:text-teal-300 dark:border-teal-900",
-  alumni: "bg-slate-100 text-slate-600 border-slate-200 dark:bg-slate-800 dark:text-slate-300 dark:border-slate-700",
+  alumni: "bg-muted text-muted-foreground border-muted-foreground/20",
   member: "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
 };
 

@@ -31,12 +31,12 @@ import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 const ASSIGNABLE_ROLES: UserRole[] = ["member", "alumni", "advisor", "staff", "president", "admin", "sysadmin"];
 
 const ROLE_COLORS: Record<string, string> = {
-  sysadmin: "bg-rose-100 text-rose-700",
-  admin: "bg-purple-100 text-purple-700",
-  president: "bg-blue-100 text-blue-700",
-  staff: "bg-sky-100 text-sky-700",
+  sysadmin: "bg-destructive/10 text-destructive",
+  admin: "bg-cat-5/10 text-cat-5",
+  president: "bg-info/10 text-info",
+  staff: "bg-info/10 text-info",
   advisor: "bg-teal-100 text-teal-700",
-  alumni: "bg-slate-100 text-slate-600",
+  alumni: "bg-muted text-muted-foreground",
   member: "bg-gray-100 text-gray-600",
 };
 
@@ -274,9 +274,9 @@ function AdminMemberDetail({ id }: { id: string }) {
                   {member.approved ? (
                     <Badge className="bg-green-100 text-green-700 text-[10px]">승인됨</Badge>
                   ) : member.rejected ? (
-                    <Badge className="bg-red-100 text-red-700 text-[10px]">거절됨</Badge>
+                    <Badge className="bg-destructive/10 text-destructive text-[10px]">거절됨</Badge>
                   ) : (
-                    <Badge className="bg-amber-100 text-amber-700 text-[10px]">승인 대기</Badge>
+                    <Badge className="bg-warning/10 text-warning text-[10px]">승인 대기</Badge>
                   )}
                 </div>
                 <p className="mt-1 text-sm text-muted-foreground">
@@ -292,8 +292,8 @@ function AdminMemberDetail({ id }: { id: string }) {
             </h3>
 
             {!member.approved && (
-              <div className="flex items-center justify-between rounded-lg border bg-amber-50 p-3">
-                <p className="text-sm text-amber-800">이 회원은 아직 승인되지 않았습니다.</p>
+              <div className="flex items-center justify-between rounded-lg border bg-warning/5 p-3">
+                <p className="text-sm text-warning">이 회원은 아직 승인되지 않았습니다.</p>
                 <div className="flex gap-2">
                   <Button size="sm" onClick={handleApprove}>
                     <CheckCircle size={14} className="mr-1" /> 승인
@@ -388,7 +388,7 @@ function ConsentStatusSection({ member }: { member: User }) {
                   <td className="border-b px-3 py-2 align-top">
                     {rec?.version ?? "-"}
                     {outdated && (
-                      <span className="ml-1 text-[10px] text-amber-600">(구버전)</span>
+                      <span className="ml-1 text-[10px] text-warning">(구버전)</span>
                     )}
                   </td>
                   <td className="border-b px-3 py-2 align-top text-muted-foreground">{fmt(rec?.at)}</td>
@@ -446,11 +446,11 @@ function MemberActivityHistory({ memberId }: { memberId: string }) {
           <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><Users size={10} />스터디</p>
         </div>
         <div className="rounded-lg border p-3 text-center">
-          <p className="text-xl font-bold text-purple-600">{projects.length}</p>
+          <p className="text-xl font-bold text-cat-5">{projects.length}</p>
           <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><FolderKanban size={10} />프로젝트</p>
         </div>
         <div className="rounded-lg border p-3 text-center">
-          <p className="text-xl font-bold text-amber-600">{externals.length}</p>
+          <p className="text-xl font-bold text-warning">{externals.length}</p>
           <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><Globe size={10} />대외활동</p>
         </div>
       </div>
@@ -484,8 +484,8 @@ function MemberActivityHistory({ memberId }: { memberId: string }) {
                 {activities.map((a) => (
                   <div key={a.id} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
                     {a.type === "study" ? <Users size={14} className="shrink-0 text-green-600" /> :
-                     a.type === "project" ? <FolderKanban size={14} className="shrink-0 text-purple-600" /> :
-                     <Globe size={14} className="shrink-0 text-amber-600" />}
+                     a.type === "project" ? <FolderKanban size={14} className="shrink-0 text-cat-5" /> :
+                     <Globe size={14} className="shrink-0 text-warning" />}
                     <span className="flex-1 truncate">{a.title}</span>
                     <span className="shrink-0 text-xs text-muted-foreground">{a.date}</span>
                     <Badge variant="secondary" className="text-[10px]">

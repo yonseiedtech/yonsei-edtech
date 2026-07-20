@@ -237,7 +237,7 @@ function ConsoleAlumniMappingContent() {
                       이름이 일치하는 회원이 없습니다.
                     </div>
                   ) : status === "verified" && t.authorUserId ? (
-                    <div className="mt-3 flex items-center justify-between rounded-md bg-emerald-50 px-3 py-2">
+                    <div className="mt-3 flex items-center justify-between rounded-md bg-success/5 px-3 py-2">
                       <span className="text-xs">
                         매핑됨 →{" "}
                         <Link

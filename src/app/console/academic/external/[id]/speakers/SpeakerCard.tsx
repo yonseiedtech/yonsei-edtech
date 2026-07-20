@@ -119,7 +119,7 @@ export default function SpeakerCard({
               {SPEAKER_SUBMISSION_TYPE_LABELS[s.submissionType]}
             </span>
             {!s.userId && (
-              <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+              <span className="rounded bg-warning/10 px-1.5 py-0.5 text-[9px] font-medium text-warning">
                 비회원
               </span>
             )}
@@ -197,7 +197,7 @@ export default function SpeakerCard({
                   disabled={busy}
                   className={`flex h-4 w-4 shrink-0 items-center justify-center rounded border ${
                     t.checked
-                      ? "border-emerald-500 bg-emerald-500 text-white"
+                      ? "border-success bg-success text-white"
                       : "border-input bg-card"
                   }`}
                   aria-label={t.checked ? "체크 해제" : "체크"}
@@ -220,7 +220,7 @@ export default function SpeakerCard({
                     <button
                       type="button"
                       onClick={commitEdit}
-                      className="text-emerald-600 hover:text-emerald-700"
+                      className="text-success hover:text-success/80"
                       aria-label="저장"
                     >
                       <Check size={13} />
@@ -315,7 +315,7 @@ function SubmissionDetails({ assignment }: { assignment: SpeakerAssignment }) {
     return (
       <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
         {d.trackName && (
-          <span className="rounded bg-violet-50 px-1.5 py-0.5 font-medium text-violet-700 dark:bg-violet-950/40 dark:text-violet-200">
+          <span className="rounded bg-cat-5/5 px-1.5 py-0.5 font-medium text-cat-5">
             {d.trackName}
           </span>
         )}
@@ -335,7 +335,7 @@ function SubmissionDetails({ assignment }: { assignment: SpeakerAssignment }) {
     return (
       <div className="mb-2 flex flex-wrap items-center gap-1.5 text-[11px] text-muted-foreground">
         {d.boothNumber && (
-          <span className="rounded bg-amber-50 px-1.5 py-0.5 font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+          <span className="rounded bg-warning/5 px-1.5 py-0.5 font-medium text-warning">
             부스 {d.boothNumber}
           </span>
         )}
@@ -351,7 +351,7 @@ function SubmissionDetails({ assignment }: { assignment: SpeakerAssignment }) {
       <div className="mb-2 space-y-1 text-[11px] text-muted-foreground">
         <div className="flex flex-wrap items-center gap-1.5">
           {d.exhibitSpace && (
-            <span className="rounded bg-rose-50 px-1.5 py-0.5 font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-200">
+            <span className="rounded bg-destructive/5 px-1.5 py-0.5 font-medium text-destructive">
               {d.exhibitSpace}
             </span>
           )}

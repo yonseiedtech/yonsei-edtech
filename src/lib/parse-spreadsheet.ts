@@ -1,7 +1,15 @@
-import * as XLSX from "xlsx";
-
 export interface SpreadsheetRow {
   [key: string]: string;
+}
+
+// xlsx 는 대용량(parsed ~400KB) 라이브러리이며 실제 파일 파싱 시점에만 필요하다.
+// 정적 import 하면 이 모듈을 참조하는 모든 화면(세미나 운영 탭 등)의 초기 번들에
+// 무조건 포함되므로, 최초 파싱 호출 시에만 지연 로드해 초기 번들에서 제외한다.
+type XLSXModule = typeof import("xlsx");
+let xlsxPromise: Promise<XLSXModule> | null = null;
+function loadXLSX(): Promise<XLSXModule> {
+  if (!xlsxPromise) xlsxPromise = import("xlsx");
+  return xlsxPromise;
 }
 
 /**
@@ -13,6 +21,7 @@ export async function parseExcelFile(
   file: File,
   columns: string[],
 ): Promise<SpreadsheetRow[]> {
+  const XLSX = await loadXLSX();
   const buffer = await file.arrayBuffer();
   const wb = XLSX.read(buffer, { type: "array" });
   const sheet = wb.Sheets[wb.SheetNames[0]];
@@ -23,10 +32,11 @@ export async function parseExcelFile(
 /**
  * CSV 텍스트를 파싱하여 행 배열로 반환
  */
-export function parseCSVText(
+export async function parseCSVText(
   text: string,
   columns: string[],
-): SpreadsheetRow[] {
+): Promise<SpreadsheetRow[]> {
+  const XLSX = await loadXLSX();
   const wb = XLSX.read(text, { type: "string" });
   const sheet = wb.Sheets[wb.SheetNames[0]];
   const raw = XLSX.utils.sheet_to_json<string[]>(sheet, { header: 1 });

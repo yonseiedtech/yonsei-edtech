@@ -25,9 +25,9 @@ const STAGE_STATUS_META: Record<
   { icon: React.ElementType; color: string; label: string }
 > = {
   pending: { icon: Clock, color: "text-muted-foreground", label: "대기" },
-  running: { icon: Loader2, color: "text-blue-600", label: "진행 중" },
-  completed: { icon: CheckCircle2, color: "text-emerald-600", label: "완료" },
-  failed: { icon: XCircle, color: "text-rose-600", label: "실패" },
+  running: { icon: Loader2, color: "text-info", label: "진행 중" },
+  completed: { icon: CheckCircle2, color: "text-success", label: "완료" },
+  failed: { icon: XCircle, color: "text-destructive", label: "실패" },
   skipped: { icon: Clock, color: "text-muted-foreground", label: "건너뜀" },
 };
 
@@ -187,10 +187,10 @@ function WorkflowRunCard({ run }: { run: WorkflowRun }) {
   const [expanded, setExpanded] = useState(false);
   const statusColor =
     run.status === "completed"
-      ? "text-emerald-600"
+      ? "text-success"
       : run.status === "failed"
-        ? "text-rose-600"
-        : "text-blue-600";
+        ? "text-destructive"
+        : "text-info";
 
   return (
     <li className="rounded-2xl border bg-background p-4">
@@ -223,11 +223,11 @@ function WorkflowRunCard({ run }: { run: WorkflowRun }) {
           const st = result?.status ?? "pending";
           const bg =
             st === "completed"
-              ? "bg-emerald-500"
+              ? "bg-success"
               : st === "failed"
-                ? "bg-rose-500"
+                ? "bg-destructive"
                 : st === "running"
-                  ? "bg-blue-500"
+                  ? "bg-info"
                   : "bg-muted";
           return <div key={i} className={`h-1.5 flex-1 rounded-full ${bg}`} />;
         })}
@@ -261,7 +261,7 @@ function WorkflowRunCard({ run }: { run: WorkflowRun }) {
                   </p>
                 )}
                 {r.error && (
-                  <p className="mt-2 text-[11px] text-rose-600">오류: {r.error}</p>
+                  <p className="mt-2 text-[11px] text-destructive">오류: {r.error}</p>
                 )}
                 {r.steps && r.steps.length > 0 && (
                   <p className="mt-1 text-[10px] text-muted-foreground">
@@ -272,7 +272,7 @@ function WorkflowRunCard({ run }: { run: WorkflowRun }) {
             );
           })}
           {run.error && (
-            <p className="rounded-lg bg-rose-50 p-2 text-[11px] text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
+            <p className="rounded-lg bg-destructive/5 p-2 text-[11px] text-destructive">
               {run.error}
             </p>
           )}

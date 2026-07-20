@@ -102,11 +102,11 @@ export default function AvailabilityTimeGrid({ activity, applicants }: Props) {
         <div className="space-y-4">
           <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
             <span className="inline-flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-sm bg-rose-200 dark:bg-rose-900" />
+              <span className="h-2.5 w-2.5 rounded-sm bg-destructive/20" />
               부족 ({SHORTAGE_THRESHOLD}명 이하)
             </span>
             <span className="inline-flex items-center gap-1">
-              <span className="h-2.5 w-2.5 rounded-sm bg-emerald-200 dark:bg-emerald-900" />
+              <span className="h-2.5 w-2.5 rounded-sm bg-success/20" />
               여유
             </span>
           </div>
@@ -138,8 +138,8 @@ function SlotCell({ cell, maxCount }: { cell: SlotAvailability; maxCount: number
       onClick={() => count > 0 && setOpen((v) => !v)}
       className={`rounded-lg border p-2 text-left transition-colors ${
         shortage
-          ? "border-rose-300 bg-rose-50 dark:border-rose-800 dark:bg-rose-950/30"
-          : "border-emerald-200 bg-emerald-50 dark:border-emerald-800 dark:bg-emerald-950/30"
+          ? "border-destructive/30 bg-destructive/5"
+          : "border-success/20 bg-success/5"
       } ${count > 0 ? "hover:brightness-95" : "cursor-default opacity-70"}`}
     >
       <div className="flex items-center justify-between">
@@ -148,7 +148,7 @@ function SlotCell({ cell, maxCount }: { cell: SlotAvailability; maxCount: number
         </span>
         <span
           className={`text-xs font-bold tabular-nums ${
-            shortage ? "text-rose-700 dark:text-rose-300" : "text-emerald-700 dark:text-emerald-300"
+            shortage ? "text-destructive" : "text-success"
           }`}
         >
           {count}명
@@ -156,7 +156,7 @@ function SlotCell({ cell, maxCount }: { cell: SlotAvailability; maxCount: number
       </div>
       <div className="mt-1 h-1.5 overflow-hidden rounded-full bg-muted">
         <div
-          className={`h-full rounded-full ${shortage ? "bg-rose-400" : "bg-emerald-400"}`}
+          className={`h-full rounded-full ${shortage ? "bg-destructive" : "bg-success"}`}
           style={{ width: `${Math.round(ratio * 100)}%` }}
         />
       </div>

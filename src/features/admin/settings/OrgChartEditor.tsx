@@ -221,7 +221,7 @@ function EditDialog({ position, allPositions, semesterKey, open, onClose, onSave
               <Input value={form.team ?? ""} onChange={(e) => setForm({ ...form, team: e.target.value || undefined })} placeholder="예: 학술팀" />
             </div>
           </div>
-          <label className="flex items-center gap-2 rounded-lg border bg-amber-50/40 px-3 py-2 text-xs">
+          <label className="flex items-center gap-2 rounded-lg border bg-warning/5 px-3 py-2 text-xs">
             <input
               type="checkbox"
               checked={!!form.isIndependent}
@@ -529,7 +529,7 @@ export default function OrgChartEditor() {
                     {pos.department && ` · ${pos.department}`}
                   </p>
                   {isOrphanAssignee(pos) && (
-                    <span className="mt-1 inline-block rounded bg-red-50 px-1.5 py-0.5 text-[10px] font-medium text-red-600">
+                    <span className="mt-1 inline-block rounded bg-destructive/5 px-1.5 py-0.5 text-[10px] font-medium text-destructive">
                       탈퇴/미확인 회원
                     </span>
                   )}
@@ -538,7 +538,7 @@ export default function OrgChartEditor() {
                   <button onClick={() => handleMoveOrder(pos.id, -1)} className="rounded p-1 text-muted-foreground hover:bg-muted"><ChevronUp size={14} /></button>
                   <button onClick={() => handleMoveOrder(pos.id, 1)} className="rounded p-1 text-muted-foreground hover:bg-muted"><ChevronDown size={14} /></button>
                   <button onClick={() => { setEditPos(pos); setShowDialog(true); }} className="rounded p-1 text-muted-foreground hover:bg-muted"><Pencil size={14} /></button>
-                  <button onClick={() => handleDelete(pos.id)} className="rounded p-1 text-red-400 hover:bg-red-50"><Trash2 size={14} /></button>
+                  <button onClick={() => handleDelete(pos.id)} className="rounded p-1 text-destructive/60 hover:bg-destructive/5"><Trash2 size={14} /></button>
                 </div>
               </div>
             ))}

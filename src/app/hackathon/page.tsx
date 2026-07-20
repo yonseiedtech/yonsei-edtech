@@ -23,7 +23,7 @@ import {
 } from "@/features/hackathon/config";
 
 export const metadata: Metadata = {
-  title: `${HACKATHON_EVENT.title} — 연세교육공학회`,
+  title: HACKATHON_EVENT.title,
   description:
     "교육 현장의 문제를 함께 정의하고 에듀테크로 해법을 만드는 하루. 개발이 처음이어도, 아이디어만 있어도 괜찮은 부담 없는 미니 학술대회. 2026년 8월 22일.",
 };

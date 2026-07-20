@@ -62,17 +62,17 @@ function StatCard({
     <div
       className={cn(
         "flex items-center gap-3 rounded-2xl border bg-card p-4 shadow-sm",
-        tone === "amber" && "border-amber-300 bg-amber-50 dark:bg-amber-950/20",
-        tone === "violet" && "border-violet-300 bg-violet-50 dark:bg-violet-950/20",
+        tone === "amber" && "border-warning/30 bg-warning/5",
+        tone === "violet" && "border-cat-5/30 bg-cat-5/5",
       )}
     >
       <div
         className={cn(
           "flex h-10 w-10 shrink-0 items-center justify-center rounded-xl",
           tone === "amber"
-            ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
+            ? "bg-warning/10 text-warning"
             : tone === "violet"
-              ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+              ? "bg-cat-5/10 text-cat-5"
               : "bg-primary/10 text-primary",
         )}
       >
@@ -181,10 +181,10 @@ function JournalConsoleContent() {
                         className={cn(
                           "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
                           iss.status === "published"
-                            ? "bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300"
+                            ? "bg-cat-5/10 text-cat-5"
                             : iss.status === "archived"
                               ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
-                              : "bg-blue-100 text-blue-700 dark:bg-blue-900/40 dark:text-blue-300",
+                              : "bg-info/10 text-info",
                         )}
                       >
                         {ISSUE_STATUS_LABELS[iss.status]}
@@ -240,7 +240,7 @@ function JournalConsoleContent() {
 
         <p className="mb-3 text-xs text-muted-foreground">
           검수 제출(submitted)·검수 중(under_review) 투고만 표시됩니다.
-          <span className="mx-1 font-medium text-amber-600">심사자 미배정</span>
+          <span className="mx-1 font-medium text-warning">심사자 미배정</span>
           투고는 강조 표시되니 먼저 처리하세요.
         </p>
 
@@ -264,7 +264,7 @@ function JournalConsoleContent() {
                   <Card
                     className={cn(
                       "transition-shadow hover:shadow-sm",
-                      unassigned && "border-amber-300 bg-amber-50/60 dark:bg-amber-950/10",
+                      unassigned && "border-warning/30 bg-warning/5",
                     )}
                   >
                     <CardContent className="flex flex-col gap-2 p-4 sm:flex-row sm:items-center sm:justify-between">
@@ -282,11 +282,11 @@ function JournalConsoleContent() {
                       </div>
                       <div className="shrink-0">
                         {unassigned ? (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-medium text-amber-700 dark:bg-amber-900/40 dark:text-amber-300">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2.5 py-1 text-xs font-medium text-warning">
                             <AlertTriangle size={12} /> 심사자 미배정
                           </span>
                         ) : (
-                          <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                          <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
                             <UserCheck size={12} /> 심사자 {reviewerCount}명
                           </span>
                         )}

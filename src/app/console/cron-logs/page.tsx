@@ -113,13 +113,13 @@ function CronStatusSection() {
 
       {/* v9-M1: stale(침묵) 경고 배너 */}
       {staleKinds.length > 0 && (
-        <div className="flex items-start gap-2 rounded-xl border border-amber-400/40 bg-amber-50 px-3 py-2.5 text-[11px] text-amber-800 dark:bg-amber-900/10 dark:text-amber-300">
+        <div className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/5 px-3 py-2.5 text-[11px] text-warning">
           <Clock size={13} className="mt-0.5 shrink-0" />
           <div>
             <span className="font-semibold">침묵(stale) 감지 — </span>
             {staleKinds.map((k) => (
               <span key={k.kind} className="mr-2">
-                <code className="rounded bg-amber-100 px-1 dark:bg-amber-900/20">{k.kind}</code>
+                <code className="rounded bg-warning/10 px-1">{k.kind}</code>
                 {" "}
                 <span>마지막 실행: {k.lastRunAt ? new Date(k.lastRunAt).toLocaleString("ko-KR") : "—"}</span>
               </span>
@@ -183,7 +183,7 @@ function CronStatusSection() {
                           {s.isStale && (
                             <Badge
                               variant="outline"
-                              className="border-amber-400 bg-amber-50 text-[9px] text-amber-700 dark:bg-amber-900/20 dark:text-amber-300"
+                              className="border-warning/40 bg-warning/5 text-[9px] text-warning"
                             >
                               stale
                             </Badge>
@@ -193,7 +193,7 @@ function CronStatusSection() {
                     </td>
                     <td className="py-1.5 px-2">
                       {s.lastSuccess ? (
-                        <span className="flex items-center gap-1 text-emerald-600">
+                        <span className="flex items-center gap-1 text-success">
                           <CheckCircle2 size={11} /> 성공
                         </span>
                       ) : (
@@ -214,7 +214,7 @@ function CronStatusSection() {
                       {s.consecutiveFailures >= 2 ? (
                         <span className="font-semibold text-destructive">{s.consecutiveFailures}회</span>
                       ) : s.consecutiveFailures === 1 ? (
-                        <span className="text-amber-600">1회</span>
+                        <span className="text-warning">1회</span>
                       ) : (
                         <span className="text-muted-foreground">—</span>
                       )}
@@ -231,11 +231,11 @@ function CronStatusSection() {
 }
 
 const KIND_LABELS: Record<string, { label: string; color: string }> = {
-  class_reminder_daily: { label: "수업 일일 리마인드", color: "bg-blue-50 text-blue-700" },
-  study_session_reminder: { label: "스터디 회차 D-1", color: "bg-purple-50 text-purple-700" },
-  study_assignment_reminder: { label: "스터디 과제 마감 D-1", color: "bg-rose-50 text-rose-700" },
-  seminar_push_reminder: { label: "세미나 D-1 (push)", color: "bg-emerald-50 text-emerald-700" },
-  seminar_push_review_request: { label: "세미나 D+1 후기 (push)", color: "bg-amber-50 text-amber-700" },
+  class_reminder_daily: { label: "수업 일일 리마인드", color: "bg-info/5 text-info" },
+  study_session_reminder: { label: "스터디 회차 D-1", color: "bg-cat-5/5 text-cat-5" },
+  study_assignment_reminder: { label: "스터디 과제 마감 D-1", color: "bg-destructive/5 text-destructive" },
+  seminar_push_reminder: { label: "세미나 D-1 (push)", color: "bg-success/5 text-success" },
+  seminar_push_review_request: { label: "세미나 D+1 후기 (push)", color: "bg-warning/5 text-warning" },
 };
 
 function kindMeta(k?: string) {
@@ -531,8 +531,8 @@ export default function CronLogsPage() {
                       className={cn(
                         "rounded px-1 py-0.5 text-[10px]",
                         l.successful === l.attempted
-                          ? "bg-emerald-50 text-emerald-700"
-                          : "bg-amber-50 text-amber-700",
+                          ? "bg-success/5 text-success"
+                          : "bg-warning/5 text-warning",
                       )}
                     >
                       {l.successful}/{l.attempted} 성공

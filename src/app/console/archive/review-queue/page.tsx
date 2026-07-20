@@ -98,7 +98,7 @@ const QUEUE_TYPES: Record<
   "research-methods": {
     label: "연구방법",
     icon: FlaskConical,
-    badgeClass: "bg-sky-50 text-sky-700 border-sky-200 dark:bg-sky-950/30 dark:text-sky-200 dark:border-sky-900",
+    badgeClass: "bg-info/5 text-info border-info/20",
     api: researchMethodsApi as unknown as QueueApi,
     editHref: (id) => `/console/archive/research-methods/${id}/edit`,
     getName: (x) => (x as unknown as ResearchMethod).name,
@@ -107,7 +107,7 @@ const QUEUE_TYPES: Record<
   "statistical-methods": {
     label: "통계방법",
     icon: BarChart3,
-    badgeClass: "bg-violet-50 text-violet-700 border-violet-200 dark:bg-violet-950/30 dark:text-violet-200 dark:border-violet-900",
+    badgeClass: "bg-cat-5/5 text-cat-5 border-cat-5/20",
     api: statisticalMethodsApi as unknown as QueueApi,
     editHref: (id) => `/console/archive/statistical-methods/${id}/edit`,
     getName: (x) => (x as unknown as StatisticalMethod).name,
@@ -116,7 +116,7 @@ const QUEUE_TYPES: Record<
   "foundation-terms": {
     label: "기초 용어",
     icon: BookOpen,
-    badgeClass: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/30 dark:text-emerald-200 dark:border-emerald-900",
+    badgeClass: "bg-success/5 text-success border-success/20",
     api: foundationTermsApi as unknown as QueueApi,
     editHref: (id) => `/console/archive/foundation-terms/${id}/edit`,
     getName: (x) => (x as unknown as FoundationTerm).term,
@@ -125,7 +125,7 @@ const QUEUE_TYPES: Record<
   "writing-tips": {
     label: "학술 글쓰기",
     icon: PenLine,
-    badgeClass: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/30 dark:text-amber-200 dark:border-amber-900",
+    badgeClass: "bg-warning/5 text-warning border-warning/20",
     api: writingTipsApi as unknown as QueueApi,
     editHref: (id) => `/console/archive/writing-tips/${id}/edit`,
     getName: (x) => (x as unknown as WritingTip).title,
@@ -622,7 +622,7 @@ export default function ConsoleArchiveReviewQueuePage() {
             <div className="rounded-lg border border-dashed p-12 text-center">
               {tab === "pending" ? (
                 <>
-                  <CheckCheck className="mx-auto mb-3 h-8 w-8 text-emerald-500" aria-hidden />
+                  <CheckCheck className="mx-auto mb-3 h-8 w-8 text-success" aria-hidden />
                   <p className="text-sm font-medium">검수 대기 항목이 없습니다</p>
                   <p className="mt-1 text-xs text-muted-foreground">
                     모든 검수형 항목이 공개되었거나 보류 처리되었습니다.
@@ -678,7 +678,7 @@ export default function ConsoleArchiveReviewQueuePage() {
                             </p>
                           )}
                           {tab === "held" && item.reviewNote && (
-                            <p className="mt-1 flex items-start gap-1 text-xs text-amber-700 dark:text-amber-300">
+                            <p className="mt-1 flex items-start gap-1 text-xs text-warning">
                               <MessageSquareText className="mt-0.5 h-3 w-3 shrink-0" aria-hidden />
                               <span className="line-clamp-2">{item.reviewNote}</span>
                             </p>
@@ -797,9 +797,9 @@ function MetricCard({
 }) {
   const toneClass =
     tone === "ok"
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? "text-success"
       : tone === "warn"
-        ? "text-amber-600 dark:text-amber-400"
+        ? "text-warning"
         : "text-muted-foreground";
   return (
     <div className="rounded-lg border bg-card p-3">

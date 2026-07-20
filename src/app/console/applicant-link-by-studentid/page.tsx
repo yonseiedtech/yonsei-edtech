@@ -218,7 +218,7 @@ function MigrationPageContent() {
         description="비회원으로 등록된 신청자 중 학번 매칭이 가능한 항목을 자동으로 회원과 연동합니다. 학번은 고유값."
       />
 
-      <div className="rounded-md border bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-100">
+      <div className="rounded-md border bg-warning/5 p-4 text-sm text-warning">
         <div className="flex items-start gap-2">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" />
           <div>
@@ -234,11 +234,11 @@ function MigrationPageContent() {
       </div>
 
       {/* Sprint 67-V: 기존 연동 정합성 보강 — applicants 연동됐지만 participants 누락된 케이스 일괄 복구 */}
-      <div className="rounded-md border bg-blue-50 p-4 dark:border-blue-900 dark:bg-blue-950/30">
-        <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+      <div className="rounded-md border bg-info/5 p-4">
+        <p className="text-sm font-semibold text-info">
           기존 연동 정합성 보강
         </p>
-        <p className="mt-1 text-xs text-blue-800 dark:text-blue-200">
+        <p className="mt-1 text-xs text-info">
           이전에 연동된 신청자(applicants[].isGuest=false) 가 학술대회 참여자 배열에 누락된 경우
           일괄 추가합니다. (박진아님 등 도구 fix 이전 케이스 복구용)
         </p>
@@ -312,9 +312,9 @@ function MigrationPageContent() {
       )}
 
       {errors.length > 0 && (
-        <div className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm dark:border-rose-800 dark:bg-rose-950/30">
-          <p className="font-semibold text-rose-900 dark:text-rose-100">실패 항목</p>
-          <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-rose-800 dark:text-rose-200">
+        <div className="rounded-md border border-destructive/20 bg-destructive/5 p-4 text-sm">
+          <p className="font-semibold text-destructive">실패 항목</p>
+          <ul className="mt-1 list-disc space-y-0.5 pl-4 text-xs text-destructive">
             {errors.map((e, i) => (
               <li key={i}>{e}</li>
             ))}

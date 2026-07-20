@@ -222,7 +222,7 @@ function MigratePageContent() {
                     </p>
                   </div>
                   {autoMatched && (
-                    <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
                       <Sparkles size={11} /> 자동 추정 매치
                     </span>
                   )}

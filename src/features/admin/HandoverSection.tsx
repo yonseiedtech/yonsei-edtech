@@ -33,8 +33,8 @@ const STAFF_ROLES = ["회장", "부회장", "총무", "학술부장", "홍보부
 const CURRENT_TERM = `${new Date().getFullYear()}-${new Date().getMonth() < 6 ? 1 : 2}`;
 
 const PRIORITY_COLORS = {
-  high: "bg-red-50 text-red-700",
-  medium: "bg-amber-50 text-amber-700",
+  high: "bg-destructive/5 text-destructive",
+  medium: "bg-warning/5 text-warning",
   low: "bg-green-50 text-green-700",
 };
 const PRIORITY_LABELS = { high: "높음", medium: "보통", low: "낮음" };

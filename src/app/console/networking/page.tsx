@@ -129,8 +129,8 @@ export default function ConsoleNetworkingPage() {
                   <span className="text-[11px] font-medium text-muted-foreground">
                     {NETWORKING_EVENT_TYPE_LABELS[ev.type]} · {NETWORKING_EVENT_STATUS_LABELS[ev.status]}
                   </span>
-                  {!ev.published && <span className="rounded bg-rose-50 px-1.5 text-[10px] text-rose-600">미게시</span>}
-                  {ev.visibility === "private" && <span className="rounded bg-violet-50 px-1.5 text-[10px] text-violet-600">비공개 링크</span>}
+                  {!ev.published && <span className="rounded bg-destructive/5 px-1.5 text-[10px] text-destructive">미게시</span>}
+                  {ev.visibility === "private" && <span className="rounded bg-cat-5/5 px-1.5 text-[10px] text-cat-5">비공개 링크</span>}
                 </div>
                 <p className="mt-1 truncate text-sm font-semibold">{ev.title}</p>
                 <p className="text-[11px] text-muted-foreground">{ev.startAt ? formatEventDate(ev.startAt) : "일정 투표 중"} · 회비 {formatWon(ev.feeAmount)}</p>
@@ -360,12 +360,12 @@ function EventManager({ event, onEdit, onDuplicate, confirmedByUid }: { event: N
           <p className="text-xs font-semibold text-muted-foreground">참석자 명단 ({rsvps.length})</p>
           {/* G2: 대기자 수 · G3: 노쇼 수 */}
           {waitlisted.length > 0 && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+            <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning">
               대기 {waitlisted.length}명
             </span>
           )}
           {noShowCount > 0 && (
-            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-medium text-rose-700 dark:bg-rose-950/40 dark:text-rose-300">
+            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-medium text-destructive">
               노쇼 {noShowCount}명
             </span>
           )}
@@ -395,7 +395,7 @@ function EventManager({ event, onEdit, onDuplicate, confirmedByUid }: { event: N
                         {(r.companions ?? 0) > 0 && <span className="ml-1 text-muted-foreground">+{r.companions}</span>}
                       </td>
                       <td className="pr-2">
-                        <span className={cn(r.status === "waitlisted" && "text-amber-600 dark:text-amber-400")}>
+                        <span className={cn(r.status === "waitlisted" && "text-warning")}>
                           {RSVP_STATUS_LABELS[r.status]}
                         </span>
                       </td>
@@ -407,7 +407,7 @@ function EventManager({ event, onEdit, onDuplicate, confirmedByUid }: { event: N
                             className={cn(
                               "inline-flex items-center gap-0.5 rounded px-1.5 py-0.5 text-[10px] transition-colors",
                               r.attendedAt
-                                ? "bg-emerald-600 text-white"
+                                ? "bg-success text-white"
                                 : "bg-muted text-muted-foreground hover:bg-muted/70",
                             )}
                             title={r.attendedAt ? "체크인 취소" : "현장 체크인"}
@@ -430,7 +430,7 @@ function EventManager({ event, onEdit, onDuplicate, confirmedByUid }: { event: N
                                 className={cn(
                                   "rounded px-1.5 py-0.5 text-[10px] transition-colors",
                                   due.status === s
-                                    ? s === "paid" ? "bg-emerald-600 text-white" : s === "unpaid" ? "bg-amber-500 text-white" : "bg-slate-500 text-white"
+                                    ? s === "paid" ? "bg-success text-white" : s === "unpaid" ? "bg-warning text-white" : "bg-muted-foreground text-white"
                                     : "bg-muted text-muted-foreground hover:bg-muted/70",
                                 )}
                               >

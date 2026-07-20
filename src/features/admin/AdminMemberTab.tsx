@@ -91,12 +91,12 @@ function formatPhone(p?: string): string {
 
 // ── 역할별 배지 색상 ──
 const ROLE_COLORS: Record<string, string> = {
-  sysadmin: "bg-rose-100 text-rose-700 border-rose-200",
-  admin: "bg-blue-100 text-blue-700 border-blue-200",
-  president: "bg-blue-100 text-blue-700 border-blue-200",
-  staff: "bg-sky-100 text-sky-700 border-sky-200",
+  sysadmin: "bg-destructive/10 text-destructive border-destructive/20",
+  admin: "bg-info/10 text-info border-info/20",
+  president: "bg-info/10 text-info border-info/20",
+  staff: "bg-info/10 text-info border-info/20",
   advisor: "bg-teal-100 text-teal-700 border-teal-200",
-  alumni: "bg-slate-100 text-slate-600 border-slate-200",
+  alumni: "bg-muted text-muted-foreground border-muted-foreground/20",
   member: "bg-gray-100 text-gray-600 border-gray-200",
   guest: "bg-gray-50 text-gray-400 border-gray-100",
 };
@@ -116,14 +116,14 @@ function RoleBadge({ role }: { role: UserRole }) {
 
 // ── 회원 상태별 행 시각 스타일 ──
 function rowStatusClass(m: User): string {
-  if (m.rejected) return "bg-red-50/50 border-l-4 border-l-red-300";
-  if (!m.approved) return "bg-amber-50/50 border-l-4 border-l-amber-300";
+  if (m.rejected) return "bg-destructive/5 border-l-4 border-l-destructive/30";
+  if (!m.approved) return "bg-warning/5 border-l-4 border-l-warning/30";
   return "";
 }
 
 function cardStatusClass(m: User): string {
-  if (m.rejected) return "border-red-300 bg-red-50/40";
-  if (!m.approved) return "border-amber-300 bg-amber-50/40";
+  if (m.rejected) return "border-destructive/30 bg-destructive/5";
+  if (!m.approved) return "border-warning/30 bg-warning/5";
   return "";
 }
 
@@ -550,10 +550,10 @@ export default function AdminMemberTab() {
               <span className="text-xs text-muted-foreground">@{m.username}</span>
               <RoleCell member={m} />
               {m.rejected && (
-                <span className="rounded-md bg-red-100 px-1.5 py-0.5 text-[10px] font-semibold text-red-700">거절</span>
+                <span className="rounded-md bg-destructive/10 px-1.5 py-0.5 text-[10px] font-semibold text-destructive">거절</span>
               )}
               {!m.approved && !m.rejected && (
-                <span className="rounded-md bg-amber-100 px-1.5 py-0.5 text-[10px] font-semibold text-amber-700">대기</span>
+                <span className="rounded-md bg-warning/10 px-1.5 py-0.5 text-[10px] font-semibold text-warning">대기</span>
               )}
             </div>
             <div className="mt-1.5 flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-muted-foreground">
@@ -723,9 +723,9 @@ export default function AdminMemberTab() {
       <nav className="flex items-center gap-1 overflow-x-auto rounded-lg border bg-muted/30 p-1">
         {([
           { key: "all" as const, icon: Users, label: "전체", count: allMembers.length, color: undefined },
-          { key: "pending" as const, icon: Clock, label: "대기", count: truePending.length, color: truePending.length > 0 ? "bg-amber-500 text-white" : undefined },
+          { key: "pending" as const, icon: Clock, label: "대기", count: truePending.length, color: truePending.length > 0 ? "bg-warning text-white" : undefined },
           { key: "approved" as const, icon: UserCheck, label: "승인", count: approvedMembers.length, color: undefined },
-          { key: "rejected" as const, icon: XCircle, label: "거절", count: rejectedMembers.length, color: rejectedMembers.length > 0 ? "bg-red-500 text-white" : undefined },
+          { key: "rejected" as const, icon: XCircle, label: "거절", count: rejectedMembers.length, color: rejectedMembers.length > 0 ? "bg-destructive text-white" : undefined },
         ] as const).map(({ key, icon: Icon, label, count, color }) => (
           <button
             key={key}
@@ -830,7 +830,7 @@ export default function AdminMemberTab() {
                     className={cn(
                       "inline-flex items-center gap-1 rounded-md border px-2 py-0.5 text-[11px] transition-colors",
                       pendingSortOldest
-                        ? "border-amber-400 bg-amber-50 text-amber-700 dark:bg-amber-950/30 dark:text-amber-300"
+                        ? "border-warning/40 bg-warning/5 text-warning"
                         : "border-border text-muted-foreground hover:text-foreground",
                     )}
                     title="대기 기간 기준 정렬 전환"
@@ -883,13 +883,13 @@ export default function AdminMemberTab() {
                   const riskIcon = eval_.qualifying
                     ? <ShieldCheck size={14} className="text-green-600" />
                     : eval_.risk === "medium"
-                    ? <AlertTriangle size={14} className="text-amber-500" />
-                    : <AlertCircle size={14} className="text-red-500" />;
+                    ? <AlertTriangle size={14} className="text-warning" />
+                    : <AlertCircle size={14} className="text-destructive" />;
                   const riskColor = eval_.qualifying
                     ? "border-green-200 bg-green-50"
                     : eval_.risk === "medium"
-                    ? "border-amber-200 bg-amber-50"
-                    : "border-red-200 bg-red-50";
+                    ? "border-warning/20 bg-warning/5"
+                    : "border-destructive/20 bg-destructive/5";
                   return (
                     <div key={u.id} className={cn("flex items-start justify-between rounded-2xl border p-4", riskColor)}>
                       {canApprove && (
@@ -913,7 +913,7 @@ export default function AdminMemberTab() {
                           {eval_.qualifying ? (
                             <Badge className="bg-green-100 text-green-700 text-[10px]">자동 승인 가능</Badge>
                           ) : (
-                            <Badge className="bg-red-100 text-red-700 text-[10px]">수동 검토 필요</Badge>
+                            <Badge className="bg-destructive/10 text-destructive text-[10px]">수동 검토 필요</Badge>
                           )}
                           {/* v9-H5: 대기 경과일 배지 */}
                           {(() => {
@@ -925,8 +925,8 @@ export default function AdminMemberTab() {
                                 className={cn(
                                   "rounded-full px-2 py-0.5 text-[10px] font-semibold",
                                   isStale
-                                    ? "bg-red-100 text-red-600 dark:bg-red-950/40 dark:text-red-400"
-                                    : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+                                    ? "bg-destructive/10 text-destructive"
+                                    : "bg-warning/10 text-warning",
                                 )}
                               >
                                 {d}일 대기
@@ -938,7 +938,7 @@ export default function AdminMemberTab() {
                         {!eval_.qualifying && eval_.reasons.length > 0 && (
                           <div className="mt-1.5 flex flex-wrap gap-1">
                             {eval_.reasons.map((r, i) => (
-                              <span key={i} className="rounded-full bg-card border border-red-200 px-2 py-0.5 text-[10px] text-red-600">{r}</span>
+                              <span key={i} className="rounded-full bg-card border border-destructive/20 px-2 py-0.5 text-[10px] text-destructive">{r}</span>
                             ))}
                           </div>
                         )}
@@ -1006,7 +1006,7 @@ export default function AdminMemberTab() {
                       <div className="flex items-center gap-2">
                         <span className="font-medium">{u.name}</span>
                         {u.studentId && <Badge variant="secondary">{u.studentId}</Badge>}
-                        <Badge variant="outline" className="text-[10px] text-red-500 border-red-200">거절됨</Badge>
+                        <Badge variant="outline" className="text-[10px] text-destructive border-destructive/20">거절됨</Badge>
                       </div>
                       <div className="mt-1 text-sm text-muted-foreground">@{u.username} · {u.email}</div>
                     </div>

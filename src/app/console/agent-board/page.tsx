@@ -33,17 +33,17 @@ interface BoardCard {
 }
 
 const COLUMNS: { status: BoardStatus; label: string; color: string }[] = [
-  { status: "pending", label: "대기", color: "border-t-slate-400" },
-  { status: "running", label: "진행 중", color: "border-t-blue-500" },
-  { status: "completed", label: "완료", color: "border-t-emerald-500" },
-  { status: "failed", label: "실패", color: "border-t-rose-500" },
+  { status: "pending", label: "대기", color: "border-t-muted-foreground" },
+  { status: "running", label: "진행 중", color: "border-t-info" },
+  { status: "completed", label: "완료", color: "border-t-success" },
+  { status: "failed", label: "실패", color: "border-t-destructive" },
 ];
 
 const STAGE_COLOR: Record<WorkflowStageStatus, string> = {
   pending: "bg-muted text-muted-foreground",
-  running: "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200",
-  completed: "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200",
-  failed: "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-200",
+  running: "bg-info/10 text-info",
+  completed: "bg-success/10 text-success",
+  failed: "bg-destructive/10 text-destructive",
   skipped: "bg-muted text-muted-foreground",
 };
 
@@ -213,10 +213,10 @@ function WorkflowDiagram({ run }: { run: WorkflowRun }) {
         <span
           className={`ml-auto rounded-full px-2 py-0.5 text-[10px] font-semibold ${
             run.status === "completed"
-              ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200"
+              ? "bg-success/10 text-success"
               : run.status === "failed"
-                ? "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-200"
-                : "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200"
+                ? "bg-destructive/10 text-destructive"
+                : "bg-info/10 text-info"
           }`}
         >
           {run.status === "completed" ? "완료" : run.status === "failed" ? "실패" : "진행 중"}
@@ -258,7 +258,7 @@ function WorkflowDiagram({ run }: { run: WorkflowRun }) {
       </div>
 
       {run.error && (
-        <p className="mt-2 rounded-lg bg-rose-50 p-2 text-[10px] text-rose-700 dark:bg-rose-950/30 dark:text-rose-200">
+        <p className="mt-2 rounded-lg bg-destructive/5 p-2 text-[10px] text-destructive">
           {run.error}
         </p>
       )}

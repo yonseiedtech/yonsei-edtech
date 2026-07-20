@@ -257,7 +257,7 @@ function GraduationConsoleContent() {
           {form.milestones.map((m, idx) => (
             <div key={m.key} className="flex flex-wrap items-center gap-2 rounded-xl border p-3">
               {m.autoSource && (
-                <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-medium text-success">
                   <Lock size={10} /> 자동 판정
                 </span>
               )}

@@ -23,15 +23,15 @@ import type { AdminTodo } from "@/types";
 type StatusFilter = "all" | "todo" | "in_progress" | "done";
 
 const STATUS_CONFIG = {
-  todo: { label: "할 일", icon: Circle, color: "bg-slate-100 text-slate-600" },
-  in_progress: { label: "진행 중", icon: Clock, color: "bg-blue-100 text-blue-700" },
+  todo: { label: "할 일", icon: Circle, color: "bg-muted text-muted-foreground" },
+  in_progress: { label: "진행 중", icon: Clock, color: "bg-info/10 text-info" },
   done: { label: "완료", icon: CheckCircle, color: "bg-green-100 text-green-700" },
 } as const;
 
 const PRIORITY_CONFIG = {
-  high: { label: "높음", icon: ArrowUp, color: "text-red-600" },
-  medium: { label: "보통", icon: ArrowRight, color: "text-amber-600" },
-  low: { label: "낮음", icon: ArrowDown, color: "text-blue-500" },
+  high: { label: "높음", icon: ArrowUp, color: "text-destructive" },
+  medium: { label: "보통", icon: ArrowRight, color: "text-warning" },
+  low: { label: "낮음", icon: ArrowDown, color: "text-info" },
 } as const;
 
 export default function AdminTodoTab() {
@@ -130,9 +130,9 @@ export default function AdminTodoTab() {
       {/* 상단: 통계 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
         {([
-          { key: "all" as const, label: "전체", count: counts.all, color: "bg-slate-50 text-slate-700" },
-          { key: "todo" as const, label: "할 일", count: counts.todo, color: "bg-amber-50 text-amber-700" },
-          { key: "in_progress" as const, label: "진행 중", count: counts.in_progress, color: "bg-blue-50 text-blue-700" },
+          { key: "all" as const, label: "전체", count: counts.all, color: "bg-muted/50 text-muted-foreground" },
+          { key: "todo" as const, label: "할 일", count: counts.todo, color: "bg-warning/5 text-warning" },
+          { key: "in_progress" as const, label: "진행 중", count: counts.in_progress, color: "bg-info/5 text-info" },
           { key: "done" as const, label: "완료", count: counts.done, color: "bg-green-50 text-green-700" },
         ]).map(({ key, label, count, color }) => (
           <button
@@ -191,7 +191,7 @@ export default function AdminTodoTab() {
                   <status.icon
                     size={20}
                     className={cn(
-                      todo.status === "done" ? "text-green-600" : todo.status === "in_progress" ? "text-blue-600" : "text-slate-400",
+                      todo.status === "done" ? "text-green-600" : todo.status === "in_progress" ? "text-info" : "text-muted-foreground",
                     )}
                   />
                 </button>
@@ -212,7 +212,7 @@ export default function AdminTodoTab() {
                   <div className="mt-2 flex flex-wrap items-center gap-3 text-[11px] text-muted-foreground">
                     {todo.assigneeName && <span>담당: {todo.assigneeName}</span>}
                     {todo.dueDate && (
-                      <span className={cn("flex items-center gap-1", isOverdue && "font-medium text-red-600")}>
+                      <span className={cn("flex items-center gap-1", isOverdue && "font-medium text-destructive")}>
                         {isOverdue && <AlertTriangle size={10} />}
                         마감: {formatDate(todo.dueDate)}
                       </span>

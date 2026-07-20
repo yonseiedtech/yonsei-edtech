@@ -43,8 +43,8 @@ const PRIORITY_LABELS: Record<HandoverDocument["priority"], string> = {
   low: "낮음",
 };
 const PRIORITY_COLORS: Record<HandoverDocument["priority"], string> = {
-  high: "bg-red-50 text-red-700 border-red-200",
-  medium: "bg-amber-50 text-amber-700 border-amber-200",
+  high: "bg-destructive/5 text-destructive border-destructive/20",
+  medium: "bg-warning/5 text-warning border-warning/20",
   low: "bg-green-50 text-green-700 border-green-200",
 };
 

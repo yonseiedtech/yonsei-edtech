@@ -44,9 +44,9 @@ import { Badge } from "@/components/ui/badge";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 
 const STATUS_LABEL: Record<AIForumStatus, { label: string; cls: string }> = {
-  scheduled: { label: "개최 대기", cls: "bg-slate-100 text-slate-700" },
-  in_progress: { label: "진행 중", cls: "bg-amber-100 text-amber-700" },
-  completed: { label: "종료", cls: "bg-emerald-100 text-emerald-700" },
+  scheduled: { label: "개최 대기", cls: "bg-muted text-muted-foreground" },
+  in_progress: { label: "진행 중", cls: "bg-warning/10 text-warning" },
+  completed: { label: "종료", cls: "bg-success/10 text-success" },
   archived: { label: "보관", cls: "bg-muted text-muted-foreground" },
 };
 
@@ -226,8 +226,8 @@ function AdminContent() {
   if (!canManage) {
     return (
       <div className="py-12 text-center">
-        <div className="rounded-2xl border-2 border-amber-200 bg-amber-50/50 p-6 text-center dark:border-amber-900 dark:bg-amber-950/20">
-          <AlertTriangle size={28} className="mx-auto mb-2 text-amber-600" />
+        <div className="rounded-2xl border-2 border-warning/20 bg-warning/5 p-6 text-center">
+          <AlertTriangle size={28} className="mx-auto mb-2 text-warning" />
           <h2 className="text-lg font-bold">접근 권한 없음</h2>
           <p className="mt-1 text-sm text-muted-foreground">
             AI 포럼 운영은 학회 운영진(staff 이상)만 가능합니다.

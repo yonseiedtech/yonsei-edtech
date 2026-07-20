@@ -895,7 +895,7 @@ function DesignTab({
                   className={cn(
                     "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
                     status[key]
-                      ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                      ? "bg-success/10 text-success"
                       : "bg-muted text-muted-foreground",
                   )}
                 >

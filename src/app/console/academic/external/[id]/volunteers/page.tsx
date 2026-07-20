@@ -364,21 +364,21 @@ export default function ExternalActivityVolunteersConsole({
           value={String(unassignedCount)}
           color={
             unassignedCount > 0
-              ? "text-rose-600 bg-rose-50 dark:bg-rose-950/30"
-              : "text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"
+              ? "text-destructive bg-destructive/5"
+              : "text-success bg-success/5"
           }
         />
         <StatCard
           icon={ClipboardList}
           label="임무 체크 진행률"
           value={stats.completionRate != null ? `${stats.completionRate}%` : "—"}
-          color="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"
+          color="text-success bg-success/5"
         />
         <StatCard
           icon={ClipboardList}
           label="임무 (완료/전체)"
           value={`${stats.dutyDone.done} / ${stats.dutyDone.total}`}
-          color="text-blue-600 bg-blue-50 dark:bg-blue-950/30"
+          color="text-info bg-info/5"
         />
       </div>
 
@@ -408,7 +408,7 @@ export default function ExternalActivityVolunteersConsole({
                   <p className="flex items-center gap-1.5 text-sm font-medium">
                     {applicant.name || "익명"}
                     {!applicant.userId && (
-                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[9px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                      <span className="rounded bg-warning/10 px-1.5 py-0.5 text-[9px] font-medium text-warning">
                         비회원
                       </span>
                     )}
@@ -420,7 +420,7 @@ export default function ExternalActivityVolunteersConsole({
                 </div>
                 <div className="flex items-center gap-2">
                   {assignment ? (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-success/20 bg-success/5 px-2 py-0.5 text-[11px] font-medium text-success">
                       <CheckCircle2 size={11} />
                       배정됨 · {VOLUNTEER_ROLE_LABELS[assignment.role]}
                     </span>

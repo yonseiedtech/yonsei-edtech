@@ -202,10 +202,10 @@ export default function ConsoleDashboardPage() {
       )}
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
-        <StatCard icon={Users} label="전체 회원" value={membersData?.total ?? 0} color="bg-blue-50 text-blue-600" href="/console/members" />
-        <StatCard icon={Clock} label="승인 대기" value={pendingData?.total ?? 0} color="bg-amber-50 text-amber-600" href="/console/members" />
+        <StatCard icon={Users} label="전체 회원" value={membersData?.total ?? 0} color="bg-info/5 text-info" href="/console/members" />
+        <StatCard icon={Clock} label="승인 대기" value={pendingData?.total ?? 0} color="bg-warning/5 text-warning" href="/console/members" />
         <StatCard icon={FileText} label="게시글" value={posts.length} color="bg-green-50 text-green-600" href="/console/posts" />
-        <StatCard icon={HelpCircle} label="미답변 문의" value={unansweredCount} color="bg-red-50 text-red-600" href="/console/inquiries" />
+        <StatCard icon={HelpCircle} label="미답변 문의" value={unansweredCount} color="bg-destructive/5 text-destructive" href="/console/inquiries" />
       </div>
 
       {!seedDone && (
@@ -272,9 +272,9 @@ export default function ConsoleDashboardPage() {
           {/* Sprint 70: 신청 승인 통합 대시보드 — 단독 진입 가능 */}
           <Link
             href="/console/academic/applications"
-            className="flex items-center gap-3 rounded-2xl border-2 border-amber-300 bg-amber-50/60 p-4 transition-shadow hover:shadow-md dark:border-amber-700 dark:bg-amber-950/20 sm:col-span-2"
+            className="flex items-center gap-3 rounded-2xl border-2 border-warning/30 bg-warning/5 p-4 transition-shadow hover:shadow-md sm:col-span-2"
           >
-            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200">
+            <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-warning/10 text-warning">
               <ClipboardCheck size={20} />
             </div>
             <div className="flex-1">
@@ -283,7 +283,7 @@ export default function ConsoleDashboardPage() {
                 모든 학술활동(외부·프로젝트·스터디)의 pending 신청자를 한 화면에서 확인·즉시 처리
               </p>
             </div>
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-900/50 dark:text-amber-200">
+            <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning">
               🆕 신설
             </span>
           </Link>
@@ -301,9 +301,9 @@ export default function ConsoleDashboardPage() {
         <div className="grid gap-3 sm:grid-cols-2">
           <Link
             href="/console/academic/external"
-            className="flex items-start gap-3 rounded-2xl border-2 border-blue-200 bg-blue-50/40 p-4 transition-shadow hover:shadow-md dark:border-blue-800 dark:bg-blue-950/20"
+            className="flex items-start gap-3 rounded-2xl border-2 border-info/20 bg-info/5 p-4 transition-shadow hover:shadow-md"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-200">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
               <MessageSquareQuote size={20} />
             </div>
             <div className="flex-1">
@@ -312,16 +312,16 @@ export default function ConsoleDashboardPage() {
                 회원이 작성한 종합 후기·재참석 의사·연구 시사점·별점을 통계로 분석.
               </p>
             </div>
-            <span className="shrink-0 rounded-full bg-blue-100 px-2 py-0.5 text-[10px] font-semibold text-blue-700 dark:bg-blue-900/50 dark:text-blue-200">
+            <span className="shrink-0 rounded-full bg-info/10 px-2 py-0.5 text-[10px] font-semibold text-info">
               신설
             </span>
           </Link>
 
           <Link
             href="/console/academic/external"
-            className="flex items-start gap-3 rounded-2xl border-2 border-emerald-200 bg-emerald-50/40 p-4 transition-shadow hover:shadow-md dark:border-emerald-800 dark:bg-emerald-950/20"
+            className="flex items-start gap-3 rounded-2xl border-2 border-success/20 bg-success/5 p-4 transition-shadow hover:shadow-md"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success">
               <HeartHandshake size={20} />
             </div>
             <div className="flex-1">
@@ -330,16 +330,16 @@ export default function ConsoleDashboardPage() {
                 전체 봉사자 명부·역할·시간대·임무 체크 진행률 + 본부석 인쇄.
               </p>
             </div>
-            <span className="shrink-0 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-200">
+            <span className="shrink-0 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
               신설
             </span>
           </Link>
 
           <Link
             href="/console/academic/external"
-            className="flex items-start gap-3 rounded-2xl border-2 border-purple-200 bg-purple-50/40 p-4 transition-shadow hover:shadow-md dark:border-purple-800 dark:bg-purple-950/20"
+            className="flex items-start gap-3 rounded-2xl border-2 border-cat-5/20 bg-cat-5/5 p-4 transition-shadow hover:shadow-md"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-200">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cat-5/10 text-cat-5">
               <BarChart3 size={20} />
             </div>
             <div className="flex-1">
@@ -348,16 +348,16 @@ export default function ConsoleDashboardPage() {
                 인기 세션 TOP 10·카테고리 분포·선택 이유 분포·출석률·평균 별점.
               </p>
             </div>
-            <span className="shrink-0 rounded-full bg-purple-100 px-2 py-0.5 text-[10px] font-semibold text-purple-700 dark:bg-purple-900/50 dark:text-purple-200">
+            <span className="shrink-0 rounded-full bg-cat-5/10 px-2 py-0.5 text-[10px] font-semibold text-cat-5">
               신설
             </span>
           </Link>
 
           <Link
             href="/console/academic/external"
-            className="flex items-start gap-3 rounded-2xl border-2 border-rose-200 bg-rose-50/40 p-4 transition-shadow hover:shadow-md dark:border-rose-800 dark:bg-rose-950/20"
+            className="flex items-start gap-3 rounded-2xl border-2 border-destructive/20 bg-destructive/5 p-4 transition-shadow hover:shadow-md"
           >
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-rose-100 text-rose-700 dark:bg-rose-900/50 dark:text-rose-200">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-destructive/10 text-destructive">
               <ListChecks size={20} />
             </div>
             <div className="flex-1">
@@ -366,7 +366,7 @@ export default function ConsoleDashboardPage() {
                 과제 task CRUD + 제출 모니터링 + 검토 워크플로우.
               </p>
             </div>
-            <span className="shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:bg-rose-900/50 dark:text-rose-200">
+            <span className="shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
               console 통합
             </span>
           </Link>

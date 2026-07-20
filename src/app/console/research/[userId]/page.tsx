@@ -324,7 +324,7 @@ function DesignSummary({ design }: { design?: ResearchDesign }) {
             className={cn(
               "flex flex-col gap-0.5 rounded-md border px-2 py-1.5 text-[11px]",
               status[key]
-                ? "border-emerald-200 bg-emerald-50/50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-400"
+                ? "border-success/20 bg-success/5 text-success"
                 : "border-border bg-muted/20 text-muted-foreground",
             )}
           >

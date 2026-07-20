@@ -35,10 +35,10 @@ import { useSeminarAdminContext } from "@/features/seminar-admin/seminar-admin-s
 import { getComputedStatus } from "@/lib/seminar-utils";
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
-  upcoming: { label: "예정", cls: "bg-blue-50 text-blue-700" },
+  upcoming: { label: "예정", cls: "bg-info/5 text-info" },
   ongoing: { label: "진행 중", cls: "bg-green-50 text-green-700" },
-  completed: { label: "완료", cls: "bg-slate-100 text-slate-600" },
-  cancelled: { label: "취소", cls: "bg-red-50 text-red-700" },
+  completed: { label: "완료", cls: "bg-muted text-muted-foreground" },
+  cancelled: { label: "취소", cls: "bg-destructive/5 text-destructive" },
 };
 
 function StatCard({ icon: Icon, label, value, sub }: {
@@ -151,7 +151,7 @@ export default function SeminarHubPage({ params }: { params: Promise<{ id: strin
               <span>
                 {timelinePct}%
                 {overdue > 0 && (
-                  <span className="ml-2 inline-flex items-center gap-0.5 font-semibold text-amber-600">
+                  <span className="ml-2 inline-flex items-center gap-0.5 font-semibold text-warning">
                     <AlertTriangle size={11} /> 기한 경과 {overdue}건
                   </span>
                 )}
@@ -159,7 +159,7 @@ export default function SeminarHubPage({ params }: { params: Promise<{ id: strin
             </div>
             <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
               <div
-                className={cn("h-full rounded-full transition-all", overdue > 0 ? "bg-amber-500" : "bg-primary")}
+                className={cn("h-full rounded-full transition-all", overdue > 0 ? "bg-warning" : "bg-primary")}
                 style={{ width: `${timelinePct}%` }}
               />
             </div>

@@ -76,19 +76,19 @@ function interestTier(score: number): { label: string; className: string } {
     return {
       label: "매우 유력",
       className:
-        "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+        "bg-destructive/10 text-destructive",
     };
   if (score >= 60)
     return {
       label: "유력",
       className:
-        "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+        "bg-warning/10 text-warning",
     };
   if (score >= 30)
     return {
       label: "관심",
       className:
-        "bg-sky-100 text-sky-700 dark:bg-sky-950/40 dark:text-sky-300",
+        "bg-info/10 text-info",
     };
   return {
     label: "기본",
@@ -261,7 +261,7 @@ function PotentialMembersContent() {
         description="대외 학술대회·세미나에 비회원으로 참여한 분들 — 가장 유력한 가입 후보입니다."
       />
 
-      <div className="rounded-md border bg-blue-50 p-4 text-sm text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-100">
+      <div className="rounded-md border bg-info/5 p-4 text-sm text-info">
         <div className="flex items-start gap-2">
           <Sparkles className="mt-0.5 h-4 w-4 shrink-0" />
           <p className="leading-relaxed">
@@ -274,14 +274,14 @@ function PotentialMembersContent() {
 
       {/* 최근 30일 잠재회원 → 정회원 전환 사례 */}
       {!isLoading && !error && conversions.length > 0 && (
-        <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 dark:border-emerald-900 dark:bg-emerald-950/20">
+        <div className="rounded-md border border-success/20 bg-success/5 p-4">
           <div className="flex items-start gap-2">
-            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-emerald-600 dark:text-emerald-400" />
+            <CheckCircle2 className="mt-0.5 h-4 w-4 shrink-0 text-success" />
             <div className="min-w-0">
-              <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">
+              <p className="text-sm font-medium text-success">
                 최근 30일 전환 성공 {conversions.length}명
               </p>
-              <p className="mt-0.5 text-xs text-emerald-700/80 dark:text-emerald-300/80">
+              <p className="mt-0.5 text-xs text-success/80">
                 비회원으로 참여하다 정회원으로 가입한 분들입니다 —{" "}
                 {conversions
                   .slice(0, 8)
@@ -315,7 +315,7 @@ function PotentialMembersContent() {
       ) : error ? (
         <div
           role="alert"
-          className="rounded-md border border-rose-200 bg-rose-50 p-4 text-sm text-rose-800 dark:border-rose-800 dark:bg-rose-950/30 dark:text-rose-200"
+          className="rounded-md border border-destructive/20 bg-destructive/5 p-4 text-sm text-destructive"
         >
           잠재회원 목록을 불러오지 못했습니다: {(error as Error).message}
         </div>

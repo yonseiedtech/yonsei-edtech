@@ -695,7 +695,7 @@ function ConsoleCoursesContent() {
                 </Button>
               </div>
               {xlsxResult && (
-                <p className="mt-2 text-xs text-emerald-700">✓ {xlsxResult}</p>
+                <p className="mt-2 text-xs text-success">✓ {xlsxResult}</p>
               )}
             </div>
 
@@ -721,7 +721,7 @@ function ConsoleCoursesContent() {
                 </Button>
               </div>
               {periodResult && (
-                <p className="mt-2 text-xs text-emerald-700">✓ {periodResult}</p>
+                <p className="mt-2 text-xs text-success">✓ {periodResult}</p>
               )}
             </div>
 

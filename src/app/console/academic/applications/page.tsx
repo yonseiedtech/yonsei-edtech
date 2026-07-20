@@ -112,23 +112,23 @@ export default function ApplicationsConsole() {
       {truePendingMembers.length > 0 && (
         <Link
           href="/console/members"
-          className="flex items-center gap-3 rounded-2xl border border-amber-300 bg-amber-50/70 px-4 py-3 transition-colors hover:bg-amber-50 dark:border-amber-700 dark:bg-amber-950/30 dark:hover:bg-amber-950/50"
+          className="flex items-center gap-3 rounded-2xl border border-warning/30 bg-warning/5 px-4 py-3 transition-colors hover:bg-warning/10"
         >
-          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-amber-100 text-amber-600 dark:bg-amber-900/50 dark:text-amber-300">
+          <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-warning/10 text-warning">
             <UserPlus size={18} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">
+            <p className="text-sm font-semibold text-warning">
               미처리 가입 신청{" "}
-              <span className="rounded-full bg-amber-500 px-2 py-0.5 text-xs text-white">
+              <span className="rounded-full bg-warning px-2 py-0.5 text-xs text-white">
                 {truePendingMembers.length}건
               </span>
             </p>
-            <p className="mt-0.5 text-xs text-amber-700 dark:text-amber-400">
+            <p className="mt-0.5 text-xs text-warning">
               승인 대기 중인 회원 가입 신청이 있습니다. 회원 관리에서 처리해주세요.
             </p>
           </div>
-          <AlertCircle size={16} className="shrink-0 text-amber-500" />
+          <AlertCircle size={16} className="shrink-0 text-warning" />
         </Link>
       )}
 
@@ -138,7 +138,7 @@ export default function ApplicationsConsole() {
           icon={AlertCircle}
           label="대기 활동"
           value={String(stats.activitiesWithPending)}
-          color="text-amber-600 bg-amber-50 dark:bg-amber-950/30"
+          color="text-warning bg-warning/5"
         />
         <StatCard
           icon={Users}
@@ -150,13 +150,13 @@ export default function ApplicationsConsole() {
           icon={Globe}
           label="대외 학술대회 대기"
           value={String(stats.byType.external)}
-          color="text-blue-600 bg-blue-50 dark:bg-blue-950/30"
+          color="text-info bg-info/5"
         />
         <StatCard
           icon={FolderKanban}
           label="프로젝트·스터디 대기"
           value={String(stats.byType.project + stats.byType.study)}
-          color="text-emerald-600 bg-emerald-50 dark:bg-emerald-950/30"
+          color="text-success bg-success/5"
         />
       </div>
 
@@ -199,7 +199,7 @@ export default function ApplicationsConsole() {
                         <span className="font-semibold">{totalApplicants}명</span>
                       </p>
                     </div>
-                    <span className="shrink-0 rounded-full bg-amber-100 px-2.5 py-1 text-xs font-bold text-amber-700 dark:bg-amber-950/40 dark:text-amber-200">
+                    <span className="shrink-0 rounded-full bg-warning/10 px-2.5 py-1 text-xs font-bold text-warning">
                       대기 {pendingCount}건
                     </span>
                   </Link>

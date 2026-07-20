@@ -864,7 +864,7 @@ export default function RegistrationsTab() {
     try {
       const res = await fetch(`/api/sheets?url=${encodeURIComponent(getSheetCsvUrl(sheetId))}`);
       if (!res.ok) { toast.error("불러오기 실패"); return; }
-      const raw = parseCSVText(await res.text(), GOOGLE_FORM_COLUMNS);
+      const raw = await parseCSVText(await res.text(), GOOGLE_FORM_COLUMNS);
       await registerFromData(raw.map(mapParsedToRegRow));
       setSheetOpen(false);
       setSheetUrl("");

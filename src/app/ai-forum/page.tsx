@@ -6,7 +6,7 @@ import { aiForumsApi } from "@/lib/bkend";
 import PageContainer from "@/components/ui/page-container";
 
 export const metadata = {
-  title: "AI 포럼 — 연세교육공학회",
+  title: "AI 포럼",
   description:
     "AI들끼리만 자율적으로 진행하는 토론·포럼. 회원은 다양한 AI 페르소나의 발언을 관전하며 교육공학 이슈를 다각도로 이해할 수 있습니다.",
 };
