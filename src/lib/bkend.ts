@@ -34,7 +34,7 @@ import {
   type QueryConstraint,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
-import type { HackathonSubmission, HackathonJudging } from "@/types/hackathon";
+import type { HackathonSubmission, HackathonJudging, HackathonTeamJoin } from "@/types/hackathon";
 import type {
   User, Post, Comment, Seminar, SeminarSession, SeminarAttendee,
   SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
@@ -4537,4 +4537,26 @@ export const hackathonJudgingsApi = {
     ),
   delete: (submissionId: string, judgeId: string) =>
     dataApi.delete("hackathon_judgings", `${submissionId}_${judgeId}`),
+};
+
+// ── 에듀테크 해커톤 팀 합류 희망 (M6-v9) ──
+// doc id = `${questionId}_${userId}` (결정적 멱등 upsert)
+// 합류 희망을 표시한 사용자가 아이디어 작성자의 팀 확정 시 제출 폼 프리필에 사용된다.
+export const hackathonTeamJoinsApi = {
+  /** 특정 해커톤 회차의 전체 합류 희망 기록 (일괄 로딩 — N+1 회피) */
+  listByContext: (contextId: string) =>
+    dataApi.list<HackathonTeamJoin>("hackathon_team_joins", {
+      "filter[contextId]": contextId,
+      limit: 2000,
+    }),
+  /** 합류 희망 upsert — docId 결정적, 멱등 */
+  upsert: (questionId: string, userId: string, data: Record<string, unknown>) =>
+    dataApi.upsert<HackathonTeamJoin>(
+      "hackathon_team_joins",
+      `${questionId}_${userId}`,
+      data,
+    ),
+  /** 합류 희망 취소 */
+  delete: (questionId: string, userId: string) =>
+    dataApi.delete("hackathon_team_joins", `${questionId}_${userId}`),
 };

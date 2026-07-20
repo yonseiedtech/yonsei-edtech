@@ -12,7 +12,7 @@
  * 게스트는 가입 유도.
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Trophy,
@@ -87,6 +87,38 @@ export default function HackathonSubmissions() {
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+
+  // ── 팀 확정 프리필 연결 (M6-v9) ──
+  // HackathonBoard 의 "팀 확정" 버튼이 CustomEvent + sessionStorage 로 전달하는
+  // teamName/members 를 받아 제출 폼을 자동 열고 프리필한다.
+  useEffect(() => {
+    function applyPrefill(teamName: string, members: string) {
+      setForm((f) => ({ ...f, teamName, members }));
+      setEditing(true);
+    }
+
+    // 1) 같은 페이지에서 CustomEvent 수신 (페이지 리로드 없는 경우)
+    function handleEvent(e: Event) {
+      const detail = (e as CustomEvent<{ teamName: string; members: string }>)
+        .detail;
+      if (detail) applyPrefill(detail.teamName, detail.members);
+    }
+    window.addEventListener("hackathon:prefill", handleEvent);
+
+    // 2) sessionStorage 잔여분 수신 (탭 이동·리로드 후 복원)
+    const raw = sessionStorage.getItem("hackathon_prefill");
+    if (raw) {
+      sessionStorage.removeItem("hackathon_prefill");
+      try {
+        const data = JSON.parse(raw) as { teamName?: string; members?: string };
+        applyPrefill(data.teamName ?? "", data.members ?? "");
+      } catch {
+        // 손상된 값 무시
+      }
+    }
+
+    return () => window.removeEventListener("hackathon:prefill", handleEvent);
+  }, []);
 
   const { data: submissions = [], isLoading } = useQuery({
     queryKey: ["hackathon-submissions"],
@@ -189,7 +221,7 @@ export default function HackathonSubmissions() {
   }
 
   return (
-    <div className="space-y-6">
+    <div id="hackathon-submission" className="space-y-6">
       {/* ── 마감 안내 ── */}
       {closed && (
         <div className="flex items-center gap-2 rounded-xl border border-muted-foreground/20 bg-muted/40 px-3 py-2 text-xs font-medium text-muted-foreground">

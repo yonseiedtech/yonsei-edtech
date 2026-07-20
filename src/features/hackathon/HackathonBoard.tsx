@@ -2,17 +2,19 @@
 
 /**
  * 해커톤 참가 신청 + 아이디어 보드 (v6-H6, 2026-07-18)
+ * M6-v9 (2026-07-20): 팀 합류 희망 액션 + 합류자 칩 + 팀 확정 프리필 연결
  *
- * 기존 소통 보드(comm_boards, contextType="hackathon") 인프라를 재사용 — 신규 컬렉션 없음.
+ * 기존 소통 보드(comm_boards, contextType="hackathon") 인프라를 재사용 — 신규 컬렉션 최소화.
  *  - 참가 신청 = "풀고 싶은 교육 현장의 문제" 한 줄 등록 (= comm_question)
  *  - 팀 참여 희망 여부 = question.presenter 슬롯 (HACKATHON_TEAM_PREFS)
  *  - 공감 = commLikesApi.toggle (question 좋아요)
+ *  - 합류 희망 = hackathon_team_joins (결정적 docId: `${questionId}_${userId}`)
+ *  - 팀 확정 = sessionStorage + CustomEvent 로 HackathonSubmissions 프리필 연결
  *  - 1인 1신청 — 본인(authorId) 질문 존재 여부로 판정
  * 게스트는 가입 유도(로그인 CTA).
  */
 
 import { useMemo, useState } from "react";
-import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Lightbulb,
@@ -22,19 +24,23 @@ import {
   CheckCircle2,
   Send,
   LogIn,
+  UserPlus,
+  UserCheck,
+  ArrowRight,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { commQuestionsApi, commLikesApi } from "@/lib/bkend";
-import type { CommBoard, CommQuestion } from "@/types";
+import { commQuestionsApi, commLikesApi, hackathonTeamJoinsApi } from "@/lib/bkend";
+import type { CommBoard, CommQuestion, HackathonTeamJoin } from "@/types";
 import { ensureHackathonBoard } from "./ensure-hackathon-board";
 import {
   HACKATHON_INTEREST_AREAS,
   HACKATHON_TEAM_PREFS,
   HACKATHON_TEAM_PREF_LIST,
+  HACKATHON_CONTEXT_ID,
   type HackathonTeamPref,
 } from "./config";
 
@@ -75,6 +81,34 @@ export default function HackathonBoard() {
     queryFn: () => commLikesApi.listMineSet(user!.id),
   });
 
+  // ── 합류 희망 전체 로딩 (N+1 회피 — contextId 기준 일괄) ──
+  const { data: allJoins = [] } = useQuery({
+    queryKey: ["hackathon-joins", HACKATHON_CONTEXT_ID],
+    enabled: !!user,
+    queryFn: async () => {
+      const res = await hackathonTeamJoinsApi.listByContext(HACKATHON_CONTEXT_ID);
+      return res.data as HackathonTeamJoin[];
+    },
+    staleTime: 30 * 1000,
+  });
+
+  /** questionId → 합류 희망자 목록 */
+  const joinsByQuestion = useMemo(() => {
+    const map = new Map<string, HackathonTeamJoin[]>();
+    for (const j of allJoins) {
+      const list = map.get(j.questionId) ?? [];
+      list.push(j);
+      map.set(j.questionId, list);
+    }
+    return map;
+  }, [allJoins]);
+
+  /** 내가 합류 희망을 표시한 questionId 집합 */
+  const myJoinedSet = useMemo(() => {
+    if (!user) return new Set<string>();
+    return new Set(allJoins.filter((j) => j.userId === user.id).map((j) => j.questionId));
+  }, [allJoins, user]);
+
   const myEntry = useMemo(
     () => (user ? entries.find((e) => e.authorId === user.id) : undefined),
     [entries, user],
@@ -109,6 +143,12 @@ export default function HackathonBoard() {
       });
     queryClient.invalidateQueries({
       queryKey: ["hackathon-likes", user?.id ?? "anon"],
+    });
+  }
+
+  function refreshJoins() {
+    queryClient.invalidateQueries({
+      queryKey: ["hackathon-joins", HACKATHON_CONTEXT_ID],
     });
   }
 
@@ -150,6 +190,52 @@ export default function HackathonBoard() {
       console.error("[hackathon/like]", e);
       toast.error("공감 처리 실패 — 잠시 후 다시 시도해주세요.");
     }
+  }
+
+  /** 합류 희망 토글 — "팀원 찾는 중" 카드에서만 노출 */
+  async function handleJoinToggle(entry: CommQuestion) {
+    if (!user) return;
+    const joined = myJoinedSet.has(entry.id);
+    try {
+      if (joined) {
+        await hackathonTeamJoinsApi.delete(entry.id, user.id);
+        toast.success("합류 희망을 취소했습니다.");
+      } else {
+        await hackathonTeamJoinsApi.upsert(entry.id, user.id, {
+          questionId: entry.id,
+          userId: user.id,
+          userName: user.name,
+          contextId: HACKATHON_CONTEXT_ID,
+        });
+        toast.success("합류 희망을 표시했습니다. 아이디어 작성자가 확인할 거예요!");
+      }
+      refreshJoins();
+    } catch (e) {
+      console.error("[hackathon/join-toggle]", e);
+      toast.error("처리 실패 — 잠시 후 다시 시도해주세요.");
+    }
+  }
+
+  /**
+   * 팀 확정 — 내 아이디어 카드에 합류 희망자 + 본인을 포함해
+   * sessionStorage + CustomEvent 로 HackathonSubmissions 제출 폼을 프리필한다.
+   */
+  function handleTeamConfirm() {
+    if (!myEntry || !user) return;
+    const joiners = joinsByQuestion.get(myEntry.id) ?? [];
+    const members = [user.name, ...joiners.map((j) => j.userName)].join(", ");
+    const prefill = { teamName: "", members };
+    sessionStorage.setItem("hackathon_prefill", JSON.stringify(prefill));
+    window.dispatchEvent(
+      new CustomEvent("hackathon:prefill", { detail: prefill }),
+    );
+    document.getElementById("hackathon-submission")?.scrollIntoView({
+      behavior: "smooth",
+    });
+    toast.success(
+      "제출 폼에 팀원 목록을 입력했습니다. 팀 이름을 추가하고 제출하세요.",
+      { duration: 4000 },
+    );
   }
 
   // ── 비로그인: 가입 유도 ──
@@ -197,6 +283,41 @@ export default function HackathonBoard() {
               <Heart size={11} /> 공감 {myEntry.likeCount}
             </span>
           </div>
+
+          {/* ── 합류 희망자 목록 + 팀 확정 ── */}
+          {myEntry.presenter === HACKATHON_TEAM_PREFS.wantTeam && (
+            <div className="mt-3 border-t border-primary/15 pt-3">
+              <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                합류 희망자
+              </p>
+              {(joinsByQuestion.get(myEntry.id) ?? []).length === 0 ? (
+                <p className="text-xs text-muted-foreground">
+                  아직 없습니다 — 아이디어 보드에서 관심이 모이면 여기에 표시됩니다.
+                </p>
+              ) : (
+                <div className="flex flex-wrap gap-1.5">
+                  {(joinsByQuestion.get(myEntry.id) ?? []).map((j) => (
+                    <span
+                      key={j.id}
+                      className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-0.5 text-xs font-medium text-primary"
+                    >
+                      <UserCheck size={11} />
+                      {j.userName}
+                    </span>
+                  ))}
+                </div>
+              )}
+              <Button
+                size="sm"
+                variant="outline"
+                className="mt-3"
+                onClick={handleTeamConfirm}
+              >
+                <ArrowRight size={13} className="mr-1" />
+                팀 확정 → 제출 폼 이동
+              </Button>
+            </div>
+          )}
         </section>
       ) : (
         <section className="rounded-2xl border bg-card p-4">
@@ -329,6 +450,10 @@ export default function HackathonBoard() {
             {visible.map((entry) => {
               const liked = likedSet.has(`question__${entry.id}`);
               const mine = entry.authorId === user.id;
+              const isWantTeam =
+                entry.presenter === HACKATHON_TEAM_PREFS.wantTeam;
+              const joiners = joinsByQuestion.get(entry.id) ?? [];
+              const iJoined = myJoinedSet.has(entry.id);
               return (
                 <li
                   key={entry.id}
@@ -368,6 +493,49 @@ export default function HackathonBoard() {
                       공감 {entry.likeCount}
                     </button>
                   </div>
+
+                  {/* ── 합류자 칩 ── */}
+                  {joiners.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {joiners.map((j) => (
+                        <span
+                          key={j.id}
+                          className="inline-flex items-center gap-0.5 rounded-full bg-primary/8 px-2 py-0.5 text-[11px] text-primary"
+                        >
+                          <UserCheck size={10} />
+                          {j.userName}
+                        </span>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* ── 합류 희망 버튼 — "팀원 찾는 중"이고 본인 카드가 아닐 때 ── */}
+                  {isWantTeam && !mine && (
+                    <div className="mt-2.5">
+                      <button
+                        type="button"
+                        onClick={() => handleJoinToggle(entry)}
+                        aria-pressed={iJoined}
+                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                          iJoined
+                            ? "border-primary bg-primary/10 text-primary"
+                            : "border-border text-muted-foreground hover:bg-accent"
+                        }`}
+                      >
+                        {iJoined ? (
+                          <>
+                            <UserCheck size={12} />
+                            합류 희망 표시 중
+                          </>
+                        ) : (
+                          <>
+                            <UserPlus size={12} />
+                            합류 희망
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </li>
               );
             })}

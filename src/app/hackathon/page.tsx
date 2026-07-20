@@ -15,6 +15,7 @@ import HackathonBoard from "@/features/hackathon/HackathonBoard";
 import HackathonSubmissions from "@/features/hackathon/HackathonSubmissions";
 import HackathonAwards from "@/features/hackathon/HackathonAwards";
 import HackathonPhaseTimeline from "@/features/hackathon/HackathonPhaseTimeline";
+import HackathonTeamView from "@/features/hackathon/HackathonTeamView";
 import {
   HACKATHON_EVENT,
   HACKATHON_TIMELINE,
@@ -89,6 +90,20 @@ export default function HackathonHubPage() {
 
         {/* ── 수상작 (행사 전: 예정 안내, 심사 중: 심사 중 안내, 이후: 공개 갤러리) ── */}
         <HackathonAwards />
+
+        {/* ── 팀 현황 (M6-v9) ── */}
+        <section className="mt-12">
+          <h2 className="flex items-center gap-2 text-lg font-bold">
+            <Users size={18} className="text-primary" />
+            팀 현황
+          </h2>
+          <p className="mt-1 text-sm text-muted-foreground">
+            확정된 팀과 팀원을 찾는 중인 아이디어를 한눈에 볼 수 있어요. 아이디어 보드에서 합류 희망을 표시하고 팀을 만들어 보세요.
+          </p>
+          <div className="mt-5">
+            <HackathonTeamView />
+          </div>
+        </section>
 
         {/* ── 산출물 제출 ── */}
         <section className="mt-12">

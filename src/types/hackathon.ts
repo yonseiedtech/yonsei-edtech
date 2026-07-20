@@ -112,6 +112,22 @@ export interface HackathonJudging {
   updatedAt?: string;
 }
 
+/**
+ * 아이디어 보드 합류 희망 표시 (M6-v9).
+ * doc id = `${questionId}_${userId}` (결정적 — 멱등 upsert)
+ */
+export interface HackathonTeamJoin {
+  /** `${questionId}_${userId}` */
+  id: string;
+  /** comm_question 의 id (아이디어 카드) */
+  questionId: string;
+  userId: string;
+  userName: string;
+  /** HACKATHON_CONTEXT_ID — 회차별 일괄 조회용 */
+  contextId: string;
+  createdAt?: string;
+}
+
 /** 한 산출물의 심사 결과 집계. */
 export interface HackathonScoreSummary {
   /** 심사위원 수 */
