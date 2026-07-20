@@ -171,10 +171,15 @@ service cloud.firestore {
     }
 
     // ─── Site Settings (admin/president only) ───
+    // 예외: internal_conferences(대내 학술대회 목록)만 운영진(staff)도 쓰기 가능 — 표적 카브아웃.
+    // 기존 문서의 key 확인을 함께 요구해 다른 설정 문서를 이 key 로 바꿔치기하는 우회를 차단.
     match /site_settings/{settingId} {
       allow read: if true;
       allow write: if isAuthenticated()
-        && getUserRole() in ['president', 'admin', 'sysadmin'];
+        && (getUserRole() in ['president', 'admin', 'sysadmin']
+          || (getUserRole() == 'staff'
+            && request.resource.data.key == 'internal_conferences'
+            && (resource == null || resource.data.key == 'internal_conferences')));
     }
 
     // ─── Seminars ───

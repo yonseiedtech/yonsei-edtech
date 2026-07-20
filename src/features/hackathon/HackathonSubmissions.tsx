@@ -27,6 +27,7 @@ import {
   Lock,
   CheckCircle2,
   Pencil,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -39,6 +40,8 @@ import {
   HACKATHON_AWARD_LABELS,
   type HackathonSubmission,
 } from "@/types";
+import MemberAutocomplete, { type SelectedMember } from "@/components/ui/MemberAutocomplete";
+import { useAllMembers } from "@/features/member/useMembers";
 import { HACKATHON_CONTEXT_ID } from "./config";
 import { useHackathonOps } from "./useHackathonOps";
 
@@ -81,10 +84,13 @@ export default function HackathonSubmissions() {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
   const { submissionClosed: closed } = useHackathonOps();
+  const { members: allMembers } = useAllMembers();
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
   const [editing, setEditing] = useState(false);
   const [saving, setSaving] = useState(false);
+  // v13-H2: 팀원 ID 다중 선택 (포트폴리오 자동연결용, 선택 사항)
+  const [memberIdItems, setMemberIdItems] = useState<SelectedMember[]>([]);
 
   // ── 팀 확정 프리필 연결 (M6-v9) ──
   // HackathonBoard 의 "팀 확정" 버튼이 CustomEvent + sessionStorage 로 전달하는
@@ -145,8 +151,18 @@ export default function HackathonSubmissions() {
   }
 
   function startEdit() {
-    if (mine) setForm(toForm(mine));
-    else setForm(EMPTY_FORM);
+    if (mine) {
+      setForm(toForm(mine));
+      // v13-H2: 기존 memberIds → 표시명 매핑 (allMembers 로딩 전이면 id 그대로)
+      const items = (mine.memberIds ?? []).map((id) => {
+        const m = allMembers.find((x) => x.id === id);
+        return { id, name: m?.name ?? id, studentId: m?.studentId };
+      });
+      setMemberIdItems(items);
+    } else {
+      setForm(EMPTY_FORM);
+      setMemberIdItems([]);
+    }
     setEditing(true);
   }
 
@@ -172,6 +188,8 @@ export default function HackathonSubmissions() {
       demoUrl: form.demoUrl.trim(),
       repoUrl: form.repoUrl.trim(),
       members,
+      // v13-H2: 팀원 ID 목록 (포트폴리오 자동적재 확장용)
+      memberIds: memberIdItems.map((m) => m.id),
       ownerId: user.id,
       ownerName: user.name,
     };
@@ -300,9 +318,52 @@ export default function HackathonSubmissions() {
                 className={inputCls}
               />
             </Field>
+            {/* v13-H2: 팀원 ID 검색 선택 — 포트폴리오 자동적재 연결용 (선택 사항) */}
+            <Field label="팀원 검색 — 포트폴리오 자동 연결용 (선택 사항)">
+              <div className="space-y-2">
+                {memberIdItems.length > 0 && (
+                  <div className="flex flex-wrap gap-1.5">
+                    {memberIdItems.map((m) => (
+                      <span
+                        key={m.id}
+                        className="inline-flex items-center gap-1 rounded-full border border-border bg-muted/30 px-2.5 py-1 text-xs"
+                      >
+                        {m.name}
+                        <button
+                          type="button"
+                          aria-label={`${m.name} 제거`}
+                          onClick={() =>
+                            setMemberIdItems((prev) => prev.filter((x) => x.id !== m.id))
+                          }
+                          className="rounded text-muted-foreground hover:text-destructive"
+                        >
+                          <X size={11} />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <MemberAutocomplete
+                  value=""
+                  excludeIds={[user.id, ...memberIdItems.map((m) => m.id)]}
+                  onSelect={(m) => setMemberIdItems((prev) => [...prev, m])}
+                  approvedOnly
+                  placeholder="이름으로 팀원 검색 (선택 후 추가)"
+                />
+              </div>
+              <p className="mt-1 text-[11px] text-muted-foreground">
+                선택된 팀원도 포트폴리오 자동 불러오기에서 해커톤 참가 이력을 연결할 수 있습니다.
+                위 텍스트 입력과 별개로 동작합니다.
+              </p>
+            </Field>
           </div>
           <div className="mt-4 flex justify-end gap-2">
-            <Button size="sm" variant="ghost" onClick={() => setEditing(false)} disabled={saving}>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => { setEditing(false); setMemberIdItems([]); }}
+              disabled={saving}
+            >
               취소
             </Button>
             <Button size="sm" onClick={handleSave} disabled={saving}>

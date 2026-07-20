@@ -7,6 +7,8 @@
 
 import { describe, expect, it } from "vitest";
 import {
+  cohortKeyOf,
+  effectiveSemesterStart,
   formatSemester,
   inferCurrentSemester,
   monthRangeDays,
@@ -103,6 +105,64 @@ describe("previousSemesterRange", () => {
     // inferCurrentSemester(2026-01) = {2025, second} → previous = same year first = 2025 first
     expect(r.from).toBe("2025-03");
     expect(r.to).toBe("2025-08");
+  });
+});
+
+describe("cohortKeyOf — C-5 8월 가입 코호트 보정", () => {
+  it("enrollmentYear + Half 명시 입력 → createdAt 무시, 폴백 보정 없음", () => {
+    // 8월 가입이라도 enrollmentYear/Half 있으면 그대로
+    expect(cohortKeyOf({ enrollmentYear: 2026, enrollmentHalf: 1, createdAt: "2026-08-15T00:00:00Z" })).toBe("2026-1");
+    expect(cohortKeyOf({ enrollmentYear: 2026, enrollmentHalf: 2, createdAt: "2026-08-15T00:00:00Z" })).toBe("2026-2");
+  });
+
+  it("8월 가입(createdAt 폴백) → 다음 학기(후기) 코호트로 보정", () => {
+    // 8/2 = 9/1 기준 30일 전 → 경계값 포함
+    expect(cohortKeyOf({ createdAt: "2026-08-02T00:00:00Z" })).toBe("2026-2");
+    // 8/15 = 17일 전
+    expect(cohortKeyOf({ createdAt: "2026-08-15T00:00:00Z" })).toBe("2026-2");
+    // 8/31 = 1일 전
+    expect(cohortKeyOf({ createdAt: "2026-08-31T00:00:00Z" })).toBe("2026-2");
+  });
+
+  it("8/1 가입(31일 전) → 보정 없음, 전기 유지", () => {
+    expect(cohortKeyOf({ createdAt: "2026-08-01T00:00:00Z" })).toBe("2026-1");
+    expect(cohortKeyOf({ createdAt: "2026-07-15T00:00:00Z" })).toBe("2026-1");
+  });
+
+  it("일반 전기 가입 → 전기 코호트", () => {
+    expect(cohortKeyOf({ createdAt: "2026-04-01T00:00:00Z" })).toBe("2026-1");
+    expect(cohortKeyOf({ createdAt: "2026-03-01T00:00:00Z" })).toBe("2026-1");
+  });
+
+  it("일반 후기 가입 → 후기 코호트 (보정 불필요)", () => {
+    expect(cohortKeyOf({ createdAt: "2026-09-15T00:00:00Z" })).toBe("2026-2");
+    expect(cohortKeyOf({ createdAt: "2026-10-01T00:00:00Z" })).toBe("2026-2");
+  });
+
+  it("createdAt 없거나 null → null", () => {
+    expect(cohortKeyOf({})).toBeNull();
+    expect(cohortKeyOf({ createdAt: null })).toBeNull();
+  });
+});
+
+describe("effectiveSemesterStart — C-1 실개강일 우선·관례일 폴백", () => {
+  it("entries 없으면 관례일 반환", () => {
+    expect(effectiveSemesterStart(2026, "first", [])).toBe("2026-03-01");
+    expect(effectiveSemesterStart(2026, "second", [])).toBe("2026-09-01");
+  });
+
+  it("해당 학기 entries 있으면 실개강일 반환", () => {
+    const entries = [{ year: 2026, semester: "second" as const, semesterStart: "2026-09-02" }];
+    expect(effectiveSemesterStart(2026, "second", entries)).toBe("2026-09-02");
+  });
+
+  it("다른 학기 entries 있어도 해당 없으면 관례일 폴백", () => {
+    const entries = [{ year: 2026, semester: "first" as const, semesterStart: "2026-03-04" }];
+    expect(effectiveSemesterStart(2026, "second", entries)).toBe("2026-09-01");
+  });
+
+  it("entries 기본값(생략) → 관례일 반환", () => {
+    expect(effectiveSemesterStart(2026, "first")).toBe("2026-03-01");
   });
 });
 

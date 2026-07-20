@@ -58,8 +58,10 @@ export interface InternalConference {
   awardsAnnounceDate?: string;
   /** 활성 기능 토글 */
   features: InternalConferenceFeatures;
-  /** 이 행사의 허브 페이지 경로 (레거시 8/22 = "/hackathon") */
+  /** 이 행사의 허브 페이지 경로 (레거시 8/22 = "/hackathon"). 빈 문자열이면 전용 허브 없음. */
   hubHref: string;
+  /** 전용 허브 페이지가 없는 신규 행사용 외부 링크 — hubHref 가 비어 있을 때 카드 CTA 로 사용. */
+  externalLink?: string;
   /** 진행 상태 — 미지정 시 date 로 자동 계산(getConferenceStatus) */
   status?: InternalConferenceStatus;
 }

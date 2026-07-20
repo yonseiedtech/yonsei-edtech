@@ -31,6 +31,7 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 
 interface Props {
   activityId: string;
@@ -258,9 +259,7 @@ export default function StudySessionNotesCard({
       {isLoading ? (
         <p className="text-[11px] text-muted-foreground">불러오는 중…</p>
       ) : notes.length === 0 ? (
-        <p className="rounded border border-dashed bg-muted/20 px-2 py-3 text-center text-[11px] text-muted-foreground">
-          아직 토론 노트가 없습니다.
-        </p>
+        <EmptyState compact title="아직 토론 노트가 없습니다" />
       ) : (
         <ul className="space-y-1.5">
           {notes.map((n) => {

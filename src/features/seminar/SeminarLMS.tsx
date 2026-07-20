@@ -32,6 +32,7 @@ import {
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import EmptyState from "@/components/ui/empty-state";
 
 const STATUS_STYLES: Record<SeminarStatus, string> = {
   draft: "bg-gray-100 text-gray-500",
@@ -171,8 +172,8 @@ export default function SeminarLMS({ seminarId }: Props) {
 
   if (!seminar) {
     return (
-      <div className="py-16 text-center text-muted-foreground">
-        세미나를 찾을 수 없습니다.
+      <div className="py-8">
+        <EmptyState compact title="세미나를 찾을 수 없습니다" />
       </div>
     );
   }

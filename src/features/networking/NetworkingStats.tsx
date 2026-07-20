@@ -19,6 +19,7 @@ import {
   type NetworkingEventType,
 } from "@/types";
 import { isPastEvent, formatWon } from "@/features/networking/networking-helpers";
+import EmptyState from "@/components/ui/empty-state";
 
 const EVENT_TYPES = Object.keys(NETWORKING_EVENT_TYPE_LABELS) as NetworkingEventType[];
 
@@ -151,10 +152,11 @@ export default function NetworkingStats({ events }: { events: NetworkingEvent[] 
   const hasData = rsvps.length > 0;
   if (!hasData) {
     return (
-      <div className="rounded-2xl border border-dashed p-10 text-center text-sm text-muted-foreground">
-        <BarChart3 size={22} className="mx-auto mb-2 opacity-50" />
-        집계할 참석 데이터가 아직 없습니다. 모임 참석 신청이 쌓이면 통계가 표시됩니다.
-      </div>
+      <EmptyState
+        icon={BarChart3}
+        title="집계할 참석 데이터가 아직 없습니다"
+        description="모임 참석 신청이 쌓이면 통계가 표시됩니다."
+      />
     );
   }
 
@@ -204,7 +206,7 @@ export default function NetworkingStats({ events }: { events: NetworkingEvent[] 
       {/* 반복 참석자 TOP */}
       <StatCard icon={<Repeat size={13} />} title="반복 참석자 TOP">
         {repeat.length === 0 ? (
-          <p className="text-xs text-muted-foreground">반복 참석자(2회 이상)가 아직 없습니다.</p>
+          <EmptyState compact title="반복 참석자(2회 이상)가 아직 없습니다" />
         ) : (
           <div className="space-y-1.5">
             {repeat.map((x) => (

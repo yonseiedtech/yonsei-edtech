@@ -41,6 +41,7 @@ import StudySessionPreClassCard from "./StudySessionPreClassCard";
 import StudySessionReflectionCard from "./StudySessionReflectionCard";
 import StudySessionAssignmentsCard from "./StudySessionAssignmentsCard";
 import StudySessionNotesCard from "./StudySessionNotesCard";
+import EmptyState from "@/components/ui/empty-state";
 import StudyCurriculumGoalCheck from "./StudyCurriculumGoalCheck";
 import KudosSendBlock from "@/features/kudos/KudosSendBlock";
 import CommBoardSection from "@/features/comm-board/CommBoardSection";
@@ -528,9 +529,7 @@ export default function ActivityWeekDetailPage({
             )}
           </div>
           {participantUsers.length === 0 ? (
-            <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-4 text-center text-xs text-muted-foreground">
-              아직 등록된 참여자가 없습니다.
-            </p>
+            <EmptyState compact title="아직 등록된 참여자가 없습니다" />
           ) : (
             <div className="grid grid-cols-2 gap-1.5 sm:grid-cols-3 md:grid-cols-4">
               {participantUsers.map((p) => {
@@ -622,9 +621,7 @@ export default function ActivityWeekDetailPage({
             )}
           </div>
           {materials.length === 0 ? (
-            <p className="rounded-lg border border-dashed bg-muted/20 px-3 py-4 text-center text-xs text-muted-foreground">
-              아직 업로드된 자료가 없습니다.
-            </p>
+            <EmptyState compact title="아직 업로드된 자료가 없습니다" />
           ) : (
             <ul className="space-y-1.5">
               {materials.map((m, idx) => (

@@ -11,6 +11,7 @@ import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import type { ActivityProgress } from "@/types";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 
 type Material = {
   url: string;
@@ -74,13 +75,11 @@ export default function StudyMaterialArchive({ progressList }: Props) {
 
   if (items.length === 0) {
     return (
-      <div className="rounded-2xl border bg-card p-8 text-center">
-        <Archive className="mx-auto mb-2 text-muted-foreground" size={32} />
-        <p className="text-sm font-medium">아카이브된 자료가 없습니다.</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          회차별 자료 또는 Pre-read 자료를 업로드하면 여기에서 한눈에 확인할 수 있습니다.
-        </p>
-      </div>
+      <EmptyState
+        icon={Archive}
+        title="아카이브된 자료가 없습니다"
+        description="회차별 자료 또는 Pre-read 자료를 업로드하면 여기에서 한눈에 확인할 수 있습니다."
+      />
     );
   }
 
@@ -146,9 +145,7 @@ export default function StudyMaterialArchive({ progressList }: Props) {
       </div>
 
       {filtered.length === 0 ? (
-        <p className="rounded-lg border border-dashed bg-muted/20 p-6 text-center text-xs text-muted-foreground">
-          검색 조건에 해당하는 자료가 없습니다.
-        </p>
+        <EmptyState compact title="검색 조건에 해당하는 자료가 없습니다" />
       ) : (
         <ul className="space-y-1.5">
           {filtered.map((i, idx) => (

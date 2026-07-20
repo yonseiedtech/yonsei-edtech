@@ -75,6 +75,7 @@ import {
   type PlacedClass,
   type ViewMode,
 } from "./timeline/types";
+import EmptyState from "@/components/ui/empty-state";
 
 export default function DailyClassTimelineWidget() {
   const { user } = useAuthStore();
@@ -1050,28 +1051,19 @@ export default function DailyClassTimelineWidget() {
               </p>
             </div>
           ) : parsedOfferings.length === 0 ? (
-            <div className="mt-4 rounded-2xl border border-dashed bg-muted/20 p-4 text-sm">
-              <p className="font-medium">
-                {semesterLabel}에 등록된 수강과목이 없어요.
-              </p>
-              <p className="mt-1 text-[12px] text-muted-foreground">
-                <Link href="/courses?tab=mine" className="text-primary underline">
-                  수강과목 페이지
-                </Link>
-                의 <b>“이번 학기”</b> 탭에서 본인 수강 또는 청강 버튼을 누르면 여기에 자동으로 표시됩니다.
-              </p>
-              {loadingEnrollments ? null : (enrollmentsRes?.data?.length ?? 0) > 0 ? (
-                <p className="mt-1 text-[11px] text-muted-foreground/80">
-                  ※ 다른 학기 수강 기록 {enrollmentsRes?.data?.length}건이 있지만,
-                  {semesterLabel} 학기에 해당하는 항목은 없습니다.
+            <div className="mt-4">
+              <EmptyState
+                icon={BookOpen}
+                title={`${semesterLabel}에 등록된 수강과목이 없어요`}
+                description="수강과목 페이지에서 이번 학기 탭의 수강/청강 버튼을 누르면 자동으로 표시됩니다."
+                actionLabel="수강과목 등록하러 가기"
+                actionHref="/courses?tab=mine"
+              />
+              {!loadingEnrollments && (enrollmentsRes?.data?.length ?? 0) > 0 && (
+                <p className="mt-2 text-center text-[11px] text-muted-foreground/80">
+                  ※ 다른 학기 수강 기록 {enrollmentsRes?.data?.length}건이 있지만, {semesterLabel} 학기에 해당하는 항목은 없습니다.
                 </p>
-              ) : null}
-              <Link
-                href="/courses?tab=mine"
-                className="mt-3 inline-flex items-center gap-1 rounded-md bg-primary px-3 py-1.5 text-[12px] font-medium text-white hover:bg-primary/90"
-              >
-                <BookOpen size={12} /> 수강과목 등록하러 가기
-              </Link>
+              )}
             </div>
           ) : (
             <div className="mt-4 rounded-2xl border border-dashed bg-muted/10 p-4 text-sm">

@@ -33,7 +33,8 @@ export type AutofillSourceKind =
   | "seminar"
   | "publication"
   | "kudos_mentoring"
-  | "hackathon_submission";
+  | "hackathon_submission"
+  | "curriculum_design";
 
 /** 정규화된 포트폴리오 후보 — external_activities 로 적재 가능한 형태 */
 export interface PortfolioCandidate {
@@ -71,6 +72,12 @@ export interface AutofillInput {
    * ownerId === userId 인 건만 필터해 후보화한다.
    */
   hackathonSubmissions?: HackathonSubmission[];
+  /**
+   * v13-M2: 교수설계 마법사로 설계된 활동 목록.
+   * activityParticipationsApi.listByUser 결과에서 role==="designer"인 건의 활동 정보.
+   * 신규 저장부터 추적 — 과거 저장분은 소급 불가.
+   */
+  designParticipations?: { activityId: string; activityTitle?: string; modelNames?: string[] }[];
 }
 
 function normalizeTitle(s: string): string {
@@ -106,7 +113,7 @@ function isAlready(idx: ExistingIndex, sourceRef: string, title: string, date: s
  * 미적재 항목을 앞에, 그 안에서 날짜 내림차순으로 정렬한다.
  */
 export function buildPortfolioCandidates(input: AutofillInput): PortfolioCandidate[] {
-  const { userId, seminars, recentPapers, existingExternals, receivedKudos, hackathonSubmissions } = input;
+  const { userId, seminars, recentPapers, existingExternals, receivedKudos, hackathonSubmissions, designParticipations } = input;
   const idx = buildExistingIndex(existingExternals);
   const out: PortfolioCandidate[] = [];
   const seen = new Set<string>();
@@ -187,10 +194,15 @@ export function buildPortfolioCandidates(input: AutofillInput): PortfolioCandida
     }
   }
 
-  // 4. v12-M2: 해커톤 참가 — ownerId(팀 대표 제출자) 일치 건만 후보화
+  // 4. v12-M2: 해커톤 참가 — ownerId(팀 대표) 또는 memberIds(팀원, v13-H2) 일치 건 후보화
   for (const sub of (hackathonSubmissions ?? [])) {
-    if (sub.ownerId !== userId) continue;
-    const sourceRef = `hackathon:submission:${sub.id}`;
+    const isOwner = sub.ownerId === userId;
+    const isMember = !isOwner && (sub.memberIds ?? []).includes(userId);
+    if (!isOwner && !isMember) continue;
+    // 대표와 팀원은 별도 sourceRef로 멱등 보장
+    const sourceRef = isOwner
+      ? `hackathon:submission:${sub.id}`
+      : `hackathon:submission:${sub.id}:member`;
     if (seen.has(sourceRef)) continue;
     seen.add(sourceRef);
     const teamPart = sub.teamName ? `[${sub.teamName}] ` : "";
@@ -209,10 +221,34 @@ export function buildPortfolioCandidates(input: AutofillInput): PortfolioCandida
       title,
       type: "conference",
       organization: "연세교육공학회",
-      role: "팀 대표",
+      role: isOwner ? "팀 대표" : "팀원",
       date,
       url,
       description: sub.description ? sub.description.slice(0, 200) : undefined,
+      alreadyAdded: isAlready(idx, sourceRef, title, date),
+    });
+  }
+
+  // 5. v13-M2: 교수설계 산출 — activity_participations role==="designer" 추적분
+  //    신규 저장부터 기록(과거 소급 불가). 활동당 1건 멱등(sourceRef 기준).
+  for (const dp of (designParticipations ?? [])) {
+    const sourceRef = `curriculum:design:${dp.activityId}`;
+    if (seen.has(sourceRef)) continue;
+    seen.add(sourceRef);
+    const modelLabel = dp.modelNames?.length ? ` (${dp.modelNames.join(", ")})` : "";
+    const title = dp.activityTitle
+      ? `${dp.activityTitle} — 교수설계${modelLabel}`
+      : `교수설계 산출${modelLabel}`;
+    const date = "";
+    out.push({
+      sourceRef,
+      sourceKind: "curriculum_design",
+      sourceKindLabel: "교수설계 산출",
+      title,
+      type: "community",
+      organization: "연세교육공학회",
+      role: "교수설계",
+      date,
       alreadyAdded: isAlready(idx, sourceRef, title, date),
     });
   }

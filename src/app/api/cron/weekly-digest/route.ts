@@ -1,10 +1,11 @@
-﻿import { NextRequest } from "next/server";
+import { NextRequest } from "next/server";
 import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 import { shouldSuppressForQuietHours, type QuietHoursConfig } from "@/lib/notify-timing";
 import { todayYmdKst } from "@/lib/dday";
+import { effectiveSemesterStart } from "@/lib/semester";
 import {
   WEEKLY_GOAL_PRESETS,
   weekDays,
@@ -889,7 +890,7 @@ function buildSuggestionHtml(s: LearningSuggestion): string {
 `;
 }
 
-function buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml, staffGapHtml, weekKey }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest; suggestion?: LearningSuggestion; peersHtml?: string; mentorHtml?: string; staffGapHtml?: string; weekKey: string }): string {
+function buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml, staffGapHtml, semesterDdayBlock, weekKey }: { seminars: SeminarLite[]; posts: PostLite[]; activities: ActivityLite[]; questions: QuestionLite[]; personal?: PersonalDigest; suggestion?: LearningSuggestion; peersHtml?: string; mentorHtml?: string; staffGapHtml?: string; semesterDdayBlock?: string; weekKey: string }): string {
   const base = "https://yonsei-edtech.vercel.app";
   // M7: 주요 CTA 링크는 /r/digest 리다이렉트로 래핑해 클릭 수 집계
   const cta = (path: string) => wrapCtaUrl(path, weekKey);
@@ -912,6 +913,7 @@ function buildHtml({ seminars, posts, activities, questions, personal, suggestio
     <div style="font-family: 'Pretendard', sans-serif; max-width: 600px; margin: 0 auto; color: #1a1a1a;">
       <h2 style="color: #003876; margin: 0 0 8px;">연세교육공학회 주간 다이제스트</h2>
       <p style="color: #666; margin: 0 0 24px;">이번 주 학회 활동을 한눈에 확인하세요.</p>
+${semesterDdayBlock ?? ""}
 ${personal ? buildPersonalHtml(personal) : ""}
 ${suggestion ? buildSuggestionHtml(suggestion) : ""}
 ${staffGapHtml ?? ""}
@@ -1082,6 +1084,42 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   const gapHtmlForStaff = buildStaffGapHtml(gapSummary.pendingQnaDrafts, gapSummary.topSearchMisses);
   const hasGapContent = gapHtmlForStaff !== "";
 
+  // C-6: 개강 D-14 이내일 때만 상단 한 줄 블록 — academic_calendar 실개강일 우선, 관례일 폴백
+  let semesterDdayBlock: string | undefined;
+  try {
+    const calSnap = await db.collection("academic_calendar").limit(20).get();
+    const calEntries = calSnap.docs
+      .map((d) => d.data() as { year?: number; semester?: string; semesterStart?: string })
+      .filter(
+        (c): c is { year: number; semester: "first" | "second"; semesterStart: string } =>
+          typeof c.year === "number" &&
+          (c.semester === "first" || c.semester === "second") &&
+          typeof c.semesterStart === "string" &&
+          c.semesterStart.length > 0,
+      );
+    const todayYmd = todayYmdKst();
+    const [y] = todayYmd.split("-").map(Number);
+    const candidates: { year: number; semester: "first" | "second"; label: string }[] = [
+      { year: y, semester: "first", label: `${y}년 1학기` },
+      { year: y, semester: "second", label: `${y}년 2학기` },
+      { year: y + 1, semester: "first", label: `${y + 1}년 1학기` },
+    ];
+    for (const c of candidates) {
+      const startStr = effectiveSemesterStart(c.year, c.semester, calEntries);
+      const [sy, sm, sd] = startStr.split("-").map(Number);
+      const [ty, tm, td] = todayYmd.split("-").map(Number);
+      const daysLeft = Math.round(
+        (Date.UTC(sy, sm - 1, sd) - Date.UTC(ty, tm - 1, td)) / 86400000,
+      );
+      if (daysLeft >= 1 && daysLeft <= 14) {
+        semesterDdayBlock = `<p style="margin:0 0 20px;padding:10px 14px;background:#e8f0fa;border-left:4px solid #003876;border-radius:4px;font-size:14px;color:#003876;font-weight:600">📅 ${c.label} 개강 D-${daysLeft} — <a href="https://yonsei-edtech.vercel.app/courses" style="color:#003876;text-decoration:underline">시간표를 미리 확인하세요 →</a></p>`;
+        break;
+      }
+    }
+  } catch {
+    // 학사일정 조회 실패 시 블록 생략 — 발송 계속
+  }
+
   const resend = new Resend(key);
   const subject = `[연세교육공학회] 주간 다이제스트 (${weekKey})`;
 
@@ -1105,7 +1143,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
   const staffGapIds = new Set(staffGapRecipients.map((r) => r.id));
   const genericEmails = nonPersonalRecipients.filter((r) => !staffGapIds.has(r.id)).map((r) => r.email);
 
-  const genericHtml = buildHtml({ seminars, posts, activities, questions, peersHtml, weekKey });
+  const genericHtml = buildHtml({ seminars, posts, activities, questions, peersHtml, semesterDdayBlock, weekKey });
 
   let sent = 0;
 
@@ -1133,7 +1171,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
     const mentorHtml = buildMentorHtml(mentorPendingById.get(r.id) ?? 0);
     // H3 v8: staff 수신자에게 갭 블록 추가
     const staffGapHtml = hasGapContent && STAFF_ROLES.has(usersById.get(r.id)?.role ?? "") ? gapHtmlForStaff : undefined;
-    const html = buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml, staffGapHtml, weekKey });
+    const html = buildHtml({ seminars, posts, activities, questions, personal, suggestion, peersHtml, mentorHtml, staffGapHtml, semesterDdayBlock, weekKey });
     try {
       await resend.emails.send({
         from: "연세교육공학회 <noreply@yonsei-edtech.vercel.app>",
@@ -1149,7 +1187,7 @@ async function sendDigest(db: FirebaseFirestore.Firestore, weekKey: string): Pro
 
   // (c) H3 v8: 비개인화 staff — 갭 블록 포함 개별 발송
   for (const r of staffGapRecipients) {
-    const html = buildHtml({ seminars, posts, activities, questions, peersHtml, staffGapHtml: gapHtmlForStaff, weekKey });
+    const html = buildHtml({ seminars, posts, activities, questions, peersHtml, staffGapHtml: gapHtmlForStaff, semesterDdayBlock, weekKey });
     try {
       await resend.emails.send({
         from: "연세교육공학회 <noreply@yonsei-edtech.vercel.app>",

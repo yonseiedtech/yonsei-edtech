@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 해커톤 수상작 섹션 (v7-M1 · v8-H6 개선)
+ * 해커톤 수상작 섹션 (v7-M1 · v8-H6 개선 · v13-H2 수상→기록 반자동)
  *
  * 단계별 상태 기계로 렌더:
  *  - registration / submission (행사 전) → 수상 발표 예정 안내 플레이스홀더
@@ -13,16 +13,20 @@
  * 플레이스홀더·심사 안내는 비로그인 포함 모든 방문자에게 표시.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { Trophy, Award as AwardIcon, Clock } from "lucide-react";
+import { Trophy, Award as AwardIcon, Clock, Bookmark, CheckCircle2, ExternalLink, Loader2 } from "lucide-react";
+import Link from "next/link";
+import { toast } from "sonner";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { hackathonSubmissionsApi } from "@/lib/bkend";
+import { hackathonSubmissionsApi, externalActivitiesApi } from "@/lib/bkend";
 import {
   HACKATHON_AWARD_LABELS,
   HACKATHON_AWARD_ORDER,
+  DEFAULT_EXTERNAL_AFFILIATION,
   type HackathonSubmission,
 } from "@/types";
+import { isAtLeast } from "@/lib/permissions";
 import {
   HACKATHON_CONTEXT_ID,
   HACKATHON_PORTFOLIO_HINT,
@@ -35,6 +39,65 @@ export default function HackathonAwards() {
   const user = useAuthStore((s) => s.user);
   const { phase } = useHackathonOps();
   const isPostEvent = phase === "judging" || phase === "awards";
+
+  // v13-H2: 수상→포트폴리오 반자동 — 세션 내 추가 완료 목록
+  const [addedAwards, setAddedAwards] = useState<Set<string>>(new Set());
+  const [addingAward, setAddingAward] = useState<string | null>(null);
+
+  // cross-session 멱등: 기존 external_activities 의 hackathon:award:* autoSourceRef 를 시드
+  const { data: existingAwardRefs } = useQuery({
+    queryKey: ["external-activities-award-refs", user?.id],
+    enabled: !!user && isPostEvent,
+    queryFn: async () => {
+      const res = await externalActivitiesApi.listByUser(user!.id);
+      return new Set(
+        res.data
+          .map((a) => a.autoSourceRef)
+          .filter((ref): ref is string => !!ref?.startsWith("hackathon:award:"))
+          .map((ref) => ref.slice("hackathon:award:".length)),
+      );
+    },
+  });
+
+  /** 수상작을 external_activities 에 1클릭 적재 (idempotent via autoSourceRef) */
+  async function addAwardToPortfolio(s: HackathonSubmission) {
+    if (!user) return;
+    if (addedAwards.has(s.id) || existingAwardRefs?.has(s.id)) {
+      toast.info("이미 포트폴리오에 추가된 수상 이력입니다.");
+      return;
+    }
+    const isOwner = s.ownerId === user.id;
+    const autoSourceRef = `hackathon:award:${s.id}`;
+    setAddingAward(s.id);
+    try {
+      await externalActivitiesApi.create({
+        userId: user.id,
+        title: `[수상] ${s.title}`,
+        type: "conference",
+        affiliation: DEFAULT_EXTERNAL_AFFILIATION,
+        organization: "연세교육공학회",
+        role: isOwner ? "팀 대표 (수상)" : "팀원 (수상)",
+        date: s.createdAt?.slice(0, 10) || new Date().toISOString().slice(0, 10),
+        url: s.presentationUrl || s.demoUrl || s.repoUrl || undefined,
+        description: `에듀테크 해커톤 ${HACKATHON_AWARD_LABELS[s.award!]} 수상 — ${s.teamName}`,
+        verified: false,
+        autoSourceRef,
+      });
+      setAddedAwards((prev) => new Set(prev).add(s.id));
+      toast.success("포트폴리오에 수상 이력을 추가했습니다. 운영진 검증 후 정식 표기됩니다.");
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "추가 실패 — 잠시 후 다시 시도해주세요.");
+    } finally {
+      setAddingAward(null);
+    }
+  }
+
+  /** 운영진 아카이브 등록 딥링크 — writing-tips/new 폼에 제목·URL 프리필 */
+  function archiveDeeplink(s: HackathonSubmission): string {
+    const title = encodeURIComponent(`[해커톤 수상] ${s.title} (${s.teamName})`);
+    const url = encodeURIComponent(s.presentationUrl || s.demoUrl || s.repoUrl || "");
+    return `/console/archive/writing-tips/new?title=${title}${url ? `&url=${url}` : ""}`;
+  }
 
   const { data: submissions = [] } = useQuery({
     queryKey: ["hackathon-submissions"],
@@ -127,6 +190,42 @@ export default function HackathonAwards() {
               {s.description}
             </p>
             <SubmissionLinks submission={s} />
+            {/* v13-H2: 수상→기록 반자동 버튼 */}
+            {user && (
+              <div className="mt-3 flex flex-wrap gap-2">
+                {(s.ownerId === user.id || (s.memberIds ?? []).includes(user.id)) && (
+                  addedAwards.has(s.id) || existingAwardRefs?.has(s.id) ? (
+                    <span className="inline-flex items-center gap-1 rounded-lg border border-primary/20 bg-primary/10 px-3 py-1.5 text-xs font-medium text-primary">
+                      <CheckCircle2 size={12} />
+                      포트폴리오에 추가됨
+                    </span>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={() => addAwardToPortfolio(s)}
+                      disabled={addingAward === s.id}
+                      className="inline-flex items-center gap-1 rounded-lg border border-primary/30 bg-primary/5 px-3 py-1.5 text-xs font-medium text-primary hover:bg-primary/10 disabled:opacity-50"
+                    >
+                      {addingAward === s.id ? (
+                        <Loader2 size={12} className="animate-spin" />
+                      ) : (
+                        <Bookmark size={12} />
+                      )}
+                      포트폴리오에 수상 이력 추가
+                    </button>
+                  )
+                )}
+                {isAtLeast(user, "staff") && (
+                  <Link
+                    href={archiveDeeplink(s)}
+                    className="inline-flex items-center gap-1 rounded-lg border border-border bg-muted/30 px-3 py-1.5 text-xs font-medium text-muted-foreground hover:bg-muted/60"
+                  >
+                    <ExternalLink size={12} />
+                    아카이브 산출물로 등록
+                  </Link>
+                )}
+              </div>
+            )}
           </li>
         ))}
       </ul>

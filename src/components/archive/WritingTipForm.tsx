@@ -23,6 +23,11 @@ import { cn } from "@/lib/utils";
 interface Props {
   initial: WritingTip | null;
   userId: string;
+  /**
+   * v13-H2: 해커톤 "아카이브 산출물로 등록" 딥링크에서 ?title=...&url=... 로 착지할 때
+   * initial === null 인 신규 폼에 한해 제목과 참고자료 URL을 미리 채운다.
+   */
+  prefill?: { title?: string; url?: string };
 }
 
 const CATEGORY_OPTIONS: WritingTipCategory[] = [
@@ -40,12 +45,13 @@ function newId(): string {
   return Math.random().toString(36).slice(2) + Date.now().toString(36);
 }
 
-export default function WritingTipForm({ initial, userId }: Props) {
+export default function WritingTipForm({ initial, userId, prefill }: Props) {
   const router = useRouter();
   const isEdit = !!initial;
   const { user: authUser } = useAuthStore();
 
-  const [title, setTitle] = useState(initial?.title ?? "");
+  // prefill 은 신규 폼(initial === null)에서만 적용
+  const [title, setTitle] = useState(initial?.title ?? prefill?.title ?? "");
   const [category, setCategory] = useState<WritingTipCategory>(
     initial?.category ?? "translationese",
   );
@@ -60,7 +66,11 @@ export default function WritingTipForm({ initial, userId }: Props) {
     initial?.additionalExamples ?? [],
   );
   const [references, setReferences] = useState<WritingTipReference[]>(
-    initial?.references ?? [],
+    // prefill.url 이 있으면 참고자료에 산출물 링크를 미리 채워 넣는다
+    initial?.references ??
+      (prefill?.url
+        ? [{ id: newId(), title: "산출물 링크", url: prefill.url }]
+        : []),
   );
   const [published, setPublished] = useState<boolean>(initial?.published ?? false);
   const [saving, setSaving] = useState(false);

@@ -19,7 +19,7 @@ import {
   DownloadCloud,
   ExternalLink,
 } from "lucide-react";
-import { seminarsApi, externalActivitiesApi, kudosApi, hackathonSubmissionsApi } from "@/lib/bkend";
+import { seminarsApi, externalActivitiesApi, kudosApi, hackathonSubmissionsApi, activityParticipationsApi, activitiesApi } from "@/lib/bkend";
 import { HACKATHON_CONTEXT_ID } from "@/features/hackathon/config";
 import {
   buildPortfolioCandidates,
@@ -53,12 +53,34 @@ export default function PortfolioAutofillDialog({
     setLoading(true);
     setSelected(new Set());
     try {
-      // v12-M2: 세미나·논문에 더해 받은 kudos(멘토링)·해커톤 제출을 병렬 수집
-      const [semRes, kudosRes, hackRes] = await Promise.all([
+      // v12-M2: 세미나·논문에 더해 받은 kudos(멘토링)·해커톤 제출·설계 참여를 병렬 수집
+      const [semRes, kudosRes, hackRes, partRes] = await Promise.all([
         seminarsApi.list({ limit: 500 }),
         kudosApi.listReceivedByUser(userId),
         hackathonSubmissionsApi.listByContext(HACKATHON_CONTEXT_ID),
+        activityParticipationsApi.listByUser(userId),
       ]);
+      // v13-M2: role==="designer" 참여 레코드 → 활동 정보 병렬 조회
+      const designerParts = (partRes.data ?? []).filter(
+        (p) => p.role === "designer" && !!p.activityId,
+      );
+      const designParticipations = await Promise.all(
+        designerParts.map(async (p) => {
+          try {
+            const act = await activitiesApi.get(p.activityId as string);
+            const design = act?.curriculumDesign as
+              | { models?: { name: string }[] }
+              | undefined;
+            return {
+              activityId: p.activityId as string,
+              activityTitle: act?.title,
+              modelNames: (design?.models ?? []).map((m) => m.name).filter(Boolean),
+            };
+          } catch {
+            return { activityId: p.activityId as string };
+          }
+        }),
+      );
       const built = buildPortfolioCandidates({
         userId,
         seminars: semRes.data,
@@ -66,6 +88,7 @@ export default function PortfolioAutofillDialog({
         existingExternals,
         receivedKudos: kudosRes.data,
         hackathonSubmissions: hackRes.data,
+        designParticipations,
       });
       setCandidates(built);
       // 미적재 항목은 기본 선택
@@ -139,8 +162,10 @@ export default function PortfolioAutofillDialog({
           </DialogHeader>
 
           <p className="text-xs text-muted-foreground">
-            세미나 발표·대표 논문·멘토링 기여·해커톤 참가를 자동 수집했습니다. 추가할 항목을
-            선택하면 대외활동 포트폴리오로 적재되며, 운영진 검증 후 프로필에 정식 표기됩니다.
+            세미나 발표·대표 논문·멘토링 기여·해커톤 참가·교수설계 산출을 자동 수집했습니다.
+            추가할 항목을 선택하면 대외활동 포트폴리오로 적재되며, 운영진 검증 후 프로필에 정식
+            표기됩니다. 교수설계 산출은 마법사를 신규 저장한 시점부터 추적됩니다(과거 저장분
+            소급 불가).
           </p>
 
           {loading ? (
@@ -151,7 +176,8 @@ export default function PortfolioAutofillDialog({
             <p className="py-10 text-center text-sm text-muted-foreground">
               자동으로 불러올 수 있는 활동이 없습니다.
               <br />
-              (세미나 연사·대표 논문 등록·멘토링 기여·해커톤 참가 이력이 있으면 표시됩니다.)
+              (세미나 연사·대표 논문 등록·멘토링 기여·해커톤 참가·교수설계 마법사 사용 이력이
+              있으면 표시됩니다.)
             </p>
           ) : (
             <ul className="space-y-2">

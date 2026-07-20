@@ -34,6 +34,7 @@ import type { ActivityProgress, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
+import EmptyState from "@/components/ui/empty-state";
 
 interface Props {
   activityId: string;
@@ -284,9 +285,7 @@ export default function StudySessionPreClassCard({
           )}
         </div>
         {preReads.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground">
-            사전에 배포할 자료가 없습니다.
-          </p>
+          <EmptyState compact title="사전에 배포할 자료가 없습니다" />
         ) : (
           <ul className="space-y-1">
             {preReads.map((m, i) => (
@@ -391,9 +390,7 @@ export default function StudySessionPreClassCard({
             </div>
           </div>
         ) : questions.length === 0 ? (
-          <p className="text-[11px] text-muted-foreground">
-            사전 공유 질문이 없습니다.
-          </p>
+          <EmptyState compact title="사전 공유 질문이 없습니다" />
         ) : (
           <ul className="space-y-1">
             {questions.map((q, i) => (

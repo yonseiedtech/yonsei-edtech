@@ -15,6 +15,7 @@ import { Input } from "@/components/ui/input";
 import { networkingProgramsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type { NetworkingEventProgram } from "@/types";
+import EmptyState from "@/components/ui/empty-state";
 
 interface Props {
   eventId: string;
@@ -97,9 +98,11 @@ export default function NetworkingProgramManager({ eventId, canEdit }: Props) {
       {isLoading ? (
         <p className="py-3 text-center text-xs text-muted-foreground">불러오는 중…</p>
       ) : programs.length === 0 && !adding ? (
-        <p className="py-4 text-center text-xs text-muted-foreground">
-          아직 프로그램이 없습니다.{canEdit && " '순서 추가'로 시간표를 구성하세요."}
-        </p>
+        <EmptyState
+          compact
+          title="아직 프로그램이 없습니다"
+          description={canEdit ? "'순서 추가'로 시간표를 구성하세요." : undefined}
+        />
       ) : (
         <ol className="space-y-1.5">
           {programs.map((p) => (

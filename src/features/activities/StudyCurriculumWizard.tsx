@@ -26,7 +26,8 @@ import {
   Wand2,
 } from "lucide-react";
 import { toast } from "sonner";
-import { activitiesApi, activityProgressApi } from "@/lib/bkend";
+import { activitiesApi, activityParticipationsApi, activityProgressApi } from "@/lib/bkend";
+import { useAuthStore } from "@/features/auth/auth-store";
 import { useConceptIndex } from "@/features/archive/useConceptIndex";
 import {
   Dialog,
@@ -109,6 +110,7 @@ export default function StudyCurriculumWizard({
   onComplete,
 }: Props) {
   const queryClient = useQueryClient();
+  const { user } = useAuthStore();
   const [step, setStep] = useState<Step>("conditions");
   const [conditions, setConditions] = useState<CurriculumConditions>(emptyConditions);
   const [sessions, setSessions] = useState<SessionDraft[]>([]);
@@ -211,6 +213,11 @@ export default function StudyCurriculumWizard({
       // 스터디 문서에 설계 메타 저장 (배지·목표 점검 소비용)
       const meta = buildDesignMeta(appliedConditions, { ...draft, sessions });
       await activitiesApi.update(activityId, { curriculumDesign: meta });
+
+      // v13-M2: 작성자 기록 — activity_participations에 role:"designer" upsert (멱등)
+      if (user?.id) {
+        await activityParticipationsApi.recordDesign({ userId: user.id, activityId });
+      }
 
       await queryClient.invalidateQueries({ queryKey: ["activity-progress", activityId] });
       await queryClient.refetchQueries({ queryKey: ["activity-progress", activityId] });

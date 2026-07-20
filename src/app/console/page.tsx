@@ -4,22 +4,24 @@ import Link from "next/link";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useInquiries } from "@/features/inquiry/useInquiry";
 import { usePosts } from "@/features/board/useBoard";
-import { profilesApi, seminarsApi, externalActivitiesApi, awardsApi, alumniThesesApi } from "@/lib/bkend";
+import { profilesApi, seminarsApi, externalActivitiesApi, awardsApi, alumniThesesApi, siteSettingsApi } from "@/lib/bkend";
 import { fetchPendingDrafts } from "@/features/content-draft/content-draft-store";
-import { useQuery } from "@tanstack/react-query";
-import { collection, getDocs } from "firebase/firestore";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { collection, getDocs, query as fsQuery, where, limit } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import type { Seminar } from "@/types";
 import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2, Globe, ClipboardCheck, MessageSquareQuote, HeartHandshake, BarChart3, ListChecks, Inbox, ArrowRight, CalendarDays, CheckCircle2, Circle } from "lucide-react";
-import { useState } from "react";
+import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { auth as firebaseAuth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
 import AdminTodoTab from "@/features/admin/AdminTodoTab";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import ActionableBanner from "@/components/ui/actionable-banner";
-import { getHackathonPhase } from "@/features/hackathon/config";
+import { getHackathonPhase, HACKATHON_CONTEXT_ID } from "@/features/hackathon/config";
+import { isCampaignLive } from "@/lib/academic-status";
+import { useAcademicStatusCampaign } from "@/features/site-settings/useAcademicStatusCampaign";
 import { useAcademicCalendar, type AcademicCalendarData, REVIEW_TYPE_LABEL } from "@/features/site-settings/useAcademicCalendar";
 import { todayYmdKst } from "@/lib/dday";
 
@@ -88,6 +90,8 @@ type SeasonItem = {
   /** null = 수동 체크, true/false = 자동 판정 */
   auto: boolean | null;
   href?: string;
+  /** 자동 판정 신호 기준 설명 (툴팁) */
+  autoTooltip?: string;
 };
 
 type SeasonEventDef = {
@@ -105,11 +109,14 @@ type SeasonEventDef = {
 function UpcomingSeasonCard({
   pendingMemberCount,
   calendarData,
+  currentUser,
 }: {
   /** undefined = 로딩 중 */
   pendingMemberCount: number | undefined;
   calendarData: AcademicCalendarData;
+  currentUser: { name?: string } | null;
 }) {
+  const qc = useQueryClient();
   const now = new Date();
   const hackathonDiff = calcDdayDiff("2026-08-22");
   const hackathonPhase = getHackathonPhase(now);
@@ -127,6 +134,228 @@ function UpcomingSeasonCard({
     120,
   ).slice(0, 3);
 
+  // ── H4: 공유 체크리스트 (site_settings) ──
+  const HACKATHON_CHK_KEY = "season_checklist_hackathon";
+  const SEMESTER_CHK_KEY = "season_checklist_semester";
+
+  type ChecklistEntry = { done: boolean; by: string; at: string };
+  type ChecklistData = Record<string, ChecklistEntry>;
+
+  const { data: hackathonChkRaw, isLoading: hackathonChkLoading } = useQuery({
+    queryKey: ["site_settings", HACKATHON_CHK_KEY],
+    queryFn: async () => {
+      const res = await siteSettingsApi.getByKey(HACKATHON_CHK_KEY);
+      if (res.data.length === 0)
+        return { recordId: null as string | null, checks: {} as ChecklistData };
+      const row = res.data[0];
+      return {
+        recordId: row.id as string,
+        checks: JSON.parse(row.value as string) as ChecklistData,
+      };
+    },
+    staleTime: 30 * 1000,
+  });
+
+  const { data: semesterChkRaw, isLoading: semesterChkLoading } = useQuery({
+    queryKey: ["site_settings", SEMESTER_CHK_KEY],
+    queryFn: async () => {
+      const res = await siteSettingsApi.getByKey(SEMESTER_CHK_KEY);
+      if (res.data.length === 0)
+        return { recordId: null as string | null, checks: {} as ChecklistData };
+      const row = res.data[0];
+      return {
+        recordId: row.id as string,
+        checks: JSON.parse(row.value as string) as ChecklistData,
+      };
+    },
+    staleTime: 30 * 1000,
+  });
+
+  const hackathonChecks: ChecklistData = hackathonChkRaw?.checks ?? {};
+  const semesterChecks: ChecklistData = semesterChkRaw?.checks ?? {};
+
+  const toggleChecklist = useMutation({
+    mutationFn: async ({
+      eventKey,
+      itemKey,
+      done,
+    }: {
+      eventKey: string;
+      itemKey: string;
+      done: boolean;
+    }) => {
+      const isHackathon = eventKey === "hackathon";
+      const settingsKey = isHackathon ? HACKATHON_CHK_KEY : SEMESTER_CHK_KEY;
+      const currentRaw = isHackathon ? hackathonChkRaw : semesterChkRaw;
+      const currentChecks: ChecklistData = currentRaw?.checks ?? {};
+      const recordId = currentRaw?.recordId ?? null;
+      const newChecks: ChecklistData = { ...currentChecks };
+      if (done) {
+        newChecks[itemKey] = {
+          done: true,
+          by: currentUser?.name ?? "운영진",
+          at: new Date().toISOString(),
+        };
+      } else {
+        delete newChecks[itemKey];
+      }
+      const payload = { key: settingsKey, value: JSON.stringify(newChecks) };
+      if (recordId) {
+        await siteSettingsApi.update(recordId, payload);
+      } else {
+        await siteSettingsApi.create(payload);
+      }
+    },
+    onSuccess: (_data, { eventKey }) => {
+      const settingsKey =
+        eventKey === "hackathon" ? HACKATHON_CHK_KEY : SEMESTER_CHK_KEY;
+      void qc.invalidateQueries({ queryKey: ["site_settings", settingsKey] });
+    },
+  });
+
+  // Migration: localStorage → site_settings (이벤트당 1회)
+  const hackathonMigrated = useRef(false);
+  const semesterMigrated = useRef(false);
+
+  useEffect(() => {
+    if (hackathonChkLoading || hackathonMigrated.current) return;
+    hackathonMigrated.current = true;
+    if (typeof window === "undefined") return;
+    const items = ["board_notice", "judge_assign", "console_ready"];
+    const localChecks: ChecklistData = {};
+    for (const k of items) {
+      if (
+        window.localStorage.getItem(`yedu_season_chk_hackathon_${k}`) === "1" &&
+        !hackathonChecks[k]
+      ) {
+        localChecks[k] = {
+          done: true,
+          by: "(이전 로컬)",
+          at: new Date().toISOString(),
+        };
+      }
+    }
+    if (Object.keys(localChecks).length === 0) return;
+    const merged = { ...localChecks, ...hackathonChecks };
+    const payload = { key: HACKATHON_CHK_KEY, value: JSON.stringify(merged) };
+    const recordId = hackathonChkRaw?.recordId ?? null;
+    (recordId
+      ? siteSettingsApi.update(recordId, payload)
+      : siteSettingsApi.create(payload)
+    )
+      .then(() =>
+        qc.invalidateQueries({ queryKey: ["site_settings", HACKATHON_CHK_KEY] }),
+      )
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hackathonChkLoading]);
+
+  useEffect(() => {
+    if (semesterChkLoading || semesterMigrated.current) return;
+    semesterMigrated.current = true;
+    if (typeof window === "undefined") return;
+    const items = ["onboarding", "welcome_post"];
+    const localChecks: ChecklistData = {};
+    for (const k of items) {
+      if (
+        window.localStorage.getItem(`yedu_season_chk_semester_${k}`) === "1" &&
+        !semesterChecks[k]
+      ) {
+        localChecks[k] = {
+          done: true,
+          by: "(이전 로컬)",
+          at: new Date().toISOString(),
+        };
+      }
+    }
+    if (Object.keys(localChecks).length === 0) return;
+    const merged = { ...localChecks, ...semesterChecks };
+    const payload = { key: SEMESTER_CHK_KEY, value: JSON.stringify(merged) };
+    const recordId = semesterChkRaw?.recordId ?? null;
+    (recordId
+      ? siteSettingsApi.update(recordId, payload)
+      : siteSettingsApi.create(payload)
+    )
+      .then(() =>
+        qc.invalidateQueries({ queryKey: ["site_settings", SEMESTER_CHK_KEY] }),
+      )
+      .catch(() => {});
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [semesterChkLoading]);
+
+  // ── H4: 자동 판정 확대 ──
+
+  // (1) 온보딩 시퀀스: cron_runs에 newcomer-activation-sequence 최근 7일 성공 존재
+  type CronKindStatus = { kind: string; lastRunAt: string; lastSuccess: boolean };
+  const { data: cronStatuses } = useQuery({
+    queryKey: ["console", "cron-runs-chk"],
+    queryFn: async () => {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/console/cron-runs", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return [] as CronKindStatus[];
+      const json = (await res.json()) as { statuses: CronKindStatus[] };
+      return json.statuses;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  const onboardingAuto = useMemo<boolean | null>(() => {
+    if (!cronStatuses) return null;
+    const seq = cronStatuses.find(
+      (s) => s.kind === "newcomer-activation-sequence",
+    );
+    if (!seq) return false;
+    const sevenDaysAgo = Date.now() - 7 * 24 * 60 * 60 * 1000;
+    return seq.lastSuccess && new Date(seq.lastRunAt).getTime() > sevenDaysAgo;
+  }, [cronStatuses]);
+
+  // (2) 아이디어 보드 공지: hackathon comm_boards에 게시글 존재 여부
+  const { data: boardNoticeAuto } = useQuery({
+    queryKey: ["console", "hackathon-board-notice-chk"],
+    queryFn: async () => {
+      const boardsSnap = await getDocs(
+        fsQuery(
+          collection(db, "comm_boards"),
+          where("contextType", "==", "hackathon"),
+          where("contextId", "==", HACKATHON_CONTEXT_ID),
+          limit(1),
+        ),
+      );
+      if (boardsSnap.empty) return false;
+      const boardId = boardsSnap.docs[0].id;
+      const qSnap = await getDocs(
+        fsQuery(
+          collection(db, "comm_questions"),
+          where("boardId", "==", boardId),
+          limit(1),
+        ),
+      );
+      return !qSnap.empty;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  // (3) 학사정보 캠페인 활성
+  const { campaign } = useAcademicStatusCampaign();
+  const campaignAutoLive = useMemo(() => {
+    const n = new Date();
+    const y = n.getFullYear();
+    return [
+      new Date(`${y}-03-01`),
+      new Date(`${y}-09-01`),
+      new Date(`${y + 1}-03-01`),
+    ].some((d) => {
+      const diff = Math.round((d.getTime() - n.getTime()) / 86400000);
+      return diff >= -14 && diff <= 14;
+    });
+  }, []);
+  const campaignLive = isCampaignLive(campaign) || campaignAutoLive;
+
+  // ── 이벤트 정의 ──
   const events: SeasonEventDef[] = [
     ...(hackathonDiff > -8 && hackathonDiff <= 120
       ? [
@@ -145,12 +374,15 @@ function UpcomingSeasonCard({
                 label: "참가 접수 오픈",
                 auto: hackathonPhase === "registration",
                 href: "/hackathon",
+                autoTooltip: "해커톤 단계가 registration(접수 중)이면 자동 체크",
               },
               {
                 key: "board_notice",
                 label: "아이디어 보드 공지 게시",
-                auto: null,
+                auto: boardNoticeAuto ?? null,
                 href: "/console/hackathon",
+                autoTooltip:
+                  "해커톤 소통 보드(comm_boards/comm_questions)에 게시글이 1건 이상이면 자동 체크",
               },
               { key: "judge_assign", label: "심사위원 배정 완료", auto: null },
               {
@@ -180,6 +412,8 @@ function UpcomingSeasonCard({
                 label: "학사일정(2학기) 등록",
                 auto: hasCalendar2ndSemester,
                 href: "/console/academic-calendar",
+                autoTooltip:
+                  "2026학년도 2학기 학사일정(semesterStart)이 등록됐으면 자동 체크",
               },
               {
                 key: "pending_clear",
@@ -189,12 +423,25 @@ function UpcomingSeasonCard({
                     ? pendingMemberCount === 0
                     : null,
                 href: "/console/members",
+                autoTooltip: "미승인 회원 수가 0명이면 자동 체크",
               },
               {
                 key: "onboarding",
                 label: "온보딩 시퀀스 활성화 확인",
-                auto: null,
+                auto: onboardingAuto,
                 href: "/console/members",
+                autoTooltip:
+                  "cron_runs에 newcomer-activation-sequence 최근 7일 성공 실행이 있으면 자동 체크",
+              },
+              {
+                key: "campaign_active",
+                label: "학사정보 캠페인 활성",
+                auto: campaignLive,
+                href: campaignLive
+                  ? undefined
+                  : "/console/settings/academic-status",
+                autoTooltip:
+                  "academic_status_campaign 활성 또는 개강 D-14~D+14 자동 발동 시 체크 · 미활성이면 설정 페이지로 이동",
               },
               {
                 key: "welcome_post",
@@ -208,38 +455,21 @@ function UpcomingSeasonCard({
       : []),
   ];
 
-  const [manualChecks, setManualChecks] = useState<Record<string, boolean>>(
-    () => {
-      if (typeof window === "undefined") return {};
-      const result: Record<string, boolean> = {};
-      for (const ev of events) {
-        for (const item of ev.items) {
-          if (item.auto === null) {
-            const k = `yedu_season_chk_${ev.key}_${item.key}`;
-            result[k] = window.localStorage.getItem(k) === "1";
-          }
-        }
-      }
-      return result;
-    },
-  );
-
   if (events.length === 0) return null;
 
+  function getChecks(evKey: string): ChecklistData {
+    return evKey === "hackathon" ? hackathonChecks : semesterChecks;
+  }
+
   function toggleManual(evKey: string, itemKey: string) {
-    const k = `yedu_season_chk_${evKey}_${itemKey}`;
-    const next = !manualChecks[k];
-    try {
-      window.localStorage.setItem(k, next ? "1" : "0");
-    } catch {
-      // ignore
-    }
-    setManualChecks((prev) => ({ ...prev, [k]: next }));
+    const checks = getChecks(evKey);
+    const currentDone = checks[itemKey]?.done ?? false;
+    toggleChecklist.mutate({ eventKey: evKey, itemKey, done: !currentDone });
   }
 
   function isChecked(evKey: string, item: SeasonItem): boolean {
-    if (item.auto !== null) return item.auto;
-    return manualChecks[`yedu_season_chk_${evKey}_${item.key}`] ?? false;
+    if (item.auto !== null) return !!item.auto;
+    return getChecks(evKey)[item.key]?.done ?? false;
   }
 
   return (
@@ -257,6 +487,7 @@ function UpcomingSeasonCard({
             isChecked(ev.key, item),
           ).length;
           const allDone = checkedCount === ev.items.length;
+          const evChecks = getChecks(ev.key);
 
           return (
             <div
@@ -304,6 +535,8 @@ function UpcomingSeasonCard({
               <ul className="space-y-1.5">
                 {ev.items.map((item) => {
                   const checked = isChecked(ev.key, item);
+                  const checkEntry =
+                    item.auto === null ? evChecks[item.key] : undefined;
                   return (
                     <li key={item.key} className="flex items-center gap-2">
                       {item.auto === null ? (
@@ -344,8 +577,20 @@ function UpcomingSeasonCard({
                       </span>
                       <span className="ml-auto flex shrink-0 items-center gap-1">
                         {item.auto !== null && (
-                          <span className="text-[10px] text-muted-foreground">
+                          <span
+                            className="cursor-help text-[10px] text-muted-foreground"
+                            title={item.autoTooltip}
+                          >
                             자동
+                          </span>
+                        )}
+                        {item.auto === null && checkEntry?.done && (
+                          <span className="text-[10px] text-muted-foreground">
+                            {checkEntry.by} ·{" "}
+                            {new Date(checkEntry.at).toLocaleDateString(
+                              "ko-KR",
+                              { month: "numeric", day: "numeric" },
+                            )}
                           </span>
                         )}
                         {item.href && (
@@ -364,8 +609,8 @@ function UpcomingSeasonCard({
               </ul>
 
               {/* M3: 다가오는 학사일정 요약 — semester 이벤트 카드 전용 */}
-              {ev.key === "semester" && (
-                upcomingCalendarItems.length > 0 ? (
+              {ev.key === "semester" &&
+                (upcomingCalendarItems.length > 0 ? (
                   <div className="mt-2 border-t border-muted-foreground/10 pt-2">
                     <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
                       학사일정 다가오는 항목
@@ -404,8 +649,7 @@ function UpcomingSeasonCard({
                       학사일정 등록 <ArrowRight size={10} />
                     </Link>
                   </div>
-                )
-              )}
+                ))}
             </div>
           );
         })}
@@ -661,6 +905,7 @@ export default function ConsoleDashboardPage() {
       <UpcomingSeasonCard
         pendingMemberCount={pendingData?.total}
         calendarData={calendarData}
+        currentUser={user}
       />
 
       {/* H3: 처리 대기 통합 큐 — 침묵하는 수동 백로그 수확 */}

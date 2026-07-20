@@ -12,7 +12,9 @@
     "test:watch": "vitest",
     "deploy:vercel": "node scripts/deploy-vercel.js",
     "sync:master": "git push origin master && node scripts/deploy-vercel.js",
-    "analyze": "next build --webpack"
+    "analyze": "next build --webpack",
+    "lint:deadcode": "node scripts/check-deadcode-ratchet.mjs",
+    "gen:deadcode-baseline": "node scripts/gen-deadcode-baseline.mjs"
   },
   "dependencies": {
     "@ai-sdk/google": "^3.0.43",
@@ -79,6 +81,7 @@
     "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.1.6",
+    "knip": "^6.27.0",
     "pdfjs-dist": "^4.10.38",
     "tailwindcss": "^4",
     "typescript": "^5",

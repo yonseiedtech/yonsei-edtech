@@ -44,6 +44,7 @@ import {
 } from "@/types";
 import type { Flashcard, FlashcardSource } from "@/types/flashcard";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 
 /** 출처 배지 메타 — concept(교육공학 개념) / diagnostic_wrong(진단 오답) 시각 구분. */
 const SOURCE_META: Record<
@@ -265,23 +266,13 @@ export default function FlashcardStudy() {
   // ── 빈 상태 ──
   if (total === 0) {
     return (
-      <Card className="rounded-2xl border-dashed shadow-sm">
-        <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary/10 text-primary">
-            <Sparkles className="h-6 w-6" aria-hidden />
-          </div>
-          <p className="text-sm font-medium">아직 저장한 암기카드가 없어요.</p>
-          <p className="max-w-sm text-xs text-muted-foreground">
-            진단평가에서 틀린 문항을 암기카드로 저장하면 여기서 뒤집기·간격반복으로 복습할 수 있습니다.
-          </p>
-          <Link href="/diagnosis">
-            <Button size="sm">
-              진단평가로 새 카드 만들기
-              <ArrowRight className="ml-1 h-4 w-4" aria-hidden />
-            </Button>
-          </Link>
-        </CardContent>
-      </Card>
+      <EmptyState
+        icon={Sparkles}
+        title="아직 저장한 암기카드가 없어요"
+        description="진단평가에서 틀린 문항을 암기카드로 저장하면 여기서 뒤집기·간격반복으로 복습할 수 있습니다."
+        actionLabel="진단평가로 새 카드 만들기"
+        actionHref="/diagnosis"
+      />
     );
   }
 

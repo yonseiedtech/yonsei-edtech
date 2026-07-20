@@ -50,6 +50,7 @@ import { getGuestNickname, setGuestNickname } from "./guest-name";
 import QuestionComposer from "./QuestionComposer";
 import AnswerThread from "./AnswerThread";
 import type { CommAnswer, CommBoard, CommQuestion, CommSortMode, User } from "@/types";
+import EmptyState from "@/components/ui/empty-state";
 
 const PALETTE = [
   "border-amber-200 bg-amber-50 dark:border-amber-800/60 dark:bg-amber-950/20",
@@ -596,12 +597,11 @@ export default function WallBoard({ boardId, variant }: Props) {
               <Skeleton className="h-44 rounded-2xl" />
             </div>
           ) : sorted.length === 0 ? (
-            <div className="rounded-2xl border-2 border-dashed py-16 text-center">
-              <MessageCircle size={28} className="mx-auto text-muted-foreground/50" />
-              <p className="mt-2 text-sm font-medium text-muted-foreground">
-                아직 노트가 없습니다 — 첫 질문을 남겨보세요!
-              </p>
-            </div>
+            <EmptyState
+              icon={MessageCircle}
+              title="아직 노트가 없습니다"
+              description="첫 질문을 남겨보세요!"
+            />
           ) : (
             groups.map((g) => {
               // 발표자 그룹이 없으면(단일 그룹) 헤더 없이 그리드만
@@ -630,9 +630,7 @@ export default function WallBoard({ boardId, variant }: Props) {
                   {!isCollapsed && (
                     <div className="mt-3">
                       {g.items.length === 0 ? (
-                        <p className="rounded-xl border border-dashed py-6 text-center text-xs text-muted-foreground">
-                          아직 {g.label} 발표자에 대한 질문이 없습니다.
-                        </p>
+                        <EmptyState compact title={`아직 ${g.label} 발표자에 대한 질문이 없습니다`} />
                       ) : (
                         <NoteGrid items={g.items} {...noteGridShared} />
                       )}

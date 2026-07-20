@@ -1,0 +1,569 @@
+{
+  "ceiling": 93,
+  "generatedAt": "2026-07-21",
+  "tool": "knip@6.27.0",
+  "note": "node scripts/gen-deadcode-baseline.mjs 로 재생성. ceiling보다 이슈 수가 늘면 check-deadcode-ratchet.mjs 가 exit 1.",
+  "unusedExports": 82,
+  "unusedFiles": 2,
+  "unusedTypes": 9,
+  "items": [
+    {
+      "file": "src/app/console/academic/external/[id]/volunteers/volunteer-utils.ts",
+      "name": "normalizeName",
+      "kind": "export",
+      "line": 22
+    },
+    {
+      "file": "src/components/ui/alert-dialog.tsx",
+      "name": "AlertDialogMedia",
+      "kind": "export",
+      "line": 182
+    },
+    {
+      "file": "src/components/ui/avatar.tsx",
+      "name": "AvatarBadge",
+      "kind": "export",
+      "line": 108
+    },
+    {
+      "file": "src/components/ui/avatar.tsx",
+      "name": "AvatarGroup",
+      "kind": "export",
+      "line": 106
+    },
+    {
+      "file": "src/components/ui/avatar.tsx",
+      "name": "AvatarGroupCount",
+      "kind": "export",
+      "line": 107
+    },
+    {
+      "file": "src/components/ui/card.tsx",
+      "name": "CardAction",
+      "kind": "export",
+      "line": 101
+    },
+    {
+      "file": "src/components/ui/card.tsx",
+      "name": "CardDescription",
+      "kind": "export",
+      "line": 102
+    },
+    {
+      "file": "src/components/ui/card.tsx",
+      "name": "CardFooter",
+      "kind": "export",
+      "line": 99
+    },
+    {
+      "file": "src/components/ui/dialog.tsx",
+      "name": "DialogClose",
+      "kind": "export",
+      "line": 148
+    },
+    {
+      "file": "src/components/ui/label.tsx",
+      "name": "default",
+      "kind": "export",
+      "line": 23
+    },
+    {
+      "file": "src/features/agent/agent-types.ts",
+      "name": "ServerConnection",
+      "kind": "type",
+      "line": 30
+    },
+    {
+      "file": "src/features/agent/agent-types.ts",
+      "name": "SSEEvent",
+      "kind": "type",
+      "line": 35
+    },
+    {
+      "file": "src/features/auth/signup-steps/useSignupForm.ts",
+      "name": "SignupStep",
+      "kind": "type",
+      "line": 63
+    },
+    {
+      "file": "src/features/card/print-card.ts",
+      "name": "mm",
+      "kind": "export",
+      "line": 20
+    },
+    {
+      "file": "src/features/collaborative-research/api/useCollabPhase2.ts",
+      "name": "useChapter",
+      "kind": "export",
+      "line": 80
+    },
+    {
+      "file": "src/features/collaborative-research/api/useCollabPhase2.ts",
+      "name": "useMentionsInbox",
+      "kind": "export",
+      "line": 139
+    },
+    {
+      "file": "src/features/collaborative-research/api/useCollabPhase2.ts",
+      "name": "useMyMilestones",
+      "kind": "export",
+      "line": 235
+    },
+    {
+      "file": "src/features/collaborative-research/api/useCollabResearch.ts",
+      "name": "useCancelCollabInvite",
+      "kind": "export",
+      "line": 194
+    },
+    {
+      "file": "src/features/collaborative-research/api/useCollabResearch.ts",
+      "name": "useCollabSentInvites",
+      "kind": "export",
+      "line": 92
+    },
+    {
+      "file": "src/features/collaborative-research/api/useCollabResearch.ts",
+      "name": "useUpdateSelfMemberMeta",
+      "kind": "export",
+      "line": 227
+    },
+    {
+      "file": "src/features/collaborative-research/lib/credit-roles.ts",
+      "name": "getCreditRoleLabel",
+      "kind": "export",
+      "line": 62
+    },
+    {
+      "file": "src/features/collaborative-research/lib/research-status.ts",
+      "name": "canEditChapter",
+      "kind": "export",
+      "line": 62
+    },
+    {
+      "file": "src/features/collaborative-research/lib/research-status.ts",
+      "name": "COLLAB_INVITE_STATUS_LABELS",
+      "kind": "export",
+      "line": 66
+    },
+    {
+      "file": "src/features/collaborative-research/lib/research-status.ts",
+      "name": "HYPOTHESIS_STATUS_LABELS",
+      "kind": "export",
+      "line": 109
+    },
+    {
+      "file": "src/features/collaborative-research/lib/research-status.ts",
+      "name": "HYPOTHESIS_TYPE_LABELS",
+      "kind": "export",
+      "line": 103
+    },
+    {
+      "file": "src/features/content-draft/types.ts",
+      "name": "ContentDraftDoc",
+      "kind": "type",
+      "line": 48
+    },
+    {
+      "file": "src/features/dashboard/NewMemberChecklistWidget.tsx",
+      "name": null,
+      "kind": "unusedFile",
+      "line": null
+    },
+    {
+      "file": "src/features/greeting/useGreeting.ts",
+      "name": "EMPTY_PERSON",
+      "kind": "export",
+      "line": 134
+    },
+    {
+      "file": "src/features/insights/loyalty-snapshot-types.ts",
+      "name": "SNAPSHOT_SEGMENTS",
+      "kind": "export",
+      "line": 10
+    },
+    {
+      "file": "src/features/internal-conference/conferences.ts",
+      "name": "getConferenceBySlug",
+      "kind": "export",
+      "line": 103
+    },
+    {
+      "file": "src/features/journal/lib/article-status.ts",
+      "name": "citationYear",
+      "kind": "export",
+      "line": 107
+    },
+    {
+      "file": "src/features/journal/lib/article-status.ts",
+      "name": "VISIBILITY_DESCRIPTIONS",
+      "kind": "export",
+      "line": 56
+    },
+    {
+      "file": "src/features/journal/lib/consent-gate.ts",
+      "name": "areAllAuthorsComplete",
+      "kind": "export",
+      "line": 117
+    },
+    {
+      "file": "src/features/member/useMembers.ts",
+      "name": "useRejectMember",
+      "kind": "export",
+      "line": 129
+    },
+    {
+      "file": "src/features/mypage/grad-activity.ts",
+      "name": "areaOfHabitKey",
+      "kind": "export",
+      "line": 113
+    },
+    {
+      "file": "src/features/mypage/grad-activity.ts",
+      "name": "buildHabitsFromKeys",
+      "kind": "export",
+      "line": 103
+    },
+    {
+      "file": "src/features/mypage/grad-activity.ts",
+      "name": "getDefaultHabitKeys",
+      "kind": "export",
+      "line": 92
+    },
+    {
+      "file": "src/features/newsletter/newsletter-store.ts",
+      "name": "useNewsletterStore",
+      "kind": "export",
+      "line": 220
+    },
+    {
+      "file": "src/features/notifications/notify.ts",
+      "name": "notifyNewNotice",
+      "kind": "export",
+      "line": 128
+    },
+    {
+      "file": "src/features/notifications/notify.ts",
+      "name": "notifyNewSeminar",
+      "kind": "export",
+      "line": 142
+    },
+    {
+      "file": "src/features/notifications/notify.ts",
+      "name": "notifySeminarReminder",
+      "kind": "export",
+      "line": 265
+    },
+    {
+      "file": "src/features/notifications/useNotifications.ts",
+      "name": "createNotification",
+      "kind": "export",
+      "line": 171
+    },
+    {
+      "file": "src/features/research-analytics/multi-axis.ts",
+      "name": "collectByYear",
+      "kind": "export",
+      "line": 95
+    },
+    {
+      "file": "src/features/research-analytics/multi-axis.ts",
+      "name": "countByYear",
+      "kind": "export",
+      "line": 102
+    },
+    {
+      "file": "src/features/research/study-timer/useStudySessions.ts",
+      "name": "useTodaySessions",
+      "kind": "export",
+      "line": 38
+    },
+    {
+      "file": "src/features/research/usePaperReadingLogs.ts",
+      "name": "useDeleteReadingLog",
+      "kind": "export",
+      "line": 73
+    },
+    {
+      "file": "src/features/research/usePaperReadingLogs.ts",
+      "name": "useUpdateReadingLog",
+      "kind": "export",
+      "line": 52
+    },
+    {
+      "file": "src/features/studio/brand-kit.ts",
+      "name": "BRAND_KIT",
+      "kind": "export",
+      "line": 76
+    },
+    {
+      "file": "src/features/studio/brand-kit.ts",
+      "name": "BrandColorName",
+      "kind": "type",
+      "line": 22
+    },
+    {
+      "file": "src/lib/aect-terminology.ts",
+      "name": "findAectTerm",
+      "kind": "export",
+      "line": 417
+    },
+    {
+      "file": "src/lib/aect-terminology.ts",
+      "name": "searchAectTerms",
+      "kind": "export",
+      "line": 434
+    },
+    {
+      "file": "src/lib/ai-tools.ts",
+      "name": "getToolsForRole",
+      "kind": "export",
+      "line": 322
+    },
+    {
+      "file": "src/lib/ai.ts",
+      "name": "_geminiFastModel",
+      "kind": "export",
+      "line": 29
+    },
+    {
+      "file": "src/lib/alumni-thesis-crosslink.ts",
+      "name": "thesesForStatMethod",
+      "kind": "export",
+      "line": 36
+    },
+    {
+      "file": "src/lib/archive-crosslink-sync.ts",
+      "name": "RESEARCH_TO_STAT",
+      "kind": "export",
+      "line": 45
+    },
+    {
+      "file": "src/lib/archive-crosslink-sync.ts",
+      "name": "STAT_TO_RESEARCH",
+      "kind": "export",
+      "line": 52
+    },
+    {
+      "file": "src/lib/bkend.ts",
+      "name": "activityMaterialsApi",
+      "kind": "export",
+      "line": 1540
+    },
+    {
+      "file": "src/lib/bkend.ts",
+      "name": "emailLogsApi",
+      "kind": "export",
+      "line": 1547
+    },
+    {
+      "file": "src/lib/bkend.ts",
+      "name": "thesisClaimsApi",
+      "kind": "export",
+      "line": 2079
+    },
+    {
+      "file": "src/lib/bkend.ts",
+      "name": "thesisReferencesApi",
+      "kind": "export",
+      "line": 2068
+    },
+    {
+      "file": "src/lib/citation-verify.ts",
+      "name": "fetchDoiMetadata",
+      "kind": "export",
+      "line": 417
+    },
+    {
+      "file": "src/lib/courseSchedule.ts",
+      "name": "scheduleIncludesDay",
+      "kind": "export",
+      "line": 119
+    },
+    {
+      "file": "src/lib/denorm-sync.ts",
+      "name": "enrichCourseReviews",
+      "kind": "export",
+      "line": 69
+    },
+    {
+      "file": "src/lib/design-tokens.ts",
+      "name": "STATUS_VARIANT_TO_TONE",
+      "kind": "export",
+      "line": 161
+    },
+    {
+      "file": "src/lib/diagnostic-seed.ts",
+      "name": "seedDiagnosticQuestions",
+      "kind": "export",
+      "line": 3244
+    },
+    {
+      "file": "src/lib/notify-timing.ts",
+      "name": "ACTIVITY_WINDOW_LABELS",
+      "kind": "export",
+      "line": 114
+    },
+    {
+      "file": "src/lib/notify-timing.ts",
+      "name": "ACTIVITY_WINDOW_SEND_HM",
+      "kind": "export",
+      "line": 122
+    },
+    {
+      "file": "src/lib/notify-timing.ts",
+      "name": "computePeakWindow",
+      "kind": "export",
+      "line": 142
+    },
+    {
+      "file": "src/lib/notify-timing.ts",
+      "name": "minutesToHm",
+      "kind": "export",
+      "line": 44
+    },
+    {
+      "file": "src/lib/onboarding-next-cta.ts",
+      "name": null,
+      "kind": "unusedFile",
+      "line": null
+    },
+    {
+      "file": "src/lib/permissions.ts",
+      "name": "canAccessLabs",
+      "kind": "export",
+      "line": 53
+    },
+    {
+      "file": "src/lib/push.ts",
+      "name": "disablePushForCurrentUser",
+      "kind": "export",
+      "line": 125
+    },
+    {
+      "file": "src/lib/push.ts",
+      "name": "onForegroundPush",
+      "kind": "export",
+      "line": 143
+    },
+    {
+      "file": "src/lib/research-paper-source.ts",
+      "name": "enrichWithSemanticScholar",
+      "kind": "export",
+      "line": 146
+    },
+    {
+      "file": "src/lib/research-paper-source.ts",
+      "name": "searchOpenAlexEdTech",
+      "kind": "export",
+      "line": 79
+    },
+    {
+      "file": "src/lib/streak-freeze.ts",
+      "name": "isWeekFrozen",
+      "kind": "export",
+      "line": 75
+    },
+    {
+      "file": "src/lib/theory-family.ts",
+      "name": "findTheoryNode",
+      "kind": "export",
+      "line": 391
+    },
+    {
+      "file": "src/lib/theory-family.ts",
+      "name": "THEORY_FAMILY_META",
+      "kind": "export",
+      "line": 60
+    },
+    {
+      "file": "src/types/academic.ts",
+      "name": "SessionSelectionReason",
+      "kind": "type",
+      "line": 326
+    },
+    {
+      "file": "src/types/ai-forum.ts",
+      "name": "AIForumCategory",
+      "kind": "type",
+      "line": 224
+    },
+    {
+      "file": "src/types/alumni.ts",
+      "name": "GRADUATION_TYPE_LABELS",
+      "kind": "export",
+      "line": 5
+    },
+    {
+      "file": "src/types/board.ts",
+      "name": "POST_CATEGORIES",
+      "kind": "export",
+      "line": 42
+    },
+    {
+      "file": "src/types/research-journal.ts",
+      "name": "CreateArticleInput",
+      "kind": "type",
+      "line": 201
+    },
+    {
+      "file": "src/types/research-journal.ts",
+      "name": "UpdateArticleAuthorsInput",
+      "kind": "type",
+      "line": 225
+    },
+    {
+      "file": "src/types/research-paper.ts",
+      "name": "HYPOTHESIS_DIRECTION_LABELS",
+      "kind": "export",
+      "line": 201
+    },
+    {
+      "file": "src/types/research-report.ts",
+      "name": "CAUSE_TYPE_LABELS",
+      "kind": "export",
+      "line": 63
+    },
+    {
+      "file": "src/types/research-report.ts",
+      "name": "EVIDENCE_TYPE_LABELS",
+      "kind": "export",
+      "line": 55
+    },
+    {
+      "file": "src/types/research-report.ts",
+      "name": "RESEARCH_APPROACH_HINTS",
+      "kind": "export",
+      "line": 41
+    },
+    {
+      "file": "src/types/seminar.ts",
+      "name": "REG_STATUS_LABELS",
+      "kind": "export",
+      "line": 172
+    },
+    {
+      "file": "src/types/steppingstone.ts",
+      "name": "BLOOM_STAGE_ORDER",
+      "kind": "export",
+      "line": 144
+    },
+    {
+      "file": "src/types/user.ts",
+      "name": "OFFICE_OF_EDUCATION_OTHER_LABEL",
+      "kind": "export",
+      "line": 315
+    },
+    {
+      "file": "src/types/user.ts",
+      "name": "PUSH_PREF_FIELD",
+      "kind": "export",
+      "line": 221
+    },
+    {
+      "file": "src/types/user.ts",
+      "name": "PUSH_PREF_LABELS",
+      "kind": "export",
+      "line": 239
+    }
+  ]
+}

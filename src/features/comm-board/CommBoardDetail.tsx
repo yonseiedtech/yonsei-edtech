@@ -15,6 +15,7 @@ import CommBoardDialog from "./CommBoardDialog";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
+import EmptyState from "@/components/ui/empty-state";
 
 interface Props {
   boardId: string;
@@ -84,8 +85,8 @@ export default function CommBoardDetail({ boardId, user }: Props) {
   }
   if (isError || !board) {
     return (
-      <div className="p-6 text-center text-sm text-muted-foreground" role="alert">
-        보드를 찾을 수 없습니다.
+      <div className="p-4">
+        <EmptyState compact title="보드를 찾을 수 없습니다" />
       </div>
     );
   }
@@ -176,9 +177,7 @@ export default function CommBoardDetail({ boardId, user }: Props) {
       </div>
 
       {sorted.length === 0 ? (
-        <p className="rounded border border-dashed bg-muted/20 px-3 py-6 text-center text-sm text-muted-foreground">
-          아직 질문이 없습니다. 첫 질문을 남겨보세요.
-        </p>
+        <EmptyState compact title="아직 질문이 없습니다" description="첫 질문을 남겨보세요." />
       ) : (
         <div className="space-y-2.5">
           {sorted.map((q) => (

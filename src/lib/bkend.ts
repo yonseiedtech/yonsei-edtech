@@ -1954,6 +1954,27 @@ export const activityParticipationsApi = {
       updatedAt: serverTimestamp(),
     }));
   },
+  /**
+   * 교수설계 마법사 저장 시 설계자(작성자) 기록 — 활동당 1건 멱등 (v13-M2).
+   * docId: `${userId}__design__${activityId}` (recordAuto 관례 준용 · 참여자 키와 구분)
+   */
+  recordDesign: async (params: { userId: string; activityId: string }): Promise<void> => {
+    const docId = `${params.userId}__design__${params.activityId}`;
+    const ref = doc(db, "activity_participations", docId);
+    const existing = await getDoc(ref);
+    if (existing.exists()) return; // 멱등 — 이미 기록된 경우 건드리지 않음
+    await setDoc(ref, {
+      id: docId,
+      userId: params.userId,
+      activityId: params.activityId,
+      role: "designer" as ActivityRole,
+      outputs: [],
+      verified: false,
+      source: "auto",
+      createdAt: serverTimestamp(),
+      updatedAt: serverTimestamp(),
+    });
+  },
   listByUser: (userId: string) =>
     dataApi.list<ActivityParticipation>("activity_participations", {
       "filter[userId]": userId,

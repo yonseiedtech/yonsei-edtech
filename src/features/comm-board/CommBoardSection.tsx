@@ -9,6 +9,7 @@ import { commBoardsApi } from "@/lib/bkend";
 import type { CommBoard, CommContextType, User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import EmptyState from "@/components/ui/empty-state";
 import CommBoardDialog from "./CommBoardDialog";
 
 interface Props {
@@ -62,9 +63,11 @@ export default function CommBoardSection({
       {isLoading ? (
         <div className="space-y-1.5"><Skeleton className="h-9 w-full" /><Skeleton className="h-9 w-full" /></div>
       ) : boards.length === 0 ? (
-        <p className="rounded border border-dashed bg-muted/20 px-2 py-3 text-center text-[11px] text-muted-foreground">
-          아직 소통 보드가 없습니다.{user ? " '보드 만들기'로 질문/답변 보드를 열어보세요." : ""}
-        </p>
+        <EmptyState
+          compact
+          title="아직 소통 보드가 없습니다"
+          description={user ? "'보드 만들기'로 질문/답변 보드를 열어보세요." : undefined}
+        />
       ) : (
         <ul className="space-y-1.5">
           {boards.map((b) => (

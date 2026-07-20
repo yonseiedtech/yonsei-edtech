@@ -86,6 +86,11 @@ export interface HackathonSubmission {
   /** 제출 회원 (수정·삭제 권한 기준) */
   ownerId: string;
   ownerName: string;
+  /**
+   * 팀원 사용자 ID 목록 (v13-H2 — profiles 검색 선택 후 저장, 선택 사항).
+   * 저장되면 포트폴리오 자동적재 시 대표 외 팀원도 커버됨.
+   */
+  memberIds?: string[];
   /** 운영진이 지정한 수상 등급 (미수상 시 부재) */
   award?: HackathonAwardGrade;
   /** 수상작 공개 여부 — 행사 후 운영진이 공개 처리 */

@@ -20,6 +20,7 @@ import { cn } from "@/lib/utils";
 import { networkingRsvpsApi } from "@/lib/bkend";
 import { auth } from "@/lib/firebase";
 import type { NetworkingRsvp } from "@/types";
+import EmptyState from "@/components/ui/empty-state";
 
 export default function AttendeeRoster({
   eventId,
@@ -100,9 +101,11 @@ export default function AttendeeRoster({
       </div>
 
       {visible.length === 0 ? (
-        <p className="mt-2 text-[11px] text-muted-foreground">
-          아직 공개에 동의한 다른 참석자가 없습니다. 먼저 공개하면 서로를 찾기 쉬워져요.
-        </p>
+        <EmptyState
+          compact
+          title="아직 공개에 동의한 다른 참석자가 없습니다"
+          description="먼저 공개하면 서로를 찾기 쉬워져요."
+        />
       ) : (
         <ul className="mt-2 flex flex-wrap gap-1.5">
           {visible.map((r) => (

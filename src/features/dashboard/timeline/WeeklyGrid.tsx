@@ -21,6 +21,7 @@ import {
   type PlacedClass,
   computeLanes,
 } from "./types";
+import EmptyState from "@/components/ui/empty-state";
 
 export function WeeklyGrid({
   placedWeekly,
@@ -228,9 +229,7 @@ export function WeeklyGrid({
         </div>
       </div>
       {!hasAny && (
-        <p className="mt-4 text-sm text-muted-foreground">
-          이번 주(월~일)에 해당하는 수강과목·학술활동 일정이 없습니다.
-        </p>
+        <EmptyState compact title="이번 주(월~일)에 해당하는 수강과목·학술활동 일정이 없습니다" className="mt-4" />
       )}
     </>
   );

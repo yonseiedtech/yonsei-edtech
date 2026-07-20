@@ -16,6 +16,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { networkingReviewsApi } from "@/lib/bkend";
 import type { NetworkingReview, NetworkingRsvp } from "@/types";
+import EmptyState from "@/components/ui/empty-state";
 
 export default function EventReviews({
   eventId,
@@ -177,9 +178,11 @@ export default function EventReviews({
         </ul>
       ) : (
         !formOpen && (
-          <p className="mt-2 text-[11px] text-muted-foreground">
-            아직 후기가 없습니다.{canWrite ? " 첫 후기를 남겨주세요!" : ""}
-          </p>
+          <EmptyState
+            compact
+            title="아직 후기가 없습니다"
+            description={canWrite ? "첫 후기를 남겨주세요!" : undefined}
+          />
         )
       )}
     </div>

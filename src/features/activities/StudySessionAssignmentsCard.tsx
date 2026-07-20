@@ -50,6 +50,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 
 interface Props {
   activityId: string;
@@ -368,9 +369,7 @@ export default function StudySessionAssignmentsCard({
       {assignmentsLoading ? (
         <p className="text-[11px] text-muted-foreground">불러오는 중…</p>
       ) : assignments.length === 0 ? (
-        <p className="rounded border border-dashed bg-muted/20 px-2 py-3 text-center text-[11px] text-muted-foreground">
-          아직 부여된 과제가 없습니다.
-        </p>
+        <EmptyState compact title="아직 부여된 과제가 없습니다" />
       ) : (
         <ul className="space-y-2">
           {assignments.map((a) => (

@@ -55,7 +55,8 @@ export function semesterKeyOf(iso: string | undefined | null): string | null {
  * 회원의 코호트(가입 기수) 학기 키 — "YYYY-1"(전기) | "YYYY-2"(후기) | null.
  * M1(8월 신입 코호트): 신규 컬렉션·필드 강제 없이 기존 회원 문서에서 가입 학기를 파생.
  *  1) enrollmentYear + enrollmentHalf(1|2) 우선 — 연락망 "입학시점"과 동일 소스.
- *  2) 없으면 createdAt(가입일)로부터 학기 키 유도(semesterKeyOf 재사용).
+ *  2) 없으면 createdAt(가입일)로부터 학기 키 유도 — 단 다음 학기 관례 개강 30일 전(예: 8/2~)
+ *     가입이면 다음 학기 코호트로 보정(C-5). enrollmentYear/Half 명시자는 영향 없음.
  * 둘 다 없으면 null(코호트 미상).
  */
 export function cohortKeyOf(member: {
@@ -67,7 +68,44 @@ export function cohortKeyOf(member: {
   if (enrollmentYear && (enrollmentHalf === 1 || enrollmentHalf === 2)) {
     return `${enrollmentYear}-${enrollmentHalf}`;
   }
+  // createdAt 폴백: 다음 학기 관례 개강 30일 전 가입이면 다음 학기 코호트로 보정 (C-5)
+  if (!member.createdAt) return null;
+  const d = new Date(member.createdAt);
+  if (isNaN(d.getTime())) return null;
+  // KST 기준 월 판정 — semesterKeyOf(currentSemesterKey) 와 동일 기준
+  const kst = new Date(d.getTime() + 9 * 60 * 60 * 1000);
+  const km = kst.getUTCMonth() + 1; // 1~12
+  const ky = kst.getUTCFullYear();
+  let nextConvStart: Date;
+  if (km >= 3 && km <= 8) {
+    // 전기(3~8월) → 다음 관례 개강: 같은 해 9/1
+    nextConvStart = new Date(Date.UTC(ky, 8, 1));
+  } else {
+    // 후기(9~12) 또는 연초(1~2) → 다음 관례 개강: 다음 3/1
+    const nextYear = km >= 9 ? ky + 1 : ky;
+    nextConvStart = new Date(Date.UTC(nextYear, 2, 1));
+  }
+  const daysToNext = Math.round((nextConvStart.getTime() - d.getTime()) / 86400000);
+  if (daysToNext >= 0 && daysToNext <= 30) {
+    return semesterKeyOf(nextConvStart.toISOString()) ?? semesterKeyOf(member.createdAt);
+  }
   return semesterKeyOf(member.createdAt);
+}
+
+/**
+ * 실개강일 우선·미등록 시 관례일 폴백 — C-1 개강일 기준 일원화.
+ * entries: academic_calendar 항목 목록(useAcademicCalendar 훅 또는 Admin SDK 조회 결과).
+ * 이 함수 자체는 fetch 없음 — 외부에서 조회한 entries 를 주입.
+ * 관례일: 1학기 3/1, 2학기 9/1.
+ */
+export function effectiveSemesterStart(
+  year: number,
+  semester: "first" | "second",
+  entries: { year: number; semester: "first" | "second"; semesterStart: string }[] = [],
+): string {
+  const found = entries.find((e) => e.year === year && e.semester === semester);
+  if (found?.semesterStart) return found.semesterStart;
+  return semester === "first" ? `${year}-03-01` : `${year}-09-01`;
 }
 
 /**

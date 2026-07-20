@@ -13,6 +13,7 @@ import { postsApi } from "@/lib/bkend";
 import { CATEGORY_LABELS, type Post, type PostCategory } from "@/types";
 import { Skeleton } from "@/components/ui/skeleton";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 
 // 대시보드에서 강조할 '소통' 카테고리 (공지는 별도 위젯이라 제외)
 const COMMUNITY_CATEGORIES: PostCategory[] = ["free", "paper_review", "interview", "seminar", "update"];
@@ -68,9 +69,14 @@ export default function RecentPostsWidget() {
           ))}
         </div>
       ) : recent.length === 0 ? (
-        <p className="mt-4 text-sm text-muted-foreground">
-          아직 게시글이 없습니다 — 첫 글로 대화를 시작해 보세요.
-        </p>
+        <EmptyState
+          compact
+          title="아직 게시글이 없습니다"
+          description="첫 글로 대화를 시작해 보세요."
+          actionLabel="게시판 바로가기"
+          actionHref="/board"
+          className="mt-4"
+        />
       ) : (
         <ul className="mt-4 space-y-1">
           {recent.map((p) => (

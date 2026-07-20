@@ -31,6 +31,7 @@ import {
   formatSlotLabel,
   resolveSlotStartAt,
 } from "@/features/networking/networking-utils";
+import EmptyState from "@/components/ui/empty-state";
 
 interface Props {
   event: NetworkingEvent;
@@ -521,9 +522,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
             ))}
           </ul>
         ) : (
-          <p className="mt-1 text-[11px] text-muted-foreground">
-            아직 응답이 없습니다. 가능한 날짜를 선택해 첫 응답을 남겨보세요.
-          </p>
+          <EmptyState compact title="아직 응답이 없습니다" description="가능한 날짜를 선택해 첫 응답을 남겨보세요." className="mt-1" />
         )}
       </div>
 

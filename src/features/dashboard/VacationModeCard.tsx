@@ -22,6 +22,8 @@ import { Input } from "@/components/ui/input";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { studySessionsApi, profilesApi, streakEventsApi } from "@/lib/bkend";
 import type { StudySession } from "@/types";
+import { effectiveSemesterStart } from "@/lib/semester";
+import { useAcademicCalendar } from "@/features/site-settings/useAcademicCalendar";
 
 function ymdLocal(d: Date): string {
   return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
@@ -49,8 +51,14 @@ export default function VacationModeCard({
   const { user } = useAuthStore();
   const uid = user?.id ?? "";
 
-  // 다음 학기 관례 개강일: 1학기 종강 후 → 9/1, 2학기 종강 후 → 이듬해 3/1
-  const nextStart = term === "spring" ? `${year}-09-01` : `${year + 1}-03-01`;
+  // C-1: 실개강일 우선·관례일 폴백 — useAcademicCalendar entries 주입 (로딩 중엔 빈 배열로 폴백)
+  const { value: calendarData } = useAcademicCalendar();
+  // 다음 학기 개강일: 1학기 종강 후 → 그 해 2학기, 2학기 종강 후 → 이듬해 1학기
+  const nextStart = effectiveSemesterStart(
+    term === "spring" ? year : year + 1,
+    term === "spring" ? "second" : "first",
+    calendarData.entries,
+  );
   const nextLabel = term === "spring" ? `${year}년 2학기` : `${year + 1}년 1학기`;
   const daysLeft = useMemo(() => {
     // P2(2026-07-04): UTC/로컬 Date 혼용 대신 YMD 문자열끼리 UTC epoch 로 비교 — 시간대 무관
