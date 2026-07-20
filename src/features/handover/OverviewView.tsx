@@ -121,7 +121,7 @@ export default function OverviewView() {
           <div className="flex flex-wrap items-center justify-between gap-2">
             <h3 className="text-sm font-semibold">인수인계 준비도 (배정 {readiness.length}직책)</h3>
             <div className="flex items-center gap-3 text-xs">
-              <span className="inline-flex items-center gap-1 text-green-700">
+              <span className="inline-flex items-center gap-1 text-success">
                 <CheckCircle2 size={13} /> 준비 {readyCount}
               </span>
               <span className={cn("inline-flex items-center gap-1", staleCount > 0 ? "text-warning" : "text-muted-foreground")}>
@@ -134,7 +134,7 @@ export default function OverviewView() {
           </div>
 
           {problem.length === 0 ? (
-            <p className="mt-3 flex items-center gap-1.5 text-xs text-green-700">
+            <p className="mt-3 flex items-center gap-1.5 text-xs text-success">
               <CheckCircle2 size={14} /> 배정된 모든 직책에 인수 메모 또는 업무노트가 있습니다. 교체 시즌 준비 양호.
             </p>
           ) : (
