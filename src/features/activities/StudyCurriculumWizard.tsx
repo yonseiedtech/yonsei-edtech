@@ -251,7 +251,14 @@ export default function StudyCurriculumWizard({
                 <label className="mb-1 block text-sm font-medium">스터디 유형</label>
                 <select
                   value={conditions.studyKind}
-                  onChange={(e) => setConditions({ ...conditions, studyKind: e.target.value as StudyKind })}
+                  onChange={(e) => {
+                    const k = e.target.value as StudyKind;
+                    setConditions({
+                      ...conditions,
+                      studyKind: k,
+                      ...(k === "thesis_writing" ? { goalType: "research" as GoalType } : {}),
+                    });
+                  }}
                   className={selectClass()}
                 >
                   {(Object.keys(STUDY_KIND_LABELS) as StudyKind[]).map((k) => (
@@ -369,6 +376,27 @@ export default function StudyCurriculumWizard({
                         className="inline-flex items-center gap-0.5 rounded border border-primary/30 bg-primary/5 px-1.5 py-0.5 text-[11px] text-primary hover:bg-primary/10"
                       >
                         {n}
+                        <ExternalLink size={9} />
+                      </Link>
+                    ))}
+                  </div>
+                );
+              })()}
+              {/* 아카이브 가이드 딥링크 — 논문 작성 등 고정 경로가 있는 모형 전용 */}
+              {(() => {
+                const links = draft.models.flatMap((m) => m.guideLinks ?? []);
+                if (links.length === 0) return null;
+                return (
+                  <div className="flex flex-wrap items-center gap-1.5 pt-1">
+                    <span className="text-[11px] text-muted-foreground">글쓰기 가이드:</span>
+                    {links.map((l) => (
+                      <Link
+                        key={l.href}
+                        href={l.href}
+                        target="_blank"
+                        className="inline-flex items-center gap-0.5 rounded border border-primary/30 bg-primary/5 px-1.5 py-0.5 text-[11px] text-primary hover:bg-primary/10"
+                      >
+                        {l.label}
                         <ExternalLink size={9} />
                       </Link>
                     ))}

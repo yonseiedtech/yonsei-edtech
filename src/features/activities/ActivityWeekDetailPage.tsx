@@ -42,6 +42,7 @@ import StudySessionReflectionCard from "./StudySessionReflectionCard";
 import StudySessionAssignmentsCard from "./StudySessionAssignmentsCard";
 import StudySessionNotesCard from "./StudySessionNotesCard";
 import StudyCurriculumGoalCheck from "./StudyCurriculumGoalCheck";
+import KudosSendBlock from "@/features/kudos/KudosSendBlock";
 import CommBoardSection from "@/features/comm-board/CommBoardSection";
 import type { CommContextType } from "@/types";
 
@@ -567,6 +568,25 @@ export default function ActivityWeekDetailPage({
           )}
         </CardContent>
       </Card>
+
+      {/* v11-H2: 같은 스터디 참여자 간 응원 — 회차 완료 맥락(양성 전용·주 1회) */}
+      {type === "study" &&
+        week.status === "completed" &&
+        user &&
+        participantIds.includes(user.id) &&
+        participantUsers.some((p) => p.id !== user.id) && (
+          <Card>
+            <CardContent className="py-4">
+              <KudosSendBlock
+                me={user}
+                targets={participantUsers.filter((p) => p.id !== user.id)}
+                context="study"
+                title="이번 회차 함께한 동료 응원"
+                description="이번 회차를 함께 완주한 스터디 동료예요. 가볍게 응원을 보내보세요. (동료당 주 1회)"
+              />
+            </CardContent>
+          </Card>
+        )}
 
       <Card>
         <CardContent className="space-y-3 py-4">

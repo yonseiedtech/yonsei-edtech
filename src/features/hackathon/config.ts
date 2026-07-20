@@ -207,6 +207,30 @@ export function resolveHackathonSubmissionClosed(
   return override?.submissionClosed ?? isHackathonSubmissionClosed(now);
 }
 
+/**
+ * 수상 발표 단계 자동 전환 가드 (R4, 2026-07-21).
+ *
+ * 자동(날짜) 폴백으로 "수상 발표(awards)" 단계에 진입했더라도 공개된 수상작이 하나도 없으면
+ * 빈 발표 화면을 막기 위해 "심사(judging)" 단계로 유지한다.
+ * 단, 운영진이 콘솔에서 수동으로 awards 를 지정한 경우(override.phase === "awards")는
+ * 명시적 운영 의사이므로 존중하고 가드를 적용하지 않는다.
+ *
+ * @param publishedCount 공개(published)된 수상작 수. 미상(로딩·비로그인 등)일 때 호출부는
+ *   downgrade 를 원치 않으면 1 이상을 넘겨 가드를 비활성화한다.
+ */
+export function resolveHackathonPhaseGuarded(
+  override: HackathonOpsOverride | null | undefined,
+  publishedCount: number,
+  now: Date = new Date(),
+): HackathonPhaseKey {
+  const phase = resolveHackathonPhase(override, now);
+  const manualAwards = (override?.phase ?? null) === "awards";
+  if (phase === "awards" && !manualAwards && publishedCount < 1) {
+    return "judging";
+  }
+  return phase;
+}
+
 /** 자주 묻는 질문 */
 export const HACKATHON_FAQ: readonly { q: string; a: string }[] = [
   {

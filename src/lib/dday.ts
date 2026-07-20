@@ -119,8 +119,19 @@ function pad2(n: number): string {
 }
 
 /** KST 기준 어제 날짜(YYYY-MM-DD). 서버사이드(UTC)에서도 정확. */
-/** ISO(UTC) 문자열 → KST 날짜 YYYY-MM-DD. slice(0,10) 대체 — UTC/KST 하루 오차 방지. */
+/** ISO(UTC) 문자열 → KST 날짜 YYYY-MM-DD. slice(0,10) 대체 — UTC/KST 하루 오차 방지.
+ *  Defensive: Firestore Admin SDK가 런타임에 Timestamp 객체({seconds, toDate, _seconds})를
+ *  반환할 수 있음(member-stage.ts parseCreatedAtMs·weekly-digest anyToYmdKst 동일 패턴).
+ */
 export function isoToKstYmd(iso: string): string {
+  if (typeof iso !== "string") {
+    const ts = iso as unknown as { toDate?: () => Date; _seconds?: number; seconds?: number };
+    if (typeof ts?.toDate === "function") return todayYmdKst(ts.toDate());
+    const secs = typeof ts?._seconds === "number" ? ts._seconds : ts?.seconds;
+    if (typeof secs === "number")
+      return new Date(secs * 1_000 + 9 * 3_600_000).toISOString().slice(0, 10);
+    return "";
+  }
   const d = new Date(iso);
   if (Number.isNaN(d.getTime())) return iso.slice(0, 10);
   return new Date(d.getTime() + 9 * 60 * 60 * 1000).toISOString().slice(0, 10);

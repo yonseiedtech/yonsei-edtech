@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
-import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw, FlaskConical, BarChart3, BookOpen, PenLine, AlertTriangle, ClipboardCheck, ArrowRight, Link2, TrendingUp } from "lucide-react";
+import { Library, Plus, Pencil, Trash2, Search, Sparkles, Loader2, RefreshCw, FlaskConical, BarChart3, BookOpen, PenLine, AlertTriangle, ClipboardCheck, ArrowRight, Link2, TrendingUp, CalendarCheck } from "lucide-react";
 import { importArchiveSeed, refreshArchiveSeedReferences } from "@/lib/archive-seed";
 import { auth } from "@/lib/firebase";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -454,6 +454,14 @@ export default function ConsoleArchivePage() {
 
       {/* M4 — 검수 품질 추세 (adoption_snapshots 기반 미니 차트) */}
       <ReviewTrendMiniSection rows={reviewTrend} loading={trendLoading} />
+
+      {/* H4 — 콘텐츠 신선도 리뷰 큐 (v11: 180일 이상 미갱신·미검토 항목 목록) */}
+      <FreshnessReviewSection
+        concepts={concepts}
+        variables={variables}
+        measurements={measurements}
+        coreLoading={loading}
+      />
 
       {/* Phase 3 — 시드 데이터 학술 신뢰도 경고 + 확인 체크박스 */}
       <div className="mt-4 rounded-lg border border-warning/20 bg-warning/5 p-4 text-xs leading-relaxed text-warning">
@@ -1151,6 +1159,321 @@ function ReviewTrendMiniSection({
       <p className="mt-1.5 text-[10px] text-muted-foreground">
         4개 검수형 컬렉션(연구방법·통계방법·기초용어·학술글쓰기) 합계 · 주 1회 스냅샷 기반
       </p>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────────────────────
+// H4 콘텐츠 신선도 리뷰 — 상수·타입·유틸·컴포넌트
+// ──────────────────────────────────────────────────────────────────────────────
+
+const FRESHNESS_STALE_DAYS = 180; // ≈ 6개월
+const FRESHNESS_WEEKLY_CAP = 10;  // 주당 리뷰 권장 상한
+
+type FreshnessCollKey =
+  | "concept" | "variable" | "measurement"
+  | "research-method" | "statistical-method" | "foundation-term" | "writing-tip";
+
+type FreshnessRawItem = {
+  id: string;
+  name?: string;        // concept · variable · measurement · research-method · statistical-method
+  term?: string;        // foundation-term
+  title?: string;       // writing-tip
+  updatedAt?: string;
+  lastReviewedAt?: string;
+};
+
+type FreshnessListApi = {
+  list: () => Promise<{ data: FreshnessRawItem[] }>;
+  update: (id: string, data: Record<string, unknown>) => Promise<unknown>;
+};
+
+interface FreshnessItem {
+  key: string; // `${type}:${id}`
+  type: FreshnessCollKey;
+  id: string;
+  name: string;
+  updatedAt: string;
+  lastReviewedAt?: string;
+  ageDays: number;
+  editHref: string;
+}
+
+const FRESHNESS_COLL: Record<
+  FreshnessCollKey,
+  { label: string; badgeClass: string; api: FreshnessListApi; editHref: (id: string) => string; getName: (x: FreshnessRawItem) => string }
+> = {
+  "concept": {
+    label: "개념",
+    badgeClass: "bg-primary/5 text-primary border-primary/20",
+    api: archiveConceptsApi as unknown as FreshnessListApi,
+    editHref: (id) => `/console/archive/concepts/${id}/edit`,
+    getName: (x) => x.name ?? "(이름 없음)",
+  },
+  "variable": {
+    label: "변인",
+    badgeClass: "bg-info/5 text-info border-info/20",
+    api: archiveVariablesApi as unknown as FreshnessListApi,
+    editHref: (id) => `/console/archive/variables/${id}/edit`,
+    getName: (x) => x.name ?? "(이름 없음)",
+  },
+  "measurement": {
+    label: "측정도구",
+    badgeClass: "bg-success/5 text-success border-success/20",
+    api: archiveMeasurementsApi as unknown as FreshnessListApi,
+    editHref: (id) => `/console/archive/measurements/${id}/edit`,
+    getName: (x) => x.name ?? "(이름 없음)",
+  },
+  "research-method": {
+    label: "연구방법",
+    badgeClass: "bg-info/5 text-info border-info/20",
+    api: researchMethodsApi as unknown as FreshnessListApi,
+    editHref: (id) => `/console/archive/research-methods/${id}/edit`,
+    getName: (x) => x.name ?? "(이름 없음)",
+  },
+  "statistical-method": {
+    label: "통계방법",
+    badgeClass: "bg-cat-5/5 text-cat-5 border-cat-5/20",
+    api: statisticalMethodsApi as unknown as FreshnessListApi,
+    editHref: (id) => `/console/archive/statistical-methods/${id}/edit`,
+    getName: (x) => x.name ?? "(이름 없음)",
+  },
+  "foundation-term": {
+    label: "기초 용어",
+    badgeClass: "bg-success/5 text-success border-success/20",
+    api: foundationTermsApi as unknown as FreshnessListApi,
+    editHref: (id) => `/console/archive/foundation-terms/${id}/edit`,
+    getName: (x) => x.term ?? x.name ?? "(이름 없음)",
+  },
+  "writing-tip": {
+    label: "학술 글쓰기",
+    badgeClass: "bg-warning/5 text-warning border-warning/20",
+    api: writingTipsApi as unknown as FreshnessListApi,
+    editHref: (id) => `/console/archive/writing-tips/${id}/edit`,
+    getName: (x) => x.title ?? x.name ?? "(이름 없음)",
+  },
+};
+
+const FRESHNESS_COLL_ORDER: FreshnessCollKey[] = [
+  "concept", "variable", "measurement",
+  "research-method", "statistical-method", "foundation-term", "writing-tip",
+];
+
+function freshnessAgeDays(updatedAt?: string, lastReviewedAt?: string): number {
+  const ref = lastReviewedAt || updatedAt;
+  if (!ref) return 0;
+  return Math.max(0, (Date.now() - new Date(ref).getTime()) / 86_400_000);
+}
+
+/**
+ * H4 콘텐츠 신선도 리뷰 섹션.
+ * 7개 아카이브 컬렉션 중 180일 이상 미갱신·미검토 항목을 오래된 순으로 표시.
+ * "확인함" 클릭 시 lastReviewedAt 스탬프 → 재노후 타이머 초기화.
+ * 코어 3종(concept·variable·measurement)은 부모의 이미 로드된 데이터를 수신,
+ * 검수형 4종은 자체 fetch. 신규 cron·컬렉션 없음(기존 updatedAt 재사용).
+ */
+function FreshnessReviewSection({
+  concepts,
+  variables,
+  measurements,
+  coreLoading,
+}: {
+  concepts: ArchiveConcept[];
+  variables: ArchiveVariable[];
+  measurements: ArchiveMeasurementTool[];
+  coreLoading: boolean;
+}) {
+  type CollData = Record<FreshnessCollKey, FreshnessRawItem[]>;
+
+  const makeEmpty = (): CollData => ({
+    "concept": [], "variable": [], "measurement": [],
+    "research-method": [], "statistical-method": [], "foundation-term": [], "writing-tip": [],
+  });
+
+  const [collData, setCollData] = useState<CollData>(makeEmpty);
+  const [rtLoading, setRtLoading] = useState(true);
+  const [reviewedKeys, setReviewedKeys] = useState<Set<string>>(new Set());
+  const [processingKeys, setProcessingKeys] = useState<Set<string>>(new Set());
+
+  const loadReviewTypes = async () => {
+    setRtLoading(true);
+    try {
+      const [rm, sm, ft, wt] = await Promise.all([
+        (researchMethodsApi as unknown as FreshnessListApi).list(),
+        (statisticalMethodsApi as unknown as FreshnessListApi).list(),
+        (foundationTermsApi as unknown as FreshnessListApi).list(),
+        (writingTipsApi as unknown as FreshnessListApi).list(),
+      ]);
+      setCollData((prev) => ({
+        ...prev,
+        "research-method": rm.data,
+        "statistical-method": sm.data,
+        "foundation-term": ft.data,
+        "writing-tip": wt.data,
+      }));
+    } catch (err) {
+      console.error("[freshness-review] load failed", err);
+    } finally {
+      setRtLoading(false);
+    }
+  };
+
+  useEffect(() => { loadReviewTypes(); }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // 코어 3종: 부모가 로드한 데이터를 수신 (별도 fetch 생략)
+  useEffect(() => {
+    if (!coreLoading) {
+      setCollData((prev) => ({
+        ...prev,
+        "concept": concepts as unknown as FreshnessRawItem[],
+        "variable": variables as unknown as FreshnessRawItem[],
+        "measurement": measurements as unknown as FreshnessRawItem[],
+      }));
+    }
+  }, [coreLoading, concepts, variables, measurements]);
+
+  const allStale = useMemo<FreshnessItem[]>(() => {
+    const result: FreshnessItem[] = [];
+    for (const type of FRESHNESS_COLL_ORDER) {
+      const cfg = FRESHNESS_COLL[type];
+      for (const raw of collData[type]) {
+        const key = `${type}:${raw.id}`;
+        if (reviewedKeys.has(key)) continue;
+        const ageDays = freshnessAgeDays(raw.updatedAt, raw.lastReviewedAt);
+        if (ageDays < FRESHNESS_STALE_DAYS) continue;
+        result.push({
+          key, type, id: raw.id,
+          name: cfg.getName(raw),
+          updatedAt: raw.updatedAt ?? "",
+          lastReviewedAt: raw.lastReviewedAt,
+          ageDays,
+          editHref: cfg.editHref(raw.id),
+        });
+      }
+    }
+    result.sort((a, b) => b.ageDays - a.ageDays);
+    return result;
+  }, [collData, reviewedKeys]);
+
+  const displayed = useMemo(() => allStale.slice(0, FRESHNESS_WEEKLY_CAP), [allStale]);
+
+  async function markReviewed(item: FreshnessItem) {
+    if (processingKeys.has(item.key)) return;
+    setProcessingKeys((prev) => new Set(prev).add(item.key));
+    setReviewedKeys((prev) => new Set(prev).add(item.key)); // optimistic
+    const nowIso = new Date().toISOString();
+    try {
+      await FRESHNESS_COLL[item.type].api.update(item.id, { lastReviewedAt: nowIso });
+      toast.success(`신선도 확인 — ${item.name}`);
+    } catch (err) {
+      console.error("[freshness-review] mark failed", err);
+      setReviewedKeys((prev) => { const n = new Set(prev); n.delete(item.key); return n; });
+      toast.error(`처리 실패 — ${item.name}`);
+    } finally {
+      setProcessingKeys((prev) => { const n = new Set(prev); n.delete(item.key); return n; });
+    }
+  }
+
+  const loading = rtLoading || coreLoading;
+  const remaining = allStale.length - displayed.length;
+
+  return (
+    <div className="mt-4 rounded-lg border bg-card p-4">
+      <div className="flex items-center justify-between gap-2">
+        <div className="flex items-center gap-2">
+          <CalendarCheck className="h-4 w-4 text-muted-foreground" aria-hidden />
+          <h2 className="text-sm font-semibold">콘텐츠 신선도 리뷰</h2>
+          {!loading && (
+            allStale.length > 0 ? (
+              <Badge variant="outline" className="border-warning/20 bg-warning/5 text-[10px] text-warning">
+                노후 {allStale.length}건
+              </Badge>
+            ) : (
+              <Badge variant="outline" className="border-success/20 bg-success/5 text-[10px] text-success">
+                모두 최신
+              </Badge>
+            )
+          )}
+        </div>
+        <Button
+          variant="ghost" size="sm"
+          onClick={() => { setReviewedKeys(new Set()); loadReviewTypes(); }}
+          disabled={loading}
+          title="신선도 목록 새로고침"
+        >
+          {loading
+            ? <Loader2 className="h-3.5 w-3.5 animate-spin" />
+            : <RefreshCw className="h-3.5 w-3.5" />}
+        </Button>
+      </div>
+      <p className="mt-1 text-[11px] text-muted-foreground">
+        {FRESHNESS_STALE_DAYS}일({Math.round(FRESHNESS_STALE_DAYS / 30)}개월) 이상 미갱신·미검토 항목 —
+        주당 최대 {FRESHNESS_WEEKLY_CAP}건 표시 · 확인함 클릭 시 재노후 타이머 초기화
+      </p>
+
+      {loading ? (
+        <div className="mt-3 space-y-2">
+          {[0, 1, 2].map((i) => <Skeleton key={i} className="h-12 w-full" />)}
+        </div>
+      ) : displayed.length === 0 ? (
+        <div className="mt-3 rounded-md border border-dashed p-6 text-center">
+          <CalendarCheck className="mx-auto mb-2 h-6 w-6 text-success" aria-hidden />
+          <p className="text-sm font-medium">노후 콘텐츠 없음</p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            모든 항목이 {FRESHNESS_STALE_DAYS}일 이내에 갱신 또는 검토되었습니다.
+          </p>
+        </div>
+      ) : (
+        <div className="mt-3 space-y-2">
+          {displayed.map((item) => {
+            const cfg = FRESHNESS_COLL[item.type];
+            const isProcessing = processingKeys.has(item.key);
+            const ageLabel = item.ageDays >= 365
+              ? `${(item.ageDays / 365).toFixed(1)}년`
+              : `${Math.round(item.ageDays)}일`;
+            return (
+              <div key={item.key} className="flex items-center justify-between gap-3 rounded-md border bg-background px-3 py-2">
+                <div className="flex min-w-0 flex-1 items-center gap-2">
+                  <Badge variant="outline" className={`shrink-0 text-[10px] ${cfg.badgeClass}`}>
+                    {cfg.label}
+                  </Badge>
+                  <Link
+                    href={item.editHref}
+                    className="truncate text-sm font-medium hover:text-primary hover:underline"
+                  >
+                    {item.name}
+                  </Link>
+                  <span className="shrink-0 text-[10px] text-warning">{ageLabel} 전</span>
+                </div>
+                <div className="flex items-center gap-1">
+                  <Link href={item.editHref}>
+                    <Button variant="ghost" size="sm" aria-label={`${item.name} 편집`}>
+                      <Pencil className="h-3.5 w-3.5" aria-hidden />
+                    </Button>
+                  </Link>
+                  <Button
+                    size="sm" variant="outline"
+                    onClick={() => markReviewed(item)}
+                    disabled={isProcessing}
+                    className="gap-1 text-[11px]"
+                    title="콘텐츠 현행 확인 — 재노후 타이머 초기화"
+                  >
+                    {isProcessing
+                      ? <Loader2 className="h-3 w-3 animate-spin" />
+                      : <CalendarCheck className="h-3 w-3" />}
+                    확인함
+                  </Button>
+                </div>
+              </div>
+            );
+          })}
+          {remaining > 0 && (
+            <p className="text-right text-[11px] text-muted-foreground">
+              + {remaining}건 추가 · 이번 주 {FRESHNESS_WEEKLY_CAP}건 확인 후 다음 항목 노출
+            </p>
+          )}
+        </div>
+      )}
     </div>
   );
 }

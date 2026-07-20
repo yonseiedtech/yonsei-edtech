@@ -14,7 +14,7 @@ import {
   useCreateMember,
   useDeleteMember,
 } from "@/features/member/useMembers";
-import { profilesApi } from "@/lib/bkend";
+import { profilesApi, siteSettingsApi } from "@/lib/bkend";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -26,7 +26,12 @@ import {
   RotateCcw, Settings, Download, ShieldCheck, AlertTriangle, AlertCircle,
   CheckSquare, Square, Trash2, ArrowUp, ArrowDown, ArrowUpDown,
 } from "lucide-react";
-import { evaluateSignup, partitionPending } from "@/lib/auth/approval-rules";
+import {
+  evaluateSignup,
+  partitionPending,
+  AUTO_APPROVE_SETTINGS_KEY,
+  isAutoApproveEnabled,
+} from "@/lib/auth/approval-rules";
 import AdminEmptyState from "@/components/admin/AdminEmptyState";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { notifyMemberApproved } from "@/features/notifications/notify";
@@ -208,16 +213,51 @@ export default function AdminMemberTab() {
     [truePending, allMembers],
   );
 
-  // 자동 승인 토글 (localStorage 영속, 기본값 ON — 명시적으로 꺼야 수동 모드)
-  const [autoApprove, setAutoApprove] = useState(false);
+  // 자동 승인 전역 토글 (R1, 2026-07-21): 운영진 개인 localStorage → site_settings 전역 키.
+  // 실제 승인 실행은 서버 cron(pending-signup-nudge, 일 1회)이 담당한다 — 콘솔 접속 불필요.
+  // 이 토글은 그 전역 스위치를 켜고 끄는 역할만 한다. 기본값 ON(문서 부재 시).
+  const [autoApprove, setAutoApprove] = useState(true);
+  const [autoApproveRecordId, setAutoApproveRecordId] = useState<string | null>(null);
+  const [autoApproveSaving, setAutoApproveSaving] = useState(false);
   useEffect(() => {
-    if (typeof window === "undefined") return;
-    setAutoApprove(localStorage.getItem("autoApproveEnabled") !== "false");
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await siteSettingsApi.getByKey(AUTO_APPROVE_SETTINGS_KEY);
+        if (cancelled) return;
+        if (res.data.length > 0) {
+          const row = res.data[0];
+          setAutoApprove(isAutoApproveEnabled(row.value as string));
+          setAutoApproveRecordId((row.id as string) ?? null);
+        } else {
+          setAutoApprove(true); // 문서 부재 = 기본 ON
+        }
+      } catch {
+        /* 조회 실패 시 기본값 유지 */
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
   }, []);
-  function toggleAutoApprove(next: boolean) {
-    setAutoApprove(next);
-    if (typeof window !== "undefined") localStorage.setItem("autoApproveEnabled", String(next));
-    toast.success(next ? "자동 승인이 켜졌습니다" : "자동 승인이 꺼졌습니다");
+  async function toggleAutoApprove(next: boolean) {
+    setAutoApprove(next); // 낙관적 반영
+    setAutoApproveSaving(true);
+    try {
+      const payload = { key: AUTO_APPROVE_SETTINGS_KEY, value: String(next) };
+      if (autoApproveRecordId) {
+        await siteSettingsApi.update(autoApproveRecordId, payload);
+      } else {
+        const created = await siteSettingsApi.create(payload);
+        setAutoApproveRecordId((created as { id?: string }).id ?? null);
+      }
+      toast.success(next ? "자동 승인이 켜졌습니다 (전역)" : "자동 승인이 꺼졌습니다 (전역)");
+    } catch {
+      setAutoApprove(!next); // 저장 실패 시 롤백
+      toast.error("자동 승인 설정 저장에 실패했습니다.");
+    } finally {
+      setAutoApproveSaving(false);
+    }
   }
 
   // 일괄 승인 처리
@@ -262,32 +302,9 @@ export default function AdminMemberTab() {
     });
   }
 
-  // 자동 승인: 토글 ON + 자격 대기자 발생 시 자동 처리
-  useEffect(() => {
-    if (!autoApprove || !canApprove || bulkApproving) return;
-    if (qualifyingPending.length === 0) return;
-    (async () => {
-      setBulkApproving(true);
-      let ok = 0;
-      let fail = 0;
-      for (const u of qualifyingPending) {
-        try {
-          await profilesApi.approve(u.id);
-          await notifyMemberApproved(u.id, u.name);
-          ok++;
-        } catch {
-          fail++;
-        }
-      }
-      setBulkApproving(false);
-      if (ok > 0) {
-        toast.success(`자동 승인 완료: ${ok}명${fail > 0 ? ` (실패 ${fail}명)` : ""}`);
-      } else if (fail > 0) {
-        toast.error(`자동 승인 실패: ${fail}명 — 잠시 후 다시 시도됩니다`);
-      }
-    })();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [autoApprove, qualifyingPending.length]);
+  // R1(2026-07-21): 자동 승인 실행을 서버 cron(pending-signup-nudge)으로 이관.
+  // 기존의 클라이언트 useEffect 자동 승인 경로는 제거했다(운영진 콘솔 접속 의존 해소).
+  // 운영진은 아래 "자동 승인 가능 N명 일괄 승인" 버튼으로 즉시 수동 승인도 계속 가능하다.
 
   async function handleBulkApprove() {
     if (qualifyingPending.length === 0) return;
@@ -776,15 +793,17 @@ export default function AdminMemberTab() {
           {canApprove && (
             <div className="mb-4 flex items-center justify-between rounded-2xl border bg-card p-4">
               <div>
-                <p className="text-sm font-medium">자동 승인</p>
+                <p className="text-sm font-medium">자동 승인 (전역)</p>
                 <p className="mt-0.5 text-xs text-muted-foreground">
-                  켜두면 승인 규칙을 통과한 가입 신청자(@yonsei.ac.kr 이메일 + 학번 + 중복 없음)를 자동으로 승인합니다.
+                  켜두면 승인 규칙을 통과한 가입 신청자(@yonsei.ac.kr 이메일 + 학번 + 중복 없음)를
+                  서버가 매일 자동 승인합니다. 이 설정은 전체 운영진에 공통 적용됩니다.
                 </p>
               </div>
               <button
                 type="button"
                 role="switch"
                 aria-checked={autoApprove}
+                disabled={autoApproveSaving}
                 onClick={() => toggleAutoApprove(!autoApprove)}
                 className={cn(
                   "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2",

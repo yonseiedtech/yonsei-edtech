@@ -1,7 +1,7 @@
 "use client";
 
 /**
- * 대시보드 프로필 요약 카드 (사이클 85, 2026-06-13)
+ * 대시보드 프로필 요약 카드 (사이클 85, 2026-06-13 / UI 개선 2026-07-20)
  *
  * 사용자 요청 — "대시보드에 이름·입학시점·누적학기 등 프로필 정보 영역을 함께 표시해
  * 주기적으로 본인 정보를 업데이트하는 기회를 마련. 마지막 접속/활동도 노출".
@@ -15,6 +15,12 @@
  *
  * JourneyGreetingHeader 가 인사+여정 단계를 담당하므로, 본 카드는 인사를 생략하고
  * "나는 누구/어디쯤(학적) + 프로필 완성도 + 최근 활동" 에 집중한다.
+ *
+ * UI 개선 (2026-07-20):
+ * - 입학 표기: semesterLabelFromKey + cohortKeyOf → "2023년 후기 입학" (서비스 표준 일치)
+ * - 정보 위계: 이름+뱃지 1행 / 학적 스탯 2행(아이콘+텍스트 독립 유닛)으로 분리
+ * - 완성도 블록: 퍼센트 강조, 미완 항목 칩, "을(를)" 조사 문구 제거
+ * - 시맨틱 토큰: 재학/기수 뱃지 border 추가(chip 토큰 테두리 표현)
  */
 
 import Image from "next/image";
@@ -28,10 +34,13 @@ import {
   PencilLine,
   CircleUserRound,
   Sparkles,
+  CalendarDays,
+  BookOpen,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { STATUS_CHIP } from "@/lib/design-tokens";
 import { getEffectiveSemesterCount } from "@/lib/interview-target";
+import { semesterLabelFromKey, cohortKeyOf } from "@/lib/semester";
 import { userActivityLogsApi } from "@/lib/bkend";
 import { ENROLLMENT_STATUS_LABELS } from "@/types";
 import type { User } from "@/types";
@@ -62,14 +71,6 @@ function relativeTime(iso?: string): { text: string; staleDays: number } | null 
   return { text: `${months}개월 전`, staleDays: days };
 }
 
-/** 입학 시점 라벨 — "2024년 후반기 입학" */
-function admissionLabel(user: User): string | null {
-  if (!user.enrollmentYear) return null;
-  const half =
-    user.enrollmentHalf === 2 ? " 후반기" : user.enrollmentHalf === 1 ? " 전반기" : "";
-  return `${user.enrollmentYear}년${half} 입학`;
-}
-
 /** 프로필 완성도 — 채운 항목/전체 + 비어 있는 항목 라벨 */
 function computeCompletion(user: User): {
   percent: number;
@@ -96,7 +97,11 @@ function computeCompletion(user: User): {
 
 export default function ProfileSummaryCard({ user }: { user: User }) {
   const semesters = useMemo(() => getEffectiveSemesterCount(user), [user]);
-  const admission = useMemo(() => admissionLabel(user), [user]);
+  const admission = useMemo(() => {
+    const key = cohortKeyOf(user);
+    const label = semesterLabelFromKey(key);
+    return label ? `${label} 입학` : null;
+  }, [user]);
   const completion = useMemo(() => computeCompletion(user), [user]);
   const statusLabel = user.enrollmentStatus
     ? ENROLLMENT_STATUS_LABELS[user.enrollmentStatus]
@@ -121,7 +126,8 @@ export default function ProfileSummaryCard({ user }: { user: User }) {
       aria-label="내 프로필 요약"
       className="rounded-2xl border bg-card p-4 shadow-sm sm:p-5"
     >
-      <div className="flex flex-wrap items-start gap-3 sm:gap-4">
+      {/* ── 상단: 아바타 + 이름/뱃지 + 수정 버튼 ── */}
+      <div className="flex items-start gap-3">
         {/* 아바타 */}
         <div className="shrink-0">
           {user.profileImage ? (
@@ -141,49 +147,61 @@ export default function ProfileSummaryCard({ user }: { user: User }) {
 
         {/* 이름 + 학적 메타 */}
         <div className="min-w-0 flex-1">
-          <div className="flex flex-wrap items-center gap-x-2 gap-y-1">
+          {/* 행 1: 이름 + 상태 뱃지 + 기수 */}
+          <div className="flex flex-wrap items-center gap-x-1.5 gap-y-1">
             <span className="truncate text-base font-bold tracking-tight sm:text-lg">
               {user.name}
             </span>
             {statusLabel && (
-              <span className={cn("rounded-full px-2 py-0.5 text-[11px] font-semibold", STATUS_CHIP.success)}>
+              <span
+                className={cn(
+                  "rounded-full border px-2 py-0.5 text-[11px] font-semibold",
+                  STATUS_CHIP.success
+                )}
+              >
                 {statusLabel}
               </span>
             )}
             {user.generation > 0 && (
-              <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+              <span className="rounded-full border border-muted-foreground/20 bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
                 {user.generation}기
               </span>
             )}
           </div>
 
-          <p className="mt-1 flex flex-wrap items-center gap-x-2 gap-y-0.5 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1">
-              <GraduationCap size={13} className="text-primary/70" />
-              {admission ?? "입학 정보 미설정"}
-            </span>
+          {/* 행 2: 학적 스탯 — 아이콘+텍스트 독립 유닛, 점 구분자 없음 */}
+          <div className="mt-1.5 flex flex-wrap items-center gap-x-3 gap-y-1">
+            {admission ? (
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
+                <GraduationCap size={13} className="shrink-0 text-primary/60" />
+                {admission}
+              </span>
+            ) : (
+              <span className="inline-flex items-center gap-1 text-xs text-muted-foreground/50">
+                <GraduationCap size={13} className="shrink-0" />
+                입학 정보 미설정
+              </span>
+            )}
             {typeof semesters === "number" && semesters > 0 && (
-              <>
-                <span aria-hidden className="text-muted-foreground/40">·</span>
-                <span className="font-medium text-foreground/80">누적 {semesters}학기</span>
-              </>
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-foreground/75">
+                <CalendarDays size={13} className="shrink-0 text-primary/60" />
+                {semesters}학기째
+              </span>
             )}
             {user.field && user.field.trim().length > 0 && (
-              <>
-                <span aria-hidden className="text-muted-foreground/40">·</span>
-                <span className="inline-flex max-w-[12rem] items-center truncate rounded-full bg-primary/5 px-2 py-0.5 text-[11px] text-primary/80">
-                  {user.field}
-                </span>
-              </>
+              <span className="inline-flex max-w-[14rem] items-center gap-1 truncate text-xs text-muted-foreground">
+                <BookOpen size={13} className="shrink-0 text-primary/60" />
+                {user.field}
+              </span>
             )}
-          </p>
+          </div>
 
-          {/* 최근 활동 — 접속이 아닌 의미 있는 마지막 행동 */}
+          {/* 행 3: 최근 활동 — 의미 있는 마지막 행동 */}
           {recentRel && (
-            <p className="mt-1 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
-              <Clock size={11} className="text-muted-foreground/70" />
+            <p className="mt-1.5 inline-flex items-center gap-1 text-[11px] text-muted-foreground">
+              <Clock size={11} className="shrink-0 text-muted-foreground/70" />
               {recentRel.staleDays >= 14 ? (
-                <span>오랜만이에요 👋 마지막 활동 {recentRel.text}</span>
+                <span>오랜만이에요 — 마지막 활동 {recentRel.text}</span>
               ) : (
                 <span>
                   최근 활동{recent?.pathLabel ? ` · ${recent.pathLabel}` : ""} · {recentRel.text}
@@ -193,7 +211,7 @@ export default function ProfileSummaryCard({ user }: { user: User }) {
           )}
         </div>
 
-        {/* 프로필 수정 링크 */}
+        {/* 프로필 수정 링크 — 우측 상단 */}
         <Link
           href="/mypage?tab=settings"
           className="inline-flex shrink-0 items-center gap-1 rounded-full border border-border bg-background px-3 py-1.5 text-[11px] font-semibold text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
@@ -203,44 +221,53 @@ export default function ProfileSummaryCard({ user }: { user: User }) {
         </Link>
       </div>
 
-      {/* 프로필 완성도 게이지 + 빈 항목 채우기 CTA */}
+      {/* ── 하단: 프로필 완성도 게이지 ── */}
       <div className="mt-3 border-t pt-3">
         {completion.percent < 100 ? (
-          <div className="flex flex-wrap items-center justify-between gap-2">
-            <div className="min-w-0 flex-1">
-              <div className="mb-1 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                <CircleUserRound size={12} className="text-primary/70" />
-                프로필 완성도
-                <span className="font-semibold tabular-nums text-foreground">
-                  {completion.percent}%
-                </span>
-                <span className="text-muted-foreground/60">
-                  ({completion.filled}/{completion.total})
-                </span>
-              </div>
-              <div className="h-1.5 w-full max-w-xs overflow-hidden rounded-full bg-muted">
+          <div className="space-y-1.5">
+            {/* 게이지 행: 라벨 + 퍼센트 강조 + 바 + 분수 + 업데이트 버튼 */}
+            <div className="flex items-center gap-2">
+              <CircleUserRound size={12} className="shrink-0 text-primary/70" />
+              <span className="text-[11px] text-muted-foreground">프로필 완성도</span>
+              <span className="text-[13px] font-bold tabular-nums text-foreground">
+                {completion.percent}%
+              </span>
+              <div className="h-1.5 min-w-0 flex-1 overflow-hidden rounded-full bg-muted">
                 <div
                   className="h-full rounded-full bg-gradient-to-r from-primary to-info transition-all"
                   style={{ width: `${completion.percent}%` }}
                 />
               </div>
-              {completion.missing.length > 0 && (
-                <p className="mt-1 text-[11px] text-muted-foreground">
-                  <span className="font-medium text-foreground/70">
-                    {completion.missing.slice(0, 2).join(" · ")}
-                  </span>
-                  {completion.missing.length > 2 && ` 외 ${completion.missing.length - 2}건`}
-                  {" "}을(를) 채워보세요.
-                </p>
-              )}
+              <span className="shrink-0 text-[10px] tabular-nums text-muted-foreground/50">
+                {completion.filled}/{completion.total}
+              </span>
+              <Link
+                href="/mypage"
+                className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
+              >
+                업데이트
+                <ArrowRight size={11} />
+              </Link>
             </div>
-            <Link
-              href="/mypage"
-              className="inline-flex shrink-0 items-center gap-1 rounded-full bg-primary px-3 py-1.5 text-[11px] font-semibold text-primary-foreground shadow-sm transition-opacity hover:opacity-90"
-            >
-              프로필 업데이트
-              <ArrowRight size={12} />
-            </Link>
+            {/* 미완 항목 — 개별 칩으로 표시 ("을(를)" 조사 문구 제거) */}
+            {completion.missing.length > 0 && (
+              <div className="flex flex-wrap items-center gap-1.5 pl-[20px]">
+                <span className="text-[10px] text-muted-foreground/60">미완성</span>
+                {completion.missing.slice(0, 3).map((label) => (
+                  <span
+                    key={label}
+                    className="inline-flex items-center rounded-full border border-dashed border-muted-foreground/25 px-2 py-0.5 text-[10px] text-muted-foreground/70"
+                  >
+                    {label}
+                  </span>
+                ))}
+                {completion.missing.length > 3 && (
+                  <span className="text-[10px] text-muted-foreground/50">
+                    외 {completion.missing.length - 3}건
+                  </span>
+                )}
+              </div>
+            )}
           </div>
         ) : (
           <p className="inline-flex items-center gap-1.5 text-[11px] text-muted-foreground">

@@ -4,13 +4,14 @@ import Link from "next/link";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useInquiries } from "@/features/inquiry/useInquiry";
 import { usePosts } from "@/features/board/useBoard";
-import { profilesApi, seminarsApi } from "@/lib/bkend";
+import { profilesApi, seminarsApi, externalActivitiesApi, awardsApi, alumniThesesApi } from "@/lib/bkend";
+import { fetchPendingDrafts } from "@/features/content-draft/content-draft-store";
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import type { Seminar } from "@/types";
-import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2, Globe, ClipboardCheck, MessageSquareQuote, HeartHandshake, BarChart3, ListChecks } from "lucide-react";
+import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2, Globe, ClipboardCheck, MessageSquareQuote, HeartHandshake, BarChart3, ListChecks, Inbox, ArrowRight } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
 import { auth as firebaseAuth } from "@/lib/firebase";
@@ -18,6 +19,18 @@ import { Button } from "@/components/ui/button";
 import AdminTodoTab from "@/features/admin/AdminTodoTab";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import ActionableBanner from "@/components/ui/actionable-banner";
+
+/** H3: 처리 대기 통합 큐 — 가장 오래된 항목 경과일 표시 */
+function oldestElapsedLabel(items: { createdAt?: string }[]): string | null {
+  const timestamps = items
+    .map((i) => (i.createdAt ? new Date(i.createdAt).getTime() : null))
+    .filter((t): t is number => t !== null && !Number.isNaN(t));
+  if (timestamps.length === 0) return null;
+  const days = Math.floor((Date.now() - Math.min(...timestamps)) / 86400000);
+  if (days <= 0) return "오늘 등록";
+  if (days === 1) return "1일 경과";
+  return `${days}일 경과`;
+}
 
 function StatCard({ icon: Icon, label, value, color, href }: {
   icon: React.ElementType;
@@ -126,6 +139,52 @@ export default function ConsoleDashboardPage() {
     retry: false,
   });
 
+  // H3: 처리 대기 통합 큐 — 포트폴리오 검증 (external_activities + awards)
+  const { data: pfExternals = [] } = useQuery({
+    queryKey: ["console", "pf-externals-pending"],
+    queryFn: async () => {
+      const r = await externalActivitiesApi.listPending();
+      return r.data;
+    },
+    staleTime: 3 * 60 * 1000,
+    retry: false,
+  });
+  const { data: pfAwards = [] } = useQuery({
+    queryKey: ["console", "pf-awards-pending"],
+    queryFn: async () => {
+      const r = await awardsApi.listPending();
+      return r.data;
+    },
+    staleTime: 3 * 60 * 1000,
+    retry: false,
+  });
+  // H3: 처리 대기 통합 큐 — 미매핑 졸업논문 (alumni_theses)
+  const { data: alumniUnmapped = [] } = useQuery({
+    queryKey: ["console", "alumni-unmapped-pending"],
+    queryFn: async () => {
+      const r = await alumniThesesApi.listUnmapped();
+      return r.data;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+  // H3: 처리 대기 통합 큐 — 콘텐츠 초안 (content_drafts pending)
+  const { data: pendingDrafts = [] } = useQuery({
+    queryKey: ["console", "content-drafts-pending"],
+    queryFn: fetchPendingDrafts,
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  const pfPendingCount = pfExternals.length + pfAwards.length;
+  const alumniPendingCount = alumniUnmapped.length;
+  const draftPendingCount = pendingDrafts.length;
+  const totalManualQueueCount = pfPendingCount + alumniPendingCount + draftPendingCount;
+
+  const pfOldest = oldestElapsedLabel([...pfExternals, ...pfAwards]);
+  const alumniOldest = oldestElapsedLabel(alumniUnmapped);
+  const draftOldest = oldestElapsedLabel(pendingDrafts);
+
   // Sprint UX-2: "오늘 처리할 일" 가시성 — 학술활동 pending 신청 총합 (1쿼리)
   const { data: pendingAppsCount = 0 } = useQuery({
     queryKey: ["console", "pending-applications-count"],
@@ -199,6 +258,66 @@ export default function ConsoleDashboardPage() {
           description="예정 세미나의 타임라인 준비 항목이 목표일을 지났습니다."
           action={{ label: "학술 대시보드 확인", href: "/console/academic/manage" }}
         />
+      )}
+
+      {/* H3: 처리 대기 통합 큐 — 침묵하는 수동 백로그 수확 */}
+      {totalManualQueueCount > 0 && (
+        <div className="rounded-2xl border border-warning/30 bg-warning/5 p-4">
+          <div className="mb-3 flex items-center gap-2">
+            <Inbox size={16} className="text-warning" />
+            <h2 className="text-sm font-semibold text-warning">처리 대기 통합 큐</h2>
+            <span className="ml-auto text-[11px] text-muted-foreground">
+              총 {totalManualQueueCount}건 — 수동 개입 필요
+            </span>
+          </div>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {pfPendingCount > 0 && (
+              <Link
+                href="/console/portfolio-verification"
+                className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 transition-shadow hover:shadow-sm"
+              >
+                <div>
+                  <p className="text-lg font-bold">{pfPendingCount}</p>
+                  <p className="text-xs text-muted-foreground">포트폴리오 검증</p>
+                  {pfOldest && (
+                    <p className="mt-0.5 text-[10px] text-warning">{pfOldest}</p>
+                  )}
+                </div>
+                <ArrowRight size={14} className="shrink-0 text-muted-foreground" />
+              </Link>
+            )}
+            {alumniPendingCount > 0 && (
+              <Link
+                href="/console/alumni-mapping"
+                className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 transition-shadow hover:shadow-sm"
+              >
+                <div>
+                  <p className="text-lg font-bold">{alumniPendingCount}</p>
+                  <p className="text-xs text-muted-foreground">미매핑 졸업논문</p>
+                  {alumniOldest && (
+                    <p className="mt-0.5 text-[10px] text-warning">{alumniOldest}</p>
+                  )}
+                </div>
+                <ArrowRight size={14} className="shrink-0 text-muted-foreground" />
+              </Link>
+            )}
+            {draftPendingCount > 0 && (
+              <Link
+                href="/console/content-drafts"
+                className="flex items-center justify-between rounded-xl border bg-card px-4 py-3 transition-shadow hover:shadow-sm"
+              >
+                <div>
+                  <p className="text-lg font-bold">{draftPendingCount}</p>
+                  <p className="text-xs text-muted-foreground">콘텐츠 초안</p>
+                  {draftOldest && (
+                    <p className="mt-0.5 text-[10px] text-warning">{draftOldest}</p>
+                  )}
+                </div>
+                <ArrowRight size={14} className="shrink-0 text-muted-foreground" />
+              </Link>
+            )}
+          </div>
+        </div>
       )}
 
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">

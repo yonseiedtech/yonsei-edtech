@@ -217,7 +217,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
     { label: "회원 승인 대기", count: pendingCount, href: "/console/members" },
     { label: "미답변 문의", count: unansweredCount, href: "/console/inquiries" },
     { label: "피드백 미확인", count: feedbackNewCount, href: "/console/feedback" },
-    { label: "아카이브 미검수", count: archiveDraftCount, href: "/console/archive/research-methods" },
+    { label: "아카이브 미검수", count: archiveDraftCount, href: "/console/archive/review-queue" },
     { label: "콘텐츠 초안 대기", count: contentDraftCount, href: "/console/content-drafts" },
   ];
 

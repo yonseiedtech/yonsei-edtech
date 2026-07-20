@@ -19,7 +19,8 @@ export type StudyKind =
   | "exam_prep" // 자격증·시험 대비
   | "project" // 프로젝트·산출물
   | "sig_research" // SIG·연구
-  | "tool_coding"; // 도구·코딩 실습
+  | "tool_coding" // 도구·코딩 실습
+  | "thesis_writing"; // 논문 작성
 
 /** 최종 목표 유형 — 기반 설계 모형을 결정하는 핵심 축 */
 export type GoalType =
@@ -55,7 +56,8 @@ export const STUDY_KIND_LABELS: Record<StudyKind, string> = {
   exam_prep: "자격증·시험 대비",
   project: "프로젝트·산출물",
   sig_research: "SIG·연구",
-  tool_coding: "도구·코딩 실습",
+  tool_coding: "도구·코딩 실습 (바이브코딩 등)",
+  thesis_writing: "논문 작성",
 };
 
 export const GOAL_TYPE_LABELS: Record<GoalType, string> = {
@@ -94,6 +96,8 @@ export interface DesignModel {
   theory: string;
   /** 아카이브에 실재하는 개념명 — 이름→id 해석 후 /archive/concept/{id} 딥링크 */
   conceptNames: string[];
+  /** 아카이브 가이드 딥링크 — 실재하는 고정 경로 (개념 색인 조회 없이 직접 렌더) */
+  guideLinks?: { href: string; label: string }[];
 }
 
 /**
@@ -151,6 +155,19 @@ const COLLABORATIVE_MODEL: DesignModel = {
   name: "협력 상호작용",
   theory: "Collaborative Learning",
   conceptNames: ["협력학습"],
+};
+
+/** 논문 작성 스터디 전용 설계 모형 — 인지적 도제 + 과정중심 글쓰기 */
+const THESIS_WRITING_MODEL: DesignModel = {
+  id: "thesis_writing",
+  name: "인지적 도제 · 과정중심 글쓰기",
+  theory: "Cognitive Apprenticeship + Process Writing (plan–draft–critique–revise cycle)",
+  conceptNames: ["인지적 도제", "자기주도학습", "메타인지"],
+  guideLinks: [
+    { href: "/archive/literature-review-guide", label: "문헌 리뷰 가이드" },
+    { href: "/archive/citation-guide", label: "인용 가이드" },
+    { href: "/archive/apa-style", label: "APA 스타일" },
+  ],
 };
 
 // ── Bloom 동사군 (목표 유형별) — 학습목표 문장 템플릿에 사용 ──
@@ -221,6 +238,8 @@ function developmentTopicLabel(kind: StudyKind, index: number): string {
       return `연구 세션 ${index}`;
     case "tool_coding":
       return `실습 ${index}`;
+    case "thesis_writing":
+      return `집필 블록 ${index}`;
   }
 }
 
@@ -362,6 +381,53 @@ function developmentSkeleton({ goalType, posIndex, devCount }: DevSkeletonInput)
   }
 }
 
+/** 논문 작성 스터디 전개 회차 골격 — 집필 블록 반복 + 섹션 마일스톤 점검 */
+function thesisWritingSkeleton(posIndex: number, devCount: number): {
+  activities: string[];
+  assignment: string;
+  topicOverride?: string;
+} {
+  // devCount >= 6 이면 1/3 지점에 서론·이론적 배경 마일스톤 추가
+  const isEarlyMilestone = devCount >= 6 && posIndex === Math.floor(devCount / 3);
+  // devCount >= 3 이면 중간 지점에 방법·결과 마일스톤
+  const isMidMilestone = devCount >= 3 && posIndex === Math.floor(devCount / 2) && !isEarlyMilestone;
+
+  if (isEarlyMilestone) {
+    return {
+      topicOverride: "마일스톤 점검 — 서론·이론적 배경 완성도",
+      activities: [
+        "완성 섹션 공유(서론·이론적 배경)",
+        "동료 피드백(체크리스트 기반)",
+        "미완성 블로커 점검",
+        "수정 우선순위 결정",
+      ],
+      assignment: "마일스톤 피드백 반영 후 서론·이론적 배경 보완",
+    };
+  }
+  if (isMidMilestone) {
+    return {
+      topicOverride: "마일스톤 점검 — 방법·결과 완성도",
+      activities: [
+        "완성 섹션 공유(방법·결과)",
+        "동료 피드백(체크리스트 기반)",
+        "미완성 블로커 점검",
+        "수정 우선순위 결정",
+      ],
+      assignment: "마일스톤 피드백 반영 후 방법·결과 섹션 보완",
+    };
+  }
+  // 일반 집필 블록: 계획→모각글→동료 크리틱→수정 계획
+  return {
+    activities: [
+      "집필 목표 공유(각자 이번 회차 목표)",
+      "라이팅 타임(모각글)",
+      "동료 크리틱(체크리스트 기반)",
+      "수정 계획 수립",
+    ],
+    assignment: "다음 회차까지 집필 분량 완성 + 체크리스트 자가 점검",
+  };
+}
+
 // ── 메인 엔진 ──
 
 /** sessionCount 범위 보정 (2~16) */
@@ -395,13 +461,20 @@ export function generateCurriculum(conditions: CurriculumConditions): Curriculum
   let week = 1;
 
   // 1) 오리엔테이션
+  const isThesisWriting = studyKind === "thesis_writing";
   sessions.push({
     week: week++,
     phase: "orientation",
-    topic: "오리엔테이션 · 목표 합의",
-    objective: "스터디 목표와 운영 규칙에 합의하고 각자의 기대를 공유할 수 있다.",
-    activities: ["목표·기대 공유", "운영 규칙·일정 합의", "아이스브레이킹", groupInteraction],
-    assignment: "다음 회차 사전 자료 훑어보기",
+    topic: isThesisWriting ? "오리엔테이션 · 논문 목표·일정 합의" : "오리엔테이션 · 목표 합의",
+    objective: isThesisWriting
+      ? "각자의 논문 목표, 완성 섹션 일정, 피드백 체크리스트 방식에 합의할 수 있다."
+      : "스터디 목표와 운영 규칙에 합의하고 각자의 기대를 공유할 수 있다.",
+    activities: isThesisWriting
+      ? ["각자 논문 목표·현재 진도 공유", "집필 일정 합의(섹션별 마일스톤)", "피드백 체크리스트 방식 소개", groupInteraction]
+      : ["목표·기대 공유", "운영 규칙·일정 합의", "아이스브레이킹", groupInteraction],
+    assignment: isThesisWriting
+      ? "다음 회차까지 집필 목표(섹션·분량) 정해 공유하기"
+      : "다음 회차 사전 자료 훑어보기",
   });
 
   // 1-b) 입문 기초 다지기
@@ -418,7 +491,9 @@ export function generateCurriculum(conditions: CurriculumConditions): Curriculum
 
   // 2) 전개
   for (let i = 0; i < devCount; i++) {
-    const skel = developmentSkeleton({ goalType, posIndex: i, devCount });
+    const skel = isThesisWriting
+      ? thesisWritingSkeleton(i, devCount)
+      : developmentSkeleton({ goalType, posIndex: i, devCount });
     const topic = skel.topicOverride ?? developmentTopicLabel(studyKind, i + 1);
     const verb = verbs[i % verbs.length];
     const activities = [...skel.activities, ...scaffoldExtra, groupInteraction];
@@ -434,14 +509,25 @@ export function generateCurriculum(conditions: CurriculumConditions): Curriculum
 
   // 3) 통합/평가 (마지막 1~2회차)
   if (integrationCount >= 2) {
-    sessions.push({
-      week: week++,
-      phase: "integration",
-      topic: "산출·성과 공유",
-      objective: `학습한 내용을 종합해 산출물/성과로 ${verbs[verbs.length - 1]}.`,
-      activities: ["개인·팀 산출물 발표", "상호 피드백", groupInteraction],
-      assignment: "발표 자료·산출물 최종본 정리",
-    });
+    if (isThesisWriting) {
+      sessions.push({
+        week: week++,
+        phase: "integration",
+        topic: "전체 초안 공유 · 상호 피드백",
+        objective: `전체 논문 초안을 공유하고 상호 피드백을 ${verbs[verbs.length - 1]}.`,
+        activities: ["전체 초안 공유", "상호 종합 피드백", "수정 우선순위 정리", groupInteraction],
+        assignment: "피드백 반영 최종 수정 착수",
+      });
+    } else {
+      sessions.push({
+        week: week++,
+        phase: "integration",
+        topic: "산출·성과 공유",
+        objective: `학습한 내용을 종합해 산출물/성과로 ${verbs[verbs.length - 1]}.`,
+        activities: ["개인·팀 산출물 발표", "상호 피드백", groupInteraction],
+        assignment: "발표 자료·산출물 최종본 정리",
+      });
+    }
   }
   sessions.push({
     week: week++,
@@ -453,7 +539,7 @@ export function generateCurriculum(conditions: CurriculumConditions): Curriculum
   });
 
   // 적용 모형 배지
-  const models: DesignModel[] = [GOAL_MODELS[goalType]];
+  const models: DesignModel[] = [isThesisWriting ? THESIS_WRITING_MODEL : GOAL_MODELS[goalType]];
   if (level === "beginner" || level === "mixed") models.push(SCAFFOLDING_MODEL);
   if (groupSize === "medium" || groupSize === "large") models.push(COLLABORATIVE_MODEL);
 

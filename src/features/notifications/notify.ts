@@ -5,7 +5,7 @@
  */
 
 import { notificationsApi, profilesApi } from "@/lib/bkend";
-import type { NotificationType } from "@/types";
+import type { NotificationType, KudosContext } from "@/types";
 
 async function create(
   userId: string,
@@ -314,17 +314,39 @@ export function notifyReaction(authorId: string, reactorName: string, postId: st
 }
 
 /**
- * 학습 활동 kudos — 코호트 동기가 내 이번 주 학습 활동에 응원 (v7-H5).
+ * 학습 활동 kudos — 회원이 내 활동/관계에 응원 (v7-H5 → v11-H2 관계 확장).
  * 동일 발신자 주 1회(docId 제약)로 자연히 과알림 방지. 학습 세부 수치는 담지 않는다.
+ * context 로 문구·링크만 관계 맥락에 맞게 조정한다(기본 = 코호트 동기 학습).
  */
-export function notifyKudos(recipientId: string, senderName: string) {
-  return create(
-    recipientId,
-    "kudos",
-    "동기가 응원을 보냈어요 👏",
-    `${senderName}님이 이번 주 학습 활동에 응원을 보냈어요.`,
-    "/steppingstone/onboarding",
-  );
+export function notifyKudos(
+  recipientId: string,
+  senderName: string,
+  context: KudosContext = "cohort",
+) {
+  const COPY: Record<KudosContext, { title: string; body: string; link: string }> = {
+    cohort: {
+      title: "동기가 응원을 보냈어요 👏",
+      body: `${senderName}님이 이번 주 학습 활동에 응원을 보냈어요.`,
+      link: "/steppingstone/onboarding",
+    },
+    mentoring: {
+      title: "멘티가 응원을 보냈어요 👏",
+      body: `${senderName}님이 멘토링 답변에 감사 응원을 보냈어요.`,
+      link: "/mentoring",
+    },
+    study: {
+      title: "함께한 동료가 응원을 보냈어요 👏",
+      body: `${senderName}님이 함께한 스터디 활동에 응원을 보냈어요.`,
+      link: "/activities",
+    },
+    hackathon: {
+      title: "팀원이 응원을 보냈어요 👏",
+      body: `${senderName}님이 해커톤 팀 활동에 응원을 보냈어요.`,
+      link: "/hackathon",
+    },
+  };
+  const { title, body, link } = COPY[context];
+  return create(recipientId, "kudos", title, body, link);
 }
 
 /** 프로필 좋아요 — 상호 방문 유도 */

@@ -1,14 +1,26 @@
 import { NextRequest } from "next/server";
+import { FieldValue } from "firebase-admin/firestore";
 import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
-import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
+import {
+  createNotificationAdmin,
+  fanOutNotificationAdmin,
+} from "@/lib/notifications-bridge";
+import {
+  partitionPending,
+  AUTO_APPROVE_SETTINGS_KEY,
+  isAutoApproveEnabled,
+} from "@/lib/auth/approval-rules";
+import type { User } from "@/types";
 
 /**
- * 미처리 가입 신청 운영진 넛지 Cron (일 1회) — v9-H5
+ * 미처리 가입 신청 운영진 넛지 Cron (일 1회) — v9-H5 · R1(자동 승인 서버 이관, 2026-07-21)
  *
- * 승인 대기 중인 가입 신청이 있을 때 운영진(admin·sysadmin·president·staff)에게
- * 인앱 알림을 1일 1회 발송한다.
+ * 1) 전역 자동 승인(site_settings.auto_approve_enabled, 기본 ON): 규칙 통과 자격자를
+ *    서버에서 approved=true 처리(운영진 콘솔 접속과 무관). 승인 알림·감사로그 부수.
+ * 2) 자동 승인 후에도 남은 미처리 가입 신청이 있으면 운영진(admin·sysadmin·president·staff)
+ *    에게 인앱 알림을 1일 1회 발송한다.
  *
  * 스팸 방지:
  *  - 일 1회: push_logs/{pending_signup_nudge_{adminId}_{dateKey}} 중복 방지
@@ -27,6 +39,10 @@ type UserDoc = {
   rejected?: boolean;
   createdAt?: string | null;
   role?: string;
+  // 자동 승인 규칙 평가에 필요한 필드 (evaluateSignup)
+  name?: string;
+  email?: string;
+  studentId?: string;
 };
 
 /** UTC 날짜 키 (YYYY-MM-DD) — 일별 dedup 앵커 */
@@ -57,12 +73,82 @@ async function _handler(req: NextRequest) {
       .where("approved", "==", false)
       .get();
 
-    const pendingUsers: UserDoc[] = pendingSnap.docs
+    let pendingUsers: UserDoc[] = pendingSnap.docs
       .map((d) => ({ id: d.id, ...(d.data() as Omit<UserDoc, "id">) }))
       .filter((u) => !u.rejected); // 거절 제외
 
+    // 승인 회원 (자동 승인 중복 검사 + 운영진 조회에 공용 재사용)
+    const allUsersSnap = await db
+      .collection("users")
+      .where("approved", "==", true)
+      .get();
+    const approvedUsers: UserDoc[] = allUsersSnap.docs.map((d) => ({
+      id: d.id,
+      ...(d.data() as Omit<UserDoc, "id">),
+    }));
+
+    // ── R1: 전역 자동 승인 (서버 이관, 2026-07-21) ──────────────────────────
+    // 기존에는 AdminMemberTab 클라이언트 useEffect 가 운영진이 콘솔을 열 때만 자동 승인을
+    // 실행했다. 이를 서버 cron(일 1회)으로 이관해 운영진 접속과 무관하게 자격자를 승인한다.
+    // 전역 토글은 site_settings(auto_approve_enabled) — 문서 부재/미설정 시 기본 ON.
+    let autoApproved = 0;
+    const settingSnap = await db
+      .collection("site_settings")
+      .where("key", "==", AUTO_APPROVE_SETTINGS_KEY)
+      .limit(1)
+      .get();
+    const autoEnabled = isAutoApproveEnabled(
+      settingSnap.empty ? undefined : (settingSnap.docs[0].data().value as string),
+    );
+
+    if (autoEnabled && pendingUsers.length > 0) {
+      const { qualifying } = partitionPending(
+        pendingUsers as unknown as User[],
+        approvedUsers as unknown as User[],
+      );
+      const approvedIds = new Set<string>();
+      for (const u of qualifying) {
+        try {
+          await db
+            .collection("users")
+            .doc(u.id)
+            .update({ approved: true, autoApprovedAt: FieldValue.serverTimestamp() });
+          await createNotificationAdmin({
+            userId: u.id,
+            type: "member_approved",
+            title: "가입이 승인되었습니다 🎉",
+            body: `${u.name ?? ""}님, 연세교육공학회 회원 가입이 승인되었습니다.`,
+            relatedLink: "/dashboard",
+          });
+          try {
+            await db.collection("audit_logs").add({
+              adminUid: "system:cron-auto-approve",
+              targetUid: u.id,
+              targetName: u.name ?? "",
+              action: "auto_approve_cron",
+              at: FieldValue.serverTimestamp(),
+            });
+          } catch {
+            /* 감사 로그 실패해도 승인은 진행 */
+          }
+          approvedIds.add(u.id);
+          autoApproved++;
+        } catch (e) {
+          console.error(`[pending-signup-nudge] auto-approve error userId=${u.id}`, e);
+        }
+      }
+      // 자동 승인된 회원은 잔여 미처리(넛지 대상)에서 제외
+      pendingUsers = pendingUsers.filter((u) => !approvedIds.has(u.id));
+    }
+
     if (pendingUsers.length === 0) {
-      return Response.json({ ok: true, pending: 0, sent: 0, reason: "no-pending" });
+      return Response.json({
+        ok: true,
+        pending: 0,
+        autoApproved,
+        sent: 0,
+        reason: autoApproved > 0 ? "all-auto-approved" : "no-pending",
+      });
     }
 
     // 3일 초과 미처리 건수
@@ -70,14 +156,8 @@ async function _handler(req: NextRequest) {
       (u) => daysAgo(u.createdAt) >= STALE_DAYS,
     ).length;
 
-    // ── 2. 운영진 조회 ────────────────────────────────────────────────────────
-    const allUsersSnap = await db
-      .collection("users")
-      .where("approved", "==", true)
-      .get();
-
-    const adminUsers: UserDoc[] = allUsersSnap.docs
-      .map((d) => ({ id: d.id, ...(d.data() as Omit<UserDoc, "id">) }))
+    // ── 2. 운영진 조회 (승인 회원 재사용) ────────────────────────────────────
+    const adminUsers: UserDoc[] = approvedUsers
       .filter((u) => u.role && ADMIN_ROLES.has(u.role))
       .slice(0, MAX_ADMINS);
 
@@ -144,6 +224,7 @@ async function _handler(req: NextRequest) {
     return Response.json({
       ok: true,
       dateKey,
+      autoApproved,
       pending: pendingUsers.length,
       stale: staleCount,
       admins: adminUsers.length,

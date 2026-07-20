@@ -2,6 +2,21 @@ import type { User } from "@/types";
 
 const APPROVED_EMAIL_DOMAINS = ["yonsei.ac.kr"];
 
+/**
+ * 자동 승인 전역 토글 site_settings 키 (R1, 2026-07-21).
+ * 기존 운영진 개인 localStorage("autoApproveEnabled") 를 대체하는 전역(서버·콘솔 공유) 스위치.
+ * 값은 문자열 "true"/"false" 로 저장한다(site_settings.value 규약).
+ */
+export const AUTO_APPROVE_SETTINGS_KEY = "auto_approve_enabled";
+
+/**
+ * site_settings value(문자열) → 자동 승인 활성 여부.
+ * 문서 부재/미설정 시 기본 ON(기존 클라이언트 기본값 유지). 명시적 "false" 일 때만 비활성.
+ */
+export function isAutoApproveEnabled(value: string | null | undefined): boolean {
+  return value !== "false";
+}
+
 export interface ApprovalEvaluation {
   qualifying: boolean;
   reasons: string[];

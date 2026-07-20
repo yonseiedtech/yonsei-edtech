@@ -14,7 +14,7 @@
  * 게스트는 가입 유도(로그인 CTA).
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Lightbulb,
@@ -27,6 +27,7 @@ import {
   UserPlus,
   UserCheck,
   ArrowRight,
+  X,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -56,6 +57,11 @@ export default function HackathonBoard() {
   );
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<string>("all");
+  const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+
+  useEffect(() => {
+    setOnboardingDismissed(localStorage.getItem("hackathon_onboarding_dismissed") === "1");
+  }, []);
 
   // 보드 프로비저닝 — 로그인 사용자만 (rules: create 는 ownerId==auth.uid)
   const { data: board, isLoading: boardLoading } = useQuery<CommBoard | null>({
@@ -150,6 +156,11 @@ export default function HackathonBoard() {
     queryClient.invalidateQueries({
       queryKey: ["hackathon-joins", HACKATHON_CONTEXT_ID],
     });
+  }
+
+  function handleDismissOnboarding() {
+    localStorage.setItem("hackathon_onboarding_dismissed", "1");
+    setOnboardingDismissed(true);
   }
 
   async function handleRegister() {
@@ -264,6 +275,42 @@ export default function HackathonBoard() {
 
   return (
     <div className="space-y-6">
+      {/* ── 팀 형성 흐름 안내 (첫 방문 1회 · localStorage dismiss) ── */}
+      {!onboardingDismissed && (
+        <div className="relative rounded-2xl border bg-card p-4">
+          <button
+            aria-label="안내 닫기"
+            className="absolute right-3 top-3 rounded-full p-0.5 text-muted-foreground hover:text-foreground transition-colors"
+            onClick={handleDismissOnboarding}
+          >
+            <X size={14} />
+          </button>
+          <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+            해커톤 팀 형성 3단계
+          </p>
+          <ol className="flex flex-wrap gap-2">
+            {[
+              { step: "1", label: "아이디어 등록", desc: "풀고 싶은 문제를 한 줄 남기면 참가 신청이 됩니다." },
+              { step: "2", label: "팀 합류", desc: "관심 있는 아이디어에 합류 희망을 표시하세요." },
+              { step: "3", label: "팀 확정·제출", desc: "합류자를 확인 후 팀을 확정하고 산출물을 제출하세요." },
+            ].map(({ step, label, desc }) => (
+              <li
+                key={step}
+                className="flex min-w-[9rem] flex-1 items-start gap-2 rounded-xl bg-muted/50 px-3 py-2"
+              >
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary text-[11px] font-bold text-primary-foreground">
+                  {step}
+                </span>
+                <div>
+                  <p className="text-xs font-semibold">{label}</p>
+                  <p className="text-[11px] text-muted-foreground">{desc}</p>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
+
       {/* ── 참가 신청 / 신청 완료 ── */}
       {myEntry ? (
         <section className="rounded-2xl border border-primary/30 bg-primary/5 p-4">

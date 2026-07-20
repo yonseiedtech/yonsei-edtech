@@ -16,6 +16,16 @@
 /** 응원 종류 — 지금은 단일 응원("cheer"). 확장 여지를 위해 유니온으로 둔다. */
 export type KudosType = "cheer";
 
+/**
+ * 응원이 오간 관계 맥락 (v11-H2 — 코호트 섬 확장).
+ *  - "cohort"    : 같은 가입 학기 동기 학습 응원 (v7-H5 원형)
+ *  - "mentoring" : 멘토링 답변 채택 시 질문자→멘토 감사 응원
+ *  - "study"     : 같은 스터디/활동 참여자 간 응원
+ *  - "hackathon" : 같은 해커톤 팀원 간 응원
+ * 하위호환: 필드가 없는 기존 문서는 "cohort" 로 간주한다.
+ */
+export type KudosContext = "cohort" | "mentoring" | "study" | "hackathon";
+
 export interface Kudos {
   /** `${fromUserId}_${toUserId}_${weekKey}` */
   id: string;
@@ -28,5 +38,7 @@ export interface Kudos {
   /** 응원 대상 활동 주의 월요일(로컬) YYYY-MM-DD — weekKeyOf() 와 동일 기준 */
   weekKey: string;
   type: KudosType;
+  /** 관계 맥락 (v11-H2). 없으면 "cohort"(하위호환). */
+  context?: KudosContext;
   createdAt: string;
 }

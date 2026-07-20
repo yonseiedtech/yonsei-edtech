@@ -20,6 +20,7 @@ import {
   Users,
   Star,
   Inbox,
+  Send,
 } from "lucide-react";
 import { toast } from "sonner";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
@@ -84,6 +85,29 @@ export default function HackathonJudgingConsolePage() {
     qc.invalidateQueries({ queryKey: ["console-hackathon-judgings"] });
   }
 
+  // R4 (#18): 수상 지정분(award 있음) 중 아직 미공개인 산출물을 일괄 공개 —
+  // 개별 토글 누락으로 일부 수상작만 노출되는 사고 방지.
+  const pendingPublish = useMemo(
+    () => submissions.filter((s) => s.award && !s.published),
+    [submissions],
+  );
+  const bulkPublish = useMutation({
+    mutationFn: async () => {
+      let ok = 0;
+      for (const s of pendingPublish) {
+        await hackathonSubmissionsApi.update(s.id, { published: true });
+        ok += 1;
+      }
+      return ok;
+    },
+    onSuccess: (ok) => {
+      toast.success(`수상작 ${ok}건을 일괄 공개했습니다.`);
+      refresh();
+    },
+    onError: (e) =>
+      toast.error(`일괄 공개 실패: ${e instanceof Error ? e.message : "오류"}`),
+  });
+
   return (
     <div className="space-y-5">
       <ConsolePageHeader
@@ -114,6 +138,27 @@ export default function HackathonJudgingConsolePage() {
             </div>
           ) : (
             <ul className="space-y-4">
+              {pendingPublish.length > 0 && (
+                <li className="flex flex-wrap items-center justify-between gap-2 rounded-2xl border border-primary/30 bg-primary/5 p-4">
+                  <p className="text-sm text-muted-foreground">
+                    수상 지정됐지만 미공개인 산출물{" "}
+                    <span className="font-semibold text-primary">{pendingPublish.length}건</span>{" "}
+                    — 한 번에 공개할 수 있습니다.
+                  </p>
+                  <Button
+                    size="sm"
+                    onClick={() => bulkPublish.mutate()}
+                    disabled={bulkPublish.isPending}
+                  >
+                    {bulkPublish.isPending ? (
+                      <Loader2 size={14} className="mr-1 animate-spin" />
+                    ) : (
+                      <Send size={14} className="mr-1" />
+                    )}
+                    수상 지정분 일괄 공개
+                  </Button>
+                </li>
+              )}
               {sorted.map((s) => (
                 <JudgingCard
                   key={s.id}

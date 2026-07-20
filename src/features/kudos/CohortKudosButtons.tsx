@@ -9,13 +9,13 @@
 
 import { Check, Loader2 } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import type { User } from "@/types";
+import type { KudosTarget } from "./useKudosSend";
 
 interface Props {
-  targets: User[];
+  targets: KudosTarget[];
   isSent: (peerId: string) => boolean;
   isSending: (peerId: string) => boolean;
-  onSend: (peer: User) => void;
+  onSend: (peer: KudosTarget) => void;
 }
 
 export default function CohortKudosButtons({ targets, isSent, isSending, onSend }: Props) {

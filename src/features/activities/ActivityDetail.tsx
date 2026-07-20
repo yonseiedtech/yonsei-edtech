@@ -64,6 +64,7 @@ import FormBuilder from "./FormBuilder";
 import FormBuilderByType from "./FormBuilderByType";
 import FormRenderer from "./FormRenderer";
 import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
+import EmptyState from "@/components/ui/empty-state";
 import { useAllMembers } from "@/features/member/useMembers";
 
 const STATUS_LABELS: Record<string, string> = { upcoming: "예정", ongoing: "진행 중", completed: "완료" };
@@ -1347,7 +1348,19 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               {/* 주차별 기록 */}
               <div className="rounded-2xl border bg-card divide-y">
                 {progressList.length === 0 ? (
-                  <p className="p-6 text-center text-sm text-muted-foreground">등록된 진행 기록이 없습니다.</p>
+                  type === "study" && (isStaff || isLeader) ? (
+                    <div className="p-2">
+                      <EmptyState
+                        icon={Wand2}
+                        title="아직 등록된 회차가 없습니다"
+                        description="교수설계 마법사로 커리큘럼을 설계하면 회차를 자동으로 생성할 수 있어요. ADDIE·Dick & Carey 등 교수설계 모형을 선택해 체계적인 스터디 계획을 세워보세요."
+                        compact
+                        actions={[{ label: "교수설계 마법사로 시작하기", onClick: () => setWizardOpen(true) }]}
+                      />
+                    </div>
+                  ) : (
+                    <p className="p-6 text-center text-sm text-muted-foreground">등록된 진행 기록이 없습니다.</p>
+                  )
                 ) : (
                   progressList.map((p, idx) => {
                     const isExpanded = expandedTimers.has(p.id);

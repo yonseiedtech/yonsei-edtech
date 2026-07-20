@@ -15,7 +15,7 @@
  */
 
 import Link from "next/link";
-import { Quote, ArrowLeft, AlertTriangle, CheckCircle2, XCircle, MinusCircle } from "lucide-react";
+import { Quote, ArrowLeft, AlertTriangle, CheckCircle2, XCircle, MinusCircle, CalendarCheck } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import PageContainer from "@/components/ui/page-container";
 import { Separator } from "@/components/ui/separator";
@@ -413,6 +413,17 @@ export default function CitationGuidePage() {
               모든 예시는 형식 설명용 가상 예시이며, 최종 표기·인용 형식은 투고 학술지 기준과 소속
               대학원 논문 작성 지침, 지도교수 안내를 우선 따르시기 바랍니다.
             </p>
+            {/* H4 콘텐츠 신선도 — 최종 검토일 + 개정 이력 슬롯 */}
+            <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-3 text-[11px] text-muted-foreground">
+              <span className="flex items-center gap-1">
+                <CalendarCheck className="h-3 w-3 shrink-0" aria-hidden />
+                최종 검토 <strong className="text-foreground">2026-07-20</strong>
+              </span>
+              <span aria-hidden>·</span>
+              <span>v1.2</span>
+              <span aria-hidden>·</span>
+              <span>개정 이력: 2026-07-12 번역서 인용(재인용) 섹션 추가 · 2026-01 최초 게시</span>
+            </div>
           </div>
 
           <ArchiveStickyToc sections={TOC_SECTIONS} />

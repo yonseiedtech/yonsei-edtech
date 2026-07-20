@@ -8,7 +8,7 @@
  */
 
 import Link from "next/link";
-import { BookText, ArrowLeft } from "lucide-react";
+import { BookText, ArrowLeft, CalendarCheck } from "lucide-react";
 import PageHeader from "@/components/ui/page-header";
 import { Separator } from "@/components/ui/separator";
 import InlineNotification from "@/components/ui/inline-notification";
@@ -216,6 +216,17 @@ export default function ApaStylePage() {
           세부 규정·예외 사항은 <em className="font-serif">APA Publication Manual (7th ed.)</em> 및 소속 대학원 논문 작성
           지침을 반드시 확인하시기 바랍니다.
         </p>
+        {/* H4 콘텐츠 신선도 — 최종 검토일 + 개정 이력 슬롯 */}
+        <div className="mt-3 flex flex-wrap items-center gap-x-3 gap-y-1 border-t pt-3 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <CalendarCheck className="h-3 w-3 shrink-0" aria-hidden />
+            최종 검토 <strong className="text-foreground">2026-07-20</strong>
+          </span>
+          <span aria-hidden>·</span>
+          <span>v1.1</span>
+          <span aria-hidden>·</span>
+          <span>개정 이력: 2026-07-12 번역서 인용 형식 추가 · 2026-01 최초 게시</span>
+        </div>
 
           </div>
           <ArchiveStickyToc sections={APA_TOC_SECTIONS} />

@@ -4,7 +4,8 @@ import type { DocumentReference } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
 import { requireAuth } from "@/lib/api-auth";
-import { currentSemesterKey } from "@/lib/semester";
+import { currentSemesterKey, shiftSemesterKey } from "@/lib/semester";
+import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 
 /**
  * 학기 자동 진행 Cron — 매일 실행, 학기 경계(3월·9월)에서만 실제 변동.
@@ -28,6 +29,96 @@ interface AdvanceResult {
   anchored: number;
   /** 대상 아님(누적학기 미설정·이미 처리됨·휴학·졸업) 수 */
   skipped: number;
+  /** 신학기 조직도 이월 결과 (R3) */
+  orgChart: OrgCarryResult;
+}
+
+interface OrgCarryResult {
+  carried: boolean;
+  /** 이월 원본 학기 키 또는 "legacy" (미이월 시 null) */
+  source: string | null;
+  reason?: string;
+}
+
+/** 학기 스코프 조직도 site_settings 키 (useOrgChart.orgChartKey 와 동일 규약 — 서버 인라인). */
+function orgChartKey(semesterKey: string): string {
+  return `org_chart:${semesterKey}`;
+}
+
+/** 운영진(조직도 이월 알림 수신) 역할 */
+const STAFF_ROLES = new Set(["admin", "sysadmin", "president", "staff"]);
+
+/**
+ * 신학기 조직도 자동 이월 (R3, 2026-07-21).
+ *
+ * 9/1 학기 키 전환 시 `org_chart:{신학기}` 문서가 없으면 직전 학기(없으면 레거시 `org_chart`)
+ * 조직도를 복사 생성한다. 비파괴 — 신학기 문서가 이미 있으면 아무 것도 하지 않는다(멱등).
+ * 원본이 전혀 없으면(첫 학기 등) 빈 조직도를 만들지 않고 건너뛴다.
+ * 이월이 실제 일어난 경우에만 운영진(staff+)에게 인앱 알림을 1회 발송한다.
+ */
+async function carryOverOrgChart(
+  db: FirebaseFirestore.Firestore,
+): Promise<OrgCarryResult> {
+  try {
+    const currentKey = currentSemesterKey();
+    const col = db.collection("site_settings");
+
+    // 신학기 문서가 이미 있으면 비파괴 — 스킵 (멱등: 이월·알림 모두 1회)
+    const currentSnap = await col.where("key", "==", orgChartKey(currentKey)).limit(1).get();
+    if (!currentSnap.empty) return { carried: false, source: null, reason: "already-exists" };
+
+    // 원본: 직전 학기 문서 → 없으면 레거시 단일 키 `org_chart`
+    const prevKey = shiftSemesterKey(currentKey, -1);
+    let sourceValue: string | null = null;
+    let sourceLabel: string | null = null;
+    if (prevKey) {
+      const prevSnap = await col.where("key", "==", orgChartKey(prevKey)).limit(1).get();
+      if (!prevSnap.empty) {
+        sourceValue = prevSnap.docs[0].data().value as string;
+        sourceLabel = prevKey;
+      }
+    }
+    if (sourceValue == null) {
+      const legacySnap = await col.where("key", "==", "org_chart").limit(1).get();
+      if (!legacySnap.empty) {
+        sourceValue = legacySnap.docs[0].data().value as string;
+        sourceLabel = "legacy";
+      }
+    }
+    if (sourceValue == null) return { carried: false, source: null, reason: "no-source" };
+
+    // 신학기 문서 생성 (복사)
+    const nowIso = new Date().toISOString();
+    await col.add({
+      key: orgChartKey(currentKey),
+      value: sourceValue,
+      createdAt: nowIso,
+      updatedAt: nowIso,
+    });
+
+    // 운영진(staff+) 인앱 알림 1회
+    const usersSnap = await db.collection("users").where("approved", "==", true).get();
+    const staffIds = usersSnap.docs
+      .filter((d) => {
+        const role = (d.data() as { role?: string }).role;
+        return role && STAFF_ROLES.has(role);
+      })
+      .map((d) => d.id);
+    if (staffIds.length > 0) {
+      await fanOutNotificationAdmin(staffIds, {
+        type: "admin_nudge",
+        title: "신학기 조직도가 이월됐습니다",
+        body: `${currentKey} 학기 조직도를 직전 조직도에서 자동 이월했습니다. 조직 설정에서 검토·갱신해주세요.`,
+        relatedLink: "/console/settings/org-chart",
+        metadata: { semesterKey: currentKey, source: sourceLabel },
+      });
+    }
+
+    return { carried: true, source: sourceLabel };
+  } catch (e) {
+    console.error("[semester-advance] carryOverOrgChart failed", e);
+    return { carried: false, source: null, reason: "error" };
+  }
 }
 
 async function advanceSemesters(): Promise<AdvanceResult> {
@@ -85,7 +176,11 @@ async function advanceSemesters(): Promise<AdvanceResult> {
     await batch.commit();
   }
 
-  return { semesterKey: key, advanced, anchored, skipped };
+  // R3: 학기 키 전환 시 신학기 조직도 자동 이월 (비파괴·멱등). 매일 실행돼도
+  // 신학기 문서가 생기면 이후엔 스킵되므로 안전하게 매 실행 호출한다.
+  const orgChart = await carryOverOrgChart(db);
+
+  return { semesterKey: key, advanced, anchored, skipped, orgChart };
 }
 
 async function _handler(req: NextRequest) {

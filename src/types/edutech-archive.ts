@@ -52,6 +52,11 @@ export interface ArchiveOperationalMeta {
   reviewStatus?: ArchiveReviewStatus;
   /** v5-H2 — 보류(held) 사유. 선택 입력. */
   reviewNote?: string;
+  /**
+   * v11-H4 콘텐츠 신선도: 운영진 수동 검토 완료 시각.
+   * 부재 시 updatedAt 기준으로 노후도(stale) 산정. 검토 확인 시 재노후 타이머 초기화.
+   */
+  lastReviewedAt?: string;
 }
 
 export interface ArchiveConcept extends ArchiveOperationalMeta {

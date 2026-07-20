@@ -121,16 +121,30 @@ async function _handler(req: NextRequest) {
       d14: { targets: 0, dup: 0, skipped: 0, sent: 0 },
     };
 
+    // R2 (승인 지연 미발송 보정, 2026-07-21):
+    // 기존에는 가입 후 경과일이 dayOffset 과 "정확히 일치"하는 신입만 대상이라, 승인이 D+2 에
+    // 나면 D+1 넛지가 영구 미발송됐다(승인 전엔 approved==false 라 대상에서 제외되므로).
+    // → 각 신입에 대해 "가입 후 경과일이 도달한 가장 최근 단계" 1개만 오늘의 대상으로 삼는다.
+    //   앞 단계를 놓쳐도 최근 1단계만 보정 발송(몰아서 다 보내지 않음). push_logs dedup 이
+    //   이미 발송된 단계의 재발송을 막고, 스킵 조건은 단계별로 그대로 적용된다.
+    //   정시 승인 신입에겐 결과적으로 D+1→D+3→… 기존 케이던스와 동일하게 동작한다.
+    const targetsByStep = new Map<StepKey, UserDoc[]>();
+    for (const u of newcomers) {
+      if (!u.createdAt) continue;
+      const elapsed = diffYmd(isoToKstYmd(u.createdAt), todayYmd);
+      const step = stepForElapsed(elapsed);
+      if (!step) continue;
+      const arr = targetsByStep.get(step) ?? [];
+      arr.push(u);
+      targetsByStep.set(step, arr);
+    }
+
     for (const stepDef of STEPS) {
-      const { step, dayOffset, title, body, link } = stepDef;
+      const { step, title, body, link } = stepDef;
       const res = stepResults[step];
 
-      // 오늘 D+{dayOffset}에 해당하는 신입만 추출
-      const dayTargets = newcomers.filter((u) => {
-        if (!u.createdAt) return false;
-        const joinedYmd = isoToKstYmd(u.createdAt);
-        return diffYmd(joinedYmd, todayYmd) === dayOffset;
-      });
+      // 오늘 이 단계로 배정된 신입 (가장 최근 도달 단계 = step)
+      const dayTargets = targetsByStep.get(step) ?? [];
       res.targets = dayTargets.length;
       if (dayTargets.length === 0) continue;
 
@@ -289,6 +303,19 @@ async function applySkipCondition(
 }
 
 // ── 유틸 ─────────────────────────────────────────────────────────────────────
+
+/**
+ * 가입 후 경과일(elapsed)이 도달한 "가장 최근 단계"를 반환 (R2 보정용).
+ * STEPS 는 dayOffset 오름차순(1/3/7/10/14)이므로 elapsed 이상인 마지막 단계가 최근 단계.
+ * elapsed 가 첫 단계(D+1) 미만이면 null.
+ */
+function stepForElapsed(elapsed: number): StepKey | null {
+  let chosen: StepKey | null = null;
+  for (const s of STEPS) {
+    if (s.dayOffset <= elapsed) chosen = s.step;
+  }
+  return chosen;
+}
 
 /** YYYY-MM-DD 두 날짜의 일수 차이 (to - from, 양수=미래) */
 function diffYmd(fromYmd: string, toYmd: string): number {

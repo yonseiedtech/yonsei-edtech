@@ -11,6 +11,7 @@ import { auth as firebaseAuth } from "@/lib/firebase";
 import type { CommAnswer, CommBoard, CommQuestion, User } from "@/types";
 import { canDeletePost } from "./comm-helpers";
 import { getGuestNickname, setGuestNickname } from "./guest-name";
+import KudosInlineButton from "@/features/kudos/KudosInlineButton";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
@@ -279,6 +280,24 @@ export default function AnswerThread({
               ) : (
                 <p className="mt-1 whitespace-pre-wrap">{a.body}</p>
               )}
+
+              {/* v11-H2: 멘토링 답변 채택 시 질문자 → 멘토 감사 응원 (주 1회·양성 전용) */}
+              {accepted &&
+                board.contextType === "mentoring" &&
+                user &&
+                question.authorId === user.id &&
+                a.authorId &&
+                a.authorId !== user.id && (
+                  <div className="mt-1.5 flex items-center gap-1.5 border-t border-emerald-200/60 pt-1.5">
+                    <span className="text-[10px] text-muted-foreground">도움이 되었다면</span>
+                    <KudosInlineButton
+                      me={user}
+                      target={{ id: a.authorId, name: a.authorName ?? "멘토" }}
+                      context="mentoring"
+                      label="멘토에게 응원"
+                    />
+                  </div>
+                )}
             </div>
           );
         })

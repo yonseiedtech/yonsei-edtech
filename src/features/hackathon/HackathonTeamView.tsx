@@ -19,6 +19,8 @@ import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { hackathonSubmissionsApi, commQuestionsApi, hackathonTeamJoinsApi } from "@/lib/bkend";
 import type { HackathonSubmission, CommQuestion, HackathonTeamJoin } from "@/types";
+import KudosSendBlock from "@/features/kudos/KudosSendBlock";
+import type { KudosTarget } from "@/features/kudos/useKudosSend";
 import { HACKATHON_CONTEXT_ID, HACKATHON_TEAM_PREFS } from "./config";
 
 /** 보드 id 를 외부에서 주입 — 없으면 팀원 모집 섹션은 스킵 */
@@ -86,6 +88,29 @@ export default function HackathonTeamView({ boardId }: Props) {
     [submissions],
   );
 
+  // v11-H2: 내가 속한 팀(내가 올린 아이디어의 합류자 + 내가 합류한 아이디어의 작성자·공동 합류자)
+  // 팀원에게 응원. 확정 팀 submissions.members 는 이름 문자열이라 userId 가 없어 대상에서 제외
+  // (응원은 결정적 docId 상 수신자 userId 필수) — join(userId 보유) 관계만 대상으로 산정한다.
+  const myTeammates = useMemo<KudosTarget[]>(() => {
+    if (!user) return [];
+    const map = new Map<string, KudosTarget>();
+    for (const e of entries) {
+      const joiners = joinsByQuestion.get(e.id) ?? [];
+      const isAuthor = e.authorId === user.id;
+      const iJoined = joiners.some((j) => j.userId === user.id);
+      if (!isAuthor && !iJoined) continue;
+      if (e.authorId && e.authorId !== user.id && e.authorName) {
+        map.set(e.authorId, { id: e.authorId, name: e.authorName });
+      }
+      for (const j of joiners) {
+        if (j.userId && j.userId !== user.id) {
+          map.set(j.userId, { id: j.userId, name: j.userName });
+        }
+      }
+    }
+    return Array.from(map.values());
+  }, [entries, joinsByQuestion, user]);
+
   const loading = subLoading || entryLoading || joinLoading;
 
   if (!user) return null;
@@ -114,6 +139,15 @@ export default function HackathonTeamView({ boardId }: Props) {
           합류 희망 진행 중 {recruiting.length}건
         </span>
       </div>
+
+      {/* v11-H2: 내 팀원에게 응원 (양성 전용·주 1회) — 팀 관계가 있을 때만 노출 */}
+      <KudosSendBlock
+        me={user}
+        targets={myTeammates}
+        context="hackathon"
+        title="내 팀원에게 응원"
+        description="함께 팀을 이룬 동료예요. 가볍게 응원을 보내보세요. (팀원당 주 1회)"
+      />
 
       {!hasAny && (
         <EmptyState

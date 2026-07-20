@@ -10,8 +10,17 @@
  */
 
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Circle, ChevronRight } from "lucide-react";
-import { HACKATHON_PHASE_TIMELINE, HACKATHON_EVENT } from "./config";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { hackathonSubmissionsApi } from "@/lib/bkend";
+import type { HackathonSubmission } from "@/types";
+import {
+  HACKATHON_PHASE_TIMELINE,
+  HACKATHON_EVENT,
+  HACKATHON_CONTEXT_ID,
+  resolveHackathonPhaseGuarded,
+} from "./config";
 import { useHackathonOps } from "./useHackathonOps";
 
 /** 행사 시작 시각 UTC ms (2026-08-22 10:00 KST = 01:00 UTC) */
@@ -42,7 +51,26 @@ function calcCountdown(): Countdown {
 }
 
 export default function HackathonPhaseTimeline() {
-  const { phase } = useHackathonOps();
+  const { phase: rawPhase, override, isManual } = useHackathonOps();
+  const user = useAuthStore((s) => s.user);
+
+  // R4 가드: 자동 폴백으로 "수상 발표"에 진입했으나 공개 수상작이 0건이면 심사 단계로 유지.
+  // hackathon_submissions list 규칙이 로그인 회원 전용이므로 로그인 사용자만 실측한다
+  // (비로그인·수동 지정 시엔 원본 단계 유지 — publishedCount 를 1로 넘겨 가드 비활성).
+  const needGuard = rawPhase === "awards" && !isManual && !!user;
+  const { data: publishedCount } = useQuery({
+    queryKey: ["hackathon-published-count", HACKATHON_CONTEXT_ID],
+    enabled: needGuard,
+    queryFn: async () => {
+      const res = await hackathonSubmissionsApi.listByContext(HACKATHON_CONTEXT_ID);
+      return (res.data as HackathonSubmission[]).filter((s) => s.published && s.award).length;
+    },
+    staleTime: 60 * 1000,
+  });
+  const phase = needGuard
+    ? resolveHackathonPhaseGuarded(override, publishedCount ?? 1)
+    : rawPhase;
+
   const currentIdx = HACKATHON_PHASE_TIMELINE.findIndex((p) => p.key === phase);
   const currentPhase = HACKATHON_PHASE_TIMELINE[currentIdx];
 

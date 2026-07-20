@@ -77,6 +77,7 @@ import type {
   StreakEventType,
   Kudos,
   KudosType,
+  KudosContext,
   UserFeedback,
   UserNote,
   WeeklyGoal,
@@ -3169,6 +3170,7 @@ export const kudosApi = {
     toUserId: string,
     weekKey: string,
     type: KudosType = "cheer",
+    context?: KudosContext,
   ): Promise<void> => {
     const id = `${fromUserId}_${toUserId}_${weekKey}`;
     await setDoc(doc(db, "kudos", id), {
@@ -3178,6 +3180,8 @@ export const kudosApi = {
       toUserId,
       weekKey,
       type,
+      // context 는 값이 있을 때만 기록 — 기존 문서(필드 없음)는 "cohort" 로 간주(하위호환).
+      ...(context ? { context } : {}),
       createdAt: serverTimestamp(),
     });
   },
