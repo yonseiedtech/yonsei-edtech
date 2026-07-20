@@ -1,10 +1,11 @@
 "use client";
 
+import Link from "next/link";
 import { Suspense, useMemo, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { dataApi } from "@/lib/bkend";
-import { useOrgChart } from "@/features/admin/settings/useOrgChart";
+import { useOrgChart, type OrgRole } from "@/features/admin/settings/useOrgChart";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BackButton } from "@/components/ui/back-button";
@@ -12,11 +13,74 @@ import {
   Printer,
   FileText,
   Users,
+  BarChart2,
+  Monitor,
+  RefreshCw,
+  AlertTriangle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import type { HandoverDocument } from "@/types";
 import { HANDOVER_CATEGORY_LABELS } from "@/types";
 import { HandoverMarkdown } from "@/lib/markdown-handover";
+
+// ── M4: 직책별 온보딩 안내 자동 채움 슬롯 (신규 컬렉션 없음·기존 역할 정의 재사용) ──
+
+/** 직책 역할별 담당 콘솔 화면 목록 */
+const ROLE_CONSOLE_SCREENS: Partial<Record<OrgRole, { label: string; href: string }[]>> = {
+  president: [
+    { label: "운영 콘솔 홈", href: "/console" },
+    { label: "회원 관리", href: "/console/members" },
+    { label: "게시글 관리", href: "/console/posts" },
+    { label: "콘텐츠 초안", href: "/console/content-drafts" },
+    { label: "운영진 설정(조직도)", href: "/console/org" },
+    { label: "업무노트", href: "/console/handover" },
+  ],
+  vice_president: [
+    { label: "운영 콘솔 홈", href: "/console" },
+    { label: "학술활동 관리", href: "/console/academic/manage" },
+    { label: "업무노트", href: "/console/handover" },
+    { label: "운영진 설정(조직도)", href: "/console/org" },
+  ],
+  direct_aide: [
+    { label: "학술활동 관리", href: "/console/academic/manage" },
+    { label: "업무노트", href: "/console/handover" },
+  ],
+  team_member: [
+    { label: "업무노트", href: "/console/handover" },
+  ],
+};
+
+/** 직책 역할별 자동 실행 cron 목록 — 신임자가 손대지 않아도 도는 것 */
+const ROLE_CRON_DEPS: Partial<Record<OrgRole, string[]>> = {
+  president: [
+    "신입 활성화 시퀀스 자동 발송 (newcomer-activation-sequence)",
+    "주간 다이제스트 자동 발행 (weekly-digest)",
+    "학기 이월 조직도 자동 복사 (semester-advance R3)",
+    "cron 연속실패 자동 감시 (cron-watchdog)",
+  ],
+  vice_president: [
+    "멘토링 넛지 자동 발송 (mentoring-nudge)",
+    "세미나·스터디 리마인더 자동 발송",
+    "학기 이월 조직도 자동 복사 (semester-advance R3)",
+  ],
+  direct_aide: [
+    "세미나·과제 리마인더 자동 발송",
+    "스터디 리마인더 자동 발송",
+  ],
+  team_member: [
+    "세미나·스터디 리마인더 자동 발송",
+  ],
+};
+
+/** 카테고리 표시 순서 (주의사항 최우선) */
+const CATEGORY_DISPLAY: { key: HandoverDocument["category"]; label: string }[] = [
+  { key: "caution", label: "주의사항" },
+  { key: "routine", label: "정기업무" },
+  { key: "project", label: "진행프로젝트" },
+  { key: "reference", label: "참고자료" },
+];
+
+// ── 기존 헬퍼 ──
 
 function buildTermOptions(): string[] {
   const now = new Date();
@@ -97,6 +161,46 @@ function ReportInner() {
 
   const isEmpty = !orgLoading && !docsLoading && orgWithHandover.length === 0 && termDocs.length === 0;
 
+  // ── M4-A: 임기 활동 요약 (기존 termDocs 재사용 — 신규 컬렉션 없음) ──
+  const assignedPositions = positions.filter((p) => (p.userName ?? "").trim().length > 0);
+
+  const categoryCount: Record<HandoverDocument["category"], number> = {
+    routine: 0, project: 0, reference: 0, caution: 0,
+  };
+  for (const d of termDocs) categoryCount[d.category]++;
+
+  const positionsWithDocs = assignedPositions.filter(
+    (p) => (docsByRole.get(p.title) ?? []).length > 0,
+  );
+
+  // 공백 직책: 인수 메모도 이 학기 업무노트도 없는 배정 직책
+  const gapTitleSet = new Set(
+    assignedPositions
+      .filter((p) => {
+        const hasMemo = (p.handover ?? "").trim().length > 0;
+        const hasNotes = (docsByRole.get(p.title) ?? []).length > 0;
+        return !hasMemo && !hasNotes;
+      })
+      .map((p) => p.title),
+  );
+
+  // ── M4-B: 직책 온보딩 안내 (duty·콘솔 화면·cron 의존 보유 배정 직책) ──
+  const positionsForOnboarding = useMemo(
+    () =>
+      positions
+        .filter((p) => (p.userName ?? "").trim().length > 0)
+        .filter((p) => {
+          const screens = p.role ? (ROLE_CONSOLE_SCREENS[p.role] ?? []) : [];
+          const crons = p.role ? (ROLE_CRON_DEPS[p.role] ?? []) : [];
+          return (p.duty ?? "").trim().length > 0 || screens.length > 0 || crons.length > 0;
+        })
+        .sort((a, b) => a.level - b.level || a.order - b.order),
+    [positions],
+  );
+
+  const showActivitySummary = !orgLoading && !docsLoading && assignedPositions.length > 0;
+  const showOnboarding = !orgLoading && positionsForOnboarding.length > 0;
+
   return (
     <div className="space-y-6 print:py-0">
       {/* 화면 전용 컨트롤 (인쇄 시 숨김) */}
@@ -142,6 +246,171 @@ function ReportInner() {
             업무노트에서 문서를 작성하거나 조직도 설정에서 직책별 메모를 기록해주세요.
           </p>
         </div>
+      )}
+
+      {/* M4-A: 임기 활동 요약 (자동 채움 — 기존 handover_docs 집계) */}
+      {showActivitySummary && (
+        <section className="space-y-2 print:break-inside-avoid">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <BarChart2 size={18} className="text-primary" />
+            임기 활동 요약
+            <span className="text-xs font-normal text-muted-foreground">(자동 채움)</span>
+          </h2>
+          <div className="rounded-lg border bg-card p-4">
+            <div className="flex flex-wrap items-end gap-6">
+              <div>
+                <span className="text-2xl font-bold">{termDocs.length}</span>
+                <span className="ml-1 text-sm text-muted-foreground">건</span>
+                <p className="mt-0.5 text-xs text-muted-foreground">이 학기 업무 문서 합계</p>
+              </div>
+              {termDocs.length > 0 && (
+                <div className="flex flex-wrap gap-1.5">
+                  {CATEGORY_DISPLAY.map(({ key, label }) =>
+                    categoryCount[key] > 0 ? (
+                      <Badge key={key} variant="secondary" className="text-xs">
+                        {label} {categoryCount[key]}
+                      </Badge>
+                    ) : null,
+                  )}
+                </div>
+              )}
+            </div>
+            <p className="mt-3 text-xs text-muted-foreground">
+              직책 커버리지: 배정 {assignedPositions.length}직책 중{" "}
+              <span
+                className={cn(
+                  "font-medium",
+                  positionsWithDocs.length === assignedPositions.length
+                    ? "text-success"
+                    : "text-warning",
+                )}
+              >
+                {positionsWithDocs.length}직책
+              </span>{" "}
+              업무 문서 있음
+              {gapTitleSet.size > 0 && (
+                <>
+                  {" · "}
+                  <span className="font-medium text-destructive">
+                    {gapTitleSet.size}직책 공백
+                  </span>
+                  (인수 메모·업무노트 없음 — 아래 온보딩 안내 참조)
+                </>
+              )}
+            </p>
+          </div>
+        </section>
+      )}
+
+      {/* M4-B: 직책 온보딩 안내 (자동 채움 — duty·콘솔 화면·cron 의존 자동 병합) */}
+      {showOnboarding && (
+        <section className="space-y-3 print:break-inside-avoid">
+          <h2 className="flex items-center gap-2 text-lg font-semibold">
+            <Monitor size={18} className="text-primary" />
+            직책 온보딩 안내
+            <span className="text-xs font-normal text-muted-foreground">
+              (자동 채움 — 첫 주 참고)
+            </span>
+          </h2>
+          <ul className="space-y-3">
+            {positionsForOnboarding.map((p) => {
+              const screens = p.role ? (ROLE_CONSOLE_SCREENS[p.role] ?? []) : [];
+              const crons = p.role ? (ROLE_CRON_DEPS[p.role] ?? []) : [];
+              const duty = (p.duty ?? "").trim();
+              const termDocCount = (docsByRole.get(p.title) ?? []).length;
+              const isGap = gapTitleSet.has(p.title);
+
+              return (
+                <li
+                  key={p.id}
+                  className={cn(
+                    "rounded-lg border bg-card p-4 print:break-inside-avoid",
+                    isGap && "border-destructive/20",
+                  )}
+                >
+                  {/* 직책 헤더 */}
+                  <div className="flex flex-wrap items-baseline gap-2">
+                    <span className="text-sm font-semibold">{p.title}</span>
+                    <span className="text-xs text-muted-foreground">
+                      {p.userName ?? "공석"}
+                      {p.department && ` · ${p.department}`}
+                    </span>
+                    {isGap && (
+                      <span className="inline-flex items-center gap-1 text-xs text-destructive">
+                        <AlertTriangle size={11} />
+                        업무노트 없음
+                      </span>
+                    )}
+                    {termDocCount > 0 && (
+                      <span className="text-xs text-muted-foreground">
+                        이 학기 업무노트 {termDocCount}건
+                      </span>
+                    )}
+                  </div>
+
+                  {/* 자동 채움 슬롯 */}
+                  <div className="mt-3 grid gap-3 sm:grid-cols-2">
+                    {/* 담당 업무 (조직도 duty 필드) */}
+                    {duty && (
+                      <div>
+                        <p className="mb-1 text-xs font-medium text-muted-foreground">
+                          담당 업무
+                        </p>
+                        <p className="rounded-md bg-muted/20 px-3 py-2 text-xs leading-relaxed">
+                          {duty}
+                        </p>
+                      </div>
+                    )}
+
+                    {/* 담당 콘솔 화면 목록 */}
+                    {screens.length > 0 && (
+                      <div>
+                        <p className="mb-1 text-xs font-medium text-muted-foreground">
+                          담당 콘솔 화면
+                        </p>
+                        <ul className="space-y-0.5">
+                          {screens.map((s) => (
+                            <li key={s.href}>
+                              <Link
+                                href={s.href}
+                                className="flex items-center gap-1.5 rounded px-2 py-1 text-xs text-primary hover:bg-muted print:text-foreground"
+                              >
+                                <Monitor size={10} className="shrink-0" />
+                                {s.label}
+                              </Link>
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+
+                    {/* 반복 cron 의존 (자동으로 도는 것) */}
+                    {crons.length > 0 && (
+                      <div
+                        className={cn(
+                          duty && screens.length > 0 ? "sm:col-span-2" : "",
+                        )}
+                      >
+                        <p className="mb-1 flex items-center gap-1 text-xs font-medium text-muted-foreground">
+                          <RefreshCw size={10} />
+                          자동으로 도는 것 (손댈 필요 없음)
+                        </p>
+                        <ul className="space-y-0.5 text-xs text-muted-foreground">
+                          {crons.map((c) => (
+                            <li key={c} className="flex items-start gap-1.5">
+                              <span className="mt-0.5 shrink-0">·</span>
+                              {c}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
+          </ul>
+        </section>
       )}
 
       {/* 1. 직책별 인수인계 메모 (조직도) */}

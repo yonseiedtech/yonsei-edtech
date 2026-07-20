@@ -20,8 +20,50 @@ import AdminTodoTab from "@/features/admin/AdminTodoTab";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import ActionableBanner from "@/components/ui/actionable-banner";
 import { getHackathonPhase } from "@/features/hackathon/config";
-import { useAcademicCalendar } from "@/features/site-settings/useAcademicCalendar";
+import { useAcademicCalendar, type AcademicCalendarData, REVIEW_TYPE_LABEL } from "@/features/site-settings/useAcademicCalendar";
 import { todayYmdKst } from "@/lib/dday";
+
+// ── M3: 학사일정 → 콘솔 랜딩 연결 — 다가오는 항목 추출 ──
+
+type CalendarUpcomingItem = {
+  label: string;
+  dateStr: string;
+  diff: number;
+};
+
+function getUpcomingCalendarItems(
+  entries: AcademicCalendarData["entries"],
+  windowDays = 120,
+): CalendarUpcomingItem[] {
+  const today = todayYmdKst();
+  const [ty, tm, td] = today.split("-").map(Number);
+  const todayMs = Date.UTC(ty, tm - 1, td);
+
+  const items: CalendarUpcomingItem[] = [];
+  for (const e of entries) {
+    const milestones: { label: string; start: string }[] = [
+      { label: "개강", start: e.semesterStart },
+      { label: "중간고사 시작", start: e.midtermStart },
+      { label: "기말고사 시작", start: e.finalStart },
+      { label: "종강", start: e.semesterEnd },
+      ...(e.reviews ?? []).map((r) => ({
+        label: REVIEW_TYPE_LABEL[r.type] + (r.notes ? ` (${r.notes})` : ""),
+        start: r.startDate,
+      })),
+    ];
+    for (const m of milestones) {
+      if (!m.start) continue;
+      const parts = m.start.split("-").map(Number);
+      if (parts.length < 3 || parts.some((p) => Number.isNaN(p))) continue;
+      const startMs = Date.UTC(parts[0], parts[1] - 1, parts[2]);
+      const diff = Math.round((startMs - todayMs) / 86400000);
+      if (diff < 0 || diff > windowDays) continue;
+      items.push({ label: m.label, dateStr: m.start, diff });
+    }
+  }
+  items.sort((a, b) => a.diff - b.diff);
+  return items;
+}
 
 // ── H1: 다가오는 시즌 카운트다운 ──
 
@@ -62,16 +104,28 @@ type SeasonEventDef = {
 
 function UpcomingSeasonCard({
   pendingMemberCount,
-  hasCalendar2ndSemester,
+  calendarData,
 }: {
   /** undefined = 로딩 중 */
   pendingMemberCount: number | undefined;
-  hasCalendar2ndSemester: boolean;
+  calendarData: AcademicCalendarData;
 }) {
   const now = new Date();
   const hackathonDiff = calcDdayDiff("2026-08-22");
-  const semesterDiff = calcDdayDiff("2026-09-01");
   const hackathonPhase = getHackathonPhase(now);
+
+  // M3: calendarData에서 2학기 개강일 동적 읽기 (하드코딩 제거)
+  const cal2ndEntry = calendarData.entries.find(
+    (e) => e.year === 2026 && e.semester === "second",
+  );
+  const semesterStartDate = cal2ndEntry?.semesterStart || "2026-09-01";
+  const semesterDiff = calcDdayDiff(semesterStartDate);
+  const hasCalendar2ndSemester = !!cal2ndEntry?.semesterStart;
+  // M3: 다가오는 학사일정 항목 (최대 3개, 120일 이내)
+  const upcomingCalendarItems = getUpcomingCalendarItems(
+    calendarData.entries,
+    120,
+  ).slice(0, 3);
 
   const events: SeasonEventDef[] = [
     ...(hackathonDiff > -8 && hackathonDiff <= 120
@@ -114,7 +168,7 @@ function UpcomingSeasonCard({
           {
             key: "semester",
             label: "2026년 후기 개강",
-            dateLabel: "2026-09-01 (화)",
+            dateLabel: semesterStartDate,
             diff: semesterDiff,
             consoleHref: "/console/academic-calendar",
             toneClass: "border-success/30 bg-success/5",
@@ -308,6 +362,50 @@ function UpcomingSeasonCard({
                   );
                 })}
               </ul>
+
+              {/* M3: 다가오는 학사일정 요약 — semester 이벤트 카드 전용 */}
+              {ev.key === "semester" && (
+                upcomingCalendarItems.length > 0 ? (
+                  <div className="mt-2 border-t border-muted-foreground/10 pt-2">
+                    <p className="mb-1 text-[10px] font-medium uppercase tracking-wide text-muted-foreground">
+                      학사일정 다가오는 항목
+                    </p>
+                    <ul className="space-y-0.5">
+                      {upcomingCalendarItems.map((item) => (
+                        <li
+                          key={`${item.dateStr}-${item.label}`}
+                          className="flex items-center justify-between gap-2 text-[11px]"
+                        >
+                          <span className="text-foreground/80">{item.label}</span>
+                          <span
+                            className={`tabular-nums font-semibold ${
+                              item.diff <= 7
+                                ? "text-destructive"
+                                : item.diff <= 30
+                                  ? "text-warning"
+                                  : "text-muted-foreground"
+                            }`}
+                          >
+                            {item.diff === 0 ? "D-DAY" : `D-${item.diff}`}
+                          </span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                ) : (
+                  <div className="mt-2 border-t border-muted-foreground/10 pt-2">
+                    <p className="text-[11px] text-muted-foreground">
+                      학사일정을 등록하면 주요 일정이 자동 반영됩니다.
+                    </p>
+                    <Link
+                      href="/console/academic-calendar"
+                      className="mt-0.5 flex items-center gap-0.5 text-[11px] text-success hover:underline"
+                    >
+                      학사일정 등록 <ArrowRight size={10} />
+                    </Link>
+                  </div>
+                )
+              )}
             </div>
           );
         })}
@@ -365,11 +463,8 @@ export default function ConsoleDashboardPage() {
   const { inquiries } = useInquiries();
   const { posts } = usePosts("all");
 
-  // H1: 다가오는 시즌 — 학사일정 2학기 등록 여부 자동 판정
+  // H1+M3: 다가오는 시즌 — 학사일정 데이터 전체를 UpcomingSeasonCard에 전달
   const { value: calendarData } = useAcademicCalendar();
-  const hasCalendar2ndSemester = calendarData.entries.some(
-    (e) => e.year === 2026 && e.semester === "second" && !!e.semesterStart,
-  );
   const unansweredCount = inquiries.filter((i) => i.status === "pending").length;
   const [seeding, setSeeding] = useState(false);
   // 시드 완료 상태 (localStorage 영속 + 세션 내 즉시 반영)
@@ -565,7 +660,7 @@ export default function ConsoleDashboardPage() {
       {/* H1: 다가오는 시즌 카운트다운 — 해커톤/개강 준비 역산 */}
       <UpcomingSeasonCard
         pendingMemberCount={pendingData?.total}
-        hasCalendar2ndSemester={hasCalendar2ndSemester}
+        calendarData={calendarData}
       />
 
       {/* H3: 처리 대기 통합 큐 — 침묵하는 수동 백로그 수확 */}
