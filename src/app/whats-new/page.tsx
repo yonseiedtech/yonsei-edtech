@@ -30,10 +30,10 @@ import {
 import PageContainer from "@/components/ui/page-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { WHATS_NEW_DISMISSED_KEY, NEW_THRESHOLD_DAYS } from "@/lib/whats-new-meta";
 
-const WHATS_NEW_KEY = "yonsei_whats_new_dismissed_v2";
-/** 이 일 수 이내에 추가된 기능에 NEW 배지 자동 표시 */
-const NEW_THRESHOLD_DAYS = 60;
+/** v12-M6: 공유 상수 재사용 — SemesterKickoffBanner와 키·임계값 동기화 */
+const WHATS_NEW_KEY = WHATS_NEW_DISMISSED_KEY;
 
 interface Feature {
   id: string;

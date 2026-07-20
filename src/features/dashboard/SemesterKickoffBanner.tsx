@@ -6,6 +6,8 @@
  * 실사용 진단: 방학 중 활동 정체 + 신규 기능 미노출 — 개강 주간(개강 D-7 ~ D+14)에만
  * 대시보드 상단에 자동으로 떠서 ①시간표 등록 ②새 기능 ③세미나 일정으로 유도한다.
  * 학기 시작일은 관례(3/1·9/1) 기준 KST 판정. per-user·학기별 dismiss.
+ *
+ * v12-M6: 방학 동안 쌓인 신기능 수 표시 + 미열람 배지 — 개강 복귀 회원 재노출 경량 연계
  */
 
 import Link from "next/link";
@@ -13,6 +15,7 @@ import { useState } from "react";
 import { X, CalendarRange, Sparkles, BookOpen } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { todayYmdKst } from "@/lib/dday";
+import { countNewFeatures, isWhatsNewUnread } from "@/lib/whats-new-meta";
 
 /** 오늘(KST)이 속한 개강 윈도(D-7~D+14)의 학기 키 — 밖이면 null */
 function activeKickoffSemester(): { key: string; label: string } | null {
@@ -63,6 +66,15 @@ export default function SemesterKickoffBanner() {
     setTick((t) => t + 1);
   }
 
+  // v12-M6: 신기능 수·미열람 여부 — 방학 동안 달라진 점 재노출
+  const newCount = countNewFeatures();
+  const whatsNewUnread = isWhatsNewUnread();
+
+  const newCountLabel =
+    newCount > 0
+      ? `방학 동안 ${newCount}개 기능이 새로 추가됐어요`
+      : "방학 동안 논문 도구가 크게 업그레이드됐어요";
+
   return (
     <div className="relative mb-4 overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-info/5 to-primary/5 p-4">
       <button
@@ -75,7 +87,7 @@ export default function SemesterKickoffBanner() {
       </button>
       <p className="text-sm font-bold">🎓 {sem.label}, 다시 시작해볼까요?</p>
       <p className="mt-0.5 text-xs text-muted-foreground">
-        방학 동안 논문 도구가 크게 업그레이드됐어요 — 시간표를 등록하면 대시보드가 새 학기 모드로 바뀝니다.
+        {newCountLabel} — 시간표를 등록하면 대시보드가 새 학기 모드로 바뀝니다.
       </p>
       <div className="mt-2.5 flex flex-wrap gap-1.5">
         <Link
@@ -89,6 +101,11 @@ export default function SemesterKickoffBanner() {
           className="inline-flex items-center gap-1 rounded-lg border border-primary/40 bg-card px-2.5 py-1.5 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
         >
           <Sparkles size={12} /> 새 기능 보기
+          {whatsNewUnread && newCount > 0 && (
+            <span className="ml-0.5 rounded-full bg-primary px-1.5 py-px text-[9px] font-bold leading-none text-white">
+              {newCount}
+            </span>
+          )}
         </Link>
         <Link
           href="/seminars"

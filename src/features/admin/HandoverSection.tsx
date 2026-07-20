@@ -8,6 +8,7 @@ import { dataApi } from "@/lib/bkend";
 import { useOrgChart } from "@/features/admin/settings/useOrgChart";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { Button } from "@/components/ui/button";
+import EmptyState from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -218,10 +219,7 @@ export default function HandoverSection() {
       </div>
 
       {filteredDocs.length === 0 ? (
-        <div className="rounded-lg border bg-card py-12 text-center">
-          <FileText size={32} className="mx-auto text-muted-foreground/30" />
-          <p className="mt-2 text-sm text-muted-foreground">등록된 업무수행 문서가 없습니다.</p>
-        </div>
+        <EmptyState compact icon={FileText} title="등록된 업무수행 문서가 없습니다." />
       ) : (
         <div className="space-y-2">
           {filteredDocs.map((doc) => (

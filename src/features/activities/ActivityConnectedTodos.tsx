@@ -22,6 +22,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import type { AdminTodo } from "@/types";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 
 const PRIORITY_LABELS: Record<AdminTodo["priority"], string> = {
   high: "높음",
@@ -115,13 +116,12 @@ export default function ActivityConnectedTodos({ activityId }: Props) {
         </Link>
       </div>
       {todos.length === 0 ? (
-        <div className="p-6 text-center text-sm text-muted-foreground">
-          이 활동에 연동된 업무가 아직 없습니다.
-          <br />
-          <span className="mt-1 inline-block text-[11px]">
-            대시보드의 <b>나의 할 일 → + 추가 → 학술활동</b> 탭에서 추가할 수 있어요.
-          </span>
-        </div>
+        <EmptyState
+          compact
+          icon={ListChecks}
+          title="이 활동에 연동된 업무가 아직 없습니다."
+          description="대시보드의 나의 할 일 → + 추가 → 학술활동 탭에서 추가할 수 있어요."
+        />
       ) : (
         <ul className="divide-y">
           {todos.map((t) => (

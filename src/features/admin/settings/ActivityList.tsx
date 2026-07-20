@@ -18,6 +18,7 @@ import Link from "next/link";
 import { Plus, Pencil, Trash2, Loader2, Calendar, Globe, FolderKanban, BookOpen, LayoutDashboard, type LucideIcon } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 import type { Activity, ActivityType } from "@/types";
 import { formatSemester, type Semester } from "@/lib/semester";
 import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
@@ -190,7 +191,7 @@ export default function ActivityList({ type, typeLabel, icon, description }: Pro
       />
 
       {activities.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">등록된 {typeLabel}이(가) 없습니다.</p>
+        <EmptyState compact icon={FolderKanban} title={`등록된 ${typeLabel}이(가) 없습니다.`} />
       ) : (
         <div className="space-y-3">
           {activities.map((a) => (

@@ -19,6 +19,7 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/u
 import MemberAutocomplete from "@/components/ui/MemberAutocomplete";
 import Section from "./SectionWrapper";
 import { toast } from "sonner";
+import EmptyState from "@/components/ui/empty-state";
 
 const LEVEL_LABELS: Record<number, string> = {
   0: "주임교수",
@@ -505,9 +506,7 @@ export default function OrgChartEditor() {
       </div>
 
       {levels.length === 0 && (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          {semesterLabelFromKey(selectedSemester)}에 등록된 직책이 없습니다.
-        </p>
+        <EmptyState compact title={`${semesterLabelFromKey(selectedSemester)}에 등록된 직책이 없습니다.`} className="mt-2" />
       )}
 
       {levels.map((level) => (

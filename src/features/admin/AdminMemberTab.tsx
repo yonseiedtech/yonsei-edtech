@@ -33,6 +33,7 @@ import {
   isAutoApproveEnabled,
 } from "@/lib/auth/approval-rules";
 import AdminEmptyState from "@/components/admin/AdminEmptyState";
+import EmptyState from "@/components/ui/empty-state";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { notifyMemberApproved } from "@/features/notifications/notify";
 import { exportCSV } from "@/lib/export-csv";
@@ -774,12 +775,12 @@ export default function AdminMemberTab() {
               ))}
             </div>
           ) : displayMembers.length === 0 ? (
-            <div className="mt-3 rounded-2xl border bg-card p-12 text-center">
-              <Users size={40} className="mx-auto text-muted-foreground/40" />
-              <p className="mt-3 text-muted-foreground">
-                {searchQuery ? "검색 결과가 없습니다." : "등록된 회원이 없습니다."}
-              </p>
-            </div>
+            <EmptyState
+              compact
+              icon={Users}
+              title={searchQuery ? "검색 결과가 없습니다." : "등록된 회원이 없습니다."}
+              className="mt-3"
+            />
           ) : (
             <MemberTable data={displayMembers} showStatus />
           )}
@@ -1009,10 +1010,7 @@ export default function AdminMemberTab() {
               ))}
             </div>
           ) : rejectedMembers.length === 0 ? (
-            <div className="rounded-2xl border bg-card p-12 text-center">
-              <XCircle size={40} className="mx-auto text-muted-foreground/40" />
-              <p className="mt-3 text-muted-foreground">거절된 회원이 없습니다.</p>
-            </div>
+            <EmptyState compact icon={XCircle} title="거절된 회원이 없습니다." />
           ) : (
             <div>
               <p className="mb-3 text-sm text-muted-foreground">

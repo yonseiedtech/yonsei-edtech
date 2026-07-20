@@ -8,6 +8,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import PageContainer from "@/components/ui/page-container";
 import PageHeader from "@/components/ui/page-header";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import EmptyState from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -89,11 +90,7 @@ function ReviewQueueSection() {
       {isLoading ? (
         <p className="py-6 text-center text-sm text-zinc-500">불러오는 중...</p>
       ) : queue.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-center text-sm text-zinc-500">
-            검수 대기 중인 논문이 없습니다.
-          </CardContent>
-        </Card>
+        <EmptyState compact icon={FileCheck2} title="검수 대기 중인 논문이 없습니다." />
       ) : (
         <div className="space-y-2">
           {queue.map((a) => (
@@ -233,11 +230,7 @@ function IssuesSection({ currentUserId }: { currentUserId: string }) {
       {isLoading ? (
         <p className="py-6 text-center text-sm text-zinc-500">불러오는 중...</p>
       ) : issues.length === 0 ? (
-        <Card>
-          <CardContent className="p-6 text-center text-sm text-zinc-500">
-            아직 생성된 호수가 없습니다.
-          </CardContent>
-        </Card>
+        <EmptyState compact icon={BookOpen} title="아직 생성된 호수가 없습니다." />
       ) : (
         <div className="space-y-2">
           {issues.map((iss) => (

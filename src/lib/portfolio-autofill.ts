@@ -1,7 +1,7 @@
 /**
- * portfolio-autofill.ts — 포트폴리오 자동 적재 (백로그 v3 G3)
+ * portfolio-autofill.ts — 포트폴리오 자동 적재 (백로그 v3 G3, M2-v12 커버리지 확장)
  *
- * 회원이 쌓아온 활동 신호(세미나 발표·연구 논문)를 조회 결과로부터
+ * 회원이 쌓아온 활동 신호를 조회 결과로부터
  * "포트폴리오 항목 후보(유형·제목·역할·날짜·출처 링크)"로 정규화하는 순수 함수 모음.
  *
  * 설계 원칙:
@@ -12,6 +12,10 @@
  *    또는 제목+날짜가 동일한 기존 항목은 `alreadyAdded=true` 로 표시해 재적재를 막는다.
  *  - 이미 다른 경로로 포트폴리오에 자동 노출되는 소스(활동 참여 이력·수료증 집계)는 중복·오귀인을
  *    피하기 위해 여기서 후보로 만들지 않는다(리포트 참조).
+ *
+ * v12-M2 확장 소스:
+ *  - receivedKudos (멘토링 context) → "멘토링 기여 인정" 대외활동 1건 (집계)
+ *  - hackathonSubmissions (ownerId 일치) → 해커톤 참가 1건/제출건
  */
 
 import { isSeminarHost } from "@/lib/host-helpers";
@@ -19,11 +23,17 @@ import { DEFAULT_EXTERNAL_AFFILIATION } from "@/types";
 import type {
   ExternalActivity,
   ExternalActivityType,
+  Kudos,
+  HackathonSubmission,
   RecentPaper,
   Seminar,
 } from "@/types";
 
-export type AutofillSourceKind = "seminar" | "publication";
+export type AutofillSourceKind =
+  | "seminar"
+  | "publication"
+  | "kudos_mentoring"
+  | "hackathon_submission";
 
 /** 정규화된 포트폴리오 후보 — external_activities 로 적재 가능한 형태 */
 export interface PortfolioCandidate {
@@ -51,6 +61,16 @@ export interface AutofillInput {
   recentPapers: RecentPaper[];
   /** 기존 external_activities — 중복 제거 기준 */
   existingExternals: ExternalActivity[];
+  /**
+   * v12-M2: 내가 받은 kudos 목록 (kudosApi.listReceivedByUser).
+   * mentoring context 만 집계해 "멘토링 기여 인정" 1건으로 후보화한다.
+   */
+  receivedKudos?: Kudos[];
+  /**
+   * v12-M2: 해커톤 회차 전체 제출 목록 (hackathonSubmissionsApi.listByContext).
+   * ownerId === userId 인 건만 필터해 후보화한다.
+   */
+  hackathonSubmissions?: HackathonSubmission[];
 }
 
 function normalizeTitle(s: string): string {
@@ -86,7 +106,7 @@ function isAlready(idx: ExistingIndex, sourceRef: string, title: string, date: s
  * 미적재 항목을 앞에, 그 안에서 날짜 내림차순으로 정렬한다.
  */
 export function buildPortfolioCandidates(input: AutofillInput): PortfolioCandidate[] {
-  const { userId, seminars, recentPapers, existingExternals } = input;
+  const { userId, seminars, recentPapers, existingExternals, receivedKudos, hackathonSubmissions } = input;
   const idx = buildExistingIndex(existingExternals);
   const out: PortfolioCandidate[] = [];
   const seen = new Set<string>();
@@ -134,6 +154,65 @@ export function buildPortfolioCandidates(input: AutofillInput): PortfolioCandida
       date,
       url: p.url?.trim() || undefined,
       description: authors ? `저자: ${authors}` : undefined,
+      alreadyAdded: isAlready(idx, sourceRef, title, date),
+    });
+  }
+
+  // 3. v12-M2: 멘토링 기여 인정 — mentoring context kudos 수신 집계
+  //    "cohort" 등 일반 응원은 포트폴리오 항목으로 부적합 → mentoring context만 처리.
+  //    여러 주에 걸친 멘토링 인정을 1건으로 집계(멱등 sourceRef).
+  const mentoringKudos = (receivedKudos ?? []).filter((k) => k.context === "mentoring");
+  if (mentoringKudos.length > 0) {
+    const sourceRef = "kudos:received:mentoring";
+    if (!seen.has(sourceRef)) {
+      seen.add(sourceRef);
+      const title = "멘토링 기여 인정";
+      // 가장 최근 weekKey 를 대표 날짜로 사용
+      const latestWeek = mentoringKudos
+        .map((k) => k.weekKey)
+        .sort()
+        .at(-1) ?? "";
+      out.push({
+        sourceRef,
+        sourceKind: "kudos_mentoring",
+        sourceKindLabel: "멘토링 기여",
+        title,
+        type: "community",
+        organization: "연세교육공학회",
+        role: "멘토",
+        date: latestWeek,
+        description: `멘토링 답변 채택 응원 ${mentoringKudos.length}건 수신`,
+        alreadyAdded: isAlready(idx, sourceRef, title, latestWeek),
+      });
+    }
+  }
+
+  // 4. v12-M2: 해커톤 참가 — ownerId(팀 대표 제출자) 일치 건만 후보화
+  for (const sub of (hackathonSubmissions ?? [])) {
+    if (sub.ownerId !== userId) continue;
+    const sourceRef = `hackathon:submission:${sub.id}`;
+    if (seen.has(sourceRef)) continue;
+    seen.add(sourceRef);
+    const teamPart = sub.teamName ? `[${sub.teamName}] ` : "";
+    const title = `${teamPart}${sub.title}`;
+    // 산출물 링크: 발표자료 > 데모 > 저장소 우선순위
+    const url = sub.presentationUrl || sub.demoUrl || sub.repoUrl;
+    // 행사 날짜(제출일 기준, 없으면 contextId에서 추출 시도)
+    const date =
+      sub.createdAt?.slice(0, 10) ||
+      sub.contextId?.replace("hackathon-", "").slice(0, 10) ||
+      "";
+    out.push({
+      sourceRef,
+      sourceKind: "hackathon_submission",
+      sourceKindLabel: "해커톤 참가",
+      title,
+      type: "conference",
+      organization: "연세교육공학회",
+      role: "팀 대표",
+      date,
+      url,
+      description: sub.description ? sub.description.slice(0, 200) : undefined,
       alreadyAdded: isAlready(idx, sourceRef, title, date),
     });
   }

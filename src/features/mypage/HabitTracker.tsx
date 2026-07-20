@@ -16,6 +16,7 @@ import { useMemo } from "react";
 import { motion, useReducedMotion } from "framer-motion";
 import { CheckIcon } from "lucide-react";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 
 /* ─────────────────────────────── types ─────────────────────────── */
 
@@ -710,9 +711,11 @@ export default function HabitTracker({
 
       {/* ── 메인 매트릭스 표 ── */}
       {habits.length === 0 ? (
-        <div className="flex items-center justify-center py-12 text-sm text-muted-foreground">
-          표시할 활동이 없습니다. 활동을 추가해보세요.
-        </div>
+        <EmptyState
+          compact
+          title="표시할 활동이 없습니다."
+          description="활동을 추가해보세요."
+        />
       ) : (
         <div className="overflow-x-auto" role="region" aria-label="습관 트래커 매트릭스">
           <table className="w-max min-w-full border-collapse text-left">

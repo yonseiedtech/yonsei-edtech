@@ -13,6 +13,7 @@ import {
   LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer,
 } from "recharts";
 import { TrendingUp, Camera, Loader2, ArrowUpRight, ArrowDownRight } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
 import { toast } from "sonner";
 import { auth } from "@/lib/firebase";
 import { Button } from "@/components/ui/button";
@@ -127,14 +128,12 @@ export default function LoyaltyTrendSection({ isAdmin }: { isAdmin: boolean }) {
           스냅샷 불러오는 중…
         </div>
       ) : snapshots.length === 0 ? (
-        <div className="rounded-lg border border-dashed bg-muted/20 p-6 text-center">
-          <p className="text-sm font-medium">아직 추이 데이터가 없습니다</p>
-          <p className="mt-1 text-xs text-muted-foreground">
-            로얄티 스냅샷은 매주 월요일 자동 적재됩니다. &ldquo;지금 캡처&rdquo;로 첫
-            스냅샷을 바로 적재할 수 있으며, 2회 이상 쌓이면 추이와 세그먼트 이동이
-            표시됩니다.
-          </p>
-        </div>
+        <EmptyState
+          compact
+          icon={TrendingUp}
+          title="아직 추이 데이터가 없습니다"
+          description="로얄티 스냅샷은 매주 월요일 자동 적재됩니다. '지금 캡처'로 첫 스냅샷을 바로 적재할 수 있으며, 2회 이상 쌓이면 추이와 세그먼트 이동이 표시됩니다."
+        />
       ) : (
         <>
           <ResponsiveContainer width="100%" height={220}>

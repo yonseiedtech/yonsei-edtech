@@ -9,6 +9,7 @@
 
 import { useQuery } from "@tanstack/react-query";
 import { TrendingUp } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
 import { auth } from "@/lib/firebase";
 import type { AdoptionSnapshot } from "@/features/insights/adoption-metrics";
 
@@ -100,10 +101,13 @@ export default function AdoptionTrendSection() {
       </h2>
 
       {rows.length === 0 ? (
-        <p className="mt-3 text-xs text-muted-foreground">
-          아직 적재된 스냅샷이 없습니다. 매주 월요일 자동 적재되며, 운영진은 회원 보고서에서
-          수동 캡처할 수도 있습니다.
-        </p>
+        <EmptyState
+          compact
+          icon={TrendingUp}
+          title="아직 적재된 스냅샷이 없습니다."
+          description="매주 월요일 자동 적재되며, 운영진은 회원 보고서에서 수동 캡처할 수도 있습니다."
+          className="mt-3"
+        />
       ) : (
         <div className="mt-3 overflow-x-auto">
           <table className="w-full min-w-[520px] border-collapse text-xs">

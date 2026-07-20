@@ -36,6 +36,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { exportCSV } from "@/lib/export-csv";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 
 const STALE_TIME = 5 * 60_000;
 
@@ -241,13 +242,11 @@ export default function DiagnosticInsightsView() {
 
   if (rows.length === 0) {
     return (
-      <div className="rounded-2xl border border-dashed bg-muted/20 p-10 text-center">
-        <Stethoscope className="mx-auto mb-3 text-muted-foreground" size={28} />
-        <p className="text-sm font-medium">아직 진단평가 응시 기록이 없습니다.</p>
-        <p className="mt-1 text-xs text-muted-foreground">
-          회원이 진단평가를 응시하면 준비도·약점이 여기에 집계됩니다.
-        </p>
-      </div>
+      <EmptyState
+        icon={Stethoscope}
+        title="아직 진단평가 응시 기록이 없습니다."
+        description="회원이 진단평가를 응시하면 준비도·약점이 여기에 집계됩니다."
+      />
     );
   }
 

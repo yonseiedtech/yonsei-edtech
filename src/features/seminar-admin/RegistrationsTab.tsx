@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 import { parseCSVText, extractSheetId, getSheetCsvUrl } from "@/lib/parse-spreadsheet";
 import type { SeminarRegistration, SeminarAttendee, RegistrationFieldConfig, RegistrationStatus } from "@/types";
 import { DEFAULT_REGISTRATION_FIELDS } from "@/types";
@@ -137,7 +138,7 @@ function RegistrationAnalysis({
 }) {
   const [shareOpen, setShareOpen] = useState(false);
 
-  if (registrations.length === 0) return <p className="py-8 text-center text-sm text-muted-foreground">신청 데이터가 없습니다.</p>;
+  if (registrations.length === 0) return <EmptyState compact icon={Users} title="신청 데이터가 없습니다." className="py-4" />;
 
   const total = registrations.length;
   const members = registrations.filter((r) => r.userId).length;

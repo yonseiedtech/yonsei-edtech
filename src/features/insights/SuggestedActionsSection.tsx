@@ -42,6 +42,7 @@ import {
 import { db } from "@/lib/firebase";
 import { useMemberMetrics } from "./useMemberMetrics";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 
 // ── 규칙·임계값 (운영 튜닝용 상수) ──────────────────────────────────────────
 /** 퍼널 전환율 경보 임계 — 이전 단계 대비 전환이 이 값 미만이면 이탈 지점으로 승격 */
@@ -390,13 +391,16 @@ export default function SuggestedActionsSection() {
           <div className="h-20 animate-pulse rounded-2xl border bg-muted/40" />
         </div>
       ) : isError && actions.length === 0 ? (
-        <p className="rounded-xl border border-dashed bg-muted/10 py-8 text-center text-sm text-muted-foreground">
-          데이터 축적 중 — 아직 제안할 액션이 없습니다.
-        </p>
+        <EmptyState
+          compact
+          title="데이터 축적 중 — 아직 제안할 액션이 없습니다."
+        />
       ) : actions.length === 0 ? (
-        <p className="rounded-xl border border-dashed bg-muted/10 py-8 text-center text-sm text-muted-foreground">
-          현재 임계값을 넘는 이탈·검색 실패·비활성 신호가 없습니다. 데이터가 더 쌓이면 제안이 나타납니다.
-        </p>
+        <EmptyState
+          compact
+          title="현재 임계값을 넘는 이탈·검색 실패·비활성 신호가 없습니다."
+          description="데이터가 더 쌓이면 제안이 나타납니다."
+        />
       ) : (
         <div className="space-y-3">
           {actions.map((action) => (

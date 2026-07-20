@@ -7,6 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { profilesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
+import EmptyState from "@/components/ui/empty-state";
 import PageContainer from "@/components/ui/page-container";
 import { currentSemesterKey } from "@/lib/semester";
 import {
@@ -197,9 +198,13 @@ export default function AcademicStatusView({ userId }: { userId: string }) {
         <section className="rounded-2xl border border-border bg-card p-5 shadow-sm">
           <h2 className="text-sm font-semibold text-foreground">학기별 이력</h2>
           {history.length === 0 ? (
-            <p className="mt-3 text-sm text-muted-foreground">
-              아직 등록된 학사 상태가 없습니다. 위에서 학기를 선택해 등록해주세요.
-            </p>
+            <EmptyState
+              compact
+              icon={GraduationCap}
+              title="아직 등록된 학사 상태가 없습니다."
+              description="위에서 학기를 선택해 등록해주세요."
+              className="mt-3"
+            />
           ) : (
             <ul className="mt-3 divide-y divide-border">
               {history.map((entry) => (

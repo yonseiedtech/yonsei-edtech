@@ -20,6 +20,7 @@ import {
 } from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
+import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { logAudit } from "@/lib/audit";
@@ -569,11 +570,7 @@ function AdminList({
     );
   }
   if (items.length === 0) {
-    return (
-      <div className="mt-8 rounded-lg border border-dashed p-12 text-center text-sm text-muted-foreground">
-        등록된 항목이 없습니다.
-      </div>
-    );
+    return <EmptyState compact icon={Library} title="등록된 항목이 없습니다." className="mt-8" />;
   }
   return (
     <div className="mt-4 space-y-2">

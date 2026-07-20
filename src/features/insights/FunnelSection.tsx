@@ -20,6 +20,7 @@ import {
   where,
 } from "firebase/firestore";
 import { GitBranch, TrendingDown, Users } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 
@@ -219,9 +220,11 @@ function FunnelCard({ title, subtitle, steps, counts }: FunnelCardProps) {
       </div>
 
       {topCount === 0 ? (
-        <p className="py-6 text-center text-sm text-muted-foreground">
-          아직 기록된 퍼널 이벤트가 없습니다.
-        </p>
+        <EmptyState
+          compact
+          icon={GitBranch}
+          title="아직 기록된 퍼널 이벤트가 없습니다."
+        />
       ) : (
         <div className="space-y-1">
           {steps.map((step, i) => (

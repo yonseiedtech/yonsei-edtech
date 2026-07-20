@@ -15,6 +15,7 @@ import {
   DraftingCompass,
 } from "lucide-react";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
+import EmptyState from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
@@ -403,9 +404,7 @@ export default function ConsoleResearchPage() {
         {loading ? (
           <div className="p-8 text-center text-sm text-muted-foreground">불러오는 중…</div>
         ) : filtered.length === 0 ? (
-          <div className="p-8 text-center text-sm text-muted-foreground">
-            아직 연구활동을 시작한 회원이 없습니다.
-          </div>
+          <EmptyState compact icon={FlaskConical} title="아직 연구활동을 시작한 회원이 없습니다." />
         ) : (
           <ul className="divide-y">
             {filtered.map((s) => (

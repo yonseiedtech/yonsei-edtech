@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Plus, Bot, Workflow, LayoutGrid, Sparkles, Server } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
 import ServerConnectionCard from "@/features/agent/ServerConnectionCard";
 import AgentCard from "@/features/agent/AgentCard";
@@ -159,7 +160,7 @@ export default function AdminAgentTab() {
           <div>
             <h3 className="mb-3 font-semibold">최근 작업</h3>
             {tasks.length === 0 ? (
-              <p className="text-sm text-muted-foreground">아직 작업이 없습니다. 에이전트에 작업을 할당해보세요.</p>
+              <EmptyState compact icon={Bot} title="아직 작업이 없습니다." description="에이전트에 작업을 할당해보세요." />
             ) : (
               <div className="rounded-2xl border bg-card divide-y">
                 {tasks.map((task) => (

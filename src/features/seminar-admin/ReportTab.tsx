@@ -16,6 +16,7 @@ import {
 } from "@/components/ui/dialog";
 import { Download, Users, UserCheck, UserX, FileSpreadsheet, Link, Loader2, UserPlus, ChevronDown, ChevronUp, Share2, BarChart3, Copy, Printer } from "lucide-react";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 import { toast } from "sonner";
 import { parseExcelFile, parseCSVText, extractSheetId, getSheetCsvUrl } from "@/lib/parse-spreadsheet";
 import { attendeesApi, profilesApi, registrationsApi } from "@/lib/bkend";
@@ -653,7 +654,7 @@ export function SeminarReport({ seminarId, seminarTitle, seminarDate }: { semina
         </div>
         <div className="max-h-80 overflow-y-auto rounded-lg border bg-card">
           {attendees.length === 0 ? (
-            <p className="p-4 text-center text-sm text-muted-foreground">참석자가 없습니다.</p>
+            <EmptyState compact icon={Users} title="참석자가 없습니다." />
           ) : (
             <table className="w-full text-sm">
               <thead className="sticky top-0 border-b bg-muted/30">

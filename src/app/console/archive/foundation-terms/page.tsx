@@ -14,6 +14,7 @@ import {
   EyeOff,
 } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import EmptyState from "@/components/ui/empty-state";
 import { Card, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
@@ -287,9 +288,7 @@ export default function ConsoleFoundationTermsPage() {
               ))}
             </div>
           ) : filtered.length === 0 ? (
-            <div className="mt-8 rounded-lg border border-dashed p-12 text-center text-sm text-muted-foreground">
-              등록된 항목이 없습니다.
-            </div>
+            <EmptyState compact icon={BookOpen} title="등록된 항목이 없습니다." className="mt-8" />
           ) : (
             <div className="mt-4 space-y-2">
               {filtered.map((t) => (

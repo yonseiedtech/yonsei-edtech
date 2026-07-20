@@ -22,6 +22,7 @@ import {
   query as buildQuery,
 } from "firebase/firestore";
 import { Clock, Info, Mail, Minus, TrendingDown, TrendingUp } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
 import { db } from "@/lib/firebase";
 
 // ── 최근 N주 weekKey 목록 (KST 기준 가장 최근 월요일 소급) ──
@@ -253,9 +254,11 @@ export default function DigestStatsSection() {
       </h2>
 
       {!hasAnyData ? (
-        <p className="py-4 text-center text-sm text-muted-foreground">
-          아직 기록된 다이제스트 추적 데이터가 없습니다.
-        </p>
+        <EmptyState
+          compact
+          icon={Mail}
+          title="아직 기록된 다이제스트 추적 데이터가 없습니다."
+        />
       ) : (
         <>
           {/* 주차별 열람·클릭 추이 테이블 (CTR + 열람률 포함) */}

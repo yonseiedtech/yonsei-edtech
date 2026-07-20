@@ -26,6 +26,7 @@ import {
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
+import EmptyState from "@/components/ui/empty-state";
 import type { Seminar, SeminarReview } from "@/types";
 
 type ReviewSubTab = "speaker" | "staff" | "attendee";
@@ -366,7 +367,7 @@ export default function ReviewManagement({ seminar }: Props) {
         <div className="space-y-2">
           <p className="text-sm text-muted-foreground">신청 시 작성된 질문/요청사항 ({memos.length}건)</p>
           {memos.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">질문이 없습니다.</p>
+            <EmptyState compact icon={MessageSquare} title="질문이 없습니다." />
           ) : (
             <div className="space-y-2">
               {memos.map((r) => (
@@ -458,7 +459,7 @@ export default function ReviewManagement({ seminar }: Props) {
 
           {/* 목록 */}
           {filteredReviews.length === 0 ? (
-            <p className="py-8 text-center text-sm text-muted-foreground">해당 유형의 후기가 없습니다.</p>
+            <EmptyState compact icon={Star} title="해당 유형의 후기가 없습니다." />
           ) : (
             <div className="space-y-2">
               {filteredReviews.map((r) => {

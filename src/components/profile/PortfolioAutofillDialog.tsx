@@ -19,7 +19,8 @@ import {
   DownloadCloud,
   ExternalLink,
 } from "lucide-react";
-import { seminarsApi, externalActivitiesApi } from "@/lib/bkend";
+import { seminarsApi, externalActivitiesApi, kudosApi, hackathonSubmissionsApi } from "@/lib/bkend";
+import { HACKATHON_CONTEXT_ID } from "@/features/hackathon/config";
 import {
   buildPortfolioCandidates,
   candidateToExternalPayload,
@@ -52,12 +53,19 @@ export default function PortfolioAutofillDialog({
     setLoading(true);
     setSelected(new Set());
     try {
-      const res = await seminarsApi.list({ limit: 500 });
+      // v12-M2: 세미나·논문에 더해 받은 kudos(멘토링)·해커톤 제출을 병렬 수집
+      const [semRes, kudosRes, hackRes] = await Promise.all([
+        seminarsApi.list({ limit: 500 }),
+        kudosApi.listReceivedByUser(userId),
+        hackathonSubmissionsApi.listByContext(HACKATHON_CONTEXT_ID),
+      ]);
       const built = buildPortfolioCandidates({
         userId,
-        seminars: res.data,
+        seminars: semRes.data,
         recentPapers,
         existingExternals,
+        receivedKudos: kudosRes.data,
+        hackathonSubmissions: hackRes.data,
       });
       setCandidates(built);
       // 미적재 항목은 기본 선택
@@ -131,8 +139,8 @@ export default function PortfolioAutofillDialog({
           </DialogHeader>
 
           <p className="text-xs text-muted-foreground">
-            세미나 발표·대표 논문을 자동 수집했습니다. 추가할 항목을 선택하면 대외활동 포트폴리오로
-            적재되며, 운영진 검증 후 프로필에 정식 표기됩니다.
+            세미나 발표·대표 논문·멘토링 기여·해커톤 참가를 자동 수집했습니다. 추가할 항목을
+            선택하면 대외활동 포트폴리오로 적재되며, 운영진 검증 후 프로필에 정식 표기됩니다.
           </p>
 
           {loading ? (
@@ -143,7 +151,7 @@ export default function PortfolioAutofillDialog({
             <p className="py-10 text-center text-sm text-muted-foreground">
               자동으로 불러올 수 있는 활동이 없습니다.
               <br />
-              (세미나 연사로 지정되었거나 프로필에 대표 논문을 등록하면 표시됩니다.)
+              (세미나 연사·대표 논문 등록·멘토링 기여·해커톤 참가 이력이 있으면 표시됩니다.)
             </p>
           ) : (
             <ul className="space-y-2">
