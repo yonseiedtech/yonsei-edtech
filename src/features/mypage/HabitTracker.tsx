@@ -342,7 +342,7 @@ function DailyChart({
       {/* 차트 범례 (작게) */}
       <div className="flex flex-wrap items-center gap-x-2.5 gap-y-0.5 text-[8.5px] text-muted-foreground/80">
         <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-0.5 w-3 rounded-full bg-teal-600" /> 과거 실선
+          <span className="inline-block h-0.5 w-3 rounded-full bg-info" /> 과거 실선
         </span>
         <span className="inline-flex items-center gap-1">
           <span className="inline-block h-1.5 w-1.5 rounded-full bg-foreground" /> 오늘 점(깜박임)

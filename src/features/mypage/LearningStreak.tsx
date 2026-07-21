@@ -114,10 +114,10 @@ interface DayCell {
 /** 색상 단계 */
 function intensityClass(score: number): string {
   if (score <= 0) return "bg-muted/40";
-  if (score < 6) return "bg-emerald-200";
-  if (score < 11) return "bg-emerald-400";
-  if (score < 21) return "bg-emerald-500";
-  return "bg-emerald-700";
+  if (score < 6) return "bg-success/25";
+  if (score < 11) return "bg-success/50";
+  if (score < 21) return "bg-success/75";
+  return "bg-success";
 }
 
 function getMilestonesShown(userId: string): Set<string> {
@@ -430,7 +430,7 @@ function StreakMonthlyView({
     <div className="rounded-2xl border bg-card p-4">
       <div className="flex items-center justify-between">
         <div className="flex items-center gap-1.5">
-          <Sprout size={16} className="text-emerald-600" aria-hidden="true" />
+          <Sprout size={16} className="text-success" aria-hidden="true" />
           <h2 className="text-sm font-bold">학습 잔디</h2>
         </div>
         <div className="flex items-center gap-1">
@@ -458,7 +458,7 @@ function StreakMonthlyView({
 
       <div className="mt-2 grid grid-cols-7 gap-1 text-center text-[10px] text-muted-foreground">
         {["일", "월", "화", "수", "목", "금", "토"].map((w, i) => (
-          <div key={w} className={cn(i === 0 && "text-rose-400", i === 6 && "text-blue-400")}>
+          <div key={w} className={cn(i === 0 && "text-destructive", i === 6 && "text-cat-1")}>
             {w}
           </div>
         ))}
@@ -475,7 +475,7 @@ function StreakMonthlyView({
               "flex aspect-square items-center justify-center rounded-[4px] text-[10px] transition",
               c.inMonth ? intensityClass(c.score) : "bg-transparent",
               c.inMonth && c.ymd === todayYmd && "ring-1 ring-primary ring-offset-1",
-              c.inMonth && c.ymd === selectedYmd && "outline outline-2 outline-offset-1 outline-emerald-500",
+              c.inMonth && c.ymd === selectedYmd && "outline outline-2 outline-offset-1 outline-success",
             )}
           >
             <span className={cn(c.score >= 11 ? "text-white/90" : "text-foreground/55")}>
@@ -488,7 +488,7 @@ function StreakMonthlyView({
       {/* 색 강도 범례 */}
       <div className="mt-2 flex items-center justify-center gap-1 text-[9px] text-muted-foreground">
         <span>적음</span>
-        {["bg-muted/40", "bg-emerald-200", "bg-emerald-400", "bg-emerald-500", "bg-emerald-700"].map(
+        {["bg-muted/40", "bg-success/25", "bg-success/50", "bg-success/75", "bg-success"].map(
           (b) => (
             <span key={b} className={cn("h-2.5 w-2.5 rounded-[2px]", b)} aria-hidden />
           ),
@@ -506,7 +506,7 @@ function StreakMonthlyView({
           <p className="text-muted-foreground">평균점수</p>
         </div>
         <div>
-          <p className="font-bold text-emerald-600 tabular-nums">{view.rate}%</p>
+          <p className="font-bold text-success tabular-nums">{view.rate}%</p>
           <p className="text-muted-foreground">활동률</p>
         </div>
       </div>
@@ -526,7 +526,7 @@ function StreakMonthlyView({
               {Array.from(acts.entries()).map(([label, score]) => (
                 <span
                   key={label}
-                  className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
+                  className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] text-success"
                 >
                   {label}
                   <span className="font-semibold">+{score}</span>
@@ -855,21 +855,21 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
   return (
     <div className={cn("rounded-2xl border bg-card", compact ? "p-4" : "p-5")}>
       <div className="flex flex-wrap items-center gap-2">
-        <Sprout size={18} className="text-emerald-600" aria-hidden="true" />
+        <Sprout size={18} className="text-success" aria-hidden="true" />
         <h2 className="font-bold">학습 잔디</h2>
         <span className="ml-auto flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
           <span>활동 <strong className="text-foreground">{stats.activeDays}</strong>일</span>
           <span>누적 <strong className="text-foreground">{stats.totalScore}</strong>점</span>
           {isCurrentSem && (
             <span className="inline-flex items-center gap-1">
-              <Flame size={12} className="text-rose-500" />
+              <Flame size={12} className="text-destructive" />
               <strong className="text-foreground">{stats.weekStreak}</strong>주 streak
             </span>
           )}
           {!compact && (
             <Link
               href="/leaderboard"
-              className="inline-flex items-center gap-1 rounded-full border border-amber-300/60 bg-amber-50 px-2.5 py-1 text-[11px] font-semibold text-amber-700 transition-colors hover:bg-amber-100"
+              className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-warning/10 px-2.5 py-1 text-[11px] font-semibold text-warning transition-colors hover:bg-warning/20"
               title="학습 잔디 순위 보기"
             >
               <Trophy size={11} aria-hidden="true" />
@@ -881,8 +881,8 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
 
       {/* 복구 넛지 (벤치마크 H2) — 막 끊긴 스트릭 인라인 한 줄. 새 카드 추가 없이 헤더 아래. */}
       {isCurrentSem && stats.justBroke && (
-        <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-amber-50 px-3 py-1.5 text-xs text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
-          <Flame size={13} className="shrink-0 text-amber-500" aria-hidden="true" />
+        <p className="mt-2 flex items-center gap-1.5 rounded-lg bg-warning/10 px-3 py-1.5 text-xs text-warning">
+          <Flame size={13} className="shrink-0 text-warning" aria-hidden="true" />
           <span>
             이번 주에 하나만 기록하면 <strong>{stats.priorStreak}주</strong> 연속이 다시 이어져요.
           </span>
@@ -894,7 +894,7 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
         <div className="mt-2 flex flex-wrap items-center gap-x-2 gap-y-1 text-xs">
           {stats.currentWeekFrozen ? (
             <>
-              <span className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2.5 py-1 font-semibold text-sky-700 ring-1 ring-sky-200 dark:bg-sky-950/30 dark:text-sky-300 dark:ring-sky-800">
+              <span className="inline-flex items-center gap-1 rounded-full bg-cat-1/10 px-2.5 py-1 font-semibold text-cat-1 ring-1 ring-cat-1/20">
                 <Snowflake size={12} aria-hidden="true" />
                 이번 주 얼림
               </span>
@@ -915,7 +915,7 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
               className={cn(
                 "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 font-semibold transition-colors",
                 freezeRemaining > 0
-                  ? "border-sky-200 bg-sky-50 text-sky-700 hover:bg-sky-100 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300"
+                  ? "border-cat-1/20 bg-cat-1/10 text-cat-1 hover:bg-cat-1/20"
                   : "cursor-not-allowed border-border bg-muted/40 text-muted-foreground",
               )}
               title="바쁘거나 아픈 주에 이번 주 잔디를 얼려 연속을 지켜요"
@@ -950,7 +950,7 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
         <p className="flex-1 text-center text-sm font-semibold">
           {semesterLabel(semester)}
           {isCurrentSem && (
-            <span className="ml-1.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700">
+            <span className="ml-1.5 rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-medium text-success">
               현재
             </span>
           )}
@@ -1015,10 +1015,10 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
       <div className="mt-3 flex items-center gap-1.5 text-[10px] text-muted-foreground">
         <span>적음</span>
         <span className="h-3 w-3 rounded-[3px] bg-muted/40" />
-        <span className="h-3 w-3 rounded-[3px] bg-emerald-200" />
-        <span className="h-3 w-3 rounded-[3px] bg-emerald-400" />
-        <span className="h-3 w-3 rounded-[3px] bg-emerald-500" />
-        <span className="h-3 w-3 rounded-[3px] bg-emerald-700" />
+        <span className="h-3 w-3 rounded-[3px] bg-success/25" />
+        <span className="h-3 w-3 rounded-[3px] bg-success/50" />
+        <span className="h-3 w-3 rounded-[3px] bg-success/75" />
+        <span className="h-3 w-3 rounded-[3px] bg-success" />
         <span>많음</span>
       </div>
 
@@ -1030,7 +1030,7 @@ export default function LearningStreak({ compact = false }: { compact?: boolean 
             return (
               <span
                 key={m.id}
-                className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2.5 py-1 text-[11px] font-semibold text-emerald-800 ring-1 ring-emerald-200"
+                className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2.5 py-1 text-[11px] font-semibold text-success ring-1 ring-success/20"
                 title={m.description}
               >
                 <Icon size={12} />

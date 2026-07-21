@@ -721,7 +721,7 @@ export default function EventEditorForm({
                         <button
                           type="button"
                           onClick={() => setInviteSelections((p) => p.filter((s) => s.id !== m.id))}
-                          className="hover:text-red-500"
+                          className="hover:text-destructive"
                           aria-label="선택 해제"
                         >
                           <X size={10} />

@@ -29,8 +29,9 @@ import { join, dirname } from "node:path";
 // 색상 부채 상환 후 이 수치를 낮춰 회귀 차단 수위를 높일 것.
 // 최초 설정: 2026-07-20 기준 eslint-rawcolor-baseline.mjs 347 개.
 // 2026-07-21 라운드7: 322 → 293 (board·mypage·networking·seminar·flashcard 정화)
+// 2026-07-21 라운드7 계속: 293 → 283 (LearningStreak·NetworkingPoll·HabitTracker·EventEditorForm 등)
 // ─────────────────────────────────────────────────────────────
-const CEILING = 293;
+const CEILING = 283;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const baselinePath = join(__dirname, "..", "eslint-rawcolor-baseline.mjs");

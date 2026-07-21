@@ -44,10 +44,10 @@ const WEEKDAYS = ["일", "월", "화", "수", "목", "금", "토"];
 function heatClass(count: number, max: number): string {
   if (count <= 0 || max <= 0) return "border-border bg-background text-muted-foreground";
   const ratio = count / max;
-  if (ratio >= 1) return "border-indigo-600 bg-indigo-600 text-white dark:border-indigo-400 dark:bg-indigo-500";
-  if (ratio >= 0.66) return "border-indigo-500 bg-indigo-400 text-white dark:bg-indigo-600/80";
-  if (ratio >= 0.33) return "border-indigo-300 bg-indigo-200 text-indigo-900 dark:border-indigo-700 dark:bg-indigo-800/60 dark:text-indigo-100";
-  return "border-indigo-200 bg-indigo-100 text-indigo-800 dark:border-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200";
+  if (ratio >= 1) return "border-cat-1 bg-cat-1 text-white";
+  if (ratio >= 0.66) return "border-cat-1/80 bg-cat-1/60 text-white";
+  if (ratio >= 0.33) return "border-cat-1/30 bg-cat-1/20 text-cat-1";
+  return "border-cat-1/20 bg-cat-1/10 text-cat-1";
 }
 
 const pad = (n: number) => String(n).padStart(2, "0");
@@ -432,7 +432,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
     return (
       <div className="space-y-2">
         {!validTime && (
-          <div className="rounded-lg border border-amber-300 bg-amber-50 px-2.5 py-2 text-[11px] text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-200">
+          <div className="rounded-lg border border-warning/30 bg-warning/10 px-2.5 py-2 text-[11px] text-warning">
             <p>「{timeLabel}」는 시각이 아니어서 아래 시각으로 확정됩니다. 계속할까요?</p>
             <label className="mt-1.5 inline-flex items-center gap-1.5 font-medium">
               확정 시각
@@ -478,7 +478,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
     <section className="rounded-2xl border bg-card p-4">
       <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
         <h3 className="flex items-center gap-1.5 text-sm font-bold">
-          <CalendarCheck size={15} className="text-indigo-600 dark:text-indigo-400" /> 일정 조율 투표
+          <CalendarCheck size={15} className="text-cat-1" /> 일정 조율 투표
         </h3>
         <span className="inline-flex items-center gap-1 text-[11px] text-muted-foreground">
           <UsersIcon size={12} /> 응답 {user ? responses.filter((r) => (r.availableSlots?.length ?? 0) > 0).length : (guestTally?.responderCount ?? 0)}명
@@ -491,9 +491,9 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
           className={cn(
             "mb-3 rounded-xl border px-3 py-2 text-[11px]",
             event.pollDecisionMode === "auto"
-              ? "border-indigo-200 bg-indigo-50/70 text-indigo-800 dark:border-indigo-900 dark:bg-indigo-950/30 dark:text-indigo-100"
+              ? "border-cat-1/20 bg-cat-1/5 text-cat-1"
               : canEdit
-                ? "border-amber-300 bg-amber-50 font-semibold text-amber-800 dark:border-amber-800/60 dark:bg-amber-950/30 dark:text-amber-100"
+                ? "border-warning/30 bg-warning/10 font-semibold text-warning"
                 : "border-border bg-muted/40 text-muted-foreground",
           )}
         >
@@ -506,17 +506,17 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
       )}
 
       {/* 현재 최다 가능 일정 (날짜 단위 집계) */}
-      <div className="mb-3 rounded-xl bg-indigo-50 px-3 py-2.5 dark:bg-indigo-950/40">
-        <p className="flex items-center gap-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-200">
-          <Sparkles size={13} className="text-indigo-600 dark:text-indigo-300" /> 현재 최다 가능 일정
+      <div className="mb-3 rounded-xl bg-cat-1/5 px-3 py-2.5">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-cat-1">
+          <Sparkles size={13} className="text-cat-1" /> 현재 최다 가능 일정
         </p>
         {bestDates.length > 0 ? (
           <ul className="mt-1.5 space-y-1">
             {bestDates.map((b) => (
-              <li key={b.date} className="text-xs text-indigo-800 dark:text-indigo-100">
+              <li key={b.date} className="text-xs text-cat-1">
                 <b>{fullDateLabel(b.date)}</b> · {b.count}명 가능
                 {b.bestTime && (
-                  <span className="text-indigo-600 dark:text-indigo-300"> — {b.bestTime} 최다</span>
+                  <span className="text-cat-1"> — {b.bestTime} 최다</span>
                 )}
               </li>
             ))}
@@ -586,13 +586,13 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
 
       {/* 게스트 투표 중 안내 배너 */}
       {isGuestVoting && (
-        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-indigo-50/60 px-3 py-2 dark:border-indigo-900 dark:bg-indigo-950/30">
-          <p className="text-[11px] text-indigo-800 dark:text-indigo-100">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-cat-1/20 bg-cat-1/5 px-3 py-2">
+          <p className="text-[11px] text-cat-1">
             비로그인 투표 중 · <b>{guestVoter?.name}</b> 님 · 선택 {guestSlots.size}개
           </p>
           <Link
             href={`/gatherings/poll/${event.id}`}
-            className="inline-flex items-center gap-1 text-[11px] font-semibold text-indigo-700 underline-offset-2 hover:underline dark:text-indigo-300"
+            className="inline-flex items-center gap-1 text-[11px] font-semibold text-cat-1 underline-offset-2 hover:underline"
           >
             전체 집계 보기 <ExternalLink size={11} />
           </Link>
@@ -635,7 +635,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
       {/* 요일 헤더 */}
       <div className="grid grid-cols-7 text-center text-[10px] font-semibold text-muted-foreground">
         {WEEKDAYS.map((w, i) => (
-          <div key={w} className={cn("py-1", i === 0 && "text-rose-500 dark:text-rose-400", i === 6 && "text-blue-500 dark:text-blue-400")}>
+          <div key={w} className={cn("py-1", i === 0 && "text-destructive", i === 6 && "text-cat-1")}>
             {w}
           </div>
         ))}
@@ -660,9 +660,9 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
                 "relative flex aspect-square flex-col items-center justify-center rounded-lg border p-0.5 text-[11px] tabular-nums transition-colors",
                 inPeriod ? heatClass(count, maxDateCount) : "border-transparent bg-transparent text-muted-foreground/40",
                 !cell.inMonth && "opacity-40",
-                inPeriod && clickable && "hover:border-indigo-400",
-                mine && "ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-card",
-                isSelected && "ring-2 ring-indigo-500 ring-offset-1 dark:ring-offset-card",
+                inPeriod && clickable && "hover:border-cat-1/60",
+                mine && "ring-2 ring-info ring-offset-1 dark:ring-offset-card",
+                isSelected && "ring-2 ring-cat-1 ring-offset-1 dark:ring-offset-card",
                 !clickable && "cursor-default",
               )}
             >
@@ -682,7 +682,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
           <DialogContent className="sm:max-w-md">
             <DialogHeader>
               <DialogTitle className="flex items-center gap-1.5 text-sm">
-                <CalendarCheck size={15} className="text-indigo-600 dark:text-indigo-400" />
+                <CalendarCheck size={15} className="text-cat-1" />
                 {selectedDate ? fullDateLabel(selectedDate) : ""} · 가능 시간대
               </DialogTitle>
             </DialogHeader>
@@ -713,8 +713,8 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
                     className={cn(
                       "flex min-h-[52px] flex-col rounded-lg border px-3 py-2.5 text-left transition-colors disabled:cursor-default",
                       heatClass(count, maxCount),
-                      mine && "ring-2 ring-teal-500 ring-offset-1 dark:ring-offset-background",
-                      canVote && "hover:border-indigo-400",
+                      mine && "ring-2 ring-info ring-offset-1 dark:ring-offset-background",
+                      canVote && "hover:border-cat-1/60",
                     )}
                   >
                     <span className="flex items-center justify-between gap-2">
@@ -739,20 +739,20 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
       {/* 범례 */}
       <div className="mt-2.5 flex flex-wrap items-center gap-x-3 gap-y-1 text-[10px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
-          <span className="h-3 w-3 rounded border border-teal-500 ring-2 ring-teal-500" /> 내 가능
+          <span className="h-3 w-3 rounded border border-info ring-2 ring-info" /> 내 가능
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="h-3 w-3 rounded border border-indigo-200 bg-indigo-100 dark:border-indigo-800 dark:bg-indigo-900/40" /> 적음
+          <span className="h-3 w-3 rounded border border-cat-1/20 bg-cat-1/10" /> 적음
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="h-3 w-3 rounded border border-indigo-600 bg-indigo-600" /> 많음
+          <span className="h-3 w-3 rounded border border-cat-1 bg-cat-1" /> 많음
         </span>
       </div>
 
       {/* 운영진 확정 패널 (기존 플로우 유지) */}
       {canEdit && (
-        <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/60 p-3 dark:border-indigo-900 dark:bg-indigo-950/30">
-          <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-indigo-700 dark:text-indigo-200">
+        <div className="mt-4 rounded-xl border border-cat-1/20 bg-cat-1/5 p-3">
+          <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-cat-1">
             <Lock size={12} /> 일정 확정 (운영진)
           </p>
           {event.pollDecisionMode === "auto" ? (
@@ -793,8 +793,8 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
                       className={cn(
                         "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
                         pickedSlot === t.slot
-                          ? "border-indigo-600 bg-indigo-600 text-white dark:bg-indigo-500"
-                          : "border-border bg-background text-muted-foreground hover:border-indigo-400",
+                          ? "border-cat-1 bg-cat-1 text-white"
+                          : "border-border bg-background text-muted-foreground hover:border-cat-1/60",
                       )}
                     >
                       {formatSlotLabel(t.slot)} · {t.count}명

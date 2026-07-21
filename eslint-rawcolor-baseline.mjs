@@ -2,7 +2,7 @@
  * AUTO-GENERATED — node scripts/gen-rawcolor-baseline.mjs 로 재생성.
  * raw Tailwind 팔레트를 이미 쓰는 기존 파일 목록(부채 baseline).
  * 이 목록에 있는 파일은 차단 규칙에서 제외되고, 새 파일은 error 로 차단된다.
- * 색상 정리 라운드 후 재생성해 목록을 줄일 것. (생성 시점 293개)
+ * 색상 정리 라운드 후 재생성해 목록을 줄일 것. (생성 시점 283개)
  */
 export default [
   "src/app/about/greeting/page.tsx",
@@ -59,7 +59,6 @@ export default [
   "src/app/exam-schedule-admin/page.tsx",
   "src/app/feedback/page.tsx",
   "src/app/forgot-password/page.tsx",
-  "src/app/gatherings/poll/\\[id\\]/page.tsx",
   "src/app/journal/articles/\\[articleId\\]/page.tsx",
   "src/app/journal/issues/\\[issueId\\]/page.tsx",
   "src/app/journal/page.tsx",
@@ -161,7 +160,6 @@ export default [
   "src/features/auth/LoginForm.tsx",
   "src/features/auth/SessionIndicator.tsx",
   "src/features/auth/signup-steps/Step2Academic.tsx",
-  "src/features/board/InterviewPlayer.tsx",
   "src/features/card-news/CardNewsEditor.tsx",
   "src/features/card/BusinessCard.tsx",
   "src/features/collaborative-research/components/ChaptersBoard.tsx",
@@ -211,17 +209,9 @@ export default [
   "src/features/journal/components/JournalConsentPanel.tsx",
   "src/features/journal/components/JournalReviewCommentSection.tsx",
   "src/features/member/OrgChart.tsx",
-  "src/features/mypage/DefensePracticeTrendCard.tsx",
-  "src/features/mypage/GraduationChecklistCard.tsx",
-  "src/features/mypage/HabitTracker.tsx",
-  "src/features/mypage/LearningEffectCard.tsx",
-  "src/features/mypage/LearningStreak.tsx",
   "src/features/network/MemberMiniDialog.tsx",
   "src/features/network/MemberNode.tsx",
   "src/features/network/NetworkAnalyticsReport.tsx",
-  "src/features/networking/EventEditorForm.tsx",
-  "src/features/networking/GuestPollVoter.tsx",
-  "src/features/networking/NetworkingPoll.tsx",
   "src/features/newsletter/newsletter-store.ts",
   "src/features/popup/PopupEditor.tsx",
   "src/features/popup/PopupListView.tsx",
