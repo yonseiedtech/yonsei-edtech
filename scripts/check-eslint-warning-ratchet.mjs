@@ -24,10 +24,11 @@ import { execSync } from "node:child_process";
 // ─────────────────────────────────────────────────────────────
 // 래칫 상한 (ratchet ceiling) — 이 값을 초과하면 exit 1.
 // warning 해소 후 이 수치를 낮춰 회귀 차단 수위를 높일 것.
-// 2026-07-21 초기 설정: ESLint 392건
+// 2026-07-21 초기 설정: ESLint 400건
 //   (react-hooks 5종 추정 · no-unescaped-entities 잔여)
+// 2026-07-21 no-unescaped-entities 13파일 수정 후: 392 → 360
 // ─────────────────────────────────────────────────────────────
-const CEILING = 392;
+const CEILING = 360;
 
 // ── 1. ESLint 실행 (JSON 포맷) ───────────────────────────────
 // execSync 사용 — ESLint 가 error 시 exit 1 을 던지므로 catch 로 stdout 수집.
