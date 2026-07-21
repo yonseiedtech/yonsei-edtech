@@ -50,6 +50,14 @@ import {
 
 const MAX_LEN = 140;
 
+/** body 앞에 붙은 관심 영역 태그 추출 (예: "K-12 학교 현장: 본문" → "K-12 학교 현장") */
+function extractArea(body: string): string | null {
+  for (const area of HACKATHON_INTEREST_AREAS) {
+    if (body.startsWith(`${area}: `) || body.startsWith(`${area}:`)) return area;
+  }
+  return null;
+}
+
 export default function HackathonBoard() {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
@@ -65,6 +73,8 @@ export default function HackathonBoard() {
   const [editingEntry, setEditingEntry] = useState(false);
   const [editBody, setEditBody] = useState("");
   const [editTeamPref, setEditTeamPref] = useState<HackathonTeamPref>(HACKATHON_TEAM_PREFS.undecided);
+  // H1: 관심 영역 태그 (신청 폼 선택)
+  const [areaTag, setAreaTag] = useState<string | null>(null);
 
   useEffect(() => {
     setOnboardingDismissed(localStorage.getItem("hackathon_onboarding_dismissed") === "1");
@@ -137,7 +147,12 @@ export default function HackathonBoard() {
 
   const visible = useMemo(() => {
     if (filter === "all") return sorted;
-    return sorted.filter((e) => (e.presenter ?? "") === filter);
+    // 팀 참여 희망 필터
+    if ((HACKATHON_TEAM_PREF_LIST as readonly string[]).includes(filter)) {
+      return sorted.filter((e) => (e.presenter ?? "") === filter);
+    }
+    // 관심 영역 필터 (H1)
+    return sorted.filter((e) => extractArea(e.body) === filter);
   }, [sorted, filter]);
 
   const prefCounts = useMemo(() => {
@@ -145,6 +160,16 @@ export default function HackathonBoard() {
     for (const e of entries) {
       const p = e.presenter ?? "";
       if (p) map.set(p, (map.get(p) ?? 0) + 1);
+    }
+    return map;
+  }, [entries]);
+
+  // H1: 관심 영역 집계
+  const areaCounts = useMemo(() => {
+    const map = new Map<string, number>();
+    for (const e of entries) {
+      const area = extractArea(e.body);
+      if (area) map.set(area, (map.get(area) ?? 0) + 1);
     }
     return map;
   }, [entries]);
@@ -189,6 +214,7 @@ export default function HackathonBoard() {
         body,
       });
       setProblem("");
+      setAreaTag(null);
       refresh();
       toast.success("참가 신청이 완료되었습니다. 현장에서 만나요!");
     } catch (e) {
@@ -494,16 +520,25 @@ export default function HackathonBoard() {
             거창하지 않아도 좋아요. 평소 궁금했던 교육 현장의 문제를 한 줄로 남기면 신청이 됩니다.
           </p>
 
-          {/* 관심 영역 빠른 입력 (선택) */}
+          {/* H1: 관심 영역 태그 선택 (토글) */}
           <div className="mt-3 flex flex-wrap gap-1.5">
             {HACKATHON_INTEREST_AREAS.map((area) => (
               <button
                 key={area}
                 type="button"
+                aria-pressed={areaTag === area}
                 onClick={() =>
-                  setProblem((prev) => (prev.trim() ? prev : `${area}: `))
+                  setAreaTag((prev) => {
+                    const next = prev === area ? null : area;
+                    if (next) setProblem((p) => (p.trim() ? p : `${next}: `));
+                    return next;
+                  })
                 }
-                className="rounded-full border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-accent"
+                className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                  areaTag === area
+                    ? "border-primary bg-primary/10 font-medium text-primary"
+                    : "border-border text-muted-foreground hover:bg-accent"
+                }`}
               >
                 {area}
               </button>
@@ -598,6 +633,24 @@ export default function HackathonBoard() {
               {p} {prefCounts.get(p)}
             </button>
           ))}
+          {/* H1: 관심 영역 필터 탭 */}
+          {HACKATHON_INTEREST_AREAS.filter(
+            (area) => (areaCounts.get(area) ?? 0) > 0,
+          ).map((area) => (
+            <button
+              key={area}
+              type="button"
+              onClick={() => setFilter(area)}
+              aria-pressed={filter === area}
+              className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                filter === area
+                  ? "border-primary bg-primary/10 font-medium text-primary"
+                  : "border-border text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {area} {areaCounts.get(area)}
+            </button>
+          ))}
         </div>
 
         <p className="sr-only" aria-live="polite">
@@ -619,13 +672,23 @@ export default function HackathonBoard() {
                 entry.presenter === HACKATHON_TEAM_PREFS.wantTeam;
               const joiners = joinsByQuestion.get(entry.id) ?? [];
               const iJoined = myJoinedSet.has(entry.id);
+              // H1: 관심 영역 태그 파싱
+              const entryArea = extractArea(entry.body);
+              const displayBody = entryArea
+                ? entry.body.slice(entryArea.length + 2).trim() || entry.body
+                : entry.body;
               return (
                 <li
                   key={entry.id}
                   className="rounded-2xl border bg-card p-4 transition-shadow hover:shadow-sm"
                 >
+                  {entryArea && (
+                    <span className="mb-1.5 inline-flex items-center rounded-full bg-primary/8 px-2 py-0.5 text-[11px] font-medium text-primary">
+                      {entryArea}
+                    </span>
+                  )}
                   <p className="text-sm leading-relaxed text-foreground">
-                    {entry.body}
+                    {displayBody}
                   </p>
                   <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="font-medium text-foreground">
