@@ -109,7 +109,7 @@ const PRIORITY_LABELS: Record<HandoverDocument["priority"], string> = {
 const PRIORITY_COLORS: Record<HandoverDocument["priority"], string> = {
   high: "bg-destructive/5 text-destructive border-destructive/20",
   medium: "bg-warning/5 text-warning border-warning/20",
-  low: "bg-green-50 text-green-700 border-green-200",
+  low: "bg-success/5 text-success border-success/20",
 };
 
 const PRIORITY_ORDER: Record<HandoverDocument["priority"], number> = {

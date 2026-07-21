@@ -454,7 +454,7 @@ function ResearchLogicMap({
   const stLeft = Math.round((stTop + stRightDiag + stBottom) / 3);
 
   return (
-    <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-blue-50/40 p-4">
+    <div className="rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-cat-1/5 p-4">
       <div className="flex flex-wrap items-center justify-between gap-2">
         <p className="text-sm font-bold text-primary">📐 연구 흐름 Logic Map</p>
         <div className="flex items-center gap-3 text-[11px] text-muted-foreground">
@@ -1761,7 +1761,7 @@ export default function ResearchReportInterview({
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-100 dark:from-slate-950 dark:via-slate-900 dark:to-slate-950">
+    <div className="fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-muted/5 via-background to-muted/5">
       <header
         className="flex items-center justify-between gap-1.5 border-b bg-card/70 px-2.5 py-2 backdrop-blur sm:gap-2 sm:px-4 sm:py-3 dark:bg-card/70"
         style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}

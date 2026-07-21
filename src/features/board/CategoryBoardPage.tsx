@@ -38,7 +38,7 @@ export default function CategoryBoardPage({ category, title, description, icon, 
           <div className="flex flex-col gap-4 sm:flex-row sm:items-start sm:justify-between sm:gap-6">
             {/* 아이콘 + 제목 */}
             <div className="flex items-center gap-4">
-              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-sky-400/15 text-primary shadow-sm">
+              <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-cat-1/15 text-primary shadow-sm">
                 {icon}
               </div>
               <div>

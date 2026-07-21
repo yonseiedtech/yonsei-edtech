@@ -52,7 +52,7 @@ export default function ArchiveStartHere() {
   return (
     <section
       aria-labelledby="archive-start-here"
-      className="mt-6 rounded-2xl border border-success/20 bg-gradient-to-br from-success/5 via-teal-50/50 to-cyan-50/40 p-5 shadow-sm dark:via-teal-950/20 dark:to-cyan-950/20"
+      className="mt-6 rounded-2xl border border-success/20 bg-gradient-to-br from-success/5 via-info/5 to-info/5 p-5 shadow-sm"
     >
       <div className="mb-4 flex items-center gap-3">
         <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-white/70 text-success shadow-sm dark:bg-muted/60">

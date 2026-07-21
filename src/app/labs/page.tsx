@@ -95,7 +95,7 @@ function LabCard({ lab }: LabCardProps) {
               className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
-            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/5 via-sky-50 to-indigo-50 dark:from-primary/10 dark:via-sky-950/20 dark:to-indigo-950/20">
+            <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/5 via-cat-1/5 to-cat-1/5">
               <FlaskConical
                 size={40}
                 className="text-primary/30"

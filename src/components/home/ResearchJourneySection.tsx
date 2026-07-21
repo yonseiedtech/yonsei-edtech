@@ -112,7 +112,7 @@ export default function ResearchJourneySection() {
           <h2 className="mt-2 text-2xl font-bold tracking-tight sm:text-3xl md:text-4xl">
             입학부터 학위논문까지,
             <br className="sm:hidden" />{" "}
-            <span className="bg-gradient-to-r from-primary via-sky-500 to-blue-500 bg-clip-text text-transparent">
+            <span className="bg-gradient-to-r from-primary via-cat-1 to-cat-1 bg-clip-text text-transparent">
               학기마다 다음 한 걸음
             </span>
           </h2>

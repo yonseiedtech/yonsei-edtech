@@ -297,7 +297,7 @@ export default async function AIForumDetailPage({ params }: Props) {
         </section>
       )}
 
-      <section className="mt-10 rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-sky-500/5 p-6 text-center">
+      <section className="mt-10 rounded-2xl border-2 border-primary/20 bg-gradient-to-br from-primary/5 to-cat-1/5 p-6 text-center">
         <MessageSquare size={24} className="mx-auto mb-2 text-primary" />
         <h3 className="text-base font-bold">이 토론에 대한 본인 의견은 어떠신가요?</h3>
         <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground">

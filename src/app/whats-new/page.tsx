@@ -402,9 +402,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "대시보드 설정 열기",
     ctaHref: "/mypage/dashboard-settings",
-    color: "from-blue-50 to-blue-100/60 dark:from-blue-950/30 dark:to-blue-950/30",
-    iconBg: "bg-blue-100/80 dark:bg-blue-950/40",
-    iconColor: "text-blue-700 dark:text-blue-400",
+    color: "from-cat-1/5 to-cat-1/10",
+    iconBg: "bg-cat-1/10",
+    iconColor: "text-cat-1",
   },
   {
     id: "onboarding-checklist",
@@ -422,9 +422,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "대시보드에서 확인",
     ctaHref: "/dashboard",
-    color: "from-green-50 to-green-100/60 dark:from-green-950/30 dark:to-green-950/30",
-    iconBg: "bg-green-100/80 dark:bg-green-950/40",
-    iconColor: "text-green-700 dark:text-green-400",
+    color: "from-success/5 to-success/10",
+    iconBg: "bg-success/10",
+    iconColor: "text-success",
   },
   {
     id: "notification-center",
@@ -442,9 +442,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "알림 설정 열기",
     ctaHref: "/mypage/notifications",
-    color: "from-purple-50 to-purple-100/60 dark:from-purple-950/30 dark:to-purple-950/30",
-    iconBg: "bg-purple-100/80 dark:bg-purple-950/40",
-    iconColor: "text-purple-700 dark:text-purple-400",
+    color: "from-cat-5/5 to-cat-5/10",
+    iconBg: "bg-cat-5/10",
+    iconColor: "text-cat-5",
   },
   {
     id: "archive-enhanced",
@@ -482,9 +482,9 @@ const FEATURES: Feature[] = [
     ],
     cta: "대외활동 보러 가기",
     ctaHref: "/activities/external",
-    color: "from-rose-50 to-rose-100/60 dark:from-rose-950/30 dark:to-rose-950/30",
-    iconBg: "bg-rose-100/80 dark:bg-rose-950/40",
-    iconColor: "text-rose-700 dark:text-rose-400",
+    color: "from-destructive/5 to-destructive/10",
+    iconBg: "bg-destructive/10",
+    iconColor: "text-destructive",
   },
 ];
 
@@ -593,10 +593,10 @@ export default function WhatsNewPage() {
       </div>
 
       {/* 피드백 CTA */}
-      <div className="mt-10 rounded-2xl border bg-gradient-to-br from-slate-50 to-slate-100/60 dark:from-slate-950/30 dark:to-slate-950/30 p-6">
+      <div className="mt-10 rounded-2xl border bg-gradient-to-br from-muted/5 to-muted/10 p-6">
         <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
           <div className="flex items-start gap-3">
-            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-200/80 text-slate-600 dark:bg-slate-800/80 dark:text-slate-400">
+            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-muted/20 text-muted-foreground">
               <MessageSquare size={18} />
             </div>
             <div>

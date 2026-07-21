@@ -17,7 +17,7 @@ import { ArrowRight, Network, Users, Sparkles } from "lucide-react";
 export default function ConnectivismPanel() {
   return (
     <section
-      className="overflow-hidden rounded-2xl border-2 border-primary/15 bg-gradient-to-br from-primary/5 via-sky-500/5 to-card p-5 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300"
+      className="overflow-hidden rounded-2xl border-2 border-primary/15 bg-gradient-to-br from-primary/5 via-cat-1/5 to-card p-5 shadow-sm animate-in fade-in slide-in-from-bottom-2 duration-300"
       aria-labelledby="connectivism-panel-title"
     >
       <div className="mb-3 flex items-center gap-2.5">

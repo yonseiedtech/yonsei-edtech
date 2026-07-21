@@ -54,7 +54,7 @@ export default function SeminarPresentPage() {
             설문 진행 중 · {pollCount}명 응답
           </span>
         )}
-        <span className="text-sm text-neutral-400">
+        <span className="text-sm text-muted-foreground">
           참여코드 <b className="ml-1 font-mono text-lg tracking-widest text-white">{session?.joinCode ?? "----"}</b>
         </span>
       </div>
@@ -69,7 +69,7 @@ export default function SeminarPresentPage() {
               className="max-h-full"
             />
           ) : (
-            <div className="text-center text-neutral-400">
+            <div className="text-center text-muted-foreground">
               <p className="text-2xl font-semibold">라이브 대기 중</p>
               <p className="mt-2 text-sm">발표자가 세션을 시작하면 슬라이드가 표시됩니다.</p>
             </div>

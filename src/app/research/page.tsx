@@ -412,7 +412,7 @@ export default function ResearchAnalyticsPage() {
             {/* ── 회원 CTA ── */}
             <section
               aria-label="학위논문 목록 안내"
-              className="mt-10 rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-sky-500/5 to-primary/5 p-6 shadow-sm sm:p-8"
+              className="mt-10 rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-cat-1/5 to-primary/5 p-6 shadow-sm sm:p-8"
             >
               <div className="flex flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
