@@ -299,7 +299,7 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
               "flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-2 py-2.5 text-xs font-medium leading-tight transition-all",
               mode === "partial"
                 ? "border-primary bg-primary/10 text-foreground"
-                : "border-input bg-card text-muted-foreground hover:border-primary/40 hover:bg-primary/5 dark:bg-card dark:hover:bg-primary/10",
+                : "border-input bg-card text-muted-foreground hover:border-primary/40 hover:bg-primary/5",
             )}
           >
             <CalendarRange size={16} className={mode === "partial" ? "text-primary" : "text-muted-foreground"} />
@@ -348,7 +348,7 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
             {expanded ? <ChevronUp size={16} className="text-muted-foreground" /> : <ChevronDown size={16} className="text-muted-foreground" />}
           </button>
           {expanded && (
-            <div className="border-t bg-card p-3 dark:bg-card">
+            <div className="border-t bg-card p-3">
               <ScheduleSelector
                 startDate={effectiveStartDate}
                 endDate={effectiveEndDate}

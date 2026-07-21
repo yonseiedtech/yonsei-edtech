@@ -3252,7 +3252,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                               "flex flex-col items-center justify-center gap-1 rounded-2xl border-2 px-3 py-3.5 text-center transition-all",
                               active
                                 ? `${EXTERNAL_PARTICIPANT_TYPE_COLORS[t]} border-current shadow-sm scale-[1.02]`
-                                : "border-input bg-card text-muted-foreground hover:border-primary/40 hover:bg-muted/50 dark:bg-card",
+                                : "border-input bg-card text-muted-foreground hover:border-primary/40 hover:bg-muted/50",
                             )}
                             aria-pressed={active}
                           >
