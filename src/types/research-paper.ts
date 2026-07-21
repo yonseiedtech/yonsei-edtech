@@ -198,7 +198,7 @@ export interface WritingSection {
 /** R2(2026-07-03): 연구 가설의 방향 */
 export type HypothesisDirection = "" | "positive" | "negative" | "difference" | "nondirectional";
 
-export const HYPOTHESIS_DIRECTION_LABELS: Record<Exclude<HypothesisDirection, "">, string> = {
+const HYPOTHESIS_DIRECTION_LABELS: Record<Exclude<HypothesisDirection, "">, string> = {
   positive: "정적(+) 영향·관계",
   negative: "부적(−) 영향·관계",
   difference: "집단 간 차이",

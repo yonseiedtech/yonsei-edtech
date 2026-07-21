@@ -38,7 +38,7 @@ export const RESEARCH_APPROACH_LABELS: Record<Exclude<ResearchApproach, "">, str
   free: "자유 진행",
 };
 
-export const RESEARCH_APPROACH_HINTS: Record<Exclude<ResearchApproach, "">, string> = {
+const RESEARCH_APPROACH_HINTS: Record<Exclude<ResearchApproach, "">, string> = {
   analytical:
     "ADDIE / 체제적 교수설계 / 행동주의·인지주의 ID. ‘현상 → 원인 진단 → 이론적 처방’ 흐름. (1.5 진단 5슬라이드)",
   generative:

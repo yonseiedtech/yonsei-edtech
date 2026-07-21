@@ -102,7 +102,7 @@ function ymd(now: Date): string {
 }
 
 /** slug 로 행사 조회. */
-export function getConferenceBySlug(slug: string): InternalConference | undefined {
+function getConferenceBySlug(slug: string): InternalConference | undefined {
   return INTERNAL_CONFERENCES.find((c) => c.slug === slug);
 }
 

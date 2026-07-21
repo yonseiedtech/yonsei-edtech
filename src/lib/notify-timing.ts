@@ -111,7 +111,7 @@ export function shouldSuppressForQuietHours(
 /** 하루를 4구간으로 단순화 */
 export type ActivityWindow = "morning" | "lunch" | "afternoon" | "evening";
 
-export const ACTIVITY_WINDOW_LABELS: Record<ActivityWindow, string> = {
+const ACTIVITY_WINDOW_LABELS: Record<ActivityWindow, string> = {
   morning: "오전",
   lunch: "점심",
   afternoon: "오후",
@@ -119,7 +119,7 @@ export const ACTIVITY_WINDOW_LABELS: Record<ActivityWindow, string> = {
 };
 
 /** 각 구간의 대표 발송 시각(KST, "HH:MM") — 추후 개인화 발송 배선 시 사용 */
-export const ACTIVITY_WINDOW_SEND_HM: Record<ActivityWindow, string> = {
+const ACTIVITY_WINDOW_SEND_HM: Record<ActivityWindow, string> = {
   morning: "09:00",
   lunch: "12:30",
   afternoon: "15:00",

@@ -92,14 +92,14 @@ export function collectByItem(
 }
 
 /** 특정 연도 논문 모음 — drill-down */
-export function collectByYear(theses: AlumniThesis[], year: number): AlumniThesis[] {
+function collectByYear(theses: AlumniThesis[], year: number): AlumniThesis[] {
   return theses
     .filter((t) => yearFrom(t) === year)
     .sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
 }
 
 /** 연도별 논문 수 (타임라인용) */
-export function countByYear(theses: AlumniThesis[]): { year: number; count: number }[] {
+function countByYear(theses: AlumniThesis[]): { year: number; count: number }[] {
   const counts = new Map<number, number>();
   for (const t of theses) {
     const y = yearFrom(t);

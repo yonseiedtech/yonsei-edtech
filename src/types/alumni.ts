@@ -2,7 +2,7 @@
 
 export type GraduationType = "thesis" | "research_report";
 
-export const GRADUATION_TYPE_LABELS: Record<GraduationType, string> = {
+const GRADUATION_TYPE_LABELS: Record<GraduationType, string> = {
   thesis: "논문",
   research_report: "연구보고서",
 };

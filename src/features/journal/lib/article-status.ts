@@ -55,7 +55,7 @@ export const VISIBILITY_LABELS: Record<ArticleVisibility, string> = {
   public: "전체 공개",
 };
 
-export const VISIBILITY_DESCRIPTIONS: Record<ArticleVisibility, string> = {
+const VISIBILITY_DESCRIPTIONS: Record<ArticleVisibility, string> = {
   private: "연구팀 멤버만 열람 가능.",
   society: "로그인한 학회 회원만 열람 가능.",
   public: "비로그인 외부 방문자 포함 전체 공개 + Google Scholar 인덱싱.",

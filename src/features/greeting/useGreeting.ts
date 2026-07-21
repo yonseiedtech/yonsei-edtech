@@ -131,4 +131,3 @@ export function useUpdateGreeting() {
   });
 }
 
-export { EMPTY_PERSON };

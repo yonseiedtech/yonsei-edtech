@@ -65,7 +65,7 @@ export function canEditChapter(role: CollabMemberRole | undefined): boolean {
   return role === "principal" || role === "co_researcher";
 }
 
-export const COLLAB_INVITE_STATUS_LABELS: Record<CollabInviteStatus, string> = {
+const COLLAB_INVITE_STATUS_LABELS: Record<CollabInviteStatus, string> = {
   pending: "대기 중",
   accepted: "수락됨",
   rejected: "거절됨",
@@ -102,13 +102,13 @@ export const METHODOLOGY_DESIGN_LABELS: Record<MethodologyDesign, string> = {
   other: "기타",
 };
 
-export const HYPOTHESIS_TYPE_LABELS: Record<HypothesisType, string> = {
+const HYPOTHESIS_TYPE_LABELS: Record<HypothesisType, string> = {
   directional: "방향성 가설",
   non_directional: "비방향성 가설",
   null: "영가설",
 };
 
-export const HYPOTHESIS_STATUS_LABELS: Record<HypothesisStatus, string> = {
+const HYPOTHESIS_STATUS_LABELS: Record<HypothesisStatus, string> = {
   proposed: "제안",
   supported: "지지",
   rejected: "기각",

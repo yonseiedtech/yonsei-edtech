@@ -1,10 +1,10 @@
 {
-  "ceiling": 93,
+  "ceiling": 59,
   "generatedAt": "2026-07-21",
   "tool": "knip@6.27.0",
   "note": "node scripts/gen-deadcode-baseline.mjs 로 재생성. ceiling보다 이슈 수가 늘면 check-deadcode-ratchet.mjs 가 exit 1.",
-  "unusedExports": 82,
-  "unusedFiles": 2,
+  "unusedExports": 50,
+  "unusedFiles": 0,
   "unusedTypes": 9,
   "items": [
     {
@@ -12,60 +12,6 @@
       "name": "normalizeName",
       "kind": "export",
       "line": 22
-    },
-    {
-      "file": "src/components/ui/alert-dialog.tsx",
-      "name": "AlertDialogMedia",
-      "kind": "export",
-      "line": 182
-    },
-    {
-      "file": "src/components/ui/avatar.tsx",
-      "name": "AvatarBadge",
-      "kind": "export",
-      "line": 108
-    },
-    {
-      "file": "src/components/ui/avatar.tsx",
-      "name": "AvatarGroup",
-      "kind": "export",
-      "line": 106
-    },
-    {
-      "file": "src/components/ui/avatar.tsx",
-      "name": "AvatarGroupCount",
-      "kind": "export",
-      "line": 107
-    },
-    {
-      "file": "src/components/ui/card.tsx",
-      "name": "CardAction",
-      "kind": "export",
-      "line": 101
-    },
-    {
-      "file": "src/components/ui/card.tsx",
-      "name": "CardDescription",
-      "kind": "export",
-      "line": 102
-    },
-    {
-      "file": "src/components/ui/card.tsx",
-      "name": "CardFooter",
-      "kind": "export",
-      "line": 99
-    },
-    {
-      "file": "src/components/ui/dialog.tsx",
-      "name": "DialogClose",
-      "kind": "export",
-      "line": 148
-    },
-    {
-      "file": "src/components/ui/label.tsx",
-      "name": "default",
-      "kind": "export",
-      "line": 23
     },
     {
       "file": "src/features/agent/agent-types.ts",
@@ -84,12 +30,6 @@
       "name": "SignupStep",
       "kind": "type",
       "line": 63
-    },
-    {
-      "file": "src/features/card/print-card.ts",
-      "name": "mm",
-      "kind": "export",
-      "line": 20
     },
     {
       "file": "src/features/collaborative-research/api/useCollabPhase2.ts",
@@ -137,25 +77,7 @@
       "file": "src/features/collaborative-research/lib/research-status.ts",
       "name": "canEditChapter",
       "kind": "export",
-      "line": 62
-    },
-    {
-      "file": "src/features/collaborative-research/lib/research-status.ts",
-      "name": "COLLAB_INVITE_STATUS_LABELS",
-      "kind": "export",
-      "line": 66
-    },
-    {
-      "file": "src/features/collaborative-research/lib/research-status.ts",
-      "name": "HYPOTHESIS_STATUS_LABELS",
-      "kind": "export",
-      "line": 109
-    },
-    {
-      "file": "src/features/collaborative-research/lib/research-status.ts",
-      "name": "HYPOTHESIS_TYPE_LABELS",
-      "kind": "export",
-      "line": 103
+      "line": 64
     },
     {
       "file": "src/features/content-draft/types.ts",
@@ -164,40 +86,10 @@
       "line": 48
     },
     {
-      "file": "src/features/dashboard/NewMemberChecklistWidget.tsx",
-      "name": null,
-      "kind": "unusedFile",
-      "line": null
-    },
-    {
-      "file": "src/features/greeting/useGreeting.ts",
-      "name": "EMPTY_PERSON",
-      "kind": "export",
-      "line": 134
-    },
-    {
-      "file": "src/features/insights/loyalty-snapshot-types.ts",
-      "name": "SNAPSHOT_SEGMENTS",
-      "kind": "export",
-      "line": 10
-    },
-    {
-      "file": "src/features/internal-conference/conferences.ts",
-      "name": "getConferenceBySlug",
-      "kind": "export",
-      "line": 103
-    },
-    {
       "file": "src/features/journal/lib/article-status.ts",
       "name": "citationYear",
       "kind": "export",
-      "line": 107
-    },
-    {
-      "file": "src/features/journal/lib/article-status.ts",
-      "name": "VISIBILITY_DESCRIPTIONS",
-      "kind": "export",
-      "line": 56
+      "line": 109
     },
     {
       "file": "src/features/journal/lib/consent-gate.ts",
@@ -260,18 +152,6 @@
       "line": 171
     },
     {
-      "file": "src/features/research-analytics/multi-axis.ts",
-      "name": "collectByYear",
-      "kind": "export",
-      "line": 95
-    },
-    {
-      "file": "src/features/research-analytics/multi-axis.ts",
-      "name": "countByYear",
-      "kind": "export",
-      "line": 102
-    },
-    {
       "file": "src/features/research/study-timer/useStudySessions.ts",
       "name": "useTodaySessions",
       "kind": "export",
@@ -288,12 +168,6 @@
       "name": "useUpdateReadingLog",
       "kind": "export",
       "line": 52
-    },
-    {
-      "file": "src/features/studio/brand-kit.ts",
-      "name": "BRAND_KIT",
-      "kind": "export",
-      "line": 76
     },
     {
       "file": "src/features/studio/brand-kit.ts",
@@ -318,30 +192,6 @@
       "name": "getToolsForRole",
       "kind": "export",
       "line": 322
-    },
-    {
-      "file": "src/lib/ai.ts",
-      "name": "_geminiFastModel",
-      "kind": "export",
-      "line": 29
-    },
-    {
-      "file": "src/lib/alumni-thesis-crosslink.ts",
-      "name": "thesesForStatMethod",
-      "kind": "export",
-      "line": 36
-    },
-    {
-      "file": "src/lib/archive-crosslink-sync.ts",
-      "name": "RESEARCH_TO_STAT",
-      "kind": "export",
-      "line": 45
-    },
-    {
-      "file": "src/lib/archive-crosslink-sync.ts",
-      "name": "STAT_TO_RESEARCH",
-      "kind": "export",
-      "line": 52
     },
     {
       "file": "src/lib/bkend.ts",
@@ -371,7 +221,7 @@
       "file": "src/lib/citation-verify.ts",
       "name": "fetchDoiMetadata",
       "kind": "export",
-      "line": 417
+      "line": 31
     },
     {
       "file": "src/lib/courseSchedule.ts",
@@ -386,28 +236,10 @@
       "line": 69
     },
     {
-      "file": "src/lib/design-tokens.ts",
-      "name": "STATUS_VARIANT_TO_TONE",
-      "kind": "export",
-      "line": 161
-    },
-    {
       "file": "src/lib/diagnostic-seed.ts",
       "name": "seedDiagnosticQuestions",
       "kind": "export",
       "line": 3244
-    },
-    {
-      "file": "src/lib/notify-timing.ts",
-      "name": "ACTIVITY_WINDOW_LABELS",
-      "kind": "export",
-      "line": 114
-    },
-    {
-      "file": "src/lib/notify-timing.ts",
-      "name": "ACTIVITY_WINDOW_SEND_HM",
-      "kind": "export",
-      "line": 122
     },
     {
       "file": "src/lib/notify-timing.ts",
@@ -420,12 +252,6 @@
       "name": "minutesToHm",
       "kind": "export",
       "line": 44
-    },
-    {
-      "file": "src/lib/onboarding-next-cta.ts",
-      "name": null,
-      "kind": "unusedFile",
-      "line": null
     },
     {
       "file": "src/lib/permissions.ts",
@@ -470,34 +296,16 @@
       "line": 391
     },
     {
-      "file": "src/lib/theory-family.ts",
-      "name": "THEORY_FAMILY_META",
-      "kind": "export",
-      "line": 60
-    },
-    {
       "file": "src/types/academic.ts",
       "name": "SessionSelectionReason",
       "kind": "type",
-      "line": 326
+      "line": 328
     },
     {
       "file": "src/types/ai-forum.ts",
       "name": "AIForumCategory",
       "kind": "type",
-      "line": 224
-    },
-    {
-      "file": "src/types/alumni.ts",
-      "name": "GRADUATION_TYPE_LABELS",
-      "kind": "export",
-      "line": 5
-    },
-    {
-      "file": "src/types/board.ts",
-      "name": "POST_CATEGORIES",
-      "kind": "export",
-      "line": 42
+      "line": 204
     },
     {
       "file": "src/types/research-journal.ts",
@@ -512,12 +320,6 @@
       "line": 225
     },
     {
-      "file": "src/types/research-paper.ts",
-      "name": "HYPOTHESIS_DIRECTION_LABELS",
-      "kind": "export",
-      "line": 201
-    },
-    {
       "file": "src/types/research-report.ts",
       "name": "CAUSE_TYPE_LABELS",
       "kind": "export",
@@ -530,12 +332,6 @@
       "line": 55
     },
     {
-      "file": "src/types/research-report.ts",
-      "name": "RESEARCH_APPROACH_HINTS",
-      "kind": "export",
-      "line": 41
-    },
-    {
       "file": "src/types/seminar.ts",
       "name": "REG_STATUS_LABELS",
       "kind": "export",
@@ -545,7 +341,7 @@
       "file": "src/types/steppingstone.ts",
       "name": "BLOOM_STAGE_ORDER",
       "kind": "export",
-      "line": 144
+      "line": 118
     },
     {
       "file": "src/types/user.ts",

@@ -7,7 +7,7 @@ import type { MemberMetricsRow } from "./computeMemberMetrics";
 export type MemberSegment = MemberMetricsRow["segment"];
 
 /** 시각화·집계 시 고정 세그먼트 순서 */
-export const SNAPSHOT_SEGMENTS: MemberSegment[] = [
+const SNAPSHOT_SEGMENTS: MemberSegment[] = [
   "champion",
   "active",
   "new",

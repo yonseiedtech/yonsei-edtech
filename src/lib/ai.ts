@@ -26,4 +26,4 @@ export const models = {
 } as const;
 
 // Gemini cap 복구 시 사용할 원본 fast 모델 (참고용 — 위 fast 를 이것으로 교체)
-export const _geminiFastModel = google("gemini-2.5-flash");
+const _geminiFastModel = google("gemini-2.5-flash");

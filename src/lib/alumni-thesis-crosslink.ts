@@ -33,7 +33,7 @@ export function thesesForResearchMethod(
  * 특정 통계방법(archive_statistical_methods id)을 쓴 졸업논문 — 학위수여년월 내림차순.
  * 자동추출(statMethodIds) ∪ 운영자 큐레이트(statisticalMethods).
  */
-export function thesesForStatMethod(
+function thesesForStatMethod(
   theses: AlumniThesis[],
   methodId: string | undefined | null,
 ): AlumniThesis[] {

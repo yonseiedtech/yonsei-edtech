@@ -39,7 +39,7 @@ export interface SeminarSpeaker {
 // ── 게시판 ──
 // board-community-v2: "press"는 "promotion"으로 통합, "resources" 자료실 신규. 마이그레이션 기간 동안 "press" 읽기 호환 유지.
 // Sprint 41d: "paper_review" 교육공학 논문 리뷰 게시판 추가 — 내 논문 읽기와 양방향 연동
-export const POST_CATEGORIES = ["notice", "seminar", "free", "promotion", "resources", "staff", "interview", "paper_review"] as const;
+const POST_CATEGORIES = ["notice", "seminar", "free", "promotion", "resources", "staff", "interview", "paper_review"] as const;
 
 export interface PostPollOption {
   id: string;

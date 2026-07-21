@@ -57,7 +57,7 @@ export const THEORY_FAMILIES: TheoryFamilyMeta[] = [
   },
 ];
 
-export const THEORY_FAMILY_META: Record<TheoryFamily, TheoryFamilyMeta> =
+const THEORY_FAMILY_META: Record<TheoryFamily, TheoryFamilyMeta> =
   THEORY_FAMILIES.reduce(
     (acc, f) => {
       acc[f.key] = f;

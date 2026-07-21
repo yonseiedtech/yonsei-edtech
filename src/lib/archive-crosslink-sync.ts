@@ -42,14 +42,14 @@ export interface CrosslinkPair {
 }
 
 /** 연구방법 ↔ 통계방법 양방향 쌍 정의 (v5-H3 우선 대상) */
-export const RESEARCH_TO_STAT: CrosslinkPair = {
+const RESEARCH_TO_STAT: CrosslinkPair = {
   selfCollection: "archive_research_methods",
   selfField: "statisticalMethodIds",
   targetCollection: "archive_statistical_methods",
   reverseField: "relatedResearchMethodIds",
 };
 
-export const STAT_TO_RESEARCH: CrosslinkPair = {
+const STAT_TO_RESEARCH: CrosslinkPair = {
   selfCollection: "archive_statistical_methods",
   selfField: "relatedResearchMethodIds",
   targetCollection: "archive_research_methods",
