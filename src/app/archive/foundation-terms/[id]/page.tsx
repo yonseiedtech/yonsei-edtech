@@ -346,7 +346,7 @@ export default function FoundationTermDetailPage() {
               (term.aectTerm?.trim() && term.aectTerm.trim() !== term.term)) && (
               <p className="mt-1.5 flex flex-wrap items-center gap-1.5">
                 {term.purifiedName?.trim() && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-800 dark:border-teal-400/30 dark:bg-teal-950/30 dark:text-teal-300">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-info/20 bg-info/5 px-2.5 py-0.5 text-xs font-medium text-info">
                     순화어 · {term.purifiedName.trim()}
                   </span>
                 )}

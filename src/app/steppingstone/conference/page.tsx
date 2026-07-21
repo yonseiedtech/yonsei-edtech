@@ -78,7 +78,7 @@ export default function ConferenceGuidePage() {
       <BackButton href="/steppingstone" label="인지디딤판으로" className="mb-6" />
 
       <header className="mb-8 flex items-start gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-warning/5 text-warning">
           <ScrollText size={28} />
         </div>
         <div>
@@ -86,7 +86,7 @@ export default function ConferenceGuidePage() {
           <p className="mt-2 text-sm text-muted-foreground">
             국내·국제 주요 학술대회 일정부터 발표 신청·포스터 작성·발표 후기 작성까지 한 흐름으로 안내합니다.
           </p>
-          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-amber-50 px-3 py-1 text-xs font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">
+          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-warning/5 px-3 py-1 text-xs font-semibold text-warning">
             <Clock size={11} />
             예상 소요 7분
           </div>
@@ -105,11 +105,11 @@ export default function ConferenceGuidePage() {
           {MAJOR_CONFERENCES.map((conf) => (
             <li
               key={conf.name}
-              className="rounded-2xl border border-amber-200 bg-amber-50/40 p-4 dark:border-amber-900 dark:bg-amber-950/20"
+              className="rounded-2xl border border-warning/20 bg-warning/5 p-4"
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="text-sm font-bold text-amber-700 dark:text-amber-300">{conf.name}</span>
-                <span className="shrink-0 rounded-full bg-amber-200/60 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-900/60 dark:text-amber-200">
+                <span className="text-sm font-bold text-warning">{conf.name}</span>
+                <span className="shrink-0 rounded-full bg-warning/20 px-2 py-0.5 text-[11px] font-semibold text-warning">
                   {conf.season}
                 </span>
               </div>
@@ -158,7 +158,7 @@ export default function ConferenceGuidePage() {
         </div>
         <ul className="mt-3 space-y-2">
           <li className="flex items-start gap-2">
-            <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-emerald-600" />
+            <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-success" />
             <Link
               href="/activities/external"
               className="text-sm font-medium underline-offset-2 hover:text-primary hover:underline"
@@ -167,7 +167,7 @@ export default function ConferenceGuidePage() {
             </Link>
           </li>
           <li className="flex items-start gap-2">
-            <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-emerald-600" />
+            <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-success" />
             <span className="text-sm font-medium">
               발표 자료·포스터를{" "}
               <Link href="/archive" className="text-primary underline-offset-2 hover:underline">
@@ -177,7 +177,7 @@ export default function ConferenceGuidePage() {
             </span>
           </li>
           <li className="flex items-start gap-2">
-            <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-emerald-600" />
+            <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-success" />
             <Link
               href="/board/seminar"
               className="text-sm font-medium underline-offset-2 hover:text-primary hover:underline"

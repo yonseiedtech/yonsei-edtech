@@ -533,7 +533,7 @@ export default function ArchiveDetailPage() {
               {(purifiedName || aectTerm) && (
                 <p className="mt-1.5 flex flex-wrap items-center gap-1.5">
                   {purifiedName && (
-                    <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2.5 py-0.5 text-xs font-medium text-teal-800 dark:border-teal-400/30 dark:bg-teal-950/30 dark:text-teal-300">
+                    <span className="inline-flex items-center gap-1 rounded-full border border-info/20 bg-info/5 px-2.5 py-0.5 text-xs font-medium text-info">
                       순화어 · {purifiedName}
                     </span>
                   )}
@@ -1010,7 +1010,7 @@ export default function ArchiveDetailPage() {
                     <Link key={m.id} href={`/archive/statistical-methods/${m.id}`}>
                       <Badge
                         variant="outline"
-                        className="cursor-pointer border-orange-200 bg-orange-50 text-orange-800 transition-shadow hover:shadow-sm dark:border-orange-800 dark:bg-orange-950/40 dark:text-orange-300"
+                        className="cursor-pointer border-warning/20 bg-warning/5 text-warning transition-shadow hover:shadow-sm"
                       >
                         {m.name}
                       </Badge>

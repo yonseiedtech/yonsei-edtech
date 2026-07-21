@@ -89,7 +89,7 @@ export default function ProgramDesignDevelopmentPage() {
       <BackButton href="/steppingstone" label="인지디딤판" className="mb-4" />
 
       <header className="mb-6 flex items-start gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 dark:bg-indigo-950 dark:text-indigo-300">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-cat-1/5 text-cat-1">
           <Blocks size={28} />
         </div>
         <div className="flex-1">
@@ -107,7 +107,7 @@ export default function ProgramDesignDevelopmentPage() {
       </header>
 
       {/* 자체 구성 고지 */}
-      <div className="mb-6 flex items-start gap-2 rounded-2xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+      <div className="mb-6 flex items-start gap-2 rounded-2xl border border-warning/20 bg-warning/5 p-3 text-xs leading-relaxed text-warning">
         <Info className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
         <p>
           본 가이드는 『교수학습공학』(이명근, 2025)의 &ldquo;이론 → 교수학습원리 → 공학 방안&rdquo; 체계와

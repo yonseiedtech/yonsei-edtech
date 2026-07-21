@@ -268,16 +268,16 @@ export default function WritingTipDetailPage() {
               <XCircle className="h-4 w-4" aria-hidden />
               ❌ 잘못된 예
             </h3>
-            <p className="whitespace-pre-wrap font-serif text-sm italic leading-relaxed text-rose-900 dark:text-rose-100">
+            <p className="whitespace-pre-wrap font-serif text-sm italic leading-relaxed text-destructive">
               “{tip.wrongExample}”
             </p>
           </article>
-          <article className="rounded-xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
-            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+          <article className="rounded-xl border border-success/20 bg-success/5 p-4">
+            <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-success">
               <CheckCircle2 className="h-4 w-4" aria-hidden />
               ✅ 권장 예
             </h3>
-            <p className="whitespace-pre-wrap font-serif text-sm italic leading-relaxed text-emerald-900 dark:text-emerald-100">
+            <p className="whitespace-pre-wrap font-serif text-sm italic leading-relaxed text-success">
               “{tip.correctExample}”
             </p>
           </article>
@@ -287,10 +287,10 @@ export default function WritingTipDetailPage() {
         {tip.accessibleSummary && tip.accessibleSummary.trim() !== "" && (
           <section id="summary" className="mt-6 scroll-mt-24">
             <div
-              className="rounded-xl border border-sky-200 bg-gradient-to-br from-sky-50 to-emerald-50 p-4 dark:border-sky-900 dark:from-sky-950/30 dark:to-emerald-950/30"
+              className="rounded-xl border border-cat-1/20 bg-gradient-to-br from-cat-1/5 to-success/5 p-4"
               aria-label="쉽게 이해하기"
             >
-              <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-sky-900 dark:text-sky-200">
+              <h3 className="mb-1.5 flex items-center gap-1.5 text-sm font-semibold text-cat-1">
                 <Lightbulb className="h-4 w-4" aria-hidden />
                 💡 쉽게 이해하기
               </h3>
@@ -341,7 +341,7 @@ export default function WritingTipDetailPage() {
               {tip.additionalExamples.map((ex) => (
                 <li
                   key={ex.id}
-                  className="rounded-md border-l-4 border-blue-300 bg-blue-50/40 px-3 py-2 text-sm leading-relaxed text-foreground/85 dark:border-blue-700 dark:bg-blue-950/20"
+                  className="rounded-md border-l-4 border-cat-1/30 bg-cat-1/5 px-3 py-2 text-sm leading-relaxed text-foreground/85"
                 >
                   {ex.text}
                 </li>
@@ -384,7 +384,7 @@ export default function WritingTipDetailPage() {
         )}
 
         {/* 학술 책임 고지 */}
-        <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+        <div className="mt-10 flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-4 text-xs text-warning">
           <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
           <p>
             본 가이드는 참고용입니다. 최종 표기·문체·인용 형식은 지도교수와 해당 학술지

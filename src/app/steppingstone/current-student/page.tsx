@@ -80,7 +80,7 @@ export default function CurrentStudentGuidePage() {
       <BackButton href="/steppingstone" label="인지디딤판으로" className="mb-6" />
 
       <header className="mb-8 flex items-start gap-4">
-        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+        <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-success/5 text-success">
           <BookOpen size={28} />
         </div>
         <div>
@@ -88,7 +88,7 @@ export default function CurrentStudentGuidePage() {
           <p className="mt-2 text-sm text-muted-foreground">
             학기별 학습 흐름부터 연구 노하우, 세미나 활용법까지 — 재학 기간을 최대한 활용하기 위한 가이드입니다.
           </p>
-          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+          <div className="mt-3 inline-flex items-center gap-1.5 rounded-full bg-success/5 px-3 py-1 text-xs font-semibold text-success">
             <Clock size={11} />
             예상 소요 5분
           </div>
@@ -111,7 +111,7 @@ export default function CurrentStudentGuidePage() {
               <ul className="mt-4 space-y-2">
                 {section.items.map((item, i) => (
                   <li key={i} className="group flex items-start gap-2">
-                    <CheckCircle2 size={14} className="mt-1 shrink-0 text-emerald-600" />
+                    <CheckCircle2 size={14} className="mt-1 shrink-0 text-success" />
                     <div className="flex-1">
                       {item.href ? (
                         <Link

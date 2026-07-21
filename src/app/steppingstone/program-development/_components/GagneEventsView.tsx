@@ -79,7 +79,7 @@ export default function GagneEventsView({
 
             {/* 설계 팁 */}
             <div className="mt-5 flex items-start gap-2 rounded-xl border border-dashed bg-muted/20 p-4">
-              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-amber-600 dark:text-amber-400" aria-hidden />
+              <Lightbulb className="mt-0.5 h-4 w-4 shrink-0 text-warning" aria-hidden />
               <p className="text-xs leading-relaxed text-muted-foreground">
                 <span className="font-semibold text-foreground">설계 팁 · </span>
                 {ev.designTip}

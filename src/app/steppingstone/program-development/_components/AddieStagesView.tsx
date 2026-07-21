@@ -23,9 +23,9 @@ const LENS_ROWS: {
   label: string;
   color: string;
 }[] = [
-  { key: "behaviorism", label: "행동주의", color: "text-rose-700 dark:text-rose-300" },
-  { key: "cognitivism", label: "인지주의", color: "text-sky-700 dark:text-sky-300" },
-  { key: "constructivism", label: "구성주의", color: "text-emerald-700 dark:text-emerald-300" },
+  { key: "behaviorism", label: "행동주의", color: "text-destructive" },
+  { key: "cognitivism", label: "인지주의", color: "text-cat-1" },
+  { key: "constructivism", label: "구성주의", color: "text-success" },
 ];
 
 interface AddieStagesViewProps {
@@ -120,14 +120,14 @@ export default function AddieStagesView({
                   className={cn(
                     "inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors hover:border-primary/40",
                     done
-                      ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-300"
+                      ? "border-success/30 bg-success/5 text-success"
                       : "border-border bg-background text-muted-foreground",
                   )}
                 >
                   <span
                     className={cn(
                       "inline-flex h-5 w-5 items-center justify-center rounded-full text-[10px] font-bold",
-                      done ? "bg-emerald-600 text-white" : "bg-muted text-muted-foreground",
+                      done ? "bg-success text-white" : "bg-muted text-muted-foreground",
                     )}
                   >
                     {done ? "✓" : i + 1}
@@ -157,7 +157,7 @@ export default function AddieStagesView({
                 <span
                   className={cn(
                     "inline-flex h-9 w-9 shrink-0 items-center justify-center rounded-xl text-sm font-bold",
-                    done ? "bg-emerald-600 text-white" : "bg-primary/10 text-primary",
+                    done ? "bg-success text-white" : "bg-primary/10 text-primary",
                   )}
                 >
                   {done ? "✓" : i + 1}
@@ -212,12 +212,12 @@ export default function AddieStagesView({
                         className={cn(
                           "flex w-full items-start gap-2.5 rounded-xl border p-2.5 text-left text-sm transition-colors",
                           isDone
-                            ? "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20"
+                            ? "border-success/20 bg-success/5"
                             : "border-border bg-background hover:border-primary/30",
                         )}
                       >
                         {isDone ? (
-                          <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-emerald-600" />
+                          <CheckCircle2 size={18} className="mt-0.5 shrink-0 text-success" />
                         ) : (
                           <Circle size={18} className="mt-0.5 shrink-0 text-muted-foreground" />
                         )}
@@ -231,7 +231,7 @@ export default function AddieStagesView({
               {/* 이론 렌즈 */}
               <div className="mt-5 rounded-xl border border-dashed bg-muted/20 p-4">
                 <div className="mb-2.5 flex items-center gap-1.5">
-                  <Lightbulb className="h-4 w-4 text-amber-600 dark:text-amber-400" aria-hidden />
+                  <Lightbulb className="h-4 w-4 text-warning" aria-hidden />
                   <h3 className="text-sm font-semibold">이론 렌즈 — 이 단계를 세 관점으로</h3>
                 </div>
                 <dl className="space-y-2">

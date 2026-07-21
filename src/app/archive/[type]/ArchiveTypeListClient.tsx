@@ -588,7 +588,7 @@ function ArchiveCard({
             {(purifiedName || aectTerm) && (
               <span className="mt-1 flex flex-wrap items-center gap-1">
                 {purifiedName && (
-                  <span className="inline-flex items-center gap-1 rounded-full border border-teal-200 bg-teal-50 px-2 py-0.5 text-[10px] font-medium text-teal-800 dark:border-teal-400/30 dark:bg-teal-950/30 dark:text-teal-300">
+                  <span className="inline-flex items-center gap-1 rounded-full border border-info/20 bg-info/5 px-2 py-0.5 text-[10px] font-medium text-info">
                     순화어 · {purifiedName}
                   </span>
                 )}

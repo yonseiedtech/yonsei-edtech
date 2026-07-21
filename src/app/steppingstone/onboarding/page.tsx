@@ -121,9 +121,9 @@ function ItemCard({ item, done, canCheck, onToggle }: ItemCardProps) {
       className={
         "rounded-2xl border p-4 transition-colors " +
         (isPreview
-          ? "border-amber-300 bg-amber-50/30 dark:bg-amber-950/20"
+          ? "border-warning/30 bg-warning/5"
           : done
-            ? "bg-emerald-50/40 dark:bg-emerald-950/20"
+            ? "bg-success/5"
             : "bg-card")
       }
     >
@@ -136,7 +136,7 @@ function ItemCard({ item, done, canCheck, onToggle }: ItemCardProps) {
           title={canCheck ? (done ? "완료 해제" : "완료 표시") : "로그인 후 체크 가능"}
         >
           {done ? (
-            <CheckCircle2 size={20} className="text-emerald-600" />
+            <CheckCircle2 size={20} className="text-success" />
           ) : (
             <Circle size={20} className={canCheck ? "text-muted-foreground" : "text-muted-foreground/40"} />
           )}
@@ -147,7 +147,7 @@ function ItemCard({ item, done, canCheck, onToggle }: ItemCardProps) {
               {item.title}
             </h3>
             {isPreview && (
-              <Badge variant="secondary" className="bg-amber-100 text-[9px] text-amber-800">
+              <Badge variant="secondary" className="bg-warning/10 text-[9px] text-warning">
                 비공개 (운영진 미리보기)
               </Badge>
             )}
@@ -536,7 +536,7 @@ export default function OnboardingPage() {
       <BackButton href="/steppingstone" label="인지디딤판" className="mb-4" />
 
       <header className="mb-8 flex items-start gap-4">
-        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300">
+        <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cat-1/5 text-cat-1">
           <GraduationCap size={28} />
         </div>
         <div className="flex-1">
@@ -549,7 +549,7 @@ export default function OnboardingPage() {
       </header>
 
       {isStaffViewer && (track?.published === false || items.some((i) => !i.published)) && (
-        <div className="mb-6 rounded-2xl border border-amber-300 bg-amber-50 p-3 text-xs text-amber-900">
+        <div className="mb-6 rounded-2xl border border-warning/30 bg-warning/5 p-3 text-xs text-warning">
           <div className="font-semibold">운영진 미리보기 모드</div>
           <div className="mt-0.5">
             비공개 트랙·항목도 함께 보입니다. 회원에게는 공개로 전환된 항목만 노출됩니다.
@@ -650,7 +650,7 @@ export default function OnboardingPage() {
       {/* 교내 IT 서비스 · 무료 소프트웨어 — 등록금 효용 높이기 (사용자 요청, 사이클 106) */}
       <section className="mt-10">
         <div className="mb-3 flex items-center gap-2">
-          <Laptop size={20} className="text-blue-600 dark:text-blue-400" />
+          <Laptop size={20} className="text-cat-1" />
           <h2 className="text-lg font-bold">교내 IT 서비스 · 무료 소프트웨어</h2>
         </div>
         <p className="mb-4 text-sm text-muted-foreground">
