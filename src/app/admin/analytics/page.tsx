@@ -18,7 +18,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { db } from "@/lib/firebase";
 import { todayYmdKst } from "@/lib/dday";
 import { pathGroupLabel } from "@/lib/visit-tracker";
-import type { User, Post, Seminar, SeminarAttendee, SeminarReview, Certificate } from "@/types";
+import type { User, SeminarAttendee, SeminarReview, Certificate } from "@/types";
 
 interface DailyVisitDoc {
   date?: string;
@@ -125,12 +125,12 @@ export default function AnalyticsPage() {
     refetchOnWindowFocus: isToday,
   });
 
-  const members = membersRes?.data ?? [];
-  const seminars = seminarsRes?.data ?? [];
-  const posts = postsRes?.data ?? [];
-  const attendees = attendeesRes?.data ?? [];
-  const reviews = reviewsRes?.data ?? [];
-  const certs = certsRes?.data ?? [];
+  const members = useMemo(() => (membersRes?.data ?? []) as User[], [membersRes]);
+  const seminars = useMemo(() => seminarsRes?.data ?? [], [seminarsRes]);
+  const posts = useMemo(() => postsRes?.data ?? [], [postsRes]);
+  const attendees = useMemo(() => (attendeesRes?.data ?? []) as SeminarAttendee[], [attendeesRes]);
+  const reviews = useMemo(() => (reviewsRes?.data ?? []) as SeminarReview[], [reviewsRes]);
+  const certs = useMemo(() => (certsRes?.data ?? []) as Certificate[], [certsRes]);
 
   // ── computed analytics ──
   const analytics = useMemo(() => {
@@ -173,7 +173,6 @@ export default function AnalyticsPage() {
       monthlySeminars.set(k, { count: 0, totalAttendees: 0, checkedIn: 0 });
     }
 
-    const seminarMap = new Map(seminars.map((s) => [s.id, s]));
     // build attendee stats per seminar
     const seminarAttendeeStats = new Map<string, { total: number; checkedIn: number }>();
     for (const a of attendees) {
