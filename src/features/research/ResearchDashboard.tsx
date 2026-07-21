@@ -35,21 +35,21 @@ const VARIABLE_LABEL: Record<string, string> = {
 const WEEKDAY_LABEL = ["일", "월", "화", "수", "목", "금", "토"];
 
 export default function ResearchDashboard({ papers, history, periodStart, periodEnd }: Props) {
-  const opts = { periodStart, periodEnd };
+  const opts = useMemo(() => ({ periodStart, periodEnd }), [periodStart, periodEnd]);
   const periodLabel = formatPeriodLabel(periodStart, periodEnd);
 
   // 작성 통계
-  const writingDays = useMemo(() => computeWritingDays(history, opts), [history, periodStart, periodEnd]);
-  const participation = useMemo(() => computeParticipationRate(history, opts), [history, periodStart, periodEnd]);
-  const streak = useMemo(() => computeLongestStreak(history, opts), [history, periodStart, periodEnd]);
-  const hourBuckets = useMemo(() => computeHourBuckets(history, opts), [history, periodStart, periodEnd]);
-  const weekdayBuckets = useMemo(() => computeWeekdayBuckets(history, opts), [history, periodStart, periodEnd]);
+  const writingDays = useMemo(() => computeWritingDays(history, opts), [history, opts]);
+  const participation = useMemo(() => computeParticipationRate(history, opts), [history, opts]);
+  const streak = useMemo(() => computeLongestStreak(history, opts), [history, opts]);
+  const hourBuckets = useMemo(() => computeHourBuckets(history, opts), [history, opts]);
+  const weekdayBuckets = useMemo(() => computeWeekdayBuckets(history, opts), [history, opts]);
 
   // 읽기 통계
-  const readingStats = useMemo(() => computeReadingStats(papers, opts), [papers, periodStart, periodEnd]);
-  const avgDuration = useMemo(() => computeAvgReadDuration(papers, opts), [papers, periodStart, periodEnd]);
-  const topKeywords = useMemo(() => computeTopKeywords(papers, 12, opts), [papers, periodStart, periodEnd]);
-  const variableBreakdown = useMemo(() => computeVariableBreakdown(papers, 5, opts), [papers, periodStart, periodEnd]);
+  const readingStats = useMemo(() => computeReadingStats(papers, opts), [papers, opts]);
+  const avgDuration = useMemo(() => computeAvgReadDuration(papers, opts), [papers, opts]);
+  const topKeywords = useMemo(() => computeTopKeywords(papers, 12, opts), [papers, opts]);
+  const variableBreakdown = useMemo(() => computeVariableBreakdown(papers, 5, opts), [papers, opts]);
 
   const hourData = hourBuckets.map((v, i) => ({ hour: `${String(i).padStart(2, "0")}시`, count: v }));
   const weekdayData = weekdayBuckets.map((v, i) => ({ day: WEEKDAY_LABEL[i], count: v }));
