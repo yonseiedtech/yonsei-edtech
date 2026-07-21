@@ -76,8 +76,8 @@ const FEATURES: Feature[] = [
     cta: "스터디 커리큘럼 설계하기",
     ctaHref: "/activities/studies",
     color: "from-violet-500/10 to-transparent",
-    iconBg: "bg-violet-100 dark:bg-violet-950/40",
-    iconColor: "text-violet-600 dark:text-violet-400",
+    iconBg: "bg-cat-5/10",
+    iconColor: "text-cat-5",
   },
   // ── 2026-07-17 ────────────────────────────────────────────────
   {
@@ -97,8 +97,8 @@ const FEATURES: Feature[] = [
     cta: "대시보드 확인하기",
     ctaHref: "/dashboard",
     color: "from-green-500/10 to-transparent",
-    iconBg: "bg-green-100 dark:bg-green-950/40",
-    iconColor: "text-green-600 dark:text-green-400",
+    iconBg: "bg-success/10",
+    iconColor: "text-success",
   },
   // ── 2026-07-16 ────────────────────────────────────────────────
   {
@@ -118,8 +118,8 @@ const FEATURES: Feature[] = [
     cta: "세미나 목록 보기",
     ctaHref: "/seminars",
     color: "from-rose-500/10 to-transparent",
-    iconBg: "bg-rose-100 dark:bg-rose-950/40",
-    iconColor: "text-rose-600 dark:text-rose-400",
+    iconBg: "bg-destructive/10",
+    iconColor: "text-destructive",
   },
   // ── 2026-07-10 ────────────────────────────────────────────────
   {

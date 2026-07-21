@@ -37,7 +37,8 @@ import { join, dirname } from "node:path";
 // 2026-07-21 라운드9: 190 → 66 (research·seminar·archive·diagnosis·home·conference·insights·admin·ui·app·agent·auth 등 정화)
 // 2026-07-21 라운드10: 66 → 36 (research WritingPaperEditor·ThesisProgressWidget·WritingHeatmap + seminar 11파일 정화)
 // 2026-07-21 라운드10 2차: 36 → 7 (app·archive·card-news·defense·handover·network·popup·research-analytics·steppingstone 정화)
-const CEILING = 7;
+// 2026-07-21 라운드10 3차: 7 → 6 (SemesterRoadmap·academic-admin·alumni·card·member 등 추가 정화)
+const CEILING = 6;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const baselinePath = join(__dirname, "..", "eslint-rawcolor-baseline.mjs");

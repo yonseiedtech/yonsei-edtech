@@ -1449,9 +1449,9 @@ const SLIDES: SlideDef[] = [
             </div>
           )}
           {outcome && (
-            <div className="rounded-2xl border-2 border-dashed border-fuchsia-200 bg-fuchsia-50/60 p-3 text-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-fuchsia-700">학습 목표</p>
-              <p className="mt-1 whitespace-pre-wrap text-fuchsia-900/90 line-clamp-3">{outcome}</p>
+            <div className="rounded-2xl border-2 border-dashed border-cat-4/20 bg-cat-4/5 p-3 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-cat-4">학습 목표</p>
+              <p className="mt-1 whitespace-pre-wrap text-cat-4/90 line-clamp-3">{outcome}</p>
             </div>
           )}
           {!domain && !profile && !outcome && (
@@ -1497,7 +1497,7 @@ const SLIDES: SlideDef[] = [
             </p>
           )}
           {outcome && (
-            <p className="rounded-md bg-fuchsia-50 px-2 py-1.5 text-[11px] text-fuchsia-900">
+            <p className="rounded-md bg-cat-4/5 px-2 py-1.5 text-[11px] text-cat-4">
               🎯 학습 목표: <strong className="ml-0.5">{outcome.slice(0, 80)}</strong>
             </p>
           )}
@@ -1635,7 +1635,7 @@ const SLIDES: SlideDef[] = [
             </p>
           )}
           {outcome && (
-            <p className="rounded-md bg-fuchsia-50 px-2 py-1.5 text-[11px] text-fuchsia-900">
+            <p className="rounded-md bg-cat-4/5 px-2 py-1.5 text-[11px] text-cat-4">
               🎯 학습 목표: <strong className="ml-0.5">{outcome.slice(0, 80)}</strong>
             </p>
           )}

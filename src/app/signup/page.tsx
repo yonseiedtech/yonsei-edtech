@@ -46,9 +46,9 @@ function SignupContent() {
         <div className="flex min-h-[70vh] items-center justify-center px-4">
           <div className="w-full max-w-lg animate-in fade-in slide-in-from-bottom-4 duration-500">
             <div className="rounded-3xl border bg-card p-8 text-center shadow-lg sm:p-10">
-              <div className="relative mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/15 to-sky-400/15 text-primary">
+              <div className="relative mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/15 to-cat-1/15 text-primary">
                 <Sparkles size={36} className="animate-pulse" />
-                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md">
+                <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-success text-white shadow-md">
                   <CheckCircle size={14} />
                 </span>
               </div>
