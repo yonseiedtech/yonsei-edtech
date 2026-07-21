@@ -53,10 +53,10 @@ const getPollData = cache(async (id: string): Promise<PollData | null> => {
 function heatStyle(count: number, max: number): string {
   if (count <= 0 || max <= 0) return "bg-background text-muted-foreground";
   const ratio = count / max;
-  if (ratio >= 1) return "bg-indigo-600 text-white dark:bg-indigo-500";
-  if (ratio >= 0.66) return "bg-indigo-400 text-white dark:bg-indigo-600/80";
-  if (ratio >= 0.33) return "bg-indigo-200 text-indigo-900 dark:bg-indigo-800/60 dark:text-indigo-100";
-  return "bg-indigo-100 text-indigo-800 dark:bg-indigo-900/40 dark:text-indigo-200";
+  if (ratio >= 1) return "bg-cat-1 text-white";
+  if (ratio >= 0.66) return "bg-cat-1/75 text-white";
+  if (ratio >= 0.33) return "bg-cat-1/40 text-cat-1";
+  return "bg-cat-1/20 text-cat-1";
 }
 
 /** "YYYY-MM-DD" → "7/18(금)" */
@@ -169,7 +169,7 @@ export default async function PollSummaryPage({ params }: Props) {
   return (
     <PageContainer width="default">
       <header className="mb-6">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-indigo-100 px-2.5 py-0.5 text-xs font-semibold text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-200">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-cat-1/10 px-2.5 py-0.5 text-xs font-semibold text-cat-1">
           <CalendarCheck size={12} /> 일정 투표 현황
         </span>
         <h1 className="mt-2.5 text-2xl font-bold leading-snug tracking-tight">{event.title}</h1>
@@ -182,7 +182,7 @@ export default async function PollSummaryPage({ params }: Props) {
           {deadline && (
             <span className="inline-flex items-center gap-1">
               <CalendarClock size={13} /> 투표 마감 {deadline}
-              {isClosed && <span className="font-semibold text-rose-500"> (마감됨)</span>}
+              {isClosed && <span className="font-semibold text-destructive"> (마감됨)</span>}
             </span>
           )}
           <span className="inline-flex items-center gap-1">
@@ -190,7 +190,7 @@ export default async function PollSummaryPage({ params }: Props) {
           </span>
         </dl>
         {isConfirmed && (
-          <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-emerald-50 px-2.5 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200">
+          <p className="mt-2 inline-flex items-center gap-1.5 rounded-lg bg-success/10 px-2.5 py-1 text-xs font-medium text-success">
             <ShieldCheck size={13} /> 일정이 확정되었습니다. 아래는 투표 당시 집계입니다.
           </p>
         )}
@@ -207,19 +207,19 @@ export default async function PollSummaryPage({ params }: Props) {
       )}
 
       {/* 최다 가능 일정 상위 3 */}
-      <section className="mb-6 rounded-2xl bg-indigo-50 p-4 dark:bg-indigo-950/40">
-        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-indigo-700 dark:text-indigo-200">
-          <Sparkles size={14} className="text-indigo-600 dark:text-indigo-300" /> 최다 가능 일정 TOP 3
+      <section className="mb-6 rounded-2xl bg-cat-1/10 p-4">
+        <h2 className="flex items-center gap-1.5 text-sm font-semibold text-cat-1">
+          <Sparkles size={14} className="text-cat-1" /> 최다 가능 일정 TOP 3
         </h2>
         {topSlots.length > 0 ? (
           <ol className="mt-2.5 space-y-1.5">
             {topSlots.map((t, i) => (
-              <li key={t.slot} className="flex items-center gap-2 text-sm text-indigo-900 dark:text-indigo-100">
-                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-indigo-600 text-[11px] font-bold text-white dark:bg-indigo-500">
+              <li key={t.slot} className="flex items-center gap-2 text-sm text-cat-1">
+                <span className="inline-flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cat-1 text-[11px] font-bold text-white">
                   {i + 1}
                 </span>
                 <b>{dateLabel(t.date)}</b>
-                {t.time && <span className="text-indigo-700 dark:text-indigo-300">{t.time}</span>}
+                {t.time && <span className="text-cat-1">{t.time}</span>}
                 <span className="ml-auto font-semibold tabular-nums">{t.count}명 가능</span>
               </li>
             ))}
@@ -298,9 +298,9 @@ export default async function PollSummaryPage({ params }: Props) {
                 <span
                   className={
                     i === 0
-                      ? "text-[11px] font-medium text-rose-500 dark:text-rose-400"
+                      ? "text-[11px] font-medium text-destructive"
                       : i === 6
-                        ? "text-[11px] font-medium text-blue-500 dark:text-blue-400"
+                        ? "text-[11px] font-medium text-cat-1"
                         : "text-[11px] font-medium text-muted-foreground"
                   }
                 >
@@ -315,10 +315,10 @@ export default async function PollSummaryPage({ params }: Props) {
       {/* 범례 + 프라이버시 안내 */}
       <div className="flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
-          <span className="h-3 w-3 rounded bg-indigo-100 dark:bg-indigo-900/40" /> 적음
+          <span className="h-3 w-3 rounded bg-cat-1/10" /> 적음
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="h-3 w-3 rounded bg-indigo-600" /> 많음
+          <span className="h-3 w-3 rounded bg-cat-1" /> 많음
         </span>
       </div>
       <p className="mt-3 rounded-xl border border-dashed bg-muted/30 p-3 text-[11px] leading-relaxed text-muted-foreground">

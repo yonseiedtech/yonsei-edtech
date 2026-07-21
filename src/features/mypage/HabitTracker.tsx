@@ -69,8 +69,8 @@ function MonthStats({
 }) {
   const stats = [
     { label: "총 일자", value: totalDays, color: "text-foreground/80" },
-    { label: "달성일", value: achievedDays, color: "text-teal-600 dark:text-teal-400" },
-    { label: "미달성", value: missedDays, color: "text-rose-500 dark:text-rose-400" },
+    { label: "달성일", value: achievedDays, color: "text-info" },
+    { label: "미달성", value: missedDays, color: "text-destructive" },
   ];
 
   return (
@@ -383,8 +383,8 @@ function MiniCalendar({
             key={i}
             className={cn(
               "text-center text-[9px] font-bold",
-              i === 0 && "text-rose-500 dark:text-rose-400",
-              i === 6 && "text-blue-500 dark:text-blue-400",
+              i === 0 && "text-destructive",
+              i === 6 && "text-cat-1",
               i > 0 && i < 6 && "text-muted-foreground/70",
             )}
           >
@@ -408,11 +408,11 @@ function MiniCalendar({
               title={isAllAchieved ? `${ymd} · 모두 달성` : ymd}
               className={cn(
                 "w-[22px] h-[22px] flex items-center justify-center rounded-full text-[10px] leading-none mx-auto",
-                dow === 0 && "text-rose-500 dark:text-rose-400",
-                dow === 6 && "text-blue-500 dark:text-blue-400",
+                dow === 0 && "text-destructive",
+                dow === 6 && "text-cat-1",
                 dow > 0 && dow < 6 && "text-foreground/75",
-                isToday && "bg-indigo-100 dark:bg-indigo-900/50 font-bold",
-                isAllAchieved && "ring-2 ring-teal-500 dark:ring-teal-400 font-semibold",
+                isToday && "bg-cat-1/10 font-bold",
+                isAllAchieved && "ring-2 ring-info font-semibold",
               )}
             >
               {day}
@@ -421,7 +421,7 @@ function MiniCalendar({
         })}
       </div>
       <p className="text-[9px] text-muted-foreground/70 leading-tight text-center">
-        <span className="inline-flex w-2.5 h-2.5 rounded-full border-2 border-teal-500 dark:border-teal-400 align-middle mr-1" />
+        <span className="inline-flex w-2.5 h-2.5 rounded-full border-2 border-info align-middle mr-1" />
         모든 습관을 달성한 날
       </p>
     </div>
@@ -483,10 +483,10 @@ function MatrixHeader({
               key={day}
               className={cn(
                 "text-[10px] font-medium text-center py-1 px-0 border-b border-r border-border w-9 min-w-[36px]",
-                isSun && "text-rose-500 dark:text-rose-400",
-                isSat && "text-blue-500 dark:text-blue-400",
+                isSun && "text-destructive",
+                isSat && "text-cat-1",
                 !isWeekend && "text-muted-foreground",
-                isToday && "bg-indigo-50/60 dark:bg-indigo-950/30 font-bold text-indigo-600 dark:text-indigo-400",
+                isToday && "bg-cat-1/5 font-bold text-cat-1",
               )}
             >
               {day}
@@ -563,14 +563,14 @@ function HabitRow({
             key={day}
             className={cn(
               "border-b border-r border-border w-9 min-w-[36px] text-center py-1",
-              isToday && "bg-indigo-50/60 dark:bg-indigo-950/30",
-              isSun && !isToday && "bg-rose-50/30 dark:bg-rose-950/10",
-              isSat && !isToday && "bg-blue-50/30 dark:bg-blue-950/10",
+              isToday && "bg-cat-1/5",
+              isSun && !isToday && "bg-destructive/5",
+              isSat && !isToday && "bg-cat-1/5",
             )}
           >
             {isDone ? (
-              <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-emerald-100 dark:bg-emerald-900/50 mx-auto">
-                <CheckIcon size={11} className="text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
+              <span className="inline-flex items-center justify-center w-5 h-5 rounded bg-success/10 mx-auto">
+                <CheckIcon size={11} className="text-success" strokeWidth={3} />
               </span>
             ) : (
               <span className="inline-flex items-center justify-center w-5 h-5 rounded border border-border/60 bg-muted/20 mx-auto" />
@@ -587,18 +587,18 @@ function HabitRow({
               <span className="text-[8px] text-muted-foreground/60">총</span>
             </span>
             <span className="flex flex-col items-center leading-none">
-              <span className="font-semibold text-emerald-600 dark:text-emerald-400">{achievedCount}</span>
+              <span className="font-semibold text-success">{achievedCount}</span>
               <span className="text-[8px] text-muted-foreground/60">달성</span>
             </span>
             <span className="flex flex-col items-center leading-none">
-              <span className="font-medium text-rose-500 dark:text-rose-400">{missed}</span>
+              <span className="font-medium text-destructive">{missed}</span>
               <span className="text-[8px] text-muted-foreground/60">미달성</span>
             </span>
-            <span className="ml-auto text-indigo-600 dark:text-indigo-400 font-bold">{rate}%</span>
+            <span className="ml-auto text-cat-1 font-bold">{rate}%</span>
           </div>
-          <div className="h-1 rounded-full bg-indigo-100 dark:bg-indigo-900/40 overflow-hidden">
+          <div className="h-1 rounded-full bg-cat-1/10 overflow-hidden">
             <div
-              className="h-full rounded-full bg-indigo-500 dark:bg-indigo-400 transition-all duration-700"
+              className="h-full rounded-full bg-cat-1 transition-all duration-700"
               style={{ width: `${rate}%` }}
             />
           </div>
@@ -753,8 +753,8 @@ export default function HabitTracker({
           범례
         </span>
         <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-          <span className="inline-flex w-4 h-4 items-center justify-center rounded bg-emerald-100 dark:bg-emerald-900/50">
-            <CheckIcon size={9} className="text-emerald-600 dark:text-emerald-400" strokeWidth={3} />
+          <span className="inline-flex w-4 h-4 items-center justify-center rounded bg-success/10">
+            <CheckIcon size={9} className="text-success" strokeWidth={3} />
           </span>
           달성
         </div>
@@ -763,11 +763,11 @@ export default function HabitTracker({
           미달성
         </div>
         <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-          <span className="inline-flex w-4 h-4 rounded-full border-2 border-teal-500 dark:border-teal-400" />
+          <span className="inline-flex w-4 h-4 rounded-full border-2 border-info" />
           전체 달성일
         </div>
         <div className="flex items-center gap-1.5 text-[10px] text-muted-foreground">
-          <span className="inline-flex w-4 h-4 rounded bg-indigo-50/60 dark:bg-indigo-950/30 border border-indigo-200 dark:border-indigo-700" />
+          <span className="inline-flex w-4 h-4 rounded bg-cat-1/5 border border-cat-1/20" />
           오늘
         </div>
       </div>
