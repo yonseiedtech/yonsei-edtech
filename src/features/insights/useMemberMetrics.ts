@@ -152,18 +152,18 @@ export function useMemberMetrics(enabled: boolean): UseMemberMetricsResult {
     queryFn: () => dataApi.list<CourseReview>("course_reviews", { limit: 5000 }),
   });
 
-  const members = (membersRes?.data ?? []) as User[];
-  const attendees = (attendeesRes?.data ?? []) as SeminarAttendee[];
-  const participations = (participationsRes?.data ?? []) as ActivityParticipation[];
-  const gradLife = (gradLifeRes?.data ?? []) as GradLifePosition[];
-  const posts = (postsRes?.data ?? []) as Post[];
-  const comments = (commentsRes?.data ?? []) as Comment[];
-  const interviewResponses = (interviewResponsesRes?.data ?? []) as InterviewResponse[];
-  const studySessions = (studySessionsRes?.data ?? []) as StudySession[];
-  const writingPapers = (writingPapersRes?.data ?? []) as WritingPaper[];
-  const researchProposals = (researchProposalsRes?.data ?? []) as ResearchProposal[];
-  const seminarReviews = (seminarReviewsRes?.data ?? []) as SeminarReview[];
-  const courseReviews = (courseReviewsRes?.data ?? []) as CourseReview[];
+  const members = useMemo(() => (membersRes?.data ?? []) as User[], [membersRes]);
+  const attendees = useMemo(() => (attendeesRes?.data ?? []) as SeminarAttendee[], [attendeesRes]);
+  const participations = useMemo(() => (participationsRes?.data ?? []) as ActivityParticipation[], [participationsRes]);
+  const gradLife = useMemo(() => (gradLifeRes?.data ?? []) as GradLifePosition[], [gradLifeRes]);
+  const posts = useMemo(() => (postsRes?.data ?? []) as Post[], [postsRes]);
+  const comments = useMemo(() => (commentsRes?.data ?? []) as Comment[], [commentsRes]);
+  const interviewResponses = useMemo(() => (interviewResponsesRes?.data ?? []) as InterviewResponse[], [interviewResponsesRes]);
+  const studySessions = useMemo(() => (studySessionsRes?.data ?? []) as StudySession[], [studySessionsRes]);
+  const writingPapers = useMemo(() => (writingPapersRes?.data ?? []) as WritingPaper[], [writingPapersRes]);
+  const researchProposals = useMemo(() => (researchProposalsRes?.data ?? []) as ResearchProposal[], [researchProposalsRes]);
+  const seminarReviews = useMemo(() => (seminarReviewsRes?.data ?? []) as SeminarReview[], [seminarReviewsRes]);
+  const courseReviews = useMemo(() => (courseReviewsRes?.data ?? []) as CourseReview[], [courseReviewsRes]);
 
   // 회원별 카운트 맵 만들기 — O(N) 한 번씩 순회
   const rows = useMemo<MemberMetricsRow[]>(() => {
@@ -235,6 +235,7 @@ export function useMemberMetrics(enabled: boolean): UseMemberMetricsResult {
       courseReviewMap.set(r.authorId, (courseReviewMap.get(r.authorId) ?? 0) + 1);
     }
 
+    // eslint-disable-next-line react-hooks/purity
     const now = Date.now();
     return members.map((m) =>
       computeMemberMetrics({
@@ -262,6 +263,7 @@ export function useMemberMetrics(enabled: boolean): UseMemberMetricsResult {
 
   // 활동 모멘텀 — 최근 30일 vs 이전 30일 활동 이벤트 수 비교
   const momentumByUser = useMemo<Map<string, MemberMomentum>>(() => {
+    // eslint-disable-next-line react-hooks/purity
     const now = Date.now();
     const day30 = now - 30 * 86_400_000;
     const day60 = now - 60 * 86_400_000;
