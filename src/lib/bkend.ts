@@ -301,7 +301,7 @@ function stripUndefinedDeep<T>(value: T): T {
 
 /** API body 타입 강제 변환 — bkend dataApi가 Record<string, unknown>을 요구할 때 사용. */
 function toRecord<T>(data: T): Record<string, unknown> {
-  return toRecord(data);
+  return data as unknown as Record<string, unknown>;
 }
 
 export const dataApi = {
