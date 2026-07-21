@@ -28,6 +28,10 @@
 npm-debug.log*
 yarn-debug.log*
 yarn-error.log*
+
+# 로컬 게이트 산출 로그 (커밋 금지)
+build*.log
+deploy-vercel.log
 .pnpm-debug.log*
 
 # build / deploy logs (sprint*, generic)

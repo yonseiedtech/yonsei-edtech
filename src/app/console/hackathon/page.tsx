@@ -22,6 +22,7 @@ import {
   Inbox,
   Send,
   BarChart2,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
@@ -375,6 +376,31 @@ function JudgingCard({
       toast.error(`갱신 실패: ${e instanceof Error ? e.message : "오류"}`),
   });
 
+  const deleteSubmission = useMutation({
+    mutationFn: async () => {
+      // cascade: 연결된 심사 기록 먼저 삭제 (staff는 본인 기록만, admin은 전체 삭제 가능)
+      for (const j of judgings) {
+        try {
+          await hackathonJudgingsApi.delete(submission.id, j.judgeId);
+        } catch {
+          // 권한 없는 심사 기록은 건너뜀 (비admin staff는 타 심사위원 기록 삭제 불가)
+        }
+      }
+      await hackathonSubmissionsApi.delete(submission.id);
+    },
+    onSuccess: () => {
+      toast.success("제출물을 삭제했습니다.");
+      onChanged();
+    },
+    onError: (e) =>
+      toast.error(`삭제 실패: ${e instanceof Error ? e.message : "오류"}`),
+  });
+
+  function handleDeleteSubmission() {
+    if (!window.confirm("제출물과 연결된 심사 기록이 함께 삭제됩니다. 계속할까요?")) return;
+    deleteSubmission.mutate();
+  }
+
   return (
     <li className="rounded-2xl border bg-card p-5">
       {/* 헤더 */}
@@ -399,14 +425,25 @@ function JudgingCard({
             {submission.members.length > 0 && ` · ${submission.members.join(", ")}`}
           </p>
         </div>
-        <div className="text-right">
-          <p className="text-xs text-muted-foreground">평균 (심사위원 {summary.judgeCount}명)</p>
-          <p className="text-lg font-bold tabular-nums text-primary">
-            {summary.total}
-            <span className="text-xs font-normal text-muted-foreground">
-              {" "}/ {HACKATHON_RUBRIC.length * HACKATHON_RUBRIC_MAX}
-            </span>
-          </p>
+        <div className="flex items-start gap-2">
+          <div className="text-right">
+            <p className="text-xs text-muted-foreground">평균 (심사위원 {summary.judgeCount}명)</p>
+            <p className="text-lg font-bold tabular-nums text-primary">
+              {summary.total}
+              <span className="text-xs font-normal text-muted-foreground">
+                {" "}/ {HACKATHON_RUBRIC.length * HACKATHON_RUBRIC_MAX}
+              </span>
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={handleDeleteSubmission}
+            disabled={deleteSubmission.isPending}
+            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive disabled:opacity-50"
+            title="제출물 삭제 (staff 전용)"
+          >
+            <Trash2 size={14} />
+          </button>
         </div>
       </div>
 

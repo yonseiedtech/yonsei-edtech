@@ -43,7 +43,7 @@ export default function SeminarPresentPage() {
   const active = session && (session.status === "live" || session.status === "paused");
 
   return (
-    <div className="flex h-screen flex-col bg-muted text-white">
+    <div className="flex h-screen flex-col bg-navy-footer text-white">
       {/* 상단 바 */}
       <div className="flex items-center justify-between gap-3 border-b border-muted px-6 py-3">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-3 py-1 text-sm font-bold">

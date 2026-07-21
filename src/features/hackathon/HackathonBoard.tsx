@@ -23,6 +23,7 @@ import {
   Users,
   CheckCircle2,
   Send,
+  Lock,
   LogIn,
   UserPlus,
   UserCheck,
@@ -41,6 +42,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { commQuestionsApi, commLikesApi, hackathonTeamJoinsApi } from "@/lib/bkend";
 import type { CommBoard, CommQuestion, HackathonTeamJoin } from "@/types";
 import { ensureHackathonBoard } from "./ensure-hackathon-board";
+import { useHackathonOps } from "./useHackathonOps";
 import {
   HACKATHON_INTEREST_AREAS,
   HACKATHON_TEAM_PREFS,
@@ -62,6 +64,8 @@ function extractArea(body: string): string | null {
 export default function HackathonBoard() {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
+  const { phase } = useHackathonOps();
+  const registrationOpen = phase === "registration";
 
   const [problem, setProblem] = useState("");
   const [teamPref, setTeamPref] = useState<HackathonTeamPref>(
@@ -529,6 +533,16 @@ export default function HackathonBoard() {
               </Button>
             </div>
           )}
+        </section>
+      ) : !registrationOpen ? (
+        <section className="rounded-2xl border bg-card p-4 flex items-start gap-3">
+          <Lock size={18} className="mt-0.5 shrink-0 text-muted-foreground" />
+          <div>
+            <p className="text-sm font-semibold text-foreground">참가 접수가 마감되었습니다</p>
+            <p className="mt-0.5 text-xs text-muted-foreground">
+              접수 기간이 종료되었습니다. 아래 아이디어 보드에서 참가자들의 아이디어를 확인하세요.
+            </p>
+          </div>
         </section>
       ) : (
         <section className="rounded-2xl border bg-card p-4">
