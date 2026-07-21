@@ -419,7 +419,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
     }
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- typing/removeSelected excluded to prevent resubscription churn on every keystroke
   }, [selectedId, pageIdx, undo, redo]);
 
   // ── 드래그/리사이즈 ──

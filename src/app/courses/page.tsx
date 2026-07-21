@@ -190,7 +190,7 @@ function CoursesPageInner() {
     if (tabFromUrl && VALID_TABS.has(tabFromUrl) && tabFromUrl !== tab) {
       setTab(tabFromUrl);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- tab excluded to prevent circular update; VALID_TABS is a stable constant
   }, [tabFromUrl]);
   const [year, setYear] = useState<number>(nowYear());
   const [term, setTerm] = useState<SemesterTerm>(defaultTermForToday());

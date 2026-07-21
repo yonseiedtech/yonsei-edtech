@@ -832,7 +832,7 @@ export default function ConferenceProgramEditor({
       void handleSave({ silent: true });
     }, 30_000);
     return () => clearTimeout(id);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- handleSave excluded to prevent autosave timer reset on every render
   }, [draft, program?.id]);
 
   if (loading) {

@@ -1690,7 +1690,7 @@ export default function ResearchReportInterview({
     const moved = prevIndexRef.current !== index && prevIndexRef.current >= 0;
     prevIndexRef.current = index;
     if (moved && dirty && !saving) void onAutoSave?.();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- dirty/saving/onAutoSave read latest values without re-subscribing on slide nav
   }, [index]);
 
   useEffect(() => {

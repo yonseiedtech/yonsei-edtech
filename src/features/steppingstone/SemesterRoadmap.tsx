@@ -444,7 +444,7 @@ export default function SemesterRoadmap() {
       stages.map((s) => ({ order: s.order, itemCount: s.items.length }))
     );
     // progressTick 을 의존성에 포함해 체크 변화 시 재계산
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- progressTick is a cache-bust signal for localStorage reads, not a true reactive dep
   }, [stages, progressTick]);
 
   const overallPct =

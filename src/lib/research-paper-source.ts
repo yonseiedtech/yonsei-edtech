@@ -127,32 +127,3 @@ export async function searchOpenAlexEdTech(opts: {
   });
 }
 
-interface SemanticScholarPaper {
-  paperId?: string;
-  externalIds?: { DOI?: string };
-  title?: string;
-  abstract?: string;
-  authors?: { name?: string }[];
-  year?: number;
-  venue?: string;
-  tldr?: { text?: string };
-  openAccessPdf?: { url?: string };
-}
-
-/**
- * Semantic Scholar 에서 같은 DOI 의 TLDR + abstract 보강.
- * (OpenAlex 는 TLDR 미제공, abstract 도 inverted index → 복원이 부정확할 수 있어 SS 로 보강)
- */
-export async function enrichWithSemanticScholar(
-  doi: string,
-  signal?: AbortSignal,
-): Promise<{ abstract?: string; tldr?: string }> {
-  const url = `https://api.semanticscholar.org/graph/v1/paper/DOI:${encodeURIComponent(doi)}?fields=abstract,tldr`;
-  const res = await fetch(url, {
-    headers: { Accept: "application/json", "User-Agent": "yonsei-edtech-bot/1.0" },
-    signal,
-  });
-  if (!res.ok) return {};
-  const j = (await res.json()) as SemanticScholarPaper;
-  return { abstract: j.abstract ?? undefined, tldr: j.tldr?.text ?? undefined };
-}

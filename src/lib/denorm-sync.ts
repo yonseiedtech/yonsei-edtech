@@ -14,14 +14,11 @@
 import {
   seminarsApi,
   activitiesApi,
-  courseOfferingsApi,
 } from "./bkend";
 import type {
   Certificate,
-  CourseReview,
   Seminar,
   Activity,
-  CourseOffering,
 } from "@/types";
 
 function uniq(arr: (string | undefined | null)[]): string[] {
@@ -63,27 +60,3 @@ export async function enrichCertificates(certs: Certificate[]): Promise<Certific
   });
 }
 
-/**
- * 강의 후기의 courseName/professor/category 를 CourseOffering 최신 값으로 overlay.
- */
-export async function enrichCourseReviews(reviews: CourseReview[]): Promise<CourseReview[]> {
-  if (reviews.length === 0) return reviews;
-
-  const offeringIds = uniq(reviews.map((r) => r.courseOfferingId));
-  if (offeringIds.length === 0) return reviews;
-
-  const res = await courseOfferingsApi.list({ limit: 1000 });
-  const offerings = res.data as unknown as CourseOffering[];
-  const map = new Map(offerings.map((o) => [o.id, o]));
-
-  return reviews.map((r) => {
-    const src = map.get(r.courseOfferingId);
-    if (!src) return r;
-    return {
-      ...r,
-      courseName: src.courseName ?? r.courseName,
-      professor: src.professor ?? r.professor,
-      category: src.category ?? r.category,
-    };
-  });
-}

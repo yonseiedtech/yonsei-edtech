@@ -344,7 +344,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
     if (!configured.includes(applyParticipantType)) {
       setApplyParticipantType(configured[0]);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- applyParticipantType/type excluded to prevent circular reset; setters are stable
   }, [applyDialog, activity?.enabledParticipantTypes]);
 
   // 참여 신청 (대외활동: 신청서 기반, 기타: 즉시 참여)

@@ -152,7 +152,7 @@ function ResearchModelEditorInner({
   readOnly = false,
   onApplyQuestions,
 }: ResearchModelEditorProps) {
-  const initial = useMemo(() => toFlow(value, { readOnly }), []); // eslint-disable-line react-hooks/exhaustive-deps
+  const initial = useMemo(() => toFlow(value, { readOnly }), []); // eslint-disable-line react-hooks/exhaustive-deps -- mount-once: initial flow layout computed only on mount, value/readOnly changes handled separately
   const [nodes, setNodes, onNodesChange] = useNodesState<VariableNodeData>(
     initial.nodes,
   );

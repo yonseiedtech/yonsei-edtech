@@ -159,7 +159,7 @@ function DashboardContent() {
     if (Date.now() - prev > 60 * 60 * 1000) {
       void profilesApi.update(user.id, { lastVisitAt: new Date().toISOString() }).catch(() => {});
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- user.lastVisitAt excluded to avoid re-trigger loop after self-update
   }, [user?.id]);
   const isStaff = isAtLeast(user, "staff");
 

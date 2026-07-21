@@ -407,34 +407,4 @@ export const AECT_TERMS: AectTerm[] = AECT_DOMAIN_TREE.flatMap((domain) =>
   ),
 );
 
-function normalize(s: string): string {
-  return s.trim().toLowerCase().replace(/\s+/g, " ");
-}
 
-/**
- * 단건 조회 — 영문(대소문자 무시)·국문 완전일치 우선, 없으면 부분일치.
- */
-export function findAectTerm(query: string): AectTerm | undefined {
-  const q = normalize(query);
-  if (!q) return undefined;
-  // 완전일치 (영문/국문)
-  const exact = AECT_TERMS.find(
-    (t) => normalize(t.en) === q || normalize(t.ko) === q,
-  );
-  if (exact) return exact;
-  // 부분일치 (영문/국문)
-  return AECT_TERMS.find(
-    (t) => normalize(t.en).includes(q) || normalize(t.ko).includes(q),
-  );
-}
-
-/**
- * 검색 — 영문/국문 부분일치 전체 목록.
- */
-export function searchAectTerms(query: string): AectTerm[] {
-  const q = normalize(query);
-  if (!q) return [];
-  return AECT_TERMS.filter(
-    (t) => normalize(t.en).includes(q) || normalize(t.ko).includes(q),
-  );
-}

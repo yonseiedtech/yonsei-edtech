@@ -871,7 +871,7 @@ export default function DefensePracticeRunner({
         readAlongSilenceTimerRef.current = null;
       }
     };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- evaluateReadAlong/readAlongUnit excluded to prevent silence timer churn
   }, [readAlongBuffer, interim, practiceMode, readAlongEvaluating]);
 
   /** 따라 읽기 관련 타이머/상태 일괄 정리 */

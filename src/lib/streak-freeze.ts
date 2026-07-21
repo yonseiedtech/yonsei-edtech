@@ -71,7 +71,3 @@ export function remainingThisMonth(freezes: StreakFreeze[], now: Date = new Date
   return Math.max(0, STREAK_FREEZE_MONTHLY_LIMIT - usedThisMonth(freezes, now));
 }
 
-/** 특정 주(주 시작 ymd)가 얼려져 있는지 */
-export function isWeekFrozen(freezes: StreakFreeze[], weekStart: string): boolean {
-  return freezes.some((f) => f.week === weekStart);
-}

@@ -469,7 +469,7 @@ export default function OnboardingPage() {
     if (!loading && user) {
       logOnboardingEvent(user.id, "enter");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- user object ref excluded; fires once per user id to log onboarding entry
   }, [loading, user?.id]);
 
   const grouped = useMemo(() => {

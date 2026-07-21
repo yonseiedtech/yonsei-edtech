@@ -18,11 +18,6 @@ import type {
 export const ALL_AVAILABLE_MARKER = "__ALL__";
 export const RESTRICTED_MARKER = "__RESTRICTED__";
 
-/** 이름 비교용 정규화 (공백 제거 + 소문자) */
-export function normalizeName(name: string | undefined | null): string {
-  return (name ?? "").replace(/\s+/g, "").toLowerCase();
-}
-
 /** 고유 id 생성 (guest assignment 등) */
 export function genId(prefix: string): string {
   return `${prefix}_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;

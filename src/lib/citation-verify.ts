@@ -16,62 +16,6 @@ export interface CrossRefMetadata {
   publisher?: string;
 }
 
-/** DOI 정규화 — URL 형식 제거 + 공백 제거 */
-function normalizeDoi(doi: string): string {
-  return doi
-    .trim()
-    .replace(/^https?:\/\/(dx\.)?doi\.org\//i, "")
-    .replace(/^doi:\s*/i, "");
-}
-
-/**
- * CrossRef API 호출해서 DOI 실재 여부 + 핵심 메타데이터 반환.
- * 네트워크 오류·404 시 exists=false. timeout 5초.
- */
-export async function fetchDoiMetadata(rawDoi: string): Promise<CrossRefMetadata> {
-  const doi = normalizeDoi(rawDoi);
-  if (!doi || !doi.includes("/")) return { exists: false };
-
-  const url = `https://api.crossref.org/works/${encodeURIComponent(doi)}`;
-  const controller = new AbortController();
-  const timeout = setTimeout(() => controller.abort(), 5000);
-
-  try {
-    const res = await fetch(url, {
-      headers: {
-        // CrossRef Polite Pool — 이메일 명시 시 우선 처리됨
-        "User-Agent": "yonsei-edtech-bot/1.0 (mailto:yonsei.edtech@gmail.com)",
-        Accept: "application/json",
-      },
-      signal: controller.signal,
-    });
-    clearTimeout(timeout);
-    if (!res.ok) return { exists: false };
-
-    const json = (await res.json()) as {
-      message?: {
-        title?: string[];
-        author?: { family?: string; given?: string }[];
-        issued?: { "date-parts"?: number[][] };
-        publisher?: string;
-      };
-    };
-    const m = json.message;
-    if (!m) return { exists: false };
-
-    return {
-      exists: true,
-      title: m.title?.[0],
-      firstAuthorFamily: m.author?.[0]?.family,
-      year: m.issued?.["date-parts"]?.[0]?.[0],
-      publisher: m.publisher,
-    };
-  } catch {
-    clearTimeout(timeout);
-    return { exists: false };
-  }
-}
-
 /**
  * 인용 객체와 CrossRef 응답을 비교해 의심도(0~3) 반환.
  * 0: 완전 일치 / 1: 연도 약간 차이 / 2: 저자 불일치 / 3: 존재 안 함 또는 제목 완전 다름

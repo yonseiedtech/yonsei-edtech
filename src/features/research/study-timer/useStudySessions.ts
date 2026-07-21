@@ -1,7 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { studySessionsApi, streakEventsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { todayYmdLocal } from "@/lib/dday";
 import type { StudySession, StudySessionType } from "@/types";
 
 export function useStudySessions() {
@@ -33,15 +32,6 @@ export function useStudySessionsByWritingPaper(writingPaperId?: string) {
   const { sessions } = useStudySessions();
   if (!writingPaperId) return [];
   return sessions.filter((s) => s.writingPaperId === writingPaperId && s.endTime);
-}
-
-export function useTodaySessions() {
-  const { sessions } = useStudySessions();
-  const today = todayYmdLocal();
-  return sessions.filter((s) => {
-    if (!s.startTime || !s.endTime) return false;
-    return todayYmdLocal(new Date(s.startTime)) === today;
-  });
 }
 
 export function usePaperTotalMinutes(paperId?: string): number {

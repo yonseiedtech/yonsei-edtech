@@ -169,7 +169,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
       seen.add(s.id);
       return true;
     });
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- isSpeaker uses owner props already in deps; function ref excluded
   }, [allSeminars, userAttendeeRecords, owner.id, owner.studentId, owner.name]);
 
   const filtered = useMemo(() => {
@@ -238,7 +238,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
       });
     }
     return arr;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- sort comparators use inline constants only; no external deps needed
   }, [filtered, tab]);
 
   // visible 개수만큼 그룹 순회하며 슬라이스

@@ -115,11 +115,6 @@ export function parseSchedule(raw: string | undefined): ParsedSchedule {
   return { weekdays, startMin, endMin };
 }
 
-/** ParsedSchedule이 특정 요일을 포함하는지. */
-export function scheduleIncludesDay(parsed: ParsedSchedule, dayIndex: number): boolean {
-  return parsed.weekdays.includes(dayIndex);
-}
-
 /** "HH:MM" 포맷 (분 단위 → 문자열) */
 export function fmtMin(min: number | null): string {
   if (min === null) return "";

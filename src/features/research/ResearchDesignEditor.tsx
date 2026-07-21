@@ -365,7 +365,7 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
         (m) => showAllMethods || kinds.length === 0 || kinds.includes(m.kind),
       )
       .sort((a, b) => a.name.localeCompare(b.name, "ko"));
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- strictKind derived from form.approach already in deps; not a separate reactive value
   }, [methods, form.approach, showAllMethods]);
 
   const selectedMethod = useMemo(

@@ -387,12 +387,6 @@ export function theoryNodesByFamily(family: TheoryFamily): TheoryNode[] {
   return THEORY_NODES.filter((n) => n.family === family);
 }
 
-/** 이름으로 노드 조회 (간선 렌더링용) */
-export function findTheoryNode(name: string): TheoryNode | undefined {
-  const nk = normalizeTheoryName(name);
-  return THEORY_NODES.find((n) => normalizeTheoryName(n.name) === nk);
-}
-
 /** 자료 출처 고지 (저작권 경계) */
 export const THEORY_MAP_SOURCE = {
   book: "『교수학습공학: 이론적 기초와 동향』",

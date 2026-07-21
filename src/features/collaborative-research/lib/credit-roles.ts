@@ -59,6 +59,3 @@ export const CREDIT_ROLES_ORDERED: CreditRole[] = [
   "funding_acquisition",
 ];
 
-export function getCreditRoleLabel(role: CreditRole): string {
-  return CREDIT_ROLE_LABELS[role] ?? role;
-}

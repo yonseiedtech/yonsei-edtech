@@ -536,8 +536,8 @@ export default function AnalyticsPage() {
                 dataKey="value" nameKey="name"
                 label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
               >
-                {analytics.roleDistribution.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                {analytics.roleDistribution.map((entry, i) => (
+                  <Cell key={entry.name} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip />
@@ -573,8 +573,8 @@ export default function AnalyticsPage() {
                 dataKey="value" nameKey="name"
                 label={({ name, percent }) => `${name} ${((percent ?? 0) * 100).toFixed(0)}%`}
               >
-                {analytics.postsByCategory.map((_, i) => (
-                  <Cell key={i} fill={COLORS[i % COLORS.length]} />
+                {analytics.postsByCategory.map((entry, i) => (
+                  <Cell key={entry.name} fill={COLORS[i % COLORS.length]} />
                 ))}
               </Pie>
               <Tooltip />

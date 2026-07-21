@@ -278,7 +278,7 @@ export default function DiagnosisPage() {
     if (!loading && phase === "landing" && user) {
       logDiagnosticEvent(user.id, "start");
     }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+  // eslint-disable-next-line react-hooks/exhaustive-deps -- phase excluded to avoid re-firing on state change; fires once per user/load cycle
   }, [loading, user?.id]);
 
   // ── 진단 시작 (문제은행에서 가중 추출 — 매 진단 다른 문제, 영역·유형·인지수준 혼합) ──

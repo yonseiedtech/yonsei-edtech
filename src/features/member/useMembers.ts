@@ -124,23 +124,6 @@ export function useApproveMember() {
   return { approveMember: mutation.mutateAsync, isLoading: mutation.isPending };
 }
 
-// ── 회원 거부 ──
-
-export function useRejectMember() {
-  const queryClient = useQueryClient();
-
-  const mutation = useMutation({
-    mutationFn: async (id: string) => {
-      return await profilesApi.update(id, { approved: false, rejected: true });
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["members"] });
-    },
-  });
-
-  return { rejectMember: mutation.mutateAsync, isLoading: mutation.isPending };
-}
-
 // ── 역할 변경 ──
 
 export function useChangeRole() {

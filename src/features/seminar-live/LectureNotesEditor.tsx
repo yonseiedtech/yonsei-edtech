@@ -37,7 +37,7 @@ export default function LectureNotesEditor({
       clearTimeout(saveTimer.current);
       saveTimer.current = null;
     }
-  }, [deck.id, currentSlide]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [deck.id, currentSlide]); // eslint-disable-line react-hooks/exhaustive-deps -- deck.lectureNotes excluded to protect in-progress edits from external updates
 
   function handleChange(e: React.ChangeEvent<HTMLTextAreaElement>) {
     const v = e.target.value;

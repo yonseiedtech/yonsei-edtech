@@ -14,6 +14,7 @@
     "devDependencies": "off",
     "optionalPeerDependencies": "off",
     "unlisted": "off",
-    "unresolved": "off"
+    "unresolved": "off",
+    "files": "off"
   }
 }

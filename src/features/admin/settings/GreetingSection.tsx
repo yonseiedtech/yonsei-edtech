@@ -59,7 +59,7 @@ export default function GreetingSection() {
       setAdvisorForm(advisor);
       setPresidentForm(president);
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- granular field deps intentional; avoids resync on object reference change
   }, [isLoading, advisor.name, advisor.title, advisor.content, president.name, president.title, president.content]);
 
   function handleSave() {

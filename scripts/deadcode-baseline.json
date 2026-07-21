@@ -1,18 +1,12 @@
 {
-  "ceiling": 39,
+  "ceiling": 26,
   "generatedAt": "2026-07-21",
   "tool": "knip@6.27.0",
   "note": "node scripts/gen-deadcode-baseline.mjs 로 재생성. ceiling보다 이슈 수가 늘면 check-deadcode-ratchet.mjs 가 exit 1.",
-  "unusedExports": 39,
+  "unusedExports": 26,
   "unusedFiles": 0,
   "unusedTypes": 0,
   "items": [
-    {
-      "file": "src/app/console/academic/external/[id]/volunteers/volunteer-utils.ts",
-      "name": "normalizeName",
-      "kind": "export",
-      "line": 22
-    },
     {
       "file": "src/features/collaborative-research/api/useCollabPhase2.ts",
       "name": "useChapter",
@@ -50,12 +44,6 @@
       "line": 227
     },
     {
-      "file": "src/features/collaborative-research/lib/credit-roles.ts",
-      "name": "getCreditRoleLabel",
-      "kind": "export",
-      "line": 62
-    },
-    {
       "file": "src/features/collaborative-research/lib/research-status.ts",
       "name": "canEditChapter",
       "kind": "export",
@@ -66,12 +54,6 @@
       "name": "areAllAuthorsComplete",
       "kind": "export",
       "line": 117
-    },
-    {
-      "file": "src/features/member/useMembers.ts",
-      "name": "useRejectMember",
-      "kind": "export",
-      "line": 129
     },
     {
       "file": "src/features/newsletter/newsletter-store.ts",
@@ -104,12 +86,6 @@
       "line": 171
     },
     {
-      "file": "src/features/research/study-timer/useStudySessions.ts",
-      "name": "useTodaySessions",
-      "kind": "export",
-      "line": 38
-    },
-    {
       "file": "src/features/research/usePaperReadingLogs.ts",
       "name": "useDeleteReadingLog",
       "kind": "export",
@@ -120,18 +96,6 @@
       "name": "useUpdateReadingLog",
       "kind": "export",
       "line": 52
-    },
-    {
-      "file": "src/lib/aect-terminology.ts",
-      "name": "findAectTerm",
-      "kind": "export",
-      "line": 417
-    },
-    {
-      "file": "src/lib/aect-terminology.ts",
-      "name": "searchAectTerms",
-      "kind": "export",
-      "line": 434
     },
     {
       "file": "src/lib/ai-tools.ts",
@@ -164,24 +128,6 @@
       "line": 2068
     },
     {
-      "file": "src/lib/citation-verify.ts",
-      "name": "fetchDoiMetadata",
-      "kind": "export",
-      "line": 31
-    },
-    {
-      "file": "src/lib/courseSchedule.ts",
-      "name": "scheduleIncludesDay",
-      "kind": "export",
-      "line": 119
-    },
-    {
-      "file": "src/lib/denorm-sync.ts",
-      "name": "enrichCourseReviews",
-      "kind": "export",
-      "line": 69
-    },
-    {
       "file": "src/lib/diagnostic-seed.ts",
       "name": "seedDiagnosticQuestions",
       "kind": "export",
@@ -200,12 +146,6 @@
       "line": 44
     },
     {
-      "file": "src/lib/permissions.ts",
-      "name": "canAccessLabs",
-      "kind": "export",
-      "line": 53
-    },
-    {
       "file": "src/lib/push.ts",
       "name": "disablePushForCurrentUser",
       "kind": "export",
@@ -219,27 +159,9 @@
     },
     {
       "file": "src/lib/research-paper-source.ts",
-      "name": "enrichWithSemanticScholar",
-      "kind": "export",
-      "line": 146
-    },
-    {
-      "file": "src/lib/research-paper-source.ts",
       "name": "searchOpenAlexEdTech",
       "kind": "export",
       "line": 79
-    },
-    {
-      "file": "src/lib/streak-freeze.ts",
-      "name": "isWeekFrozen",
-      "kind": "export",
-      "line": 75
-    },
-    {
-      "file": "src/lib/theory-family.ts",
-      "name": "findTheoryNode",
-      "kind": "export",
-      "line": 391
     }
   ]
 }

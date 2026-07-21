@@ -404,7 +404,7 @@ export default function AdminMemberTab() {
       return String(av).localeCompare(String(bv), "ko");
     });
     return sortDir === "desc" ? sorted.reverse() : sorted;
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- getSortValue/onboardingProgress helpers stable, intentionally omitted
   }, [activeTab, allMembers, members, searchQuery, sortKey, sortDir, onboardingFilter]);
 
   async function handleRoleChange(userId: string, newRole: UserRole) {
