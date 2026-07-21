@@ -274,6 +274,7 @@ export default function NewsletterMagazinePage({
             <div className="mt-6 flex items-center justify-center gap-3">
               <button
                 type="button"
+                title="이전 페이지 (←)"
                 onClick={() => setPageIndex((p) => Math.max(0, p - 1))}
                 disabled={pageIndex === 0}
                 className="inline-flex items-center gap-1 rounded-lg border bg-card px-3 py-2 text-sm hover:bg-muted disabled:opacity-40"
@@ -285,6 +286,7 @@ export default function NewsletterMagazinePage({
               </span>
               <button
                 type="button"
+                title="다음 페이지 (→)"
                 onClick={() => setPageIndex((p) => Math.min(totalPages - 1, p + 1))}
                 disabled={pageIndex >= totalPages - 1}
                 className="inline-flex items-center gap-1 rounded-lg border bg-card px-3 py-2 text-sm hover:bg-muted disabled:opacity-40"

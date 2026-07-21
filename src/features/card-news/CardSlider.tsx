@@ -165,6 +165,7 @@ export default function CardSlider({ cards, seriesId }: CardSliderProps) {
         <button
           type="button"
           aria-label="이전 슬라이드"
+          title="이전 슬라이드 (←)"
           onClick={goPrev}
           disabled={index === 0}
           className="absolute left-2 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow-lg backdrop-blur transition hover:bg-background disabled:opacity-30 sm:-left-12"
@@ -174,6 +175,7 @@ export default function CardSlider({ cards, seriesId }: CardSliderProps) {
         <button
           type="button"
           aria-label="다음 슬라이드"
+          title="다음 슬라이드 (→)"
           onClick={goNext}
           disabled={index === total - 1}
           className="absolute right-2 top-1/2 -translate-y-1/2 rounded-full bg-background/90 p-2 shadow-lg backdrop-blur transition hover:bg-background disabled:opacity-30 sm:-right-12"
