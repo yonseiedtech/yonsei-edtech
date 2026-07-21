@@ -51,7 +51,7 @@ export default function ResearchReportPrint({
   periodEnd,
 }: Props) {
   const periodLabel = formatPeriodLabel(periodStart, periodEnd);
-  const opts = { periodStart, periodEnd };
+  const opts = useMemo(() => ({ periodStart, periodEnd }), [periodStart, periodEnd]);
 
   const filtered = useMemo(() => {
     return papers
@@ -65,14 +65,14 @@ export default function ResearchReportPrint({
       });
   }, [papers, periodStart, periodEnd]);
 
-  const writingDays = useMemo(() => computeWritingDays(history, opts), [history, periodStart, periodEnd]);
-  const participation = useMemo(() => computeParticipationRate(history, opts), [history, periodStart, periodEnd]);
-  const streak = useMemo(() => computeLongestStreak(history, opts), [history, periodStart, periodEnd]);
-  const readingStats = useMemo(() => computeReadingStats(papers, opts), [papers, periodStart, periodEnd]);
-  const avgDuration = useMemo(() => computeAvgReadDuration(papers, opts), [papers, periodStart, periodEnd]);
-  const topKeywords = useMemo(() => computeTopKeywords(papers, 10, opts), [papers, periodStart, periodEnd]);
-  const variableBreakdown = useMemo(() => computeVariableBreakdown(papers, 5, opts), [papers, periodStart, periodEnd]);
-  const totalReadDays = useMemo(() => computeTotalReadDays(papers, opts), [papers, periodStart, periodEnd]);
+  const writingDays = useMemo(() => computeWritingDays(history, opts), [history, opts]);
+  const participation = useMemo(() => computeParticipationRate(history, opts), [history, opts]);
+  const streak = useMemo(() => computeLongestStreak(history, opts), [history, opts]);
+  const readingStats = useMemo(() => computeReadingStats(papers, opts), [papers, opts]);
+  const avgDuration = useMemo(() => computeAvgReadDuration(papers, opts), [papers, opts]);
+  const topKeywords = useMemo(() => computeTopKeywords(papers, 10, opts), [papers, opts]);
+  const variableBreakdown = useMemo(() => computeVariableBreakdown(papers, 5, opts), [papers, opts]);
+  const totalReadDays = useMemo(() => computeTotalReadDays(papers, opts), [papers, opts]);
 
   const writingMeta = writingPaper && writingPaper.chapters
     ? Object.entries(writingPaper.chapters).filter(([, v]) => (v ?? "").trim().length > 0)
