@@ -290,7 +290,7 @@ export default function WritingHeatmap({ history }: Props) {
           <p className="text-[11px] text-muted-foreground">
             활동일 <span className="font-medium text-foreground">{totalActiveDays}일</span>
             {writeStreak.days > 0 && (
-              <span className="ml-2 font-medium text-orange-600 dark:text-orange-400">
+              <span className="ml-2 font-medium text-warning">
                 🔥 연속 {writeStreak.days}일
                 {!writeStreak.activeToday && (
                   <span className="ml-1 font-normal text-muted-foreground">— 오늘 저장하면 이어져요</span>
@@ -366,7 +366,7 @@ export default function WritingHeatmap({ history }: Props) {
             >
               <p className="font-semibold text-foreground">{tooltip.dateStr}</p>
               <p className="text-muted-foreground">
-                논문 작성 : <span className={tooltip.hasWriting ? "font-bold text-green-600" : "text-muted-foreground"}>{tooltip.hasWriting ? "YES!" : "NO"}</span>
+                논문 작성 : <span className={tooltip.hasWriting ? "font-bold text-success" : "text-muted-foreground"}>{tooltip.hasWriting ? "YES!" : "NO"}</span>
               </p>
               <p className="text-muted-foreground">
                 작업 이력 : <span className="font-medium text-foreground">{tooltip.count}건</span>

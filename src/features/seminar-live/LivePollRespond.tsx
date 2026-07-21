@@ -73,7 +73,7 @@ function QuestionInput({
                   className={cn(
                     "flex h-4 w-4 flex-shrink-0 items-center justify-center rounded-full border",
                     checked
-                      ? "border-indigo-500 bg-indigo-500 dark:border-indigo-400 dark:bg-indigo-500"
+                      ? "border-cat-1 bg-cat-1"
                       : "border-muted-foreground",
                   )}
                 >
@@ -113,7 +113,7 @@ function QuestionInput({
                   className={cn(
                     "flex h-4 w-4 flex-shrink-0 items-center justify-center rounded border",
                     checked
-                      ? "border-indigo-500 bg-indigo-500 dark:border-indigo-400 dark:bg-indigo-500"
+                      ? "border-cat-1 bg-cat-1"
                       : "border-muted-foreground",
                   )}
                 >
@@ -139,7 +139,7 @@ function QuestionInput({
           onChange={(e) => onText(e.target.value)}
           placeholder="답변을 입력하세요"
           rows={3}
-          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-indigo-400"
+          className="w-full rounded-xl border border-border bg-background px-3 py-2 text-xs placeholder:text-muted-foreground focus:outline-none focus:ring-1 focus:ring-cat-1/40"
         />
       )}
 
@@ -156,8 +156,8 @@ function QuestionInput({
                 className={cn(
                   "flex h-9 w-9 items-center justify-center rounded-xl border text-xs font-bold transition-colors",
                   active
-                    ? "border-indigo-500 bg-indigo-500 text-white dark:border-indigo-400 dark:bg-indigo-500"
-                    : "border-border bg-background text-muted-foreground hover:border-indigo-400 hover:text-foreground",
+                    ? "border-cat-1 bg-cat-1 text-white"
+                    : "border-border bg-background text-muted-foreground hover:border-cat-1/40 hover:text-foreground",
                 )}
               >
                 {n}
@@ -183,7 +183,7 @@ function QuestionResultBar({
   count,
   max,
   total,
-  color = "bg-indigo-500 dark:bg-indigo-400",
+  color = "bg-cat-1",
 }: {
   label: string;
   count: number;

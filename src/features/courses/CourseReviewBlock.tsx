@@ -188,7 +188,7 @@ export default function CourseReviewBlock({
                     <div className="flex flex-wrap items-center gap-1.5 text-[11px]">
                       <StarRow value={r.rating} readonly size={11} />
                       {r.recommend && (
-                        <Badge variant="outline" className="border-emerald-200 bg-emerald-50 text-[9px] text-emerald-700">
+                        <Badge variant="outline" className="border-success/20 bg-success/5 text-[9px] text-success">
                           추천
                         </Badge>
                       )}
@@ -198,7 +198,7 @@ export default function CourseReviewBlock({
                       </span>
                     </div>
                     {r.ratingReason && (
-                      <p className="mt-1 text-[10px] italic text-amber-700/80">
+                      <p className="mt-1 text-[10px] italic text-warning/80">
                         ★ {r.ratingReason}
                       </p>
                     )}
@@ -212,7 +212,7 @@ export default function CourseReviewBlock({
                       </div>
                     )}
                     {(r.midtermType || r.finalType || r.examNotes) && (
-                      <div className="mt-1.5 rounded border border-blue-100 bg-blue-50/40 p-1.5 text-[10px] text-blue-900/80">
+                      <div className="mt-1.5 rounded border border-cat-1/10 bg-cat-1/5 p-1.5 text-[10px] text-cat-1/80">
                         <div className="flex flex-wrap gap-2">
                           {r.midtermType && (
                             <span>

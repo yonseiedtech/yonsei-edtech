@@ -240,7 +240,7 @@ export default function ElectiveReviewsByName() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-emerald-200 bg-emerald-50/50 p-3 text-[11px] text-emerald-800">
+      <div className="rounded-lg border border-success/20 bg-success/5 p-3 text-[11px] text-success">
         💬 강의명을 기준으로 학기별 수강 후기를 모아 보여드립니다. 본인이 수강한
         학기를 선택해 후기를 남겨주세요. 익명 작성도 가능합니다.
       </div>
@@ -341,7 +341,7 @@ function NameCard({
             <span className="text-[11px] text-muted-foreground">후기 없음</span>
           ) : (
             <div className="text-right">
-              <span className="inline-flex items-center gap-0.5 text-sm font-semibold text-amber-600">
+              <span className="inline-flex items-center gap-0.5 text-sm font-semibold text-warning">
                 <Star size={13} className="fill-warning text-warning" />
                 {group.avgRating.toFixed(1)}
               </span>
@@ -397,7 +397,7 @@ function NameCard({
             const list = group.reviewsBySemester.get(sk) ?? [];
             return (
               <div key={sk}>
-                <h4 className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-blue-50 px-2 py-0.5 text-[11px] font-semibold text-blue-800">
+                <h4 className="mb-1.5 inline-flex items-center gap-1.5 rounded-full bg-cat-1/5 px-2 py-0.5 text-[11px] font-semibold text-cat-1">
                   {yStr}년 {SEMESTER_TERM_LABELS[t]}
                   <span className="text-muted-foreground">·</span>
                   <span>{list.length}건</span>
@@ -491,7 +491,7 @@ function ReviewItem({ review }: { review: CourseReview }) {
             </div>
           )}
           {(review.midtermType || review.finalType || review.examNotes) && (
-            <div className="rounded border border-blue-100 bg-blue-50/40 p-1.5 text-[10px] text-blue-900/80">
+            <div className="rounded border border-cat-1/10 bg-cat-1/5 p-1.5 text-[10px] text-cat-1/80">
               <div className="flex flex-wrap gap-2">
                 {review.midtermType && (
                   <span>

@@ -136,7 +136,7 @@ function PollRow({ poll, isActive, onSetLive, settingLive, liveCount, liveAggs }
       className={cn(
         "rounded-xl border p-3 transition-colors",
         isActive
-          ? "border-indigo-300 bg-indigo-50/60 dark:border-indigo-800 dark:bg-indigo-950/20"
+          ? "border-cat-1/30 bg-cat-1/5"
           : "border-border bg-card",
       )}
     >
@@ -144,12 +144,12 @@ function PollRow({ poll, isActive, onSetLive, settingLive, liveCount, liveAggs }
         <div className="min-w-0 flex-1">
           <div className="flex items-center gap-1.5">
             {isActive && (
-              <span className="flex h-1.5 w-1.5 rounded-full bg-indigo-500 animate-pulse" />
+              <span className="flex h-1.5 w-1.5 rounded-full bg-cat-1 animate-pulse" />
             )}
             <p className="truncate text-xs font-semibold">{poll.title}</p>
           </div>
           {isActive && liveCount !== undefined && (
-            <p className="mt-0.5 text-[10px] text-indigo-600 dark:text-indigo-400">
+            <p className="mt-0.5 text-[10px] text-cat-1">
               실시간 응답 {liveCount}명
             </p>
           )}
