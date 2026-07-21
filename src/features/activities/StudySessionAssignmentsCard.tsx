@@ -262,8 +262,8 @@ export default function StudySessionAssignmentsCard({
               className={cn(
                 "text-[9px]",
                 myCompletedRequired === totalRequired
-                  ? "border-emerald-200 bg-emerald-50 text-emerald-700"
-                  : "border-amber-200 bg-amber-50 text-amber-700",
+                  ? "border-success/20 bg-success/10 text-success"
+                  : "border-warning/20 bg-warning/10 text-warning",
               )}
             >
               필수 {myCompletedRequired}/{totalRequired}
@@ -606,7 +606,7 @@ function AssignmentItem({
             className={cn(
               "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded border-2 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
               checked
-                ? "border-emerald-500 bg-emerald-500 text-white"
+                ? "border-success bg-success text-white"
                 : "border-muted-foreground/30 hover:border-primary",
             )}
           >
@@ -622,7 +622,7 @@ function AssignmentItem({
               {STUDY_ASSIGNMENT_TYPE_LABELS[a.type]}
             </Badge>
             {a.required && (
-              <Badge className="bg-rose-50 text-[9px] text-rose-700">필수</Badge>
+              <Badge className="bg-destructive/10 text-[9px] text-destructive">필수</Badge>
             )}
             <Badge
               variant="outline"
@@ -631,7 +631,7 @@ function AssignmentItem({
               {STUDY_ASSIGNMENT_STATUS_LABELS[status]}
             </Badge>
             {isOverdue && (
-              <Badge className="bg-red-100 text-[9px] text-red-700">마감초과</Badge>
+              <Badge className="bg-destructive/20 text-[9px] text-destructive">마감초과</Badge>
             )}
           </div>
           {a.description && (
@@ -647,12 +647,12 @@ function AssignmentItem({
 
           {/* 내 제출 미리보기 */}
           {mySubmission && (mySubmission.text || mySubmission.rating || mySubmission.fileUrl) && (
-            <div className="mt-1.5 rounded border border-emerald-200 bg-emerald-50/60 px-2 py-1 text-[11px] text-foreground">
+            <div className="mt-1.5 rounded border border-success/20 bg-success/5 px-2 py-1 text-[11px] text-foreground">
               {mySubmission.text && (
                 <p className="whitespace-pre-wrap">{mySubmission.text}</p>
               )}
               {mySubmission.rating && (
-                <p className="flex items-center gap-0.5 text-amber-700">
+                <p className="flex items-center gap-0.5 text-warning">
                   {Array.from({ length: mySubmission.rating }).map((_, i) => (
                     <Star key={i} size={10} className="fill-current" />
                   ))}
@@ -669,8 +669,8 @@ function AssignmentItem({
                 </a>
               )}
               {mySubmission.feedback && (
-                <div className="mt-1 border-t border-emerald-200 pt-1">
-                  <p className="text-[10px] font-semibold text-emerald-800">
+                <div className="mt-1 border-t border-success/20 pt-1">
+                  <p className="text-[10px] font-semibold text-success">
                     🎯 운영진 피드백 — {mySubmission.feedbackByName ?? "운영진"}
                   </p>
                   <p className="mt-0.5 whitespace-pre-wrap text-foreground">
@@ -743,7 +743,7 @@ function AssignmentItem({
                   onClick={() => setRating((r) => (r === n ? 0 : n))}
                   className={cn(
                     "rounded p-0.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
-                    rating >= n ? "text-amber-500" : "text-muted-foreground/40 hover:text-amber-400",
+                    rating >= n ? "text-warning" : "text-muted-foreground/40 hover:text-warning/60",
                   )}
                 >
                   <Star size={16} className={cn(rating >= n && "fill-current")} />
@@ -863,7 +863,7 @@ function AssignmentItem({
                       <p className="mt-0.5 whitespace-pre-wrap text-foreground">{sub.text}</p>
                     )}
                     {sub?.rating && (
-                      <p className="flex items-center gap-0.5 text-amber-700">
+                      <p className="flex items-center gap-0.5 text-warning">
                         {Array.from({ length: sub.rating }).map((_, i) => (
                           <Star key={i} size={9} className="fill-current" />
                         ))}

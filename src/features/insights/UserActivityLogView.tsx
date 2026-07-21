@@ -135,8 +135,8 @@ export default function UserActivityLogView() {
 
   if (!isAdmin) {
     return (
-      <div className="rounded-2xl border border-rose-200 bg-rose-50/50 p-6">
-        <div className="flex items-center gap-2 text-rose-900">
+      <div className="rounded-2xl border border-destructive/20 bg-destructive/5 p-6">
+        <div className="flex items-center gap-2 text-destructive">
           <AlertCircle size={20} />
           <p className="font-semibold">관리자만 접근 가능합니다.</p>
         </div>
@@ -216,7 +216,7 @@ export default function UserActivityLogView() {
                   </span>
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                     <div
-                      className="h-full rounded-full bg-gradient-to-r from-primary to-sky-500"
+                      className="h-full rounded-full bg-gradient-to-r from-primary to-info"
                       style={{ width: `${Math.min(100, (row.users / Math.max(1, uiSummary[0].users)) * 100)}%` }}
                     />
                   </div>
@@ -228,7 +228,7 @@ export default function UserActivityLogView() {
       )}
 
       {error && (
-        <div className="mt-3 rounded-lg border border-rose-200 bg-rose-50/50 p-3 text-sm text-rose-900">
+        <div className="mt-3 rounded-lg border border-destructive/20 bg-destructive/5 p-3 text-sm text-destructive">
           {(error as Error).message}
         </div>
       )}

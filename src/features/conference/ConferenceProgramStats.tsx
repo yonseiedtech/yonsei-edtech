@@ -137,9 +137,9 @@ export default function ConferenceProgramStats({ programId }: Props) {
                   </p>
                 </div>
                 <div className="flex flex-shrink-0 gap-2 text-xs">
-                  <Badge variant="secondary" className="bg-blue-50 text-blue-700">선택 {s.count}</Badge>
-                  {s.attendedCount > 0 && <Badge variant="secondary" className="bg-emerald-50 text-emerald-700">참석 {s.attendedCount}</Badge>}
-                  {s.avgRating !== null && <Badge variant="secondary" className="bg-amber-50 text-amber-700">★ {s.avgRating.toFixed(1)}</Badge>}
+                  <Badge variant="secondary" className="bg-cat-1/5 text-cat-1">선택 {s.count}</Badge>
+                  {s.attendedCount > 0 && <Badge variant="secondary" className="bg-success/5 text-success">참석 {s.attendedCount}</Badge>}
+                  {s.avgRating !== null && <Badge variant="secondary" className="bg-warning/5 text-warning">★ {s.avgRating.toFixed(1)}</Badge>}
                 </div>
               </li>
             ))}
@@ -155,12 +155,12 @@ export default function ConferenceProgramStats({ programId }: Props) {
           <CardContent>
             <ul className="space-y-3">
               {recentReflections.map((p) => (
-                <li key={p.id} className="rounded-md border bg-emerald-50/40 p-3 text-sm">
+                <li key={p.id} className="rounded-md border bg-success/5 p-3 text-sm">
                   <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="font-medium text-foreground">{p.userName ?? "회원"}</span>
                     <span>·</span>
                     <span>{p.sessionTitle}</span>
-                    {p.rating ? <Badge variant="secondary" className="bg-amber-50 text-amber-700">★ {p.rating}</Badge> : null}
+                    {p.rating ? <Badge variant="secondary" className="bg-warning/10 text-warning">★ {p.rating}</Badge> : null}
                   </div>
                   <p className="mt-1 whitespace-pre-wrap text-foreground/80">{p.reflection}</p>
                 </li>

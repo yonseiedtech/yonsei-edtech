@@ -72,21 +72,21 @@ const SEGMENTS: SegmentDef[] = [
     label: "이탈 위험군 넛지",
     description: "60일 이상 미접속한 승인 회원에게 재참여 독려 알림을 발송합니다.",
     icon: AlertTriangle,
-    color: "bg-rose-50 text-rose-600 dark:bg-rose-950/30",
+    color: "bg-destructive/5 text-destructive",
   },
   {
     segment: "diagnosis_missing",
     label: "진단 미응시자 유도",
     description: "진단평가를 아직 받지 않은 승인 회원에게 응시 유도 알림을 발송합니다.",
     icon: ClipboardList,
-    color: "bg-blue-50 text-blue-600 dark:bg-blue-950/30",
+    color: "bg-cat-1/5 text-cat-1",
   },
   {
     segment: "review_stalled",
     label: "복습 정체 회원 알림",
     description: "복습 지연 암기카드가 많이 쌓인 회원에게 복습 독려 알림을 발송합니다.",
     icon: Layers,
-    color: "bg-amber-50 text-amber-600 dark:bg-amber-950/30",
+    color: "bg-warning/5 text-warning",
   },
 ];
 
@@ -243,7 +243,7 @@ export default function InsightsActionPanel() {
                   <strong className="text-foreground">{dryRun.total}명</strong>
                 </span>
                 {dryRun.capped && (
-                  <span className="ml-auto text-[11px] text-rose-500">
+                  <span className="ml-auto text-[11px] text-destructive">
                     상한 {dryRun.maxRecipients}명 초과 — 발송 불가
                   </span>
                 )}

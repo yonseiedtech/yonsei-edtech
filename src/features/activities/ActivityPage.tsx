@@ -28,9 +28,9 @@ import MyActivitiesSection from "./MyActivitiesSection";
 
 const RECRUIT_LABELS: Record<string, string> = { recruiting: "모집중", closed: "모집마감", in_progress: "진행중", completed: "완료" };
 const RECRUIT_COLORS: Record<string, string> = {
-  recruiting: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
-  closed: "bg-rose-50 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
-  in_progress: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+  recruiting: "bg-success/10 text-success",
+  closed: "bg-destructive/10 text-destructive",
+  in_progress: "bg-warning/10 text-warning",
   completed: "bg-muted text-muted-foreground",
 };
 import { toast } from "sonner";
@@ -47,8 +47,8 @@ async function apiFetch(url: string, options?: RequestInit) {
 
 const STATUS_LABELS: Record<string, string> = { upcoming: "예정", ongoing: "진행 중", completed: "완료" };
 const STATUS_COLORS: Record<string, string> = {
-  upcoming: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
-  ongoing: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+  upcoming: "bg-cat-1/10 text-cat-1",
+  ongoing: "bg-warning/10 text-warning",
   completed: "bg-muted text-muted-foreground",
 };
 
@@ -273,11 +273,11 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
     const diff = Math.round((target.getTime() - today.getTime()) / 86400000);
     if (a.status === "completed") return { label: "종료", tone: "bg-muted text-muted-foreground" };
     if (diff > 0) return { label: `D-${diff}`, tone: "bg-primary text-primary-foreground" };
-    if (diff === 0) return { label: "D-DAY", tone: "bg-rose-500 text-white" };
+    if (diff === 0) return { label: "D-DAY", tone: "bg-destructive text-white" };
     if (a.endDate) {
       const end = new Date(`${a.endDate}T00:00:00`);
       if (!isNaN(end.getTime()) && end.getTime() >= today.getTime()) {
-        return { label: "진행중", tone: "bg-amber-500 text-white" };
+        return { label: "진행중", tone: "bg-warning text-white" };
       }
     }
     return { label: `D+${Math.abs(diff)}`, tone: "bg-muted text-muted-foreground" };
@@ -301,11 +301,11 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
       completed: "완료",
     };
     const RECRUIT_CARD_COLORS: Record<string, string> = {
-      recruiting: "bg-emerald-50 text-emerald-700 border border-emerald-200",
+      recruiting: "bg-success/10 text-success border border-success/20",
       closed: recruitComputed.notStarted
-        ? "bg-blue-50 text-blue-700 border border-blue-200"
-        : "bg-rose-50 text-rose-700 border border-rose-200",
-      in_progress: "bg-amber-50 text-amber-700 border border-amber-200",
+        ? "bg-cat-1/10 text-cat-1 border border-cat-1/20"
+        : "bg-destructive/10 text-destructive border border-destructive/20",
+      in_progress: "bg-warning/10 text-warning border border-warning/20",
       completed: "bg-muted text-muted-foreground border border-border",
     };
     // 모집 D-day 라벨
@@ -313,12 +313,12 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
       if (recruitComputed.auto && recruitComputed.notStarted && a.recruitmentStartAt) {
         const ms = new Date(a.recruitmentStartAt as string).getTime() - Date.now();
         const days = Math.ceil(ms / (1000 * 60 * 60 * 24));
-        if (days > 0) return { label: `모집까지 D-${days}`, color: "bg-blue-500 text-white" };
+        if (days > 0) return { label: `모집까지 D-${days}`, color: "bg-cat-1 text-white" };
       }
       if (recruitComputed.auto && recruitStatus === "recruiting" && recruitComputed.msUntilEnd !== null) {
         const days = Math.ceil(recruitComputed.msUntilEnd / (1000 * 60 * 60 * 24));
-        if (days <= 0) return { label: "마감 D-DAY", color: "bg-rose-500 text-white" };
-        if (days <= 7) return { label: `마감 D-${days}`, color: days <= 3 ? "bg-amber-500 text-white" : "bg-emerald-500 text-white" };
+        if (days <= 0) return { label: "마감 D-DAY", color: "bg-destructive text-white" };
+        if (days <= 7) return { label: `마감 D-${days}`, color: days <= 3 ? "bg-warning text-white" : "bg-success text-white" };
       }
       return null;
     })();
@@ -416,7 +416,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
                 <Button
                   variant="outline"
                   size="sm"
-                  className="h-7 gap-1 px-2 text-[11px] text-emerald-600 dark:text-emerald-400"
+                  className="h-7 gap-1 px-2 text-[11px] text-success"
                   onClick={() => leaveMutation.mutate(a.id)}
                   disabled={leaveMutation.isPending}
                 >
@@ -454,9 +454,9 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
     // 진행 상태별 카드 배경색 — 진행 중: 앰버, 예정: 블루, 완료: 회색
     const statusCardBg =
       a.status === "ongoing"
-        ? "bg-amber-50/60 border-amber-200 dark:bg-amber-950/20 dark:border-amber-900"
+        ? "bg-warning/10 border-warning/20"
         : a.status === "upcoming"
-          ? "bg-blue-50/50 border-blue-200 dark:bg-blue-950/20 dark:border-blue-900"
+          ? "bg-cat-1/5 border-cat-1/20"
           : "bg-muted/30 border-muted";
 
     // 모집 상태 배지 — 상태(ongoing/upcoming)와 의미가 겹치는 legacy 'in_progress'는 표시 생략
@@ -515,7 +515,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
               </Link>
             )}
             {isJoined && (
-              <Button variant="outline" size="sm" className="h-8 gap-1 text-xs text-emerald-600 dark:text-emerald-400" onClick={() => leaveMutation.mutate(a.id)} disabled={leaveMutation.isPending}>
+              <Button variant="outline" size="sm" className="h-8 gap-1 text-xs text-success" onClick={() => leaveMutation.mutate(a.id)} disabled={leaveMutation.isPending}>
                 <Check size={12} />참여 중
               </Button>
             )}
@@ -818,7 +818,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
                               "flex items-center justify-center gap-1.5 rounded-lg border-2 px-3 py-2 text-xs font-medium transition-all",
                               enabled
                                 ? `${EXTERNAL_PARTICIPANT_TYPE_COLORS[t]} border-current shadow-sm`
-                                : "border-input bg-card text-slate-400 hover:border-primary/40 hover:bg-muted/30",
+                                : "border-input bg-card text-muted-foreground hover:border-primary/40 hover:bg-muted/30",
                             )}
                             aria-pressed={enabled}
                           >
@@ -849,7 +849,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
                         </label>
                         <Input value={form.imageUrl} onChange={(e) => setForm({ ...form, imageUrl: e.target.value })} placeholder="또는 이미지 URL 직접 입력 (https://...)" />
                         {form.imageUrl && (
-                          <button type="button" onClick={() => setForm({ ...form, imageUrl: "" })} className="text-xs text-muted-foreground hover:text-red-600">포스터 제거</button>
+                          <button type="button" onClick={() => setForm({ ...form, imageUrl: "" })} className="text-xs text-muted-foreground hover:text-destructive">포스터 제거</button>
                         )}
                       </div>
                     </div>
@@ -859,7 +859,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
               <div><label className="mb-1 block text-sm font-medium">태그 (쉼표 구분)</label><Input value={form.tags} onChange={(e) => setForm({ ...form, tags: e.target.value })} placeholder="예: AI교육, UX리서치" /></div>
               {!editId && (
                 <label className="flex cursor-pointer items-center gap-2 rounded-lg border bg-muted/20 px-3 py-2.5">
-                  <input type="checkbox" checked={autoPost} onChange={(e) => setAutoPost(e.target.checked)} className="h-4 w-4 rounded border-gray-300" />
+                  <input type="checkbox" checked={autoPost} onChange={(e) => setAutoPost(e.target.checked)} className="h-4 w-4 rounded border-border" />
                   <Megaphone size={14} className="text-primary" />
                   <span className="text-sm">게시판에 모집 공고 자동 등록</span>
                 </label>

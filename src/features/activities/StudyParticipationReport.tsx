@@ -318,7 +318,7 @@ export default function StudyParticipationReport({
                 <td className="py-1.5 pr-2 font-medium">
                   {s.name}
                   {s.isLeader && (
-                    <span className="ml-1 text-[9px] text-amber-600">(리더)</span>
+                    <span className="ml-1 text-[9px] text-warning">(리더)</span>
                   )}
                   {!s.isLeader && s.role && (
                     <span className="ml-1 text-[9px] text-muted-foreground">({s.role})</span>
@@ -333,22 +333,22 @@ export default function StudyParticipationReport({
                           className={cn(
                             "inline-flex h-3 w-3 items-center justify-center rounded-sm",
                             c.attended
-                              ? "bg-emerald-500"
+                              ? "bg-success"
                               : "border border-muted-foreground/30 bg-background",
                           )}
                           title={c.attended ? "출석" : "미출석"}
                         />
                         <span className="flex items-center gap-0.5 text-[9px]">
                           {c.hasReflection && (
-                            <span className="text-blue-600" title="회고">●</span>
+                            <span className="text-cat-1" title="회고">●</span>
                           )}
                           {c.assignmentRatio !== null && (
                             <span
                               className={cn(
                                 c.assignmentRatio === 1
-                                  ? "text-emerald-600"
+                                  ? "text-success"
                                   : c.assignmentRatio > 0
-                                    ? "text-amber-600"
+                                    ? "text-warning"
                                     : "text-muted-foreground/50",
                               )}
                               title={`과제 ${Math.round(c.assignmentRatio * 100)}%`}
@@ -366,9 +366,9 @@ export default function StudyParticipationReport({
                     className={cn(
                       "text-[10px]",
                       s.score >= 80
-                        ? "bg-emerald-100 text-emerald-800"
+                        ? "bg-success/20 text-success"
                         : s.score >= 50
-                          ? "bg-amber-100 text-amber-800"
+                          ? "bg-warning/20 text-warning"
                           : "bg-muted text-muted-foreground",
                     )}
                   >
@@ -395,13 +395,13 @@ export default function StudyParticipationReport({
             key={s.id}
             className={cn(
               "rounded-xl border bg-card p-3",
-              rank === 0 && s.score >= 80 && "border-emerald-300 bg-emerald-50/40",
+              rank === 0 && s.score >= 80 && "border-success/30 bg-success/5",
             )}
           >
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
                 {rank < 3 && s.score >= 80 && (
-                  <Award size={14} className="text-amber-500" />
+                  <Award size={14} className="text-warning" />
                 )}
                 <span className="text-sm font-semibold">{s.name}</span>
                 {s.isLeader && (
@@ -419,9 +419,9 @@ export default function StudyParticipationReport({
                 className={cn(
                   "text-[10px]",
                   s.score >= 80
-                    ? "bg-emerald-100 text-emerald-800"
+                    ? "bg-success/20 text-success"
                     : s.score >= 50
-                      ? "bg-amber-100 text-amber-800"
+                      ? "bg-warning/20 text-warning"
                       : "bg-muted text-muted-foreground",
                 )}
               >

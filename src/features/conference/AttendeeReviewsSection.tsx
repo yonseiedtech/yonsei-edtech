@@ -32,8 +32,8 @@ interface Props {
 }
 
 const WILL_LABELS: Record<string, { label: string; emoji: string; color: string }> = {
-  yes: { label: "꼭 다시", emoji: "🙌", color: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200" },
-  maybe: { label: "기회되면", emoji: "🤔", color: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200" },
+  yes: { label: "꼭 다시", emoji: "🙌", color: "bg-success/10 text-success" },
+  maybe: { label: "기회되면", emoji: "🤔", color: "bg-warning/10 text-warning" },
   no: { label: "당분간", emoji: "🥲", color: "bg-muted text-muted-foreground" },
 };
 
@@ -171,7 +171,7 @@ export default function AttendeeReviewsSection({
                       )}
                       {/* QA-M2: overallRating falsy 방어 (0 저장 케이스 차단) */}
                       {r.overallRating != null && r.overallRating > 0 && (
-                        <span className="inline-flex items-center gap-0.5 text-xs text-amber-700 dark:text-amber-300">
+                        <span className="inline-flex items-center gap-0.5 text-xs text-warning">
                           <Star className="h-3 w-3 fill-current" />
                           {r.overallRating}/5
                         </span>
@@ -243,7 +243,7 @@ export default function AttendeeReviewsSection({
                     {/* QA-H1: regrets 는 별도 collection 에서 권한별 fetch — 페이로드 노출 차단 */}
                     {showRegrets && regretsMap[r.id] && (
                       <Field label="⚠️ 아쉬운 점 (운영진/본인만 열람)">
-                        <p className="rounded-md bg-amber-50 p-2 text-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                        <p className="rounded-md bg-warning/10 p-2 text-warning">
                           {regretsMap[r.id]}
                         </p>
                       </Field>
@@ -258,7 +258,7 @@ export default function AttendeeReviewsSection({
 
       {currentUserId && !myReview && othersCount > 0 && (
         <div className="border-t bg-muted/30 p-3 text-center text-xs text-muted-foreground">
-          <Award className="mr-1 inline h-3 w-3 text-amber-500" />
+          <Award className="mr-1 inline h-3 w-3 text-warning" />
           후기를 작성하면 내 학술활동 리스트에 자동 추가됩니다.
         </div>
       )}

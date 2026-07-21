@@ -157,10 +157,10 @@ export default function ConferenceRoundupView({ activityId, activityTitle }: Pro
         </Link>
       </div>
 
-      <Card className="border-amber-200 bg-gradient-to-br from-amber-50 to-rose-50">
+      <Card className="border-warning/20 bg-gradient-to-br from-warning/5 to-destructive/5">
         <CardHeader>
           <CardTitle className="flex flex-wrap items-center gap-2">
-            <Sparkles className="h-5 w-5 text-amber-600" />
+            <Sparkles className="h-5 w-5 text-warning" />
             {activityTitle} · 라운드업
           </CardTitle>
           <p className="text-sm text-muted-foreground">
@@ -213,7 +213,7 @@ export default function ConferenceRoundupView({ activityId, activityTitle }: Pro
                     {CONFERENCE_SESSION_CATEGORY_LABELS[g.session.category]}
                   </Badge>
                   {g.avgRating !== null && (
-                    <Badge variant="secondary" className="bg-amber-50 text-amber-700">
+                    <Badge variant="secondary" className="bg-warning/5 text-warning">
                       ★ {g.avgRating.toFixed(1)} · {g.reflections.length}개
                     </Badge>
                   )}
@@ -229,11 +229,11 @@ export default function ConferenceRoundupView({ activityId, activityTitle }: Pro
               <CardContent>
                 <ul className="space-y-3">
                   {g.reflections.map((r) => (
-                    <li key={r.id} className="rounded-md border bg-emerald-50/40 p-3">
+                    <li key={r.id} className="rounded-md border bg-success/5 p-3">
                       <div className="flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                         <span className="font-medium text-foreground">{r.userName ?? "회원"}</span>
                         {r.rating ? (
-                          <Badge variant="secondary" className="bg-amber-50 text-amber-700">
+                          <Badge variant="secondary" className="bg-warning/5 text-warning">
                             ★ {r.rating}
                           </Badge>
                         ) : null}

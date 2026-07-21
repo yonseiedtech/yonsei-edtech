@@ -76,11 +76,11 @@ export default function MyConferenceSessions({ userId }: Props) {
         <section key={activityId} className="rounded-2xl border bg-card p-4">
           <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
-              <Globe size={14} className="text-emerald-600" />
+              <Globe size={14} className="text-success" />
               <h3 className="text-sm font-semibold">학회 참여</h3>
-              <Badge variant="secondary" className="bg-blue-50 text-blue-700">선택 {items.length}개</Badge>
-              {attendedCount > 0 && <Badge variant="secondary" className="bg-emerald-50 text-emerald-700">참석 {attendedCount}개</Badge>}
-              {reflectedCount > 0 && <Badge variant="secondary" className="bg-amber-50 text-amber-700">후기 {reflectedCount}개</Badge>}
+              <Badge variant="secondary" className="bg-cat-1/5 text-cat-1">선택 {items.length}개</Badge>
+              {attendedCount > 0 && <Badge variant="secondary" className="bg-success/5 text-success">참석 {attendedCount}개</Badge>}
+              {reflectedCount > 0 && <Badge variant="secondary" className="bg-warning/5 text-warning">후기 {reflectedCount}개</Badge>}
             </div>
             <Link href={`/activities/external/${activityId}/program`}>
               <Button size="sm" variant="outline" className="h-8">
@@ -99,10 +99,10 @@ export default function MyConferenceSessions({ userId }: Props) {
                     variant="secondary"
                     className={
                       p.status === "attended"
-                        ? "bg-emerald-50 text-emerald-700"
+                        ? "bg-success/5 text-success"
                         : p.status === "skipped"
                           ? "bg-muted text-muted-foreground"
-                          : "bg-blue-50 text-blue-700"
+                          : "bg-cat-1/5 text-cat-1"
                     }
                   >
                     {p.status === "attended" ? "참석 완료" : p.status === "skipped" ? "건너뜀" : "참석 예정"}
@@ -116,12 +116,12 @@ export default function MyConferenceSessions({ userId }: Props) {
                   </p>
                 )}
                 {p.reflection && (
-                  <div className="mt-2 rounded-md bg-emerald-50 p-2 text-xs text-emerald-900">
+                  <div className="mt-2 rounded-md bg-success/5 p-2 text-xs text-success">
                     <div className="flex items-center gap-1 font-semibold">
                       <MessageSquare size={11} /> 후기
                       {p.rating ? (
-                        <span className="ml-1 inline-flex items-center text-amber-700">
-                          <Star size={11} className="fill-amber-400 text-amber-400" /> {p.rating}/5
+                        <span className="ml-1 inline-flex items-center text-warning">
+                          <Star size={11} className="fill-warning text-warning" /> {p.rating}/5
                         </span>
                       ) : null}
                     </div>
