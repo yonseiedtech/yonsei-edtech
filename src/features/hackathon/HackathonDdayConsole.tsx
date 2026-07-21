@@ -27,6 +27,7 @@ import {
   RotateCcw,
   Lock,
   Unlock,
+  Download,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -146,6 +147,29 @@ export default function HackathonDdayConsole() {
 
   const busy = updateOps.isPending;
 
+  /** 참가자 명단 CSV 다운로드 (v14-H2) */
+  function downloadParticipantsCsv() {
+    const header = "이름,팀희망,아이디어,공감수,신청일";
+    const rows = entries.map((e) => {
+      const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+      return [
+        escape(e.authorName ?? ""),
+        escape(e.presenter ?? ""),
+        escape((e.body ?? "").replace(/\n/g, " ")),
+        String(e.likeCount ?? 0),
+        (e.createdAt ?? "").slice(0, 10),
+      ].join(",");
+    });
+    const csv = "﻿" + [header, ...rows].join("\n");
+    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement("a");
+    a.href = url;
+    a.download = `hackathon-participants-${new Date().toISOString().slice(0, 10)}.csv`;
+    a.click();
+    URL.revokeObjectURL(url);
+  }
+
   const steps: {
     idx: number;
     label: string;
@@ -231,6 +255,19 @@ export default function HackathonDdayConsole() {
           loading={subsLoading}
         />
       </div>
+
+      {/* ── 참가자 명단 CSV (v14-H2) ── */}
+      {entries.length > 0 && (
+        <div className="flex items-center justify-between gap-2">
+          <p className="text-xs text-muted-foreground">
+            참가 신청자 <span className="font-semibold text-foreground">{entries.length}명</span>
+          </p>
+          <Button size="sm" variant="outline" onClick={downloadParticipantsCsv}>
+            <Download size={13} className="mr-1" />
+            참가자 명단 CSV
+          </Button>
+        </div>
+      )}
 
       {/* ── 현재 단계 ── */}
       <div className="rounded-2xl border bg-card p-5">

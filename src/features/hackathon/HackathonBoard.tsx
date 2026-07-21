@@ -28,6 +28,9 @@ import {
   UserCheck,
   ArrowRight,
   X,
+  Pencil,
+  Trash2,
+  Save,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -58,6 +61,10 @@ export default function HackathonBoard() {
   const [saving, setSaving] = useState(false);
   const [filter, setFilter] = useState<string>("all");
   const [onboardingDismissed, setOnboardingDismissed] = useState(false);
+  // v14-H3: 내 아이디어 수정
+  const [editingEntry, setEditingEntry] = useState(false);
+  const [editBody, setEditBody] = useState("");
+  const [editTeamPref, setEditTeamPref] = useState<HackathonTeamPref>(HACKATHON_TEAM_PREFS.undecided);
 
   useEffect(() => {
     setOnboardingDismissed(localStorage.getItem("hackathon_onboarding_dismissed") === "1");
@@ -192,6 +199,45 @@ export default function HackathonBoard() {
     }
   }
 
+  /** v14-H3: 내 아이디어 수정 */
+  async function handleUpdate() {
+    if (!myEntry) return;
+    const body = editBody.trim();
+    if (!body) {
+      toast.error("풀고 싶은 문제를 입력하세요.");
+      return;
+    }
+    setSaving(true);
+    try {
+      await commQuestionsApi.update(myEntry.id, { body, presenter: editTeamPref });
+      setEditingEntry(false);
+      refresh();
+      toast.success("아이디어를 수정했습니다.");
+    } catch (e) {
+      console.error("[hackathon/update]", e);
+      toast.error("수정 실패 — 잠시 후 다시 시도해주세요.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  /** v14-H3: 내 아이디어 삭제 (참가 취소) */
+  async function handleDelete() {
+    if (!myEntry) return;
+    if (!window.confirm("참가 신청을 취소하면 내 아이디어와 합류 희망 정보가 삭제됩니다. 계속할까요?")) return;
+    setSaving(true);
+    try {
+      await commQuestionsApi.delete(myEntry.id);
+      refresh();
+      toast.success("참가 신청을 취소했습니다.");
+    } catch (e) {
+      console.error("[hackathon/delete]", e);
+      toast.error("삭제 실패 — 잠시 후 다시 시도해주세요.");
+    } finally {
+      setSaving(false);
+    }
+  }
+
   async function handleLike(entry: CommQuestion) {
     if (!user) return;
     try {
@@ -314,25 +360,97 @@ export default function HackathonBoard() {
       {/* ── 참가 신청 / 신청 완료 ── */}
       {myEntry ? (
         <section className="rounded-2xl border border-primary/30 bg-primary/5 p-4">
-          <h3 className="flex items-center gap-1.5 text-sm font-bold text-primary">
-            <CheckCircle2 size={16} />
-            참가 신청 완료
-          </h3>
-          <p className="mt-2 text-sm text-foreground">
-            <span className="font-medium">내가 남긴 문제 </span>
-            {myEntry.body}
-          </p>
-          <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
-              <Users size={11} /> {myEntry.presenter}
-            </span>
-            <span className="inline-flex items-center gap-1">
-              <Heart size={11} /> 공감 {myEntry.likeCount}
-            </span>
+          <div className="flex items-start justify-between gap-2">
+            <h3 className="flex items-center gap-1.5 text-sm font-bold text-primary">
+              <CheckCircle2 size={16} />
+              참가 신청 완료
+            </h3>
+            {/* v14-H3: 수정·삭제 버튼 */}
+            {!editingEntry && (
+              <div className="flex gap-1">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setEditBody(myEntry.body ?? "");
+                    setEditTeamPref((myEntry.presenter as HackathonTeamPref) ?? HACKATHON_TEAM_PREFS.undecided);
+                    setEditingEntry(true);
+                  }}
+                  className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
+                  title="수정"
+                >
+                  <Pencil size={13} />
+                </button>
+                <button
+                  type="button"
+                  onClick={handleDelete}
+                  disabled={saving}
+                  className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                  title="참가 취소"
+                >
+                  <Trash2 size={13} />
+                </button>
+              </div>
+            )}
           </div>
 
-          {/* ── 합류 희망자 목록 + 팀 확정 ── */}
-          {myEntry.presenter === HACKATHON_TEAM_PREFS.wantTeam && (
+          {editingEntry ? (
+            /* ── 수정 폼 ── */
+            <div className="mt-3 space-y-3">
+              <textarea
+                value={editBody}
+                onChange={(e) => setEditBody(e.target.value.slice(0, MAX_LEN))}
+                rows={2}
+                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+              />
+              <div className="text-right text-[11px] text-muted-foreground">
+                {editBody.length}/{MAX_LEN}
+              </div>
+              <div className="flex flex-wrap gap-1.5">
+                {HACKATHON_TEAM_PREF_LIST.map((pref) => (
+                  <button
+                    key={pref}
+                    type="button"
+                    onClick={() => setEditTeamPref(pref)}
+                    aria-pressed={editTeamPref === pref}
+                    className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                      editTeamPref === pref
+                        ? "border-primary bg-primary text-primary-foreground"
+                        : "border-border text-muted-foreground hover:bg-accent"
+                    }`}
+                  >
+                    {pref}
+                  </button>
+                ))}
+              </div>
+              <div className="flex gap-2">
+                <Button size="sm" onClick={handleUpdate} disabled={saving || !editBody.trim()}>
+                  {saving ? <Loader2 size={13} className="mr-1 animate-spin" /> : <Save size={13} className="mr-1" />}
+                  저장
+                </Button>
+                <Button size="sm" variant="ghost" onClick={() => setEditingEntry(false)} disabled={saving}>
+                  취소
+                </Button>
+              </div>
+            </div>
+          ) : (
+            <>
+              <p className="mt-2 text-sm text-foreground">
+                <span className="font-medium">내가 남긴 문제 </span>
+                {myEntry.body}
+              </p>
+              <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
+                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
+                  <Users size={11} /> {myEntry.presenter}
+                </span>
+                <span className="inline-flex items-center gap-1">
+                  <Heart size={11} /> 공감 {myEntry.likeCount}
+                </span>
+              </div>
+            </>
+          )}
+
+          {/* ── 합류 희망자 목록 + 팀 확정 (편집 중에는 숨김) ── */}
+          {!editingEntry && myEntry.presenter === HACKATHON_TEAM_PREFS.wantTeam && (
             <div className="mt-3 border-t border-primary/15 pt-3">
               <p className="mb-1.5 text-xs font-medium text-muted-foreground">
                 합류 희망자
