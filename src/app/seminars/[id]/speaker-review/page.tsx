@@ -500,8 +500,8 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
         {/* 에러 */}
         {step === "error" && (
           <div className="rounded-2xl border bg-card p-6 text-center">
-            <AlertCircle size={48} className="mx-auto mb-4 text-red-400" />
-            <h2 className="text-lg font-bold text-red-600">접근 불가</h2>
+            <AlertCircle size={48} className="mx-auto mb-4 text-destructive" />
+            <h2 className="text-lg font-bold text-destructive">접근 불가</h2>
             <p className="mt-2 text-sm text-muted-foreground">{errorMsg}</p>
             <Link href={`/seminars/${seminarId}`}>
               <Button variant="outline" className="mt-4">세미나 페이지로 돌아가기</Button>
@@ -512,7 +512,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
         {/* 후기 작성 */}
         {step === "write" && (
           <div className="space-y-4 rounded-2xl border bg-card p-6">
-            <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700">
+            <div className="flex items-center gap-2 rounded-lg bg-cat-1/5 px-3 py-2 text-sm text-cat-1">
               <Mic size={16} className="shrink-0" />
               <span><strong>{speakerName}</strong> 연사님 환영합니다{editMode ? " — 후기 수정 모드" : ""}</span>
             </div>
@@ -523,7 +523,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
               <div className="flex gap-1">
                 {[1, 2, 3, 4, 5].map((v) => (
                   <button key={v} type="button" onClick={() => setRating(v)} className="p-1.5 sm:p-0.5">
-                    <Star size={28} className={cn("transition-colors", v <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")} />
+                    <Star size={28} className={cn("transition-colors", v <= rating ? "fill-warning text-warning" : "text-muted-foreground/30")} />
                   </button>
                 ))}
               </div>
@@ -556,10 +556,10 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
             </div>
 
             {/* 추천 섹션 */}
-            <div className="rounded-lg border border-dashed border-amber-300 bg-amber-50/50 p-4 space-y-3">
+            <div className="rounded-lg border border-dashed border-warning/30 bg-warning/5 p-4 space-y-3">
               <div>
-                <p className="text-sm font-medium text-amber-800 mb-1">추천 정보 (운영진 전용)</p>
-                <p className="text-xs text-amber-600">아래 내용은 운영진과 관리자만 확인할 수 있습니다.</p>
+                <p className="text-sm font-medium text-warning mb-1">추천 정보 (운영진 전용)</p>
+                <p className="text-xs text-warning">아래 내용은 운영진과 관리자만 확인할 수 있습니다.</p>
               </div>
               <div>
                 <label className="mb-1 block text-sm font-medium">추천 세미나 주제</label>
@@ -593,7 +593,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
         {step === "done" && submittedReview && seminar && (
           <div className="space-y-6">
             <div className="rounded-2xl border bg-card p-6 text-center">
-              <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
+              <CheckCircle size={48} className="mx-auto mb-4 text-success" />
               <h2 className="text-xl font-bold">
                 {existingReview && !editMode ? "후기가 등록되어 있습니다" : editMode ? "후기가 수정되었습니다!" : "후기가 등록되었습니다!"}
               </h2>
@@ -607,7 +607,7 @@ function SpeakerReviewForm({ seminarId }: { seminarId: string }) {
                 <span className="text-sm font-medium">{speakerName}</span>
                 <div className="flex gap-0.5">
                   {[1, 2, 3, 4, 5].map((v) => (
-                    <Star key={v} size={14} className={v <= submittedReview.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"} />
+                    <Star key={v} size={14} className={v <= submittedReview.rating ? "fill-warning text-warning" : "text-muted-foreground/20"} />
                   ))}
                 </div>
               </div>

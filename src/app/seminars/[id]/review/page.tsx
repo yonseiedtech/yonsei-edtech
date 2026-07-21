@@ -264,7 +264,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
               <div className={cn(
                 "flex h-7 w-7 items-center justify-center rounded-full text-xs font-bold",
                 step === s ? "bg-primary text-white" :
-                (["verify", "write", "done"].indexOf(step) > i) ? "bg-green-500 text-white" :
+                (["verify", "write", "done"].indexOf(step) > i) ? "bg-success text-white" :
                 "bg-muted text-muted-foreground",
               )}>
                 {["verify", "write", "done"].indexOf(step) > i ? "✓" : i + 1}
@@ -307,7 +307,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
             </div>
 
             {verifyError && (
-              <div className="flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+              <div className="flex items-center gap-2 rounded-lg bg-destructive/5 px-3 py-2 text-sm text-destructive">
                 <AlertCircle size={16} className="shrink-0" />
                 {verifyError}
               </div>
@@ -326,7 +326,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
         {/* Step 2: 후기 작성 */}
         {step === "write" && verifiedAttendee && (
           <div className="space-y-4 rounded-2xl border bg-card p-6">
-            <div className="flex items-center gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+            <div className="flex items-center gap-2 rounded-lg bg-success/5 px-3 py-2 text-sm text-success">
               <CheckCircle size={16} className="shrink-0" />
               <span><strong>{verifiedAttendee.name}</strong>님 인증 완료{editMode ? " — 후기 수정 모드" : ""}</span>
             </div>
@@ -339,7 +339,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
                   <button key={v} type="button" onClick={() => setRating(v)} className="p-1.5 sm:p-0.5">
                     <Star
                       size={28}
-                      className={cn("transition-colors", v <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30")}
+                      className={cn("transition-colors", v <= rating ? "fill-warning text-warning" : "text-muted-foreground/30")}
                     />
                   </button>
                 ))}
@@ -382,7 +382,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
         {step === "done" && submittedReview && (
           <div className="space-y-4">
             <div className="rounded-2xl border bg-card p-6 text-center">
-              <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
+              <CheckCircle size={48} className="mx-auto mb-4 text-success" />
               <h2 className="text-xl font-bold">{editMode ? "후기가 수정되었습니다!" : "후기가 등록되었습니다!"}</h2>
               <p className="mt-2 text-sm text-muted-foreground">소중한 의견 감사합니다.</p>
             </div>
@@ -394,7 +394,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
                 <span className="text-sm font-medium">{verifiedAttendee?.name}</span>
                 <div className="flex gap-0.5">
                   {[1, 2, 3, 4, 5].map((v) => (
-                    <Star key={v} size={14} className={v <= submittedReview.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"} />
+                    <Star key={v} size={14} className={v <= submittedReview.rating ? "fill-warning text-warning" : "text-muted-foreground/20"} />
                   ))}
                 </div>
               </div>
@@ -424,7 +424,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
                   </div>
                 </div>
                 {noteState === "sent" ? (
-                  <div className="mt-3 flex items-center justify-between gap-2 rounded-lg bg-green-50 px-3 py-2 text-sm text-green-700">
+                  <div className="mt-3 flex items-center justify-between gap-2 rounded-lg bg-success/5 px-3 py-2 text-sm text-success">
                     <span className="flex items-center gap-1.5">
                       <CheckCircle size={16} className="shrink-0" />
                       지도노트에 저장됨
@@ -512,7 +512,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
                     <span className="text-sm font-medium">{verifiedAttendee?.name}</span>
                     <div className="flex gap-0.5">
                       {[1, 2, 3, 4, 5].map((v) => (
-                        <Star key={v} size={14} className={v <= (existingReview.rating ?? 5) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"} />
+                        <Star key={v} size={14} className={v <= (existingReview.rating ?? 5) ? "fill-warning text-warning" : "text-muted-foreground/20"} />
                       ))}
                     </div>
                   </div>

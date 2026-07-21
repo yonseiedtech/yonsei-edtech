@@ -183,7 +183,7 @@ function JournalConsoleContent() {
                           iss.status === "published"
                             ? "bg-cat-5/10 text-cat-5"
                             : iss.status === "archived"
-                              ? "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400"
+                              ? "bg-muted text-muted-foreground"
                               : "bg-info/10 text-info",
                         )}
                       >

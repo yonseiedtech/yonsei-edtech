@@ -73,14 +73,14 @@ function ReviewCard({ review, extraInfo }: { review: SeminarReview; extraInfo?: 
             </span>
           )}
           {review.authorRole === "staff" && (
-            <span className="rounded bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+            <span className="rounded bg-cat-1/10 px-1.5 py-0.5 text-[10px] font-medium text-cat-1">
               운영진
             </span>
           )}
         </div>
         <div className="flex gap-0.5">
           {[1,2,3,4,5].map((v) => (
-            <Star key={v} size={12} className={v <= (review.rating ?? 5) ? "fill-amber-400 text-amber-400" : "text-muted-foreground/20"} />
+            <Star key={v} size={12} className={v <= (review.rating ?? 5) ? "fill-warning text-warning" : "text-muted-foreground/20"} />
           ))}
         </div>
       </div>
@@ -128,7 +128,7 @@ function ReviewsSection({ seminarId, isStaff, speakerInfo }: { seminarId: string
       {/* 연사 후기 */}
       {speakerReviews.length > 0 && (
         <div>
-          <h3 className="flex items-center gap-2 text-xs font-semibold text-amber-600 uppercase tracking-wide mb-3">
+          <h3 className="flex items-center gap-2 text-xs font-semibold text-warning uppercase tracking-wide mb-3">
             <Mic size={14} />
             연사 후기
           </h3>
@@ -138,18 +138,18 @@ function ReviewsSection({ seminarId, isStaff, speakerInfo }: { seminarId: string
                 <ReviewCard review={r} extraInfo={speakerInfo?.affiliation || speakerInfo?.position ? [speakerInfo.affiliation, speakerInfo.position].filter(Boolean).join(' · ') : undefined} />
                 {/* 연사 추천 정보: 운영진만 표시 */}
                 {isStaff && (r.recommendedTopics || r.recommendedSpeakers) && (
-                  <div className="mt-2 ml-3 rounded-lg border border-dashed border-amber-300 bg-amber-50/50 px-3 py-2 space-y-1">
-                    <p className="text-[10px] font-medium text-amber-700 uppercase tracking-wide">연사 추천 (운영진 전용)</p>
+                  <div className="mt-2 ml-3 rounded-lg border border-dashed border-warning/30 bg-warning/5 px-3 py-2 space-y-1">
+                    <p className="text-[10px] font-medium text-warning uppercase tracking-wide">연사 추천 (운영진 전용)</p>
                     {r.recommendedTopics && (
                       <div>
-                        <span className="text-xs font-medium text-amber-800">추천 주제:</span>
-                        <p className="text-xs text-amber-700 whitespace-pre-wrap">{r.recommendedTopics}</p>
+                        <span className="text-xs font-medium text-warning">추천 주제:</span>
+                        <p className="text-xs text-warning whitespace-pre-wrap">{r.recommendedTopics}</p>
                       </div>
                     )}
                     {r.recommendedSpeakers && (
                       <div>
-                        <span className="text-xs font-medium text-amber-800">추천 연사:</span>
-                        <p className="text-xs text-amber-700 whitespace-pre-wrap">{r.recommendedSpeakers}</p>
+                        <span className="text-xs font-medium text-warning">추천 연사:</span>
+                        <p className="text-xs text-warning whitespace-pre-wrap">{r.recommendedSpeakers}</p>
                       </div>
                     )}
                   </div>
@@ -163,7 +163,7 @@ function ReviewsSection({ seminarId, isStaff, speakerInfo }: { seminarId: string
       {/* 운영진 후기 */}
       {staffReviews.length > 0 && (
         <div>
-          <h3 className="flex items-center gap-2 text-xs font-semibold text-blue-600 uppercase tracking-wide mb-3">
+          <h3 className="flex items-center gap-2 text-xs font-semibold text-cat-1 uppercase tracking-wide mb-3">
             <Users size={14} />
             운영진 후기
           </h3>
@@ -554,14 +554,14 @@ function SeminarDetail({ id }: { id: string }) {
 
         {/* Section 6: Seminar Space Entry */}
         {computedStatus !== "cancelled" && (isAttending || hasRegistration || isStaff) && (
-          <div className="mt-4 rounded-2xl border border-green-200 bg-green-50/50 p-5 sm:mt-6 sm:p-8">
+          <div className="mt-4 rounded-2xl border border-success/20 bg-success/5 p-5 sm:mt-6 sm:p-8">
             <div className="flex items-center gap-2 mb-4">
-              <CheckCircle size={20} className="text-green-600" />
-              <span className="text-sm font-semibold text-green-800">
+              <CheckCircle size={20} className="text-success" />
+              <span className="text-sm font-semibold text-success">
                 {isStaff ? "운영진 접근" : "신청 완료"}
               </span>
             </div>
-            <p className="text-sm text-green-700 mb-4">
+            <p className="text-sm text-success mb-4">
               {isStaff
                 ? "운영진으로서 세미나 공간에 접근할 수 있습니다."
                 : "세미나 참석 신청이 완료되었습니다. 세미나 공간에서 자료와 후기를 확인하세요."}
@@ -577,11 +577,11 @@ function SeminarDetail({ id }: { id: string }) {
 
         {/* Section 6.5: Attendance Certificate */}
         {myAttendee?.checkedIn && (
-          <div className="mt-4 rounded-2xl border border-blue-200 bg-blue-50/50 p-5 sm:mt-6 sm:p-6">
+          <div className="mt-4 rounded-2xl border border-cat-1/20 bg-cat-1/5 p-5 sm:mt-6 sm:p-6">
             <div className="flex items-center justify-between">
               <div>
-                <h3 className="text-sm font-semibold text-blue-800">참석 확인서</h3>
-                <p className="mt-1 text-xs text-blue-600">출석이 확인되었습니다. 참석 확인서를 다운로드할 수 있습니다.</p>
+                <h3 className="text-sm font-semibold text-cat-1">참석 확인서</h3>
+                <p className="mt-1 text-xs text-cat-1">출석이 확인되었습니다. 참석 확인서를 다운로드할 수 있습니다.</p>
               </div>
               <AttendanceCertificate
                 seminarTitle={seminar.title}

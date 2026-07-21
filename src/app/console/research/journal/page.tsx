@@ -88,7 +88,7 @@ function ReviewQueueSection() {
         <FileCheck2 size={18} /> 검수 큐 ({queue.length})
       </h2>
       {isLoading ? (
-        <p className="py-6 text-center text-sm text-zinc-500">불러오는 중...</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">불러오는 중...</p>
       ) : queue.length === 0 ? (
         <EmptyState compact icon={FileCheck2} title="검수 대기 중인 논문이 없습니다." />
       ) : (
@@ -103,7 +103,7 @@ function ReviewQueueSection() {
                       <ReviewStatusBadge status={a.reviewStatus} size="sm" />
                     </div>
                     <p className="text-sm font-medium">{a.titleKo}</p>
-                    <p className="text-xs text-zinc-500">
+                    <p className="text-xs text-muted-foreground">
                       {a.authors.map((au) => au.displayName).join(", ")}
                     </p>
                   </div>
@@ -194,7 +194,7 @@ function IssuesSection({ currentUserId }: { currentUserId: string }) {
                   id="iss-season"
                   value={season}
                   onChange={(e) => setSeason(e.target.value as JournalIssueSeason | "")}
-                  className="block w-full rounded border border-zinc-300 px-2 py-2 text-sm"
+                  className="block w-full rounded border border-input px-2 py-2 text-sm"
                 >
                   <option value="">없음</option>
                   {SEASONS.map((s) => (
@@ -228,7 +228,7 @@ function IssuesSection({ currentUserId }: { currentUserId: string }) {
       )}
 
       {isLoading ? (
-        <p className="py-6 text-center text-sm text-zinc-500">불러오는 중...</p>
+        <p className="py-6 text-center text-sm text-muted-foreground">불러오는 중...</p>
       ) : issues.length === 0 ? (
         <EmptyState compact icon={BookOpen} title="아직 생성된 호수가 없습니다." />
       ) : (
@@ -252,7 +252,7 @@ function IssueRow({ issue }: { issue: import("@/types").ResearchJournalIssue }) 
             {formatIssueCode(issue.volume, issue.number)} · {issue.year}
             {issue.season ? ` · ${issue.season}` : ""}
           </p>
-          <p className="text-xs text-zinc-500">
+          <p className="text-xs text-muted-foreground">
             {ISSUE_STATUS_LABELS[issue.status]} · {issue.articleIds.length}편
             {issue.publishedAt &&
               ` · 발간 ${new Date(issue.publishedAt).toLocaleDateString("ko-KR")}`}

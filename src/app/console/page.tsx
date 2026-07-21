@@ -994,7 +994,7 @@ export default function ConsoleDashboardPage() {
       <div className="grid grid-cols-2 gap-4 md:grid-cols-4">
         <StatCard icon={Users} label="전체 회원" value={membersData?.total ?? 0} color="bg-info/5 text-info" href="/console/members" />
         <StatCard icon={Clock} label="승인 대기" value={pendingData?.total ?? 0} color="bg-warning/5 text-warning" href="/console/members" />
-        <StatCard icon={FileText} label="게시글" value={posts.length} color="bg-green-50 text-green-600" href="/console/posts" />
+        <StatCard icon={FileText} label="게시글" value={posts.length} color="bg-success/5 text-success" href="/console/posts" />
         <StatCard icon={HelpCircle} label="미답변 문의" value={unansweredCount} color="bg-destructive/5 text-destructive" href="/console/inquiries" />
       </div>
 

@@ -36,7 +36,7 @@ import { getComputedStatus } from "@/lib/seminar-utils";
 
 const STATUS_META: Record<string, { label: string; cls: string }> = {
   upcoming: { label: "예정", cls: "bg-info/5 text-info" },
-  ongoing: { label: "진행 중", cls: "bg-green-50 text-green-700" },
+  ongoing: { label: "진행 중", cls: "bg-success/5 text-success" },
   completed: { label: "완료", cls: "bg-muted text-muted-foreground" },
   cancelled: { label: "취소", cls: "bg-destructive/5 text-destructive" },
 };

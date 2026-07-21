@@ -46,11 +46,11 @@ export default function SeminarPresentPage() {
     <div className="flex h-screen flex-col bg-neutral-950 text-white">
       {/* 상단 바 */}
       <div className="flex items-center justify-between gap-3 border-b border-neutral-800 px-6 py-3">
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-600 px-3 py-1 text-sm font-bold">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-3 py-1 text-sm font-bold">
           <Radio size={15} /> LIVE
         </span>
         {active && session?.activePollId && (
-          <span className="rounded-full bg-indigo-600 px-3 py-1 text-sm font-semibold">
+          <span className="rounded-full bg-cat-1 px-3 py-1 text-sm font-semibold">
             설문 진행 중 · {pollCount}명 응답
           </span>
         )}

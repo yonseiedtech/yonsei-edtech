@@ -23,7 +23,7 @@ const STATUS_COLOR: Record<LabStatus, string> = {
   testing: "bg-warning/10 text-warning",
   feedback: "bg-info/10 text-info",
   approved: "bg-success/10 text-success",
-  archived: "bg-zinc-100 text-zinc-500",
+  archived: "bg-muted text-muted-foreground",
 };
 
 export default function LabsPage() {

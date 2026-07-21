@@ -265,7 +265,7 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
 
       <header className="mb-8">
         <div className="flex flex-wrap items-center gap-2">
-          <Badge className="bg-blue-600 text-white">
+          <Badge className="bg-cat-1 text-white">
             <Mic size={12} className="mr-1" />
             연사 대시보드
           </Badge>
@@ -274,8 +274,8 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
               운영진 보기 모드
             </Badge>
           )}
-          <Badge variant="outline" className="gap-1 border-emerald-200 bg-emerald-50 text-[10px] text-emerald-700">
-            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-emerald-500" />
+          <Badge variant="outline" className="gap-1 border-success/20 bg-success/5 text-[10px] text-success">
+            <span className="inline-block h-1.5 w-1.5 animate-pulse rounded-full bg-success" />
             실시간 (5초)
           </Badge>
         </div>
@@ -314,7 +314,7 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
                   key={r.id}
                   className={
                     "rounded-2xl border p-3 " +
-                    (checked ? "bg-emerald-50/40 dark:bg-emerald-950/20" : "bg-card")
+                    (checked ? "bg-success/5" : "bg-card")
                   }
                 >
                   <div className="flex items-center justify-between gap-2">
@@ -323,7 +323,7 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
                       <p className="truncate text-xs text-muted-foreground">{r.affiliation || r.email}</p>
                     </div>
                     {checked ? (
-                      <Badge className="shrink-0 bg-emerald-600 text-white">출석</Badge>
+                      <Badge className="shrink-0 bg-success text-white">출석</Badge>
                     ) : (
                       <Badge variant="outline" className="shrink-0 text-[10px]">대기</Badge>
                     )}
@@ -377,21 +377,21 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
           ) : (
             <div className="space-y-5">
               <RetroField
-                icon={<Heart size={14} className="text-rose-500" />}
+                icon={<Heart size={14} className="text-destructive" />}
                 label="좋았던 점"
                 placeholder="잘 굴러간 진행 / 참가자 반응 / 운영 요소…"
                 value={liked}
                 onChange={setLiked}
               />
               <RetroField
-                icon={<AlertTriangle size={14} className="text-amber-500" />}
+                icon={<AlertTriangle size={14} className="text-warning" />}
                 label="아쉬웠던 점"
                 placeholder="시간 부족 / 자료 미비 / 참여 저조…"
                 value={lacked}
                 onChange={setLacked}
               />
               <RetroField
-                icon={<Lightbulb size={14} className="text-blue-500" />}
+                icon={<Lightbulb size={14} className="text-cat-1" />}
                 label="보완·발전시킬 사항"
                 placeholder="다음 회차 또는 인수인계 시 반영할 개선안…"
                 value={longedFor}
@@ -524,7 +524,7 @@ function StatCard({
 }) {
   const tones = {
     default: "bg-card",
-    success: "bg-emerald-50/60 dark:bg-emerald-950/30",
+    success: "bg-success/5",
     muted: "bg-muted/30",
   };
   return (
@@ -566,19 +566,19 @@ function ReadOnlyRetro({ liked, lacked, longedFor }: { liked: string; lacked: st
     <div className="space-y-2 text-sm">
       {liked && (
         <p>
-          <span className="mr-1 font-semibold text-rose-600">좋았던 점:</span>
+          <span className="mr-1 font-semibold text-destructive">좋았던 점:</span>
           <span className="text-foreground/90">{liked}</span>
         </p>
       )}
       {lacked && (
         <p>
-          <span className="mr-1 font-semibold text-amber-600">아쉬웠던 점:</span>
+          <span className="mr-1 font-semibold text-warning">아쉬웠던 점:</span>
           <span className="text-foreground/90">{lacked}</span>
         </p>
       )}
       {longedFor && (
         <p>
-          <span className="mr-1 font-semibold text-blue-600">보완·발전:</span>
+          <span className="mr-1 font-semibold text-cat-1">보완·발전:</span>
           <span className="text-foreground/90">{longedFor}</span>
         </p>
       )}

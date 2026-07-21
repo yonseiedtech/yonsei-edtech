@@ -123,14 +123,14 @@ export default function SeminarLiveHostPage() {
             <ArrowLeft size={13} /> 세미나로
           </Link>
           <h1 className="mt-1 flex items-center gap-2 text-lg font-bold">
-            <Presentation size={18} className="text-indigo-600" />
+            <Presentation size={18} className="text-cat-1" />
             라이브 콘솔
           </h1>
           <p className="truncate text-xs text-muted-foreground">{seminar?.title ?? seminarId}</p>
         </div>
         <div className="flex items-center gap-2">
           {isLive ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-bold text-white">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-2.5 py-1 text-[11px] font-bold text-white">
               <Radio size={12} /> LIVE{status === "paused" && " (일시정지)"}
             </span>
           ) : (
@@ -156,7 +156,7 @@ export default function SeminarLiveHostPage() {
                 <Play size={14} className="mr-1" /> 재개
               </Button>
             )}
-            <Button size="sm" variant="outline" className="text-rose-600" onClick={() => { if (confirm("라이브를 종료할까요?")) setStatus("ended"); }}>
+            <Button size="sm" variant="outline" className="text-destructive" onClick={() => { if (confirm("라이브를 종료할까요?")) setStatus("ended"); }}>
               <Square size={14} className="mr-1" /> 종료
             </Button>
           </>
@@ -202,7 +202,7 @@ export default function SeminarLiveHostPage() {
                     onClick={() => isLive && gotoSlide(i)}
                     className={cn(
                       "relative h-12 w-20 shrink-0 overflow-hidden rounded border-2 transition",
-                      i === current ? "border-indigo-600" : "border-transparent opacity-70 hover:opacity-100",
+                      i === current ? "border-cat-1" : "border-transparent opacity-70 hover:opacity-100",
                     )}
                     title={`슬라이드 ${i + 1}`}
                   >
@@ -227,7 +227,7 @@ export default function SeminarLiveHostPage() {
                       onClick={() => selectDeck(d)}
                       className={cn(
                         "flex w-full items-center justify-between gap-2 rounded-lg border px-2.5 py-1.5 text-xs transition hover:bg-accent",
-                        d.id === currentDeck?.id ? "border-indigo-400 bg-indigo-50/50 dark:bg-indigo-950/20" : "border-border",
+                        d.id === currentDeck?.id ? "border-cat-1 bg-cat-1/5" : "border-border",
                       )}
                     >
                       <span className="truncate font-medium">{d.title}</span>

@@ -55,7 +55,7 @@ const STATUS_META: Record<
   new: { label: "신규", color: "bg-info/5 text-info" },
   reviewed: { label: "검토됨", color: "bg-cat-5/5 text-cat-5" },
   "in-progress": { label: "처리중", color: "bg-warning/5 text-warning" },
-  resolved: { label: "완료", color: "bg-green-50 text-green-700" },
+  resolved: { label: "완료", color: "bg-success/5 text-success" },
 };
 
 const CATEGORY_COLORS: Record<FeedbackCategory, string> = {

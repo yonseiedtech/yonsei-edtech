@@ -80,7 +80,7 @@ export default function SeminarLivePage() {
     <div className="mx-auto max-w-3xl p-4 sm:p-6">
       <div className="mb-3 flex items-center justify-between gap-2">
         <BackLink seminarId={seminarId} />
-        <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-bold text-white">
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-2.5 py-1 text-[11px] font-bold text-white">
           <Radio size={12} /> LIVE
           {session.status === "paused" && <span className="ml-1 opacity-80">(일시정지)</span>}
         </span>
@@ -96,7 +96,7 @@ export default function SeminarLivePage() {
             className={cn(
               "inline-flex items-center gap-1 rounded-lg border px-2.5 py-1 text-[11px] font-medium transition",
               follow
-                ? "border-indigo-600 bg-indigo-600 text-white"
+                ? "border-cat-1 bg-cat-1 text-white"
                 : "border-border bg-background text-muted-foreground hover:text-foreground",
             )}
           >
@@ -121,7 +121,7 @@ export default function SeminarLivePage() {
         <TabButton active={tab === "notes"} onClick={() => setTab("notes")} icon={<StickyNote size={13} />}>내 노트</TabButton>
         <TabButton active={tab === "qa"} onClick={() => setTab("qa")} icon={<MessageCircleQuestion size={13} />}>Q&A</TabButton>
         <TabButton active={tab === "poll"} onClick={() => setTab("poll")} icon={<BarChart3 size={13} />}>
-          설문{session.activePollId && <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-rose-500" />}
+          설문{session.activePollId && <span className="ml-1 inline-block h-1.5 w-1.5 rounded-full bg-destructive" />}
         </TabButton>
       </div>
 

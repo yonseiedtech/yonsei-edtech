@@ -35,9 +35,9 @@ const ROLE_COLORS: Record<string, string> = {
   admin: "bg-cat-5/10 text-cat-5",
   president: "bg-info/10 text-info",
   staff: "bg-info/10 text-info",
-  advisor: "bg-teal-100 text-teal-700",
+  advisor: "bg-info/10 text-info",
   alumni: "bg-muted text-muted-foreground",
-  member: "bg-gray-100 text-gray-600",
+  member: "bg-muted text-muted-foreground",
 };
 
 function AdminMemberDetail({ id }: { id: string }) {
@@ -272,7 +272,7 @@ function AdminMemberDetail({ id }: { id: string }) {
                     <Badge variant="outline">{ENROLLMENT_STATUS_LABELS[member.enrollmentStatus]}</Badge>
                   )}
                   {member.approved ? (
-                    <Badge className="bg-green-100 text-green-700 text-[10px]">승인됨</Badge>
+                    <Badge className="bg-success/10 text-success text-[10px]">승인됨</Badge>
                   ) : member.rejected ? (
                     <Badge className="bg-destructive/10 text-destructive text-[10px]">거절됨</Badge>
                   ) : (
@@ -380,9 +380,9 @@ function ConsentStatusSection({ member }: { member: User }) {
                   </td>
                   <td className="border-b px-3 py-2 align-top">
                     {rec?.agreed ? (
-                      <Badge className="bg-green-100 text-green-700">동의</Badge>
+                      <Badge className="bg-success/10 text-success">동의</Badge>
                     ) : (
-                      <Badge className="bg-gray-100 text-gray-600">미동의</Badge>
+                      <Badge className="bg-muted text-muted-foreground">미동의</Badge>
                     )}
                   </td>
                   <td className="border-b px-3 py-2 align-top">
@@ -442,7 +442,7 @@ function MemberActivityHistory({ memberId }: { memberId: string }) {
           <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><BookOpen size={10} />세미나 참석</p>
         </div>
         <div className="rounded-lg border p-3 text-center">
-          <p className="text-xl font-bold text-green-600">{studies.length}</p>
+          <p className="text-xl font-bold text-success">{studies.length}</p>
           <p className="text-[10px] text-muted-foreground flex items-center justify-center gap-1"><Users size={10} />스터디</p>
         </div>
         <div className="rounded-lg border p-3 text-center">
@@ -483,7 +483,7 @@ function MemberActivityHistory({ memberId }: { memberId: string }) {
               <div className="space-y-1">
                 {activities.map((a) => (
                   <div key={a.id} className="flex items-center gap-2 rounded-lg border px-3 py-2 text-sm">
-                    {a.type === "study" ? <Users size={14} className="shrink-0 text-green-600" /> :
+                    {a.type === "study" ? <Users size={14} className="shrink-0 text-success" /> :
                      a.type === "project" ? <FolderKanban size={14} className="shrink-0 text-cat-5" /> :
                      <Globe size={14} className="shrink-0 text-warning" />}
                     <span className="flex-1 truncate">{a.title}</span>

@@ -191,7 +191,7 @@ function CheckinContent({ id }: { id: string }) {
                     <span className="font-medium">{log.name}</span>
                     <span className={cn(
                       "rounded px-1.5 py-0.5 text-[10px] font-medium",
-                      log.method === "QR" ? "bg-blue-50 text-blue-600" : "bg-green-50 text-green-600",
+                      log.method === "QR" ? "bg-cat-1/5 text-cat-1" : "bg-success/5 text-success",
                     )}>
                       {log.method}
                     </span>
