@@ -77,7 +77,8 @@ export function withCronLog(
       const durationMs = Date.now() - startMs;
       const endedAt = new Date().toISOString();
       const errorMessage = err instanceof Error ? err.message : String(err);
-      logCronRun({
+      // await 필수 — 서버리스는 응답/throw 후 즉시 동결되어 미대기 promise 가 유실된다
+      await logCronRun({
         kind,
         startedAt,
         endedAt,
@@ -97,24 +98,23 @@ export function withCronLog(
     const endedAt = new Date().toISOString();
     const success = res.status >= 200 && res.status < 500;
 
-    // 응답 바디를 clone해서 비동기 파싱 — 원본 response는 그대로 반환
-    const resClone = res.clone();
-    resClone
-      .json()
-      .then((body: unknown) => {
-        const summary = extractCounts(body);
-        const errorMessage =
-          !success && body && typeof body === "object"
-            ? ((body as Record<string, unknown>).error as string | undefined)
-            : undefined;
-        return logCronRun({ kind, startedAt, endedAt, durationMs, success, summary, errorMessage, createdAt: endedAt });
-      })
-      .catch(() => {
-        // JSON 파싱 실패 시 counts 없이 메타만 적재
-        logCronRun({ kind, startedAt, endedAt, durationMs, success, summary: {}, createdAt: endedAt }).catch(
-          () => {},
-        );
-      });
+    // 응답 반환 "전"에 적재를 await — fire-and-forget 은 Vercel 함수 동결로 기록이
+    // 비결정적으로 유실된다(2026-07-21 newcomer 성공 실행 미기록 실증). cron 은 사용자가
+    // 기다리지 않으므로 수 ms 지연은 무해. 로깅 실패는 여전히 본 동작에 불간섭.
+    try {
+      const body: unknown = await res.clone().json();
+      const summary = extractCounts(body);
+      const errorMessage =
+        !success && body && typeof body === "object"
+          ? ((body as Record<string, unknown>).error as string | undefined)
+          : undefined;
+      await logCronRun({ kind, startedAt, endedAt, durationMs, success, summary, errorMessage, createdAt: endedAt });
+    } catch {
+      // JSON 파싱 실패 시 counts 없이 메타만 적재
+      await logCronRun({ kind, startedAt, endedAt, durationMs, success, summary: {}, createdAt: endedAt }).catch(
+        () => {},
+      );
+    }
 
     return res;
   };
