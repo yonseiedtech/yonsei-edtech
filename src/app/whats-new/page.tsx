@@ -1,4 +1,4 @@
-"use client";
+﻿"use client";
 
 import { useState } from "react";
 import Link from "next/link";
@@ -30,7 +30,7 @@ import {
 import PageContainer from "@/components/ui/page-container";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { WHATS_NEW_DISMISSED_KEY, NEW_THRESHOLD_DAYS } from "@/lib/whats-new-meta";
+import { WHATS_NEW_DISMISSED_KEY, NEW_THRESHOLD_DAYS, FEATURE_DATES } from "@/lib/whats-new-meta";
 
 /** v12-M6: 공유 상수 재사용 — SemesterKickoffBanner와 키·임계값 동기화 */
 const WHATS_NEW_KEY = WHATS_NEW_DISMISSED_KEY;
@@ -61,7 +61,7 @@ const FEATURES: Feature[] = [
   // ── 2026-07-21 ────────────────────────────────────────────────
   {
     id: "curriculum-wizard",
-    addedAt: "2026-07-21",
+    addedAt: FEATURE_DATES["curriculum-wizard"],
     icon: Wand2,
     badge: "스터디",
     badgeVariant: "default",
@@ -82,7 +82,7 @@ const FEATURES: Feature[] = [
   // ── 2026-07-17 ────────────────────────────────────────────────
   {
     id: "newcomer-onboarding",
-    addedAt: "2026-07-17",
+    addedAt: FEATURE_DATES["newcomer-onboarding"],
     icon: Users,
     badge: "온보딩",
     badgeVariant: "default",
@@ -103,7 +103,7 @@ const FEATURES: Feature[] = [
   // ── 2026-07-16 ────────────────────────────────────────────────
   {
     id: "seminar-live",
-    addedAt: "2026-07-16",
+    addedAt: FEATURE_DATES["seminar-live"],
     icon: Radio,
     badge: "세미나",
     badgeVariant: "default",
@@ -124,7 +124,7 @@ const FEATURES: Feature[] = [
   // ── 2026-07-10 ────────────────────────────────────────────────
   {
     id: "hackathon-2026",
-    addedAt: "2026-07-10",
+    addedAt: FEATURE_DATES["hackathon-2026"],
     icon: Zap,
     badge: "행사",
     badgeVariant: "default",
@@ -145,7 +145,7 @@ const FEATURES: Feature[] = [
   // ── 2026-06-15 ────────────────────────────────────────────────
   {
     id: "kudos-recognition",
-    addedAt: "2026-06-15",
+    addedAt: FEATURE_DATES["kudos-recognition"],
     icon: Heart,
     badge: "커뮤니티",
     badgeVariant: "default",
@@ -166,7 +166,7 @@ const FEATURES: Feature[] = [
   // ── 2026-06-12 ────────────────────────────────────────────────
   {
     id: "reading-apa-doi",
-    addedAt: "2026-06-12",
+    addedAt: FEATURE_DATES["reading-apa-doi"],
     icon: Quote,
     badge: "논문 읽기",
     badgeVariant: "secondary",
@@ -186,7 +186,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "scholar-seminal-works",
-    addedAt: "2026-06-12",
+    addedAt: FEATURE_DATES["scholar-seminal-works"],
     icon: GraduationCap,
     badge: "아카이브",
     badgeVariant: "outline",
@@ -206,7 +206,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "research-design-profile",
-    addedAt: "2026-06-12",
+    addedAt: FEATURE_DATES["research-design-profile"],
     icon: BarChart3,
     badge: "연구 분석",
     badgeVariant: "outline",
@@ -227,7 +227,7 @@ const FEATURES: Feature[] = [
   // ── 2026-06-03 ────────────────────────────────────────────────
   {
     id: "research-journey-v2",
-    addedAt: "2026-06-03",
+    addedAt: FEATURE_DATES["research-journey-v2"],
     icon: Microscope,
     badge: "연구 여정",
     badgeVariant: "outline",
@@ -247,7 +247,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "literature-matrix",
-    addedAt: "2026-06-03",
+    addedAt: FEATURE_DATES["literature-matrix"],
     icon: BookMarked,
     badge: "문헌 고찰",
     badgeVariant: "outline",
@@ -267,7 +267,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "research-model-wizard",
-    addedAt: "2026-06-03",
+    addedAt: FEATURE_DATES["research-model-wizard"],
     icon: Network,
     badge: "연구 모형",
     badgeVariant: "outline",
@@ -287,7 +287,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "design-studio",
-    addedAt: "2026-06-03",
+    addedAt: FEATURE_DATES["design-studio"],
     icon: Palette,
     badge: "콘텐츠",
     badgeVariant: "outline",
@@ -307,7 +307,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "finders",
-    addedAt: "2026-06-03",
+    addedAt: FEATURE_DATES["finders"],
     icon: Target,
     badge: "아카이브",
     badgeVariant: "outline",
@@ -327,7 +327,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "stat-model-diagrams",
-    addedAt: "2026-06-03",
+    addedAt: FEATURE_DATES["stat-model-diagrams"],
     icon: BarChart3,
     badge: "통계 가이드",
     badgeVariant: "outline",
@@ -347,7 +347,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "archive-foundation-expansion",
-    addedAt: "2026-06-03",
+    addedAt: FEATURE_DATES["archive-foundation-expansion"],
     icon: GraduationCap,
     badge: "아카이브 확장",
     badgeVariant: "outline",
@@ -367,7 +367,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "thesis-journey-suite",
-    addedAt: "2026-06-03",
+    addedAt: FEATURE_DATES["thesis-journey-suite"],
     icon: Compass,
     badge: "논문 여정",
     badgeVariant: "outline",
@@ -388,7 +388,7 @@ const FEATURES: Feature[] = [
   // ── 2026-05-15 ────────────────────────────────────────────────
   {
     id: "dashboard-phase-d",
-    addedAt: "2026-05-15",
+    addedAt: FEATURE_DATES["dashboard-phase-d"],
     icon: LayoutDashboard,
     badge: "대시보드",
     badgeVariant: "outline",
@@ -408,7 +408,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "onboarding-checklist",
-    addedAt: "2026-05-15",
+    addedAt: FEATURE_DATES["onboarding-checklist"],
     icon: CheckSquare,
     badge: "시작하기",
     badgeVariant: "outline",
@@ -428,7 +428,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "notification-center",
-    addedAt: "2026-05-15",
+    addedAt: FEATURE_DATES["notification-center"],
     icon: Bell,
     badge: "알림센터",
     badgeVariant: "outline",
@@ -448,7 +448,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "archive-enhanced",
-    addedAt: "2026-05-15",
+    addedAt: FEATURE_DATES["archive-enhanced"],
     icon: Archive,
     badge: "아카이브",
     badgeVariant: "outline",
@@ -468,7 +468,7 @@ const FEATURES: Feature[] = [
   },
   {
     id: "external-activity-status",
-    addedAt: "2026-05-15",
+    addedAt: FEATURE_DATES["external-activity-status"],
     icon: Trophy,
     badge: "대외 학술대회",
     badgeVariant: "outline",

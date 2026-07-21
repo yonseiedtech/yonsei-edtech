@@ -18,18 +18,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { hackathonSubmissionsApi, commQuestionsApi, hackathonTeamJoinsApi } from "@/lib/bkend";
-import type { HackathonSubmission, CommQuestion, HackathonTeamJoin } from "@/types";
+import type { HackathonSubmission, CommQuestion, HackathonTeamJoin, CommBoard } from "@/types";
 import KudosSendBlock from "@/features/kudos/KudosSendBlock";
 import type { KudosTarget } from "@/features/kudos/useKudosSend";
 import { HACKATHON_CONTEXT_ID, HACKATHON_TEAM_PREFS } from "./config";
+import { ensureHackathonBoard } from "./ensure-hackathon-board";
 
-/** 보드 id 를 외부에서 주입 — 없으면 팀원 모집 섹션은 스킵 */
-interface Props {
-  boardId?: string;
-}
-
-export default function HackathonTeamView({ boardId }: Props) {
+export default function HackathonTeamView() {
   const user = useAuthStore((s) => s.user);
+
+  // 보드 id 자동 조회 — HackathonBoard 와 동일 쿼리 키 공유(React Query dedupe)
+  const { data: board } = useQuery<CommBoard | null>({
+    queryKey: ["hackathon-board"],
+    queryFn: () =>
+      user ? ensureHackathonBoard(user.id, user.name) : Promise.resolve(null),
+    enabled: !!user,
+    staleTime: 5 * 60 * 1000,
+  });
 
   const { data: submissions = [], isLoading: subLoading } = useQuery({
     queryKey: ["hackathon-submissions"],
@@ -41,10 +46,10 @@ export default function HackathonTeamView({ boardId }: Props) {
   });
 
   const { data: entries = [], isLoading: entryLoading } = useQuery({
-    queryKey: ["hackathon-entries", boardId ?? ""],
-    enabled: !!user && !!boardId,
+    queryKey: ["hackathon-entries", board?.id ?? ""],
+    enabled: !!user && !!board?.id,
     queryFn: async () => {
-      const res = await commQuestionsApi.listByBoard(boardId!);
+      const res = await commQuestionsApi.listByBoard(board!.id);
       return res.data as CommQuestion[];
     },
   });
