@@ -315,13 +315,13 @@ function ConceptTrendRow({ trend }: { trend: ConceptTrend }) {
           label: "개선됨",
           icon: CheckCircle2,
           cls: "border-success/20 bg-success/5 text-success",
-          stroke: "#10b981", // emerald-500
+          stroke: "var(--color-success)",
         }
       : {
           label: "지속 약점",
           icon: AlertTriangle,
           cls: "border-warning/20 bg-warning/5 text-warning",
-          stroke: "#f59e0b", // amber-500
+          stroke: "var(--color-warning)",
         };
   const StatusIcon = statusMeta.icon;
 

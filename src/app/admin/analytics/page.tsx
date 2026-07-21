@@ -42,8 +42,12 @@ function monthLabel(key: string) {
 }
 
 const COLORS = [
-  "#3b82f6", "#10b981", "#f59e0b", "#ef4444", "#8b5cf6",
-  "#06b6d4", "#ec4899", "#84cc16",
+  "var(--color-cat-1)",
+  "var(--color-cat-2)",
+  "var(--color-cat-3)",
+  "var(--color-cat-4)",
+  "var(--color-cat-5)",
+  "var(--color-cat-6)",
 ];
 
 function StatCard({ icon: Icon, label, value, sub, color }: {
@@ -479,11 +483,11 @@ export default function AnalyticsPage() {
               <p className="mb-1 text-xs text-muted-foreground">총 {visitInsights.hourlyTotal} 페이지뷰</p>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={visitInsights.hourly}>
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                   <XAxis dataKey="hour" tick={{ fontSize: 10 }} interval={1} />
                   <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
                   <Tooltip />
-                  <Bar dataKey="count" name="페이지뷰" fill="#06b6d4" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="count" name="페이지뷰" fill="var(--color-info)" radius={[4, 4, 0, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </>
@@ -500,11 +504,11 @@ export default function AnalyticsPage() {
               <p className="mb-1 text-xs text-muted-foreground">상위 {visitInsights.paths.length}개 그룹 / 합계 {visitInsights.pathsTotal} 페이지뷰</p>
               <ResponsiveContainer width="100%" height={220}>
                 <BarChart data={visitInsights.paths} layout="vertical">
-                  <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+                  <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
                   <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
                   <YAxis type="category" dataKey="name" width={100} tick={{ fontSize: 11 }} />
                   <Tooltip />
-                  <Bar dataKey="count" name="페이지뷰" fill="#ec4899" radius={[0, 4, 4, 0]} />
+                  <Bar dataKey="count" name="페이지뷰" fill="var(--color-cat-4)" radius={[0, 4, 4, 0]} />
                 </BarChart>
               </ResponsiveContainer>
             </>
@@ -517,11 +521,11 @@ export default function AnalyticsPage() {
         <ChartCard title="월별 신규 회원">
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={analytics.memberGrowth}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Bar dataKey="count" name="신규 회원" fill="#3b82f6" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="count" name="신규 회원" fill="var(--color-cat-1)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -551,14 +555,14 @@ export default function AnalyticsPage() {
         <ChartCard title="월별 세미나 현황">
           <ResponsiveContainer width="100%" height={240}>
             <LineChart data={analytics.seminarMonthly}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis dataKey="month" tick={{ fontSize: 12 }} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
               <Tooltip />
               <Legend />
-              <Line type="monotone" dataKey="seminars" name="세미나 수" stroke="#8b5cf6" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="attendees" name="참가자" stroke="#3b82f6" strokeWidth={2} dot={{ r: 3 }} />
-              <Line type="monotone" dataKey="checkedIn" name="출석" stroke="#10b981" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="seminars" name="세미나 수" stroke="var(--color-cat-5)" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="attendees" name="참가자" stroke="var(--color-cat-1)" strokeWidth={2} dot={{ r: 3 }} />
+              <Line type="monotone" dataKey="checkedIn" name="출석" stroke="var(--color-success)" strokeWidth={2} dot={{ r: 3 }} />
             </LineChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -588,11 +592,11 @@ export default function AnalyticsPage() {
         <ChartCard title="세미나 만족도 분포">
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={analytics.ratingDistribution}>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis dataKey="rating" tick={{ fontSize: 12 }} />
               <YAxis allowDecimals={false} tick={{ fontSize: 12 }} />
               <Tooltip />
-              <Bar dataKey="count" name="응답 수" fill="#f59e0b" radius={[4, 4, 0, 0]} />
+              <Bar dataKey="count" name="응답 수" fill="var(--color-warning)" radius={[4, 4, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>
@@ -600,13 +604,13 @@ export default function AnalyticsPage() {
         <ChartCard title="참가자 많은 세미나 Top 5">
           <ResponsiveContainer width="100%" height={240}>
             <BarChart data={analytics.topSeminars} layout="vertical">
-              <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+              <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
               <XAxis type="number" allowDecimals={false} tick={{ fontSize: 12 }} />
               <YAxis type="category" dataKey="title" width={120} tick={{ fontSize: 11 }} />
               <Tooltip />
               <Legend />
-              <Bar dataKey="attendees" name="참가자" fill="#8b5cf6" radius={[0, 4, 4, 0]} />
-              <Bar dataKey="checkedIn" name="출석" fill="#10b981" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="attendees" name="참가자" fill="var(--color-cat-5)" radius={[0, 4, 4, 0]} />
+              <Bar dataKey="checkedIn" name="출석" fill="var(--color-success)" radius={[0, 4, 4, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </ChartCard>

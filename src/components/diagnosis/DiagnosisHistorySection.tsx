@@ -67,9 +67,9 @@ function fullDate(value?: string): string {
 
 /** 영역 색상 (recharts stroke/fill — 영역 배지 색과 결을 맞춤) */
 const AREA_CHART_COLOR: Record<DiagnosticArea, string> = {
-  statistics: "#6366f1", // indigo-500
-  method: "#0ea5e9", // sky-500
-  concept: "#8b5cf6", // violet-500
+  statistics: "var(--color-cat-5)", // indigo≈violet
+  method: "var(--color-info)",      // sky
+  concept: "var(--color-cat-1)",    // blue
 };
 
 export default function DiagnosisHistorySection({ userId }: DiagnosisHistorySectionProps) {
@@ -208,8 +208,8 @@ export default function DiagnosisHistorySection({ userId }: DiagnosisHistorySect
                     <Radar
                       name="정답률"
                       dataKey="정답률"
-                      stroke="#6366f1"
-                      fill="#6366f1"
+                      stroke="var(--color-cat-5)"
+                      fill="var(--color-cat-5)"
                       fillOpacity={0.35}
                     />
                     <Tooltip formatter={(v) => [`${v}%`, "정답률"]} />
