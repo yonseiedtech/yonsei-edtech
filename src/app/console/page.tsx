@@ -391,6 +391,29 @@ function UpcomingSeasonCard({
                 auto: null,
                 href: "/console/hackathon",
               },
+              // M3: 수상 발표 단계 전용 항목 (awards phase 진입 후 표시)
+              ...(hackathonPhase === "awards"
+                ? ([
+                    {
+                      key: "award_scores",
+                      label: "수상 등급 입력 완료",
+                      auto: null,
+                      href: "/console/hackathon",
+                    },
+                    {
+                      key: "award_publish",
+                      label: "수상작 일괄 공개 완료",
+                      auto: null,
+                      href: "/console/hackathon",
+                    },
+                    {
+                      key: "portfolio_notice",
+                      label: "포트폴리오 자동적재 공지 게시",
+                      auto: null,
+                      href: "/boards/new",
+                    },
+                  ] as SeasonItem[])
+                : []),
             ] as SeasonItem[],
           },
         ]

@@ -159,6 +159,37 @@ export default function HackathonJudgingConsolePage() {
         </TabsContent>
 
         <TabsContent value="judging" className="mt-5">
+          {/* M3: 수상 발표 절차 가이드 (접기 패널) */}
+          <details className="mb-4 rounded-2xl border bg-card">
+            <summary className="flex cursor-pointer select-none items-center gap-2 px-4 py-3 text-sm font-semibold marker:content-none">
+              <Trophy size={14} className="shrink-0 text-primary" />
+              수상 발표 절차 안내
+              <span className="ml-auto text-xs font-normal text-muted-foreground">클릭해서 펼치기</span>
+            </summary>
+            <ol className="space-y-1.5 px-4 pb-4 pt-1 text-sm text-muted-foreground">
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">1</span>
+                <span><strong className="text-foreground">심사 완료 확인</strong> — 모든 산출물에 루브릭 점수가 입력됐는지 아래 목록에서 확인. 점수 없는 항목은 배지로 표시됨.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">2</span>
+                <span><strong className="text-foreground">수상 등급 지정</strong> — 각 산출물 카드의 "수상 등급" 드롭다운에서 대상/최우수상/우수상/장려상 지정.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">3</span>
+                <span><strong className="text-foreground">수상작 일괄 공개</strong> — 아래 "미공개 일괄 공개" 버튼 클릭 → /hackathon 수상작 섹션 즉시 노출.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">4</span>
+                <span><strong className="text-foreground">포트폴리오 자동적재 공지</strong> — 수상팀에게 "마이페이지 → 포트폴리오에서 수상 실적이 자동 적재됐습니다" 공지 게시.</span>
+              </li>
+              <li className="flex gap-2">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">5</span>
+                <span><strong className="text-foreground">아카이브 등록 안내</strong> — 팀장에게 /archive 딥링크(아이디어 → 아카이브 등록) 안내 메시지 전송.</span>
+              </li>
+            </ol>
+          </details>
+
           {subsLoading ? (
             <div className="p-6">
               <Loader2 className="animate-spin text-muted-foreground" />
