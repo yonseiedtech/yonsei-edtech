@@ -380,7 +380,7 @@ function UpcomingSeasonCard({
                 key: "board_notice",
                 label: "아이디어 보드 공지 게시",
                 auto: boardNoticeAuto ?? null,
-                href: "/console/hackathon",
+                href: "/board/write",
                 autoTooltip:
                   "해커톤 소통 보드(comm_boards/comm_questions)에 게시글이 1건 이상이면 자동 체크",
               },
@@ -410,7 +410,7 @@ function UpcomingSeasonCard({
                       key: "portfolio_notice",
                       label: "포트폴리오 자동적재 공지 게시",
                       auto: null,
-                      href: "/boards/new",
+                      href: "/board/write",
                     },
                   ] as SeasonItem[])
                 : []),
@@ -470,7 +470,7 @@ function UpcomingSeasonCard({
                 key: "welcome_post",
                 label: "신입 환영 게시글 준비",
                 auto: null,
-                href: "/console/posts",
+                href: "/board/write",
               },
             ] as SeasonItem[],
           },
