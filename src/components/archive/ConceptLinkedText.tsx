@@ -46,7 +46,7 @@ export default function ConceptLinkedText({
             target="_blank"
             rel="noopener noreferrer"
             title={`아카이브에서 '${p.text}' 개념 보기 (새 탭)`}
-            className="font-medium text-violet-600 underline decoration-dotted decoration-violet-300 underline-offset-2 transition-colors hover:text-violet-700 hover:decoration-violet-500 dark:text-violet-300 dark:hover:text-violet-200"
+            className="font-medium text-cat-5 underline decoration-dotted decoration-cat-5/30 underline-offset-2 transition-colors hover:text-cat-5/80 hover:decoration-cat-5/50"
           >
             {p.text}
           </a>

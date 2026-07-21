@@ -313,7 +313,7 @@ export default function ResearchPaperDialog({
             {initial ? "논문 편집" : draftId ? "논문 추가 (임시저장 중)" : "논문 추가"}
           </DialogTitle>
           <DialogDescription>
-            단계별로 작성할 수 있어요. 언제든 <span className="font-medium text-amber-700">임시 저장</span>해두고 나중에 이어쓸 수 있습니다.
+            단계별로 작성할 수 있어요. 언제든 <span className="font-medium text-warning">임시 저장</span>해두고 나중에 이어쓸 수 있습니다.
           </DialogDescription>
         </DialogHeader>
 
@@ -561,10 +561,10 @@ export default function ResearchPaperDialog({
                           "rounded-full border px-3 py-1 text-xs font-medium transition",
                           isActive
                             ? s === "to_read"
-                              ? "border-amber-500 bg-amber-50 text-amber-800"
+                              ? "border-warning bg-warning/5 text-warning"
                               : s === "reading"
-                                ? "border-blue-500 bg-blue-50 text-blue-800"
-                                : "border-emerald-500 bg-emerald-50 text-emerald-800"
+                                ? "border-cat-1 bg-cat-1/5 text-cat-1"
+                                : "border-success bg-success/5 text-success"
                             : "border-muted text-muted-foreground hover:bg-muted/60"
                         )}
                       >
@@ -599,7 +599,7 @@ export default function ResearchPaperDialog({
                     return <p className="mt-1 text-[11px] text-destructive">완독일이 시작일보다 빠릅니다.</p>;
                   }
                   const days = Math.round((e - s) / 86400000);
-                  return <p className="mt-1 text-[11px] text-emerald-700">소요 기간: {days}일</p>;
+                  return <p className="mt-1 text-[11px] text-success">소요 기간: {days}일</p>;
                 })()}
               </div>
             </section>
@@ -706,7 +706,7 @@ export default function ResearchPaperDialog({
                       key={n}
                       type="button"
                       onClick={() => update("rating", (form.rating === n ? 0 : n) as FormState["rating"])}
-                      className="p-1 text-amber-500 hover:scale-110"
+                      className="p-1 text-warning hover:scale-110"
                     >
                       <Star
                         size={20}
@@ -742,7 +742,7 @@ export default function ResearchPaperDialog({
               variant="ghost"
               onClick={handleDraftSave}
               disabled={saving || titleEmpty}
-              className="text-amber-700 hover:bg-amber-50 hover:text-amber-800"
+              className="text-warning hover:bg-warning/5 hover:text-warning"
               title={titleEmpty ? "제목을 먼저 입력하세요" : "현재까지 입력한 내용을 임시로 저장합니다"}
             >
               <Save size={14} className="mr-1" />

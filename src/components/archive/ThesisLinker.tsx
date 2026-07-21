@@ -86,7 +86,7 @@ export default function ThesisLinker({ selectedIds, onChange }: Props) {
               <Badge
                 key={t.id}
                 variant="default"
-                className="gap-1 pr-1 bg-emerald-600 hover:bg-emerald-700 cursor-default"
+                className="gap-1 pr-1 bg-success hover:bg-success/90 cursor-default"
               >
                 <span className="max-w-[18ch] truncate">{t.authorName ?? "?"}</span>
                 <span className="opacity-75">·</span>
@@ -137,14 +137,14 @@ export default function ThesisLinker({ selectedIds, onChange }: Props) {
                     onClick={() => toggle(t.id)}
                     className={cn(
                       "flex w-full items-start gap-2 px-3 py-2 text-left text-xs transition-colors",
-                      isOn ? "bg-emerald-50 hover:bg-emerald-100" : "hover:bg-muted/50",
+                      isOn ? "bg-success/5 hover:bg-success/10" : "hover:bg-muted/50",
                     )}
                   >
                     <div
                       className={cn(
                         "mt-0.5 flex h-4 w-4 shrink-0 items-center justify-center rounded border",
                         isOn
-                          ? "bg-emerald-600 border-emerald-600 text-white"
+                          ? "bg-success border-success text-success-foreground"
                           : "border-input",
                       )}
                     >

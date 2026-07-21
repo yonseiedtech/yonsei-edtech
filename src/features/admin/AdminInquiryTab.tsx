@@ -146,7 +146,7 @@ export default function AdminInquiryTab() {
                       "text-[10px]",
                       inq.status === "pending"
                         ? "bg-warning/5 text-warning"
-                        : "bg-green-50 text-green-700"
+                        : "bg-success/5 text-success"
                     )}
                   >
                     {inq.status === "pending" ? "대기" : "답변완료"}
@@ -203,7 +203,7 @@ export default function AdminInquiryTab() {
                     className={
                       inq.status === "pending"
                         ? "bg-warning/5 text-warning"
-                        : "bg-green-50 text-green-700"
+                        : "bg-success/5 text-success"
                     }
                   >
                     {inq.status === "pending" ? "대기" : "답변완료"}

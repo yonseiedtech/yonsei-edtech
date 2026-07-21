@@ -14,7 +14,7 @@ function GreetingCard({ person, accent }: { person: GreetingPerson; accent: "adv
   const initial = person.name?.[0] ?? (accent === "advisor" ? "교" : "회");
   const accentClass =
     accent === "advisor"
-      ? "bg-violet-50/50 text-violet-400/60"
+      ? "bg-cat-5/5 text-cat-5/60"
       : "bg-primary/5 text-primary/30";
 
   return (

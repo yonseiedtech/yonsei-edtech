@@ -44,7 +44,7 @@ function StarRating({ value, onChange, readonly }: { value: number; onChange?: (
     <div className="flex gap-0.5">
       {[1, 2, 3, 4, 5].map((n) => (
         <button key={n} type="button" disabled={readonly} onClick={() => onChange?.(n)} className={readonly ? "cursor-default" : "cursor-pointer"}>
-          <Star size={16} className={n <= value ? "fill-amber-400 text-amber-400" : "text-muted-foreground/30"} />
+          <Star size={16} className={n <= value ? "fill-warning text-warning" : "text-muted-foreground/30"} />
         </button>
       ))}
     </div>
@@ -230,9 +230,9 @@ export default function ReviewManagement({ seminar }: Props) {
   return (
     <div className="space-y-4">
       {/* 연사 후기 링크 (항상 표시) */}
-      <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-4">
+      <div className="rounded-lg border border-cat-1/20 bg-cat-1/5 p-4">
         <h3 className="mb-3 flex items-center gap-2 text-sm font-medium">
-          <Mic size={14} className="text-blue-600" />
+          <Mic size={14} className="text-cat-1" />
           연사 후기 링크
         </h3>
         {speakerToken ? (
@@ -292,7 +292,7 @@ export default function ReviewManagement({ seminar }: Props) {
               <p className="text-xs text-muted-foreground">총 후기</p>
             </div>
             <div className="rounded-lg border bg-card p-3 text-center">
-              <p className="text-2xl font-bold text-amber-500">★ {stats.avgRating}</p>
+              <p className="text-2xl font-bold text-warning">★ {stats.avgRating}</p>
               <p className="text-xs text-muted-foreground">평균 평점</p>
             </div>
             <div className="rounded-lg border bg-card p-3 text-center">
@@ -412,7 +412,7 @@ export default function ReviewManagement({ seminar }: Props) {
             {currentQuestions.map((q, i) => (
               <div key={i} className="flex items-center gap-2 rounded-lg border bg-card px-3 py-2">
                 <span className="flex-1 text-sm">{q}</span>
-                <button onClick={() => removeQuestion(i)} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500">
+                <button onClick={() => removeQuestion(i)} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-destructive/5 hover:text-destructive">
                   <X size={14} />
                 </button>
               </div>
@@ -472,24 +472,24 @@ export default function ReviewManagement({ seminar }: Props) {
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-medium">{r.authorName}</span>
                           {r.rating && <StarRating value={r.rating} readonly />}
-                          {isHidden && <Badge variant="secondary" className="text-xs text-red-500">숨김</Badge>}
-                          {isInternal && <Badge variant="secondary" className="text-xs text-amber-600">비공개</Badge>}
+                          {isHidden && <Badge variant="secondary" className="text-xs text-destructive">숨김</Badge>}
+                          {isInternal && <Badge variant="secondary" className="text-xs text-warning">비공개</Badge>}
                         </div>
                         <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed">{r.content}</p>
                         {/* 연사 추천 정보 */}
                         {r.type === "speaker" && (r.recommendedTopics || r.recommendedSpeakers) && (
-                          <div className="mt-2 rounded-lg border border-dashed border-amber-300 bg-amber-50/50 px-3 py-2 space-y-1">
-                            <p className="text-[10px] font-medium text-amber-700 uppercase tracking-wide">연사 추천 (운영진 전용)</p>
+                          <div className="mt-2 rounded-lg border border-dashed border-warning/30 bg-warning/5 px-3 py-2 space-y-1">
+                            <p className="text-[10px] font-medium text-warning uppercase tracking-wide">연사 추천 (운영진 전용)</p>
                             {r.recommendedTopics && (
                               <div>
-                                <span className="text-xs font-medium text-amber-800">추천 주제: </span>
-                                <span className="text-xs text-amber-700">{r.recommendedTopics}</span>
+                                <span className="text-xs font-medium text-warning">추천 주제: </span>
+                                <span className="text-xs text-warning">{r.recommendedTopics}</span>
                               </div>
                             )}
                             {r.recommendedSpeakers && (
                               <div>
-                                <span className="text-xs font-medium text-amber-800">추천 연사: </span>
-                                <span className="text-xs text-amber-700">{r.recommendedSpeakers}</span>
+                                <span className="text-xs font-medium text-warning">추천 연사: </span>
+                                <span className="text-xs text-warning">{r.recommendedSpeakers}</span>
                               </div>
                             )}
                           </div>

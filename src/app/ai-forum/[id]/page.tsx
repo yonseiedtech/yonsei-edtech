@@ -200,13 +200,13 @@ export default async function AIForumDetailPage({ params }: Props) {
                                 {c.verified ? (
                                   <CheckCircle2
                                     size={11}
-                                    className="mr-1 inline shrink-0 text-emerald-600"
+                                    className="mr-1 inline shrink-0 text-success"
                                     aria-label="운영진 검증 완료"
                                   />
                                 ) : (
                                   <AlertTriangle
                                     size={11}
-                                    className="mr-1 inline shrink-0 text-amber-600"
+                                    className="mr-1 inline shrink-0 text-warning"
                                     aria-label="AI 자동 생성 — 1차 자료 검증 필요"
                                   />
                                 )}
@@ -244,8 +244,8 @@ export default async function AIForumDetailPage({ params }: Props) {
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
             AI 페르소나들이 본 토론에서 인용한 학술 자료입니다.{" "}
-            <CheckCircle2 size={10} className="inline text-emerald-600" /> 운영진 검증 완료,{" "}
-            <AlertTriangle size={10} className="inline text-amber-600" /> AI 자동 생성 (1차 자료 직접 확인 필요).
+            <CheckCircle2 size={10} className="inline text-success" /> 운영진 검증 완료,{" "}
+            <AlertTriangle size={10} className="inline text-warning" /> AI 자동 생성 (1차 자료 직접 확인 필요).
           </p>
           <ol className="mt-4 space-y-3 text-sm leading-relaxed text-foreground/85">
             {sortedCitations.map((c, i) => {
@@ -257,13 +257,13 @@ export default async function AIForumDetailPage({ params }: Props) {
                     {c.verified ? (
                       <CheckCircle2
                         size={12}
-                        className="mr-1 inline shrink-0 text-emerald-600"
+                        className="mr-1 inline shrink-0 text-success"
                         aria-label="운영진 검증 완료"
                       />
                     ) : (
                       <AlertTriangle
                         size={12}
-                        className="mr-1 inline shrink-0 text-amber-600"
+                        className="mr-1 inline shrink-0 text-warning"
                         aria-label="AI 자동 생성 — 1차 자료 검증 필요"
                       />
                     )}

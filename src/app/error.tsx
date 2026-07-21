@@ -29,7 +29,7 @@ export default function Error({
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-md">
         {/* 아이콘 영역 */}
         <div className="mb-8 flex flex-col items-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-3xl border-2 border-dashed border-rose-200 bg-rose-50 text-rose-400 shadow-sm dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300">
+          <div className="flex h-20 w-20 items-center justify-center rounded-3xl border-2 border-dashed border-destructive/20 bg-destructive/5 text-destructive/50 shadow-sm">
             <AlertTriangle size={36} strokeWidth={1.5} aria-hidden />
           </div>
         </div>

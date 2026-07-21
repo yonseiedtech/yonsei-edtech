@@ -176,10 +176,10 @@ function ReviewImpactCard({
   hasReviewData: boolean;
 }) {
   return (
-    <Card className="rounded-2xl border-emerald-200 bg-emerald-50/30 shadow-sm dark:border-emerald-900/60 dark:bg-emerald-950/20">
+    <Card className="rounded-2xl border-success/20 bg-success/5 shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Target className="h-4 w-4 text-emerald-600 dark:text-emerald-400" aria-hidden />
+          <Target className="h-4 w-4 text-success" aria-hidden />
           복습 → 재진단 학습효과
         </CardTitle>
       </CardHeader>
@@ -196,7 +196,7 @@ function ReviewImpactCard({
             </p>
             <Link
               href="/flashcards"
-              className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-emerald-700 hover:underline dark:text-emerald-400"
+              className="mt-1 inline-flex items-center gap-1 text-xs font-medium text-success hover:underline"
             >
               내 암기카드로 가기
               <ArrowRight className="h-3.5 w-3.5" aria-hidden />
@@ -213,7 +213,7 @@ function ReviewImpactCard({
           <div className="space-y-4">
             {improved.length > 0 && (
               <div>
-                <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-emerald-800 dark:text-emerald-300">
+                <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-success">
                   <CheckCircle2 className="h-4 w-4" aria-hidden />
                   복습이 효과로 이어진 개념 ({improved.length})
                 </p>
@@ -221,13 +221,13 @@ function ReviewImpactCard({
                   {improved.map((it) => (
                     <li
                       key={it.conceptKey}
-                      className="flex flex-wrap items-center gap-2 rounded-xl border border-emerald-200 bg-card/70 p-3 dark:border-emerald-900/60"
+                      className="flex flex-wrap items-center gap-2 rounded-xl border border-success/20 bg-card/70 p-3"
                     >
                       <ConceptLabel id={it.conceptId} name={it.conceptName} tone="emerald" />
                       <span className="text-xs text-muted-foreground">
                         암기카드 <strong className="tabular-nums text-foreground">{it.reviewCount}회</strong>{" "}
                         복습 후 재진단에서{" "}
-                        <strong className="text-emerald-700 dark:text-emerald-400">약점 해소</strong>
+                        <strong className="text-success">약점 해소</strong>
                       </span>
                     </li>
                   ))}
@@ -237,7 +237,7 @@ function ReviewImpactCard({
 
             {reviewing.length > 0 && (
               <div>
-                <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-amber-800 dark:text-amber-300">
+                <p className="mb-2 flex items-center gap-1.5 text-sm font-medium text-warning">
                   <Repeat className="h-4 w-4" aria-hidden />
                   복습 중인 개념 ({reviewing.length})
                 </p>
@@ -314,13 +314,13 @@ function ConceptTrendRow({ trend }: { trend: ConceptTrend }) {
       ? {
           label: "개선됨",
           icon: CheckCircle2,
-          cls: "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300",
+          cls: "border-success/20 bg-success/5 text-success",
           stroke: "#10b981", // emerald-500
         }
       : {
           label: "지속 약점",
           icon: AlertTriangle,
-          cls: "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
+          cls: "border-warning/20 bg-warning/5 text-warning",
           stroke: "#f59e0b", // amber-500
         };
   const StatusIcon = statusMeta.icon;
@@ -393,10 +393,10 @@ function ConceptLabel({
 }) {
   const toneCls =
     tone === "emerald"
-      ? "border-emerald-200 bg-emerald-50 text-emerald-800 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
+      ? "border-success/20 bg-success/5 text-success"
       : tone === "amber"
-        ? "border-amber-200 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
-        : "border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300";
+        ? "border-warning/20 bg-warning/5 text-warning"
+        : "border-cat-5/20 bg-cat-5/5 text-cat-5";
 
   if (id) {
     return (

@@ -76,7 +76,7 @@ export default function LectureNotesEditor({
             status === "saving"
               ? "text-muted-foreground opacity-100"
               : status === "saved"
-                ? "text-indigo-600 opacity-100 dark:text-indigo-400"
+                ? "text-cat-1 opacity-100"
                 : "opacity-0",
           )}
         >
@@ -94,7 +94,7 @@ export default function LectureNotesEditor({
         className={cn(
           "w-full resize-y rounded-xl border border-border bg-background px-3 py-2.5",
           "text-sm text-foreground placeholder:text-muted-foreground",
-          "focus:outline-none focus:ring-2 focus:ring-indigo-500/40",
+          "focus:outline-none focus:ring-2 focus:ring-cat-1/40",
           "dark:bg-muted/10",
         )}
       />

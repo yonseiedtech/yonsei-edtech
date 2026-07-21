@@ -508,7 +508,7 @@ export default function ResearchDesignEditor({ user, readOnly = false }: Props) 
             <div className="flex shrink-0 items-center gap-2">
               {savedAt && !saving && (
                 <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <CheckCircle2 size={12} className="text-emerald-500" />
+                  <CheckCircle2 size={12} className="text-success" />
                   {(() => {
                     const diff = Date.now() - new Date(savedAt).getTime();
                     if (diff < 60_000) return "방금 저장됨";

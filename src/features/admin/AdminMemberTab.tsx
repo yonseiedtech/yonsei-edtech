@@ -101,10 +101,10 @@ const ROLE_COLORS: Record<string, string> = {
   admin: "bg-info/10 text-info border-info/20",
   president: "bg-info/10 text-info border-info/20",
   staff: "bg-info/10 text-info border-info/20",
-  advisor: "bg-teal-100 text-teal-700 border-teal-200",
+  advisor: "bg-info/10 text-info border-info/20",
   alumni: "bg-muted text-muted-foreground border-muted-foreground/20",
-  member: "bg-gray-100 text-gray-600 border-gray-200",
-  guest: "bg-gray-50 text-gray-400 border-gray-100",
+  member: "bg-muted text-muted-foreground border-muted-foreground/20",
+  guest: "bg-muted/50 text-muted-foreground/50 border-muted-foreground/10",
 };
 
 function RoleBadge({ role }: { role: UserRole }) {
@@ -807,8 +807,8 @@ export default function AdminMemberTab() {
                 disabled={autoApproveSaving}
                 onClick={() => toggleAutoApprove(!autoApprove)}
                 className={cn(
-                  "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-green-500 focus:ring-offset-2",
-                  autoApprove ? "bg-green-500" : "bg-gray-300",
+                  "relative inline-flex h-6 w-11 shrink-0 items-center rounded-full border border-transparent transition-colors focus:outline-none focus:ring-2 focus:ring-success/50 focus:ring-offset-2",
+                  autoApprove ? "bg-success" : "bg-muted",
                 )}
               >
                 <span
@@ -832,7 +832,7 @@ export default function AdminMemberTab() {
               <Clock size={40} className="mx-auto text-muted-foreground/40" />
               <p className="mt-3 text-muted-foreground">승인 대기 중인 회원이 없습니다.</p>
               {autoApprove && (
-                <p className="mt-2 text-xs text-green-700">자동 승인이 켜져 있습니다.</p>
+                <p className="mt-2 text-xs text-success">자동 승인이 켜져 있습니다.</p>
               )}
             </div>
           ) : (
@@ -841,7 +841,7 @@ export default function AdminMemberTab() {
                 <div className="flex items-center gap-3 flex-wrap">
                   <p className="text-sm text-muted-foreground">
                     {truePending.length}명 대기 중 — 자동 승인 가능{" "}
-                    <span className="font-semibold text-green-700">{qualifyingPending.length}명</span>
+                    <span className="font-semibold text-success">{qualifyingPending.length}명</span>
                   </p>
                   {/* 오래된 순 정렬 토글 (v9-H5) */}
                   <button
@@ -901,12 +901,12 @@ export default function AdminMemberTab() {
                 {truePending.map((u) => {
                   const eval_ = evaluateSignup(u, allMembers);
                   const riskIcon = eval_.qualifying
-                    ? <ShieldCheck size={14} className="text-green-600" />
+                    ? <ShieldCheck size={14} className="text-success" />
                     : eval_.risk === "medium"
                     ? <AlertTriangle size={14} className="text-warning" />
                     : <AlertCircle size={14} className="text-destructive" />;
                   const riskColor = eval_.qualifying
-                    ? "border-green-200 bg-green-50"
+                    ? "border-success/20 bg-success/5"
                     : eval_.risk === "medium"
                     ? "border-warning/20 bg-warning/5"
                     : "border-destructive/20 bg-destructive/5";
@@ -931,7 +931,7 @@ export default function AdminMemberTab() {
                           <span className="font-medium">{u.name}</span>
                           {u.studentId && <Badge variant="secondary">{u.studentId}</Badge>}
                           {eval_.qualifying ? (
-                            <Badge className="bg-green-100 text-green-700 text-[10px]">자동 승인 가능</Badge>
+                            <Badge className="bg-success/10 text-success text-[10px]">자동 승인 가능</Badge>
                           ) : (
                             <Badge className="bg-destructive/10 text-destructive text-[10px]">수동 검토 필요</Badge>
                           )}

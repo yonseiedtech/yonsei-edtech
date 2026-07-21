@@ -467,7 +467,7 @@ function ResearchModelEditorInner({
             className={cn(
               "flex h-8 items-center gap-1 rounded-md border border-input px-2.5 text-xs font-medium",
               hasSelection
-                ? "text-rose-600 hover:bg-rose-50 dark:text-rose-300 dark:hover:bg-rose-950/40"
+                ? "text-destructive hover:bg-destructive/5"
                 : "cursor-not-allowed text-muted-foreground opacity-60",
             )}
           >

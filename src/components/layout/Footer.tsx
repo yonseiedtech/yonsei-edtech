@@ -16,13 +16,13 @@ export default function Footer() {
   const { user } = useAuthStore();
 
   return (
-    <footer className="border-t bg-gradient-to-b from-navy-footer via-slate-900 to-[hsl(214,60%,7%)] text-slate-300">
+    <footer className="border-t bg-gradient-to-b from-navy-footer via-slate-900 to-[hsl(214,60%,7%)] text-foreground/80">
       <div className="mx-auto max-w-6xl px-4 py-12">
         <div className="grid gap-8 md:grid-cols-3">
           {/* Logo & Description */}
           <div>
             <div className="flex items-center gap-2.5">
-              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card p-1 shadow-sm dark:bg-slate-100">
+              <div className="flex h-10 w-10 items-center justify-center rounded-full bg-card p-1 shadow-sm">
                 <Image
                   src="/yonsei-emblem.svg"
                   alt="연세대학교 엠블럼"
@@ -33,7 +33,7 @@ export default function Footer() {
               </div>
               <span className="text-lg font-bold text-white">연세교육공학회</span>
             </div>
-            <p className="mt-3 text-sm text-slate-400">
+            <p className="mt-3 text-sm text-muted-foreground">
               교육의 미래를 함께 설계하는
               <br />
               연세대학교 교육공학 학술 커뮤니티
@@ -44,24 +44,24 @@ export default function Footer() {
           <div>
             <h3 className="mb-3 text-sm font-semibold text-white">학회소개</h3>
             <nav className="flex flex-col gap-2">
-              <Link href="/about/greeting" className="text-sm text-slate-400 hover:text-white">인사말</Link>
-              <Link href="/about" className="text-sm text-slate-400 hover:text-white">학회 소개</Link>
-              <Link href="/about/fields" className="text-sm text-slate-400 hover:text-white">활동 분야</Link>
-              <Link href="/about/history" className="text-sm text-slate-400 hover:text-white">연혁</Link>
-              <Link href="/about/leadership?tab=professor" className="text-sm text-slate-400 hover:text-white">주임교수·운영진</Link>
-              <Link href="/help" className="text-sm text-slate-400 hover:text-white">도움말 (FAQ)</Link>
-              <Link href="/contact" className="text-sm text-slate-400 hover:text-white">문의하기</Link>
+              <Link href="/about/greeting" className="text-sm text-muted-foreground hover:text-white">인사말</Link>
+              <Link href="/about" className="text-sm text-muted-foreground hover:text-white">학회 소개</Link>
+              <Link href="/about/fields" className="text-sm text-muted-foreground hover:text-white">활동 분야</Link>
+              <Link href="/about/history" className="text-sm text-muted-foreground hover:text-white">연혁</Link>
+              <Link href="/about/leadership?tab=professor" className="text-sm text-muted-foreground hover:text-white">주임교수·운영진</Link>
+              <Link href="/help" className="text-sm text-muted-foreground hover:text-white">도움말 (FAQ)</Link>
+              <Link href="/contact" className="text-sm text-muted-foreground hover:text-white">문의하기</Link>
             </nav>
 
             {user && (
               <div className="mt-5">
-                <h3 className="mb-2 text-xs font-semibold text-slate-500">회원 전용</h3>
+                <h3 className="mb-2 text-xs font-semibold text-muted-foreground">회원 전용</h3>
                 <nav className="flex flex-col gap-2">
                   {MEMBER_SHORTCUTS.map((s) => (
                     <Link
                       key={s.href}
                       href={s.href}
-                      className="inline-flex items-center gap-1.5 text-sm text-slate-400 hover:text-white"
+                      className="inline-flex items-center gap-1.5 text-sm text-muted-foreground hover:text-white"
                     >
                       <s.icon size={14} />
                       {s.label}
@@ -75,7 +75,7 @@ export default function Footer() {
           {/* Contact */}
           <div>
             <h3 className="mb-3 text-sm font-semibold text-white">연락처</h3>
-            <div className="flex flex-col gap-2 text-sm text-slate-400">
+            <div className="flex flex-col gap-2 text-sm text-muted-foreground">
               <p>yonsei.edtech@gmail.com</p>
               <p>서울시 서대문구 연세로 50</p>
               <p>연세대학교 교육과학관</p>
@@ -83,7 +83,7 @@ export default function Footer() {
                 href="https://www.instagram.com/edtech_yonsei/"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-blue-400 hover:text-blue-300"
+                className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-cat-1 hover:text-cat-1/80"
               >
                 <Instagram size={16} />
                 @edtech_yonsei
@@ -92,14 +92,14 @@ export default function Footer() {
           </div>
         </div>
 
-        <div className="mt-10 flex flex-col items-center justify-center gap-3 border-t border-slate-700/60 pt-6 text-xs text-slate-500 sm:flex-row sm:gap-5">
+        <div className="mt-10 flex flex-col items-center justify-center gap-3 border-t border-muted/60 pt-6 text-xs text-muted-foreground sm:flex-row sm:gap-5">
           <p>&copy; 2026 연세교육공학회 (Yonsei EdTech). All rights reserved.</p>
           <div className="flex items-center gap-3">
-            <Link href="/terms" className="transition-colors hover:text-slate-200">이용약관</Link>
-            <span aria-hidden className="text-slate-700">·</span>
-            <Link href="/privacy" className="transition-colors hover:text-slate-200">개인정보처리방침</Link>
-            <span aria-hidden className="text-slate-700">·</span>
-            <Link href="/contact" className="transition-colors hover:text-slate-200">문의</Link>
+            <Link href="/terms" className="transition-colors hover:text-foreground">이용약관</Link>
+            <span aria-hidden className="text-muted">·</span>
+            <Link href="/privacy" className="transition-colors hover:text-foreground">개인정보처리방침</Link>
+            <span aria-hidden className="text-muted">·</span>
+            <Link href="/contact" className="transition-colors hover:text-foreground">문의</Link>
           </div>
         </div>
       </div>

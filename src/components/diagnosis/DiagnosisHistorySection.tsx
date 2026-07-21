@@ -108,7 +108,7 @@ export default function DiagnosisHistorySection({ userId }: DiagnosisHistorySect
 
   if (error) {
     return (
-      <div className="mt-12 flex items-start gap-2 rounded-xl border border-rose-200 bg-rose-50 p-4 text-xs text-rose-800 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
+      <div className="mt-12 flex items-start gap-2 rounded-xl border border-destructive/20 bg-destructive/5 p-4 text-xs text-destructive">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
         <p>진단 이력을 불러오지 못했습니다. 잠시 후 다시 시도해 주세요.</p>
       </div>
@@ -239,7 +239,7 @@ export default function DiagnosisHistorySection({ userId }: DiagnosisHistorySect
             )}
             {weakestArea && (
               <p className="mt-3 flex items-center gap-1.5 text-xs text-muted-foreground">
-                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-amber-500" aria-hidden />
+                <AlertTriangle className="h-3.5 w-3.5 shrink-0 text-warning" aria-hidden />
                 가장 보완이 필요한 영역:{" "}
                 <strong className="text-foreground">{weakestArea.area}</strong> ({weakestArea.pct}%)
               </p>
@@ -324,7 +324,7 @@ export default function DiagnosisHistorySection({ userId }: DiagnosisHistorySect
                   <span className="rounded-md bg-primary/10 px-2 py-0.5 font-medium text-primary tabular-nums">
                     논문 작성 {r.paperReadiness}
                   </span>
-                  <span className="rounded-md bg-sky-500/10 px-2 py-0.5 font-medium text-sky-700 dark:text-sky-300 tabular-nums">
+                  <span className="rounded-md bg-cat-1/10 px-2 py-0.5 font-medium text-cat-1 tabular-nums">
                     연구 분석 {r.analysisReadiness}
                   </span>
                 </span>
@@ -352,7 +352,7 @@ export default function DiagnosisHistorySection({ userId }: DiagnosisHistorySect
                     <Badge
                       key={`${r.id}-${ni}`}
                       variant="outline"
-                      className="border-violet-200 bg-violet-50 text-[10px] text-violet-800 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300"
+                      className="border-cat-5/20 bg-cat-5/5 text-[10px] text-cat-5"
                     >
                       {name}
                     </Badge>

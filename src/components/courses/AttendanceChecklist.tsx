@@ -177,9 +177,9 @@ export function AttendanceChecklist({
               <Square className="mr-1 h-3.5 w-3.5" /> 전체 해제
             </Button>
             <span className="ml-auto text-muted-foreground">
-              출석 <span className="font-semibold text-emerald-700">{summary.attendedCount}</span>
+              출석 <span className="font-semibold text-success">{summary.attendedCount}</span>
               {" · "}
-              결석 <span className="font-semibold text-rose-700">{summary.absentCount}</span>
+              결석 <span className="font-semibold text-destructive">{summary.absentCount}</span>
               {" / "}
               총 {summary.total}명
             </span>
@@ -203,7 +203,7 @@ export function AttendanceChecklist({
                         onClick={() => toggle(k)}
                         className={`mt-0.5 inline-flex h-5 w-5 shrink-0 items-center justify-center rounded border ${
                           isAttended
-                            ? "border-emerald-500 bg-emerald-500 text-white"
+                            ? "border-success bg-success text-white"
                             : "border-input bg-card text-transparent"
                         }`}
                         aria-label={isAttended ? "출석 해제" : "출석 표시"}

@@ -228,11 +228,11 @@ export default function StatMethodGuideDialog({
                   );
                 })}
                 {rec.cautions.length > 0 && (
-                  <ul className="space-y-1 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5">
+                  <ul className="space-y-1 rounded-lg border border-warning/30 bg-warning/5 p-2.5">
                     {rec.cautions.map((c, i) => (
                       <li
                         key={i}
-                        className="flex gap-1.5 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300"
+                        className="flex gap-1.5 text-[11px] leading-relaxed text-warning"
                       >
                         <span aria-hidden>⚠</span>
                         <span>{c}</span>

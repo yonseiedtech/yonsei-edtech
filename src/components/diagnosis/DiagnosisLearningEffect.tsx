@@ -84,14 +84,14 @@ async function loadConceptImprovement(userId: string): Promise<ConceptImprovemen
 function DeltaBadge({ deltaPp }: { deltaPp: number }) {
   if (deltaPp > 0) {
     return (
-      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 tabular-nums dark:bg-emerald-950/40 dark:text-emerald-300">
+      <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success tabular-nums">
         <TrendingUp size={11} aria-hidden />+{deltaPp}%p
       </span>
     );
   }
   if (deltaPp < 0) {
     return (
-      <span className="inline-flex shrink-0 items-center rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-semibold text-rose-700 tabular-nums dark:bg-rose-950/40 dark:text-rose-300">
+      <span className="inline-flex shrink-0 items-center rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-semibold text-destructive tabular-nums">
         {deltaPp}%p
       </span>
     );
@@ -179,7 +179,7 @@ export default function DiagnosisLearningEffect({ userId }: { userId: string }) 
           {/* 요약 한 줄 인사이트 — 상관/경향 표현. */}
           <p className="text-sm text-foreground">
             다시 진단한 개념 <b className="tabular-nums">{concepts.length}</b>개 중{" "}
-            <b className="tabular-nums text-emerald-700 dark:text-emerald-400">{improvedCount}</b>개의
+            <b className="tabular-nums text-success">{improvedCount}</b>개의
             정답률이 향상됐어요
             {improvedWithReviewCount > 0 && (
               <span className="text-muted-foreground">

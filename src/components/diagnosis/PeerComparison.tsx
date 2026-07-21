@@ -58,9 +58,9 @@ function deltaTone(mine: number, peerAvg: number): {
 } {
   const d = mine - peerAvg;
   if (d >= 5)
-    return { color: "text-emerald-600 dark:text-emerald-400", Icon: ArrowUp, label: `평균 +${d}` };
+    return { color: "text-success", Icon: ArrowUp, label: `평균 +${d}` };
   if (d <= -5)
-    return { color: "text-rose-600 dark:text-rose-400", Icon: ArrowDown, label: `평균 ${d}` };
+    return { color: "text-destructive", Icon: ArrowDown, label: `평균 ${d}` };
   return { color: "text-muted-foreground", Icon: Minus, label: "평균과 비슷" };
 }
 
@@ -76,7 +76,7 @@ function percentilePhrase(pct: number): string {
 /** 한 줄 비교 막대 — 내 값(마커) + 동료 평균(점선) */
 function ComparisonBar({ mine, peerAvg }: { mine: number; peerAvg: number }) {
   const tone =
-    mine >= 80 ? "bg-emerald-500" : mine >= 60 ? "bg-sky-500" : mine >= 40 ? "bg-amber-500" : "bg-rose-500";
+    mine >= 80 ? "bg-success" : mine >= 60 ? "bg-cat-1" : mine >= 40 ? "bg-warning" : "bg-destructive";
   return (
     <div className="relative h-2.5 w-full overflow-visible rounded-full bg-muted">
       <div
@@ -150,10 +150,10 @@ export default function PeerComparison({
   const hasAny = areaRows.length > 0 || readinessRows.length > 0;
 
   return (
-    <Card className="mt-6 rounded-2xl border-sky-200 bg-sky-50/30 shadow-sm dark:border-sky-800/60 dark:bg-sky-950/15">
+    <Card className="mt-6 rounded-2xl border-cat-1/20 bg-cat-1/5 shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Users className="h-4 w-4 text-sky-500" aria-hidden />
+          <Users className="h-4 w-4 text-cat-1" aria-hidden />
           동료 대비 내 위치
         </CardTitle>
       </CardHeader>
@@ -193,7 +193,7 @@ export default function PeerComparison({
                       <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
                         <span>동료 평균 {stat.avg} · 중앙값 {stat.median} (표본 {stat.sample}명)</span>
                         {pct !== null && (
-                          <span className="text-sky-700 dark:text-sky-300">{percentilePhrase(pct)}</span>
+                          <span className="text-cat-1">{percentilePhrase(pct)}</span>
                         )}
                       </div>
                     </div>
@@ -229,7 +229,7 @@ export default function PeerComparison({
                       <div className="mt-1 flex items-center justify-between text-[11px] text-muted-foreground">
                         <span>동료 평균 {r.stat.avg}% · 중앙값 {r.stat.median}% (표본 {r.stat.sample}명)</span>
                         {r.pct !== null && (
-                          <span className="text-sky-700 dark:text-sky-300">{percentilePhrase(r.pct)}</span>
+                          <span className="text-cat-1">{percentilePhrase(r.pct)}</span>
                         )}
                       </div>
                     </div>

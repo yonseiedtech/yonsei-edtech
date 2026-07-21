@@ -203,7 +203,7 @@ export default function DiagnosisLanding({
           className="flex w-full items-center justify-between gap-3 px-6 py-5 text-left transition-colors hover:bg-muted/30 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
         >
           <span className="flex items-start gap-4">
-            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-500/10 text-violet-600 dark:text-violet-400">
+            <span className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-cat-5/10 text-cat-5">
               <SlidersHorizontal className="h-6 w-6" aria-hidden />
             </span>
             <span>
@@ -276,8 +276,8 @@ export default function DiagnosisLanding({
                       className={cn(
                         "rounded-full border px-3 py-1.5 text-xs transition-all duration-150 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-1 disabled:cursor-not-allowed disabled:opacity-40",
                         active
-                          ? "border-violet-500 bg-violet-500/10 font-medium text-violet-700 shadow-sm dark:text-violet-300"
-                          : "border-border bg-card text-muted-foreground hover:border-violet-400/50 hover:bg-muted/40",
+                          ? "border-cat-5 bg-cat-5/10 font-medium text-cat-5 shadow-sm"
+                          : "border-border bg-card text-muted-foreground hover:border-cat-5/50 hover:bg-muted/40",
                       )}
                     >
                       {DIAGNOSTIC_QUESTION_TYPE_LABELS[type]}
@@ -389,7 +389,7 @@ export default function DiagnosisLanding({
       </div>
 
       {/* 학술 책임 고지 */}
-      <div className="mt-10 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-4 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+      <div className="mt-10 flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-4 text-xs text-warning">
         <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
         <p>
           본 진단은 학습 보조용 자기점검 도구입니다. 점수는 절대적 평가가 아니며, 연구 설계·통계

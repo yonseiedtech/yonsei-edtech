@@ -64,7 +64,7 @@ function MiniResultBar({
       </div>
       <div className="h-1 w-full rounded-full bg-muted">
         <div
-          className="h-full rounded-full bg-indigo-500 transition-all duration-300 dark:bg-indigo-400"
+          className="h-full rounded-full bg-cat-1 transition-all duration-300"
           style={{ width: `${pct}%` }}
         />
       </div>
@@ -95,7 +95,7 @@ function MiniAggView({ agg }: { agg: QuestionAggregation }) {
     return (
       <p className="text-[10px] text-muted-foreground">
         평균{" "}
-        <span className="font-semibold text-indigo-600 dark:text-indigo-400">
+        <span className="font-semibold text-cat-1">
           {agg.average.toFixed(1)}
         </span>
         점 / 5 · {total}명

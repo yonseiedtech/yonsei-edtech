@@ -115,10 +115,10 @@ export default function AbstractPanel({ value, keywords, readOnly, onChange, onK
     chars === 0
       ? "text-muted-foreground"
       : chars < REC.lowChars
-        ? "text-amber-600"
+        ? "text-warning"
         : chars > REC.highChars
-          ? "text-amber-600"
-          : "text-emerald-600";
+          ? "text-warning"
+          : "text-success";
 
   function addKeyword(raw: string) {
     const k = raw.trim().replace(/,$/, "").trim();
@@ -141,7 +141,7 @@ export default function AbstractPanel({ value, keywords, readOnly, onChange, onK
 
       {/* 실시간 문장 점검 — 긴 문장·이중피동 (사이클 72) */}
       {(longCount > 0 || doublePassiveCount > 0) && (
-        <p className="flex flex-wrap items-center gap-2 rounded-lg bg-amber-50 px-2.5 py-1.5 text-[11px] text-amber-800 dark:bg-amber-950/30 dark:text-amber-200">
+        <p className="flex flex-wrap items-center gap-2 rounded-lg bg-warning/5 px-2.5 py-1.5 text-[11px] text-warning">
           {longCount > 0 && (
             <span>⚠ 긴 문장 {longCount}개({LONG_SENTENCE}자 초과) — 한 문장 한 메시지로 끊어보세요</span>
           )}
@@ -177,7 +177,7 @@ export default function AbstractPanel({ value, keywords, readOnly, onChange, onK
               배경 → 목적 → 방법 → 결과 → 시사점. 도입은 <span className="font-medium">목적·방법</span>을 앞세우고,
               마무리는 <span className="font-medium">시사점</span>으로 닫는 것이 관례입니다.
             </p>
-            <p className="text-amber-700 dark:text-amber-300">
+            <p className="text-warning">
               💡 졸업생 초록은 방법(89%)·목적(80%)·결과(70%)는 잘 담지만 <span className="font-semibold">배경(41%)과
               시사점(34%)</span>은 자주 빠집니다. 5요소를 모두 갖춘 초록은 8%뿐 — 이 둘까지 챙기면 차별화됩니다.
             </p>
@@ -210,18 +210,18 @@ export default function AbstractPanel({ value, keywords, readOnly, onChange, onK
                 className={cn(
                   "flex items-start gap-2 rounded-lg border px-2.5 py-1.5 text-[11px] transition-colors",
                   ok
-                    ? "border-emerald-200 bg-emerald-50/60 dark:border-emerald-900/40 dark:bg-emerald-950/20"
+                    ? "border-success/20 bg-success/5"
                     : "border-dashed bg-muted/30",
                 )}
                 title={e.hint}
               >
                 {ok ? (
-                  <Check size={13} className="mt-0.5 shrink-0 text-emerald-600" />
+                  <Check size={13} className="mt-0.5 shrink-0 text-success" />
                 ) : (
                   <Circle size={13} className="mt-0.5 shrink-0 text-muted-foreground/50" />
                 )}
                 <span className="min-w-0">
-                  <span className={cn("font-medium", ok ? "text-emerald-800 dark:text-emerald-200" : "text-foreground/70")}>
+                  <span className={cn("font-medium", ok ? "text-success" : "text-foreground/70")}>
                     {e.label}
                   </span>
                   <span className="ml-1 text-muted-foreground">· 졸업생 {e.rate}%</span>
@@ -258,7 +258,7 @@ export default function AbstractPanel({ value, keywords, readOnly, onChange, onK
                 >
                   <span className="font-semibold text-primary">+</span>
                   {t.label}
-                  {done && <Check size={11} className="text-emerald-600" />}
+                  {done && <Check size={11} className="text-success" />}
                 </button>
               );
             })}

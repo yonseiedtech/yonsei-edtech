@@ -55,31 +55,31 @@ const SOURCE_META: Record<
     label: "교육공학 개념",
     icon: BookOpen,
     className:
-      "border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950/30 dark:text-violet-300",
+      "border-cat-5/30 bg-cat-5/5 text-cat-5",
   },
   diagnostic_wrong: {
     label: "진단 오답",
     icon: AlertCircle,
     className:
-      "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/30 dark:text-amber-300",
+      "border-warning/30 bg-warning/5 text-warning",
   },
   foundation_term: {
     label: "기초 용어",
     icon: BookOpen,
     className:
-      "border-sky-300 bg-sky-50 text-sky-700 dark:border-sky-800 dark:bg-sky-950/30 dark:text-sky-300",
+      "border-info/30 bg-info/5 text-info",
   },
   variable: {
     label: "변인",
     icon: Variable,
     className:
-      "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/30 dark:text-blue-300",
+      "border-cat-1/30 bg-cat-1/5 text-cat-1",
   },
   measurement: {
     label: "측정도구",
     icon: Ruler,
     className:
-      "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300",
+      "border-success/30 bg-success/5 text-success",
   },
 };
 
@@ -281,7 +281,7 @@ export default function FlashcardStudy() {
     return (
       <Card className="rounded-2xl shadow-sm">
         <CardContent className="flex flex-col items-center gap-3 py-12 text-center">
-          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400">
+          <div className="inline-flex h-12 w-12 items-center justify-center rounded-xl bg-success/10 text-success">
             <PartyPopper className="h-6 w-6" aria-hidden />
           </div>
           <p className="text-sm font-semibold">오늘의 복습을 마쳤어요! ({reviewedCount}장)</p>
@@ -384,7 +384,7 @@ export default function FlashcardStudy() {
           className={cn(
             "min-h-[16rem] rounded-2xl shadow-sm transition-colors",
             flipped
-              ? "border-sky-300 bg-sky-50/50 dark:border-sky-800 dark:bg-sky-950/20"
+              ? "border-info/30 bg-info/5"
               : "hover:border-primary/40",
           )}
         >
@@ -445,7 +445,7 @@ export default function FlashcardStudy() {
                   <Link
                     href={`/archive/foundation-terms/${current.foundationTermId}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="mt-4 inline-flex w-fit items-center gap-1 text-xs font-medium text-violet-700 hover:underline dark:text-violet-300"
+                    className="mt-4 inline-flex w-fit items-center gap-1 text-xs font-medium text-cat-5 hover:underline"
                   >
                     <BookOpen className="h-3 w-3" aria-hidden />
                     용어 정의 바로가기
@@ -456,7 +456,7 @@ export default function FlashcardStudy() {
                   <Link
                     href={`/archive/concept/${current.conceptId}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="mt-4 inline-flex w-fit items-center gap-1 text-xs font-medium text-violet-700 hover:underline dark:text-violet-300"
+                    className="mt-4 inline-flex w-fit items-center gap-1 text-xs font-medium text-cat-5 hover:underline"
                   >
                     <BookOpen className="h-3 w-3" aria-hidden />
                     {current.source === "concept"
@@ -469,7 +469,7 @@ export default function FlashcardStudy() {
                   <Link
                     href={`/archive/variable/${current.variableId}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="mt-4 inline-flex w-fit items-center gap-1 text-xs font-medium text-blue-700 hover:underline dark:text-blue-300"
+                    className="mt-4 inline-flex w-fit items-center gap-1 text-xs font-medium text-cat-1 hover:underline"
                   >
                     <Variable className="h-3 w-3" aria-hidden />
                     변인 정의 바로가기
@@ -480,7 +480,7 @@ export default function FlashcardStudy() {
                   <Link
                     href={`/archive/measurement/${current.measurementId}`}
                     onClick={(e) => e.stopPropagation()}
-                    className="mt-4 inline-flex w-fit items-center gap-1 text-xs font-medium text-emerald-700 hover:underline dark:text-emerald-300"
+                    className="mt-4 inline-flex w-fit items-center gap-1 text-xs font-medium text-success hover:underline"
                   >
                     <Ruler className="h-3 w-3" aria-hidden />
                     측정도구 정의 바로가기

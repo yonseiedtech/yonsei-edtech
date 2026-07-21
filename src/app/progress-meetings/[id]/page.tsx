@@ -285,7 +285,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
                 variant="secondary"
                 className={cn(
                   "text-xs",
-                  overallDelta > 0 ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700",
+                  overallDelta > 0 ? "bg-destructive/5 text-destructive" : "bg-success/5 text-success",
                 )}
               >
                 {overallDelta > 0 ? "초과" : "여유"} {fmtMMSS(Math.abs(overallDelta))}
@@ -373,7 +373,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
                   <button
                     type="button"
                     onClick={handleRemoveSlides}
-                    className="rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+                    className="rounded p-1 text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
                     aria-label="슬라이드 삭제"
                     title="슬라이드 삭제"
                   >
@@ -440,7 +440,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
                     <div className="flex flex-wrap items-center gap-2">
                       <Badge variant="secondary" className="text-[10px]">#{i + 1}</Badge>
                       {isActive && <Badge className="bg-primary text-[10px] text-white">진행 중</Badge>}
-                      {isDone && <Badge className="bg-emerald-50 text-[10px] text-emerald-700"><CheckCircle2 size={10} className="mr-0.5" />완료</Badge>}
+                      {isDone && <Badge className="bg-success/5 text-[10px] text-success"><CheckCircle2 size={10} className="mr-0.5" />완료</Badge>}
                     </div>
                     {canControl && status === "planning" ? (
                       <Input
@@ -475,7 +475,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
                         <span
                           className={cn(
                             "tabular-nums",
-                            overTime ? "text-rose-600" : "text-emerald-600",
+                            overTime ? "text-destructive" : "text-success",
                           )}
                         >
                           {overTime ? <AlertTriangle size={12} className="-mt-0.5 mr-0.5 inline" /> : null}
@@ -488,7 +488,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
                         <div
                           className={cn(
                             "h-full transition-all duration-300",
-                            overTime ? "bg-rose-500" : "bg-primary",
+                            overTime ? "bg-destructive" : "bg-primary",
                           )}
                           style={{ width: `${pct}%` }}
                         />
@@ -499,7 +499,7 @@ export default function ProgressMeetingPage({ params }: PageProps) {
                     <button
                       type="button"
                       onClick={() => handleRemoveSection(s.id)}
-                      className="rounded p-1 text-muted-foreground hover:text-rose-500"
+                      className="rounded p-1 text-muted-foreground hover:text-destructive"
                       aria-label="섹션 삭제"
                     >
                       <Trash2 size={14} />
@@ -546,10 +546,10 @@ export default function ProgressMeetingPage({ params }: PageProps) {
 
 function StatusBadge({ status }: { status: ProgressMeeting["status"] }) {
   const map: Record<ProgressMeeting["status"], { label: string; cls: string }> = {
-    planning: { label: "준비 중", cls: "bg-slate-100 text-slate-700" },
-    running: { label: "진행 중", cls: "bg-emerald-50 text-emerald-700 animate-pulse" },
-    paused: { label: "일시정지", cls: "bg-amber-50 text-amber-700" },
-    completed: { label: "종료됨", cls: "bg-blue-50 text-blue-700" },
+    planning: { label: "준비 중", cls: "bg-muted text-muted-foreground" },
+    running: { label: "진행 중", cls: "bg-success/5 text-success animate-pulse" },
+    paused: { label: "일시정지", cls: "bg-warning/5 text-warning" },
+    completed: { label: "종료됨", cls: "bg-cat-1/5 text-cat-1" },
   };
   const m = map[status];
   return <Badge variant="secondary" className={cn("text-xs", m.cls)}>{m.label}</Badge>;

@@ -30,15 +30,15 @@ const STATUS_LABEL: Record<LabStatus, string> = {
 // DESIGN.md §2.1 Status 컬러 매핑
 const STATUS_COLOR: Record<LabStatus, string> = {
   draft:
-    "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    "bg-muted text-muted-foreground",
   testing:
-    "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
+    "bg-warning/10 text-warning",
   feedback:
-    "bg-sky-100 text-sky-700 dark:bg-sky-950/60 dark:text-sky-300",
+    "bg-info/10 text-info",
   approved:
-    "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300",
+    "bg-success/10 text-success",
   archived:
-    "bg-zinc-100 text-zinc-500 dark:bg-zinc-800 dark:text-zinc-400",
+    "bg-muted text-muted-foreground",
 };
 
 // ── 필터 상수 ────────────────────────────────────────────────────────────────

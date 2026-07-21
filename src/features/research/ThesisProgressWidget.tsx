@@ -107,10 +107,10 @@ export default function ThesisProgressWidget({ variant = "card" }: Props) {
     return (
       <Link
         href="/research"
-        className="group block rounded-2xl border-2 border-dashed border-amber-200/70 bg-amber-50/40 p-5 transition-colors hover:border-amber-300 dark:border-amber-800/40 dark:bg-amber-950/20"
+        className="group block rounded-2xl border-2 border-dashed border-warning/20 bg-warning/5 p-5 transition-colors hover:border-warning/30"
       >
         <div className="flex items-start gap-4">
-          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-amber-200/40 text-amber-700 dark:bg-amber-900/30 dark:text-amber-300">
+          <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-xl bg-warning/20 text-warning">
             <PenLine size={20} />
           </div>
           <div className="min-w-0 flex-1">
@@ -118,7 +118,7 @@ export default function ThesisProgressWidget({ variant = "card" }: Props) {
             <p className="mt-0.5 text-sm text-muted-foreground">
               아직 작성한 본문이 없어요. 5장 작성을 시작하면 완성도를 한눈에 추적할 수 있어요.
             </p>
-            <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-amber-700 dark:text-amber-300">
+            <span className="mt-2 inline-flex items-center gap-1 text-xs font-semibold text-warning">
               논문 작성 시작 <ArrowRight size={12} />
             </span>
           </div>
@@ -133,7 +133,7 @@ export default function ThesisProgressWidget({ variant = "card" }: Props) {
       className="group block rounded-2xl border bg-card p-4 shadow-sm transition-colors hover:bg-muted/30 sm:p-5"
     >
       <div className="flex items-center gap-2">
-        <FileText size={18} className="text-amber-600 dark:text-amber-400" aria-hidden="true" />
+        <FileText size={18} className="text-warning" aria-hidden="true" />
         <h3 className="font-bold">내 논문 진행도</h3>
         <span className="ml-auto inline-flex items-center gap-1 text-[11px] font-medium text-muted-foreground transition-colors group-hover:text-foreground">
           보고서로 이동 <ArrowRight size={11} />
@@ -142,7 +142,7 @@ export default function ThesisProgressWidget({ variant = "card" }: Props) {
 
       {/* 종합 완성도 */}
       <div className="mt-3 flex items-end gap-2">
-        <span className="text-3xl font-bold leading-none tabular-nums text-amber-600 dark:text-amber-400">
+        <span className="text-3xl font-bold leading-none tabular-nums text-warning">
           {completion.overallPercent}
           <span className="ml-0.5 text-base font-normal text-muted-foreground">%</span>
         </span>
@@ -152,7 +152,7 @@ export default function ThesisProgressWidget({ variant = "card" }: Props) {
       </div>
       <div className="mt-2 h-2 overflow-hidden rounded-full bg-muted">
         <div
-          className="h-full rounded-full bg-amber-500 transition-all dark:bg-amber-400"
+          className="h-full rounded-full bg-warning transition-all"
           style={{ width: `${Math.max(0, Math.min(100, completion.overallPercent))}%` }}
         />
       </div>
@@ -166,8 +166,8 @@ export default function ThesisProgressWidget({ variant = "card" }: Props) {
           <span
             className={
               completion.balanceFlagged > 0
-                ? "inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
-                : "inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                ? "inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-warning"
+                : "inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-success"
             }
           >
             {completion.balanceFlagged > 0 ? (
@@ -182,8 +182,8 @@ export default function ThesisProgressWidget({ variant = "card" }: Props) {
           <span
             className={
               completion.lintPassPercent < 100
-                ? "inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
-                : "inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
+                ? "inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-warning"
+                : "inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-success"
             }
           >
             {completion.lintPassPercent < 100 ? (
@@ -206,7 +206,7 @@ export default function ThesisProgressWidget({ variant = "card" }: Props) {
               <div key={key} className="flex flex-col items-center gap-1">
                 <div className="flex h-16 w-full items-end overflow-hidden rounded-md bg-muted">
                   <div
-                    className="w-full rounded-md bg-amber-400/80 transition-all dark:bg-amber-500/70"
+                    className="w-full rounded-md bg-warning transition-all"
                     style={{ height: `${Math.max(6, pct)}%` }}
                     aria-hidden="true"
                   />

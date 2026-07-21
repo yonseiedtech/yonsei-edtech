@@ -28,7 +28,7 @@ export default function SeminarPreview() {
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-warning/10 text-warning">
               <Calendar size={18} aria-hidden />
             </div>
             <h2 className="text-xl font-bold tracking-tight sm:text-2xl">예정 세미나</h2>

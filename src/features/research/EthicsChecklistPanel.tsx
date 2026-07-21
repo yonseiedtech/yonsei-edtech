@@ -94,40 +94,40 @@ export default function EthicsChecklistPanel({
   );
 
   return (
-    <div className="mt-3 rounded-xl border border-emerald-200/70 bg-emerald-50/40 dark:border-emerald-800/50 dark:bg-emerald-950/10">
+    <div className="mt-3 rounded-xl border border-success/20 bg-success/5">
       <button
         type="button"
         onClick={() => setOpen((v) => !v)}
         aria-expanded={open}
         className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
       >
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-200">
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-success">
           <ShieldCheck size={13} />
           연구윤리 체크리스트
           <span
             className={cn(
               "rounded-full px-1.5 py-0.5 text-[10px] font-bold",
               done === ETHICS_ITEMS.length
-                ? "bg-emerald-200 text-emerald-900 dark:bg-emerald-800 dark:text-emerald-100"
-                : "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300",
+                ? "bg-success/20 text-success"
+                : "bg-success/10 text-success",
             )}
           >
             {done}/{ETHICS_ITEMS.length}
           </span>
-          <span className="font-normal text-emerald-700/80 dark:text-emerald-300/80">
+          <span className="font-normal text-success/80">
             동의·IRB·개인정보 — 심사 전 필수 점검
           </span>
         </span>
         <ChevronRight
           size={14}
           className={cn(
-            "shrink-0 text-emerald-700/70 transition-transform dark:text-emerald-300/70",
+            "shrink-0 text-success/70 transition-transform",
             open && "rotate-90",
           )}
         />
       </button>
       {open && (
-        <div className="space-y-2 border-t border-emerald-200/60 px-3.5 py-3 dark:border-emerald-800/40">
+        <div className="space-y-2 border-t border-success/20 px-3.5 py-3">
           <ul className="space-y-1.5">
             {ETHICS_ITEMS.map((it) => {
               const on = checked.includes(it.id);
@@ -137,8 +137,8 @@ export default function EthicsChecklistPanel({
                     className={cn(
                       "flex cursor-pointer items-start gap-2 rounded-lg border px-2.5 py-1.5 transition-colors",
                       on
-                        ? "border-emerald-300 bg-emerald-100/50 dark:border-emerald-700 dark:bg-emerald-900/20"
-                        : "border-dashed bg-card/50 hover:border-emerald-300/70",
+                        ? "border-success/30 bg-success/10"
+                        : "border-dashed bg-card/50 hover:border-success/30",
                       readOnly && "cursor-default",
                     )}
                   >
@@ -147,10 +147,10 @@ export default function EthicsChecklistPanel({
                       checked={on}
                       onChange={() => toggle(it.id)}
                       disabled={readOnly}
-                      className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-emerald-600"
+                      className="mt-0.5 h-3.5 w-3.5 shrink-0 accent-success"
                     />
                     <span className="min-w-0 text-xs leading-relaxed">
-                      <span className={cn("font-medium", on && "text-emerald-900 dark:text-emerald-100")}>
+                      <span className={cn("font-medium", on && "text-success")}>
                         {it.label}
                       </span>
                       <span className="mt-0.5 block text-[10px] text-muted-foreground">{it.hint}</span>

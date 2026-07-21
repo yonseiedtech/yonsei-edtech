@@ -12,11 +12,11 @@ interface Props {
 }
 
 const CATEGORIES: { key: keyof PaperVariables; label: string; color: string; placeholder: string }[] = [
-  { key: "independent", label: "독립변인", color: "bg-blue-50 text-blue-700", placeholder: "예: 자기조절학습" },
-  { key: "dependent", label: "종속변인", color: "bg-emerald-50 text-emerald-700", placeholder: "예: 학업성취도" },
-  { key: "mediator", label: "매개변인", color: "bg-blue-50 text-blue-700", placeholder: "예: 학습몰입" },
-  { key: "moderator", label: "조절변인", color: "bg-amber-50 text-amber-700", placeholder: "예: 학년" },
-  { key: "control", label: "통제변인", color: "bg-slate-100 text-slate-700", placeholder: "예: 사전학업성취도" },
+  { key: "independent", label: "독립변인", color: "bg-cat-1/5 text-cat-1", placeholder: "예: 자기조절학습" },
+  { key: "dependent", label: "종속변인", color: "bg-success/5 text-success", placeholder: "예: 학업성취도" },
+  { key: "mediator", label: "매개변인", color: "bg-cat-1/5 text-cat-1", placeholder: "예: 학습몰입" },
+  { key: "moderator", label: "조절변인", color: "bg-warning/5 text-warning", placeholder: "예: 학년" },
+  { key: "control", label: "통제변인", color: "bg-muted text-muted-foreground", placeholder: "예: 사전학업성취도" },
 ];
 
 export default function VariablesInput({ value, onChange }: Props) {

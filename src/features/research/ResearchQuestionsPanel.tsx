@@ -194,9 +194,9 @@ export default function ResearchQuestionsPanel({
   }
 
   return (
-    <div className="mt-3 rounded-xl border border-amber-200/70 bg-amber-50/40 p-4 dark:border-amber-800/50 dark:bg-amber-950/10">
+    <div className="mt-3 rounded-xl border border-warning/20 bg-warning/5 p-4">
       <div className="flex items-center justify-between gap-2">
-        <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-200">
+        <p className="flex items-center gap-1.5 text-xs font-semibold text-warning">
           <HelpCircle size={13} />
           연구 문제
         </p>
@@ -235,7 +235,7 @@ export default function ResearchQuestionsPanel({
         {items.map((q, i) => (
           <div key={q.id} className="rounded-xl border bg-card p-3">
             <div className="flex items-start gap-2">
-              <span className="mt-2 shrink-0 rounded-md bg-amber-100 px-2 py-0.5 text-[11px] font-bold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+              <span className="mt-2 shrink-0 rounded-md bg-warning/10 px-2 py-0.5 text-[11px] font-bold text-warning">
                 {i + 1}
               </span>
               <Textarea
@@ -260,7 +260,7 @@ export default function ResearchQuestionsPanel({
             {/* R2: 연구 가설 — 문제와 1:1 쌍 (서술문으로 바꿨을 때 그대로 가설이 되는지가 시금석) */}
             <div className="mt-2 pl-8">
               <div className="flex flex-wrap items-center gap-2">
-                <p className="text-[11px] font-semibold text-emerald-700 dark:text-emerald-300">
+                <p className="text-[11px] font-semibold text-success">
                   연구 가설{" "}
                   <span className="font-normal text-muted-foreground">
                     (선택 — 분석 방향 설계용. 우리 전공 논문은 가설을 본문에 직접 쓰지 않는 관례가 있어요)
@@ -272,7 +272,7 @@ export default function ResearchQuestionsPanel({
                     onClick={() =>
                       patch(q.id, (cur) => ({ ...cur, hypothesisText: toHypothesisDraft(cur.text) }))
                     }
-                    className="inline-flex items-center gap-1 rounded-full border border-dashed border-emerald-400/60 px-2 py-0.5 text-[10px] text-emerald-700 transition-colors hover:bg-emerald-50 dark:text-emerald-300 dark:hover:bg-emerald-950/30"
+                    className="inline-flex items-center gap-1 rounded-full border border-dashed border-success/40 px-2 py-0.5 text-[10px] text-success transition-colors hover:bg-success/5"
                     title="연구문제를 서술문 가설 초안으로 변환"
                   >
                     <ArrowRightLeft size={10} />
@@ -313,7 +313,7 @@ export default function ResearchQuestionsPanel({
               <TagPicker
                 icon={Compass}
                 label="연구방법"
-                accent="text-amber-700 dark:text-amber-300"
+                accent="text-warning"
                 options={rmOptions}
                 selectedIds={q.researchMethodIds}
                 readOnly={readOnly}
@@ -323,7 +323,7 @@ export default function ResearchQuestionsPanel({
               <TagPicker
                 icon={BarChart3}
                 label="통계방법"
-                accent="text-blue-700 dark:text-blue-300"
+                accent="text-cat-1"
                 options={smOptions}
                 selectedIds={q.statMethodIds}
                 readOnly={readOnly}

@@ -134,29 +134,29 @@ export default function FlashcardDashboard() {
             icon={Layers}
             label="총 카드"
             value={stats.total}
-            tone="text-sky-700 dark:text-sky-300"
-            bg="bg-sky-100 dark:bg-sky-950/40"
+            tone="text-info"
+            bg="bg-info/10"
           />
           <StatTile
             icon={CheckCircle2}
             label="숙달 카드"
             value={stats.mastered}
-            tone="text-emerald-700 dark:text-emerald-300"
-            bg="bg-emerald-100 dark:bg-emerald-950/40"
+            tone="text-success"
+            bg="bg-success/10"
           />
           <StatTile
             icon={Target}
             label="전체 정답률"
             value={stats.accuracy === null ? "—" : `${stats.accuracy}%`}
-            tone="text-violet-700 dark:text-violet-300"
-            bg="bg-violet-100 dark:bg-violet-950/40"
+            tone="text-cat-5"
+            bg="bg-cat-5/10"
           />
           <StatTile
             icon={Flame}
             label="연속 학습일"
             value={stats.streakDays > 0 ? `${stats.streakDays}일` : "—"}
-            tone="text-amber-700 dark:text-amber-300"
-            bg="bg-amber-100 dark:bg-amber-950/40"
+            tone="text-warning"
+            bg="bg-warning/10"
           />
         </div>
 
@@ -192,7 +192,7 @@ export default function FlashcardDashboard() {
                     <div
                       className={cn(
                         "w-full rounded-md transition-all duration-500",
-                        i === MASTERED_STREAK ? "bg-emerald-500" : "bg-sky-500",
+                        i === MASTERED_STREAK ? "bg-success" : "bg-info",
                       )}
                       style={{ height: `${Math.max(count > 0 ? 8 : 0, heightPct)}%` }}
                     />
@@ -209,7 +209,7 @@ export default function FlashcardDashboard() {
           className={cn(
             "flex items-center gap-2.5 rounded-xl border px-4 py-3",
             stats.dueToday > 0
-              ? "border-sky-200 bg-sky-50/60 dark:border-sky-900/50 dark:bg-sky-950/20"
+              ? "border-info/20 bg-info/5"
               : "bg-muted/40",
           )}
         >
@@ -217,7 +217,7 @@ export default function FlashcardDashboard() {
             className={cn(
               "flex h-9 w-9 shrink-0 items-center justify-center rounded-xl",
               stats.dueToday > 0
-                ? "bg-sky-200/60 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300"
+                ? "bg-info/20 text-info"
                 : "bg-primary/10 text-primary",
             )}
           >

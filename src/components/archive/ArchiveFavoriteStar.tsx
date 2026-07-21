@@ -33,7 +33,7 @@ export default function ArchiveFavoriteStar({
       className={cn(
         "rounded-md p-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
         isFav
-          ? "text-amber-500 hover:bg-amber-50 dark:hover:bg-amber-950/30"
+          ? "text-warning hover:bg-warning/5"
           : "text-muted-foreground hover:bg-muted hover:text-amber-500",
         className,
       )}

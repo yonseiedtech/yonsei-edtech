@@ -251,11 +251,11 @@ export default function PaperEditPage({ paperId }: PaperEditPageProps) {
             </span>
           )}
           {!saving && dirty && (
-            <span className="text-amber-600">저장 대기 중…</span>
+            <span className="text-warning">저장 대기 중…</span>
           )}
           {!saving && !dirty && lastSavedAt && (
             <span className="inline-flex items-center gap-1 text-muted-foreground">
-              <Check size={12} className="text-green-600" />
+              <Check size={12} className="text-success" />
               저장됨
             </span>
           )}
@@ -405,7 +405,7 @@ export default function PaperEditPage({ paperId }: PaperEditPageProps) {
                 <Star
                   size={20}
                   className={cn(
-                    n <= form.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground",
+                    n <= form.rating ? "fill-warning text-warning" : "text-muted-foreground",
                   )}
                 />
               </button>

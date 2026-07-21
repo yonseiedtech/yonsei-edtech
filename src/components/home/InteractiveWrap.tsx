@@ -56,11 +56,11 @@ export function InteractiveBackdrop() {
       />
       <motion.div
         style={{ y: y2, x: my, rotate: rot }}
-        className="absolute right-[-4%] top-[45%] h-[32rem] w-[32rem] rounded-full bg-sky-300/20 blur-[120px]"
+        className="absolute right-[-4%] top-[45%] h-[32rem] w-[32rem] rounded-full bg-cat-1/20 blur-[120px]"
       />
       <motion.div
         style={{ y: y1 }}
-        className="absolute bottom-[-6rem] left-[30%] h-[24rem] w-[24rem] rounded-full bg-amber-200/20 blur-[100px]"
+        className="absolute bottom-[-6rem] left-[30%] h-[24rem] w-[24rem] rounded-full bg-warning/20 blur-[100px]"
       />
     </div>
   );
@@ -73,7 +73,7 @@ export function ScrollProgressBar() {
   return (
     <motion.div
       style={{ scaleX, transformOrigin: "0%" }}
-      className="fixed left-0 right-0 top-0 z-[60] h-[2px] bg-gradient-to-r from-primary via-sky-400 to-blue-500"
+      className="fixed left-0 right-0 top-0 z-[60] h-[2px] bg-gradient-to-r from-primary via-cat-1 to-cat-1"
     />
   );
 }

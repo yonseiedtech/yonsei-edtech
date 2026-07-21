@@ -25,7 +25,7 @@ type StatusFilter = "all" | "todo" | "in_progress" | "done";
 const STATUS_CONFIG = {
   todo: { label: "할 일", icon: Circle, color: "bg-muted text-muted-foreground" },
   in_progress: { label: "진행 중", icon: Clock, color: "bg-info/10 text-info" },
-  done: { label: "완료", icon: CheckCircle, color: "bg-green-100 text-green-700" },
+  done: { label: "완료", icon: CheckCircle, color: "bg-success/10 text-success" },
 } as const;
 
 const PRIORITY_CONFIG = {
@@ -133,7 +133,7 @@ export default function AdminTodoTab() {
           { key: "all" as const, label: "전체", count: counts.all, color: "bg-muted/50 text-muted-foreground" },
           { key: "todo" as const, label: "할 일", count: counts.todo, color: "bg-warning/5 text-warning" },
           { key: "in_progress" as const, label: "진행 중", count: counts.in_progress, color: "bg-info/5 text-info" },
-          { key: "done" as const, label: "완료", count: counts.done, color: "bg-green-50 text-green-700" },
+          { key: "done" as const, label: "완료", count: counts.done, color: "bg-success/5 text-success" },
         ]).map(({ key, label, count, color }) => (
           <button
             key={key}
@@ -191,7 +191,7 @@ export default function AdminTodoTab() {
                   <status.icon
                     size={20}
                     className={cn(
-                      todo.status === "done" ? "text-green-600" : todo.status === "in_progress" ? "text-info" : "text-muted-foreground",
+                      todo.status === "done" ? "text-success" : todo.status === "in_progress" ? "text-info" : "text-muted-foreground",
                     )}
                   />
                 </button>

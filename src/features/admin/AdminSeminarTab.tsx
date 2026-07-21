@@ -33,10 +33,10 @@ import { useAllMembers } from "@/features/member/useMembers";
 import type { SeminarSpeaker } from "@/types";
 
 const STATUS_COLORS: Record<SeminarStatus, string> = {
-  draft: "bg-gray-50 text-gray-500",
+  draft: "bg-muted/50 text-muted-foreground",
   upcoming: "bg-info/5 text-info",
   ongoing: "bg-warning/5 text-warning",
-  completed: "bg-green-50 text-green-700",
+  completed: "bg-success/5 text-success",
   cancelled: "bg-destructive/5 text-destructive",
 };
 
@@ -264,7 +264,7 @@ export default function AdminSeminarTab() {
         </div>
         <div className="rounded-2xl border bg-card p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <TrendingUp size={16} className="text-green-500" />
+            <TrendingUp size={16} className="text-success" />
             <span>완료</span>
           </div>
           <p className="mt-1 text-2xl font-bold">{stats.completed}<span className="ml-1 text-sm font-normal text-muted-foreground">건</span></p>
@@ -278,7 +278,7 @@ export default function AdminSeminarTab() {
         </div>
         <div className="rounded-2xl border bg-card p-4">
           <div className="flex items-center gap-2 text-sm text-muted-foreground">
-            <FileEdit size={16} className="text-gray-400" />
+            <FileEdit size={16} className="text-muted-foreground" />
             <span>임시저장</span>
           </div>
           <p className="mt-1 text-2xl font-bold">{stats.draft}<span className="ml-1 text-sm font-normal text-muted-foreground">건</span></p>
@@ -308,7 +308,7 @@ export default function AdminSeminarTab() {
                     {total > 0 && (
                       <div className="flex items-center gap-1">
                         <div className="h-1.5 w-16 rounded-full bg-muted">
-                          <div className={cn("h-full rounded-full", pct === 100 ? "bg-green-500" : "bg-primary")} style={{ width: `${pct}%` }} />
+                          <div className={cn("h-full rounded-full", pct === 100 ? "bg-success" : "bg-primary")} style={{ width: `${pct}%` }} />
                         </div>
                         <span className="text-[10px] text-muted-foreground">{pct}%</span>
                       </div>
@@ -371,7 +371,7 @@ export default function AdminSeminarTab() {
             {progressPct >= 0 ? (
               <div className="flex flex-col gap-0.5" title={`${doneTasks}/${totalTasks} 완료${overdue.length > 0 ? ` (지연 ${overdue.length}건)` : ""}`}>
                 <div className="h-1.5 w-full rounded-full bg-muted">
-                  <div className={cn("h-full rounded-full transition-all", progressPct === 100 ? "bg-green-500" : overdue.length > 0 ? "bg-destructive/60" : "bg-primary")} style={{ width: `${progressPct}%` }} />
+                  <div className={cn("h-full rounded-full transition-all", progressPct === 100 ? "bg-success" : overdue.length > 0 ? "bg-destructive/60" : "bg-primary")} style={{ width: `${progressPct}%` }} />
                 </div>
                 <span className={cn("text-[10px]", overdue.length > 0 ? "text-destructive" : "text-muted-foreground")}>{progressPct}%</span>
               </div>
@@ -417,7 +417,7 @@ export default function AdminSeminarTab() {
               {progressPct >= 0 && (
                 <div className="mt-1.5 flex items-center gap-2">
                   <div className="h-1.5 flex-1 rounded-full bg-muted">
-                    <div className={cn("h-full rounded-full", progressPct === 100 ? "bg-green-500" : overdue.length > 0 ? "bg-destructive/60" : "bg-primary")} style={{ width: `${progressPct}%` }} />
+                    <div className={cn("h-full rounded-full", progressPct === 100 ? "bg-success" : overdue.length > 0 ? "bg-destructive/60" : "bg-primary")} style={{ width: `${progressPct}%` }} />
                   </div>
                   <span className={cn("text-[10px] shrink-0", overdue.length > 0 ? "text-destructive" : "text-muted-foreground")}>{progressPct}% ({doneTasks}/{totalTasks})</span>
                 </div>
@@ -494,7 +494,7 @@ export default function AdminSeminarTab() {
                       onChange={(e) =>
                         setEditSeminar({ ...editSeminar, isOnline: e.target.checked })
                       }
-                      className="h-3.5 w-3.5 rounded border-gray-300"
+                      className="h-3.5 w-3.5 rounded border-muted-foreground/30"
                     />
                     <Video size={12} className="text-info" />
                     온라인 (ZOOM)

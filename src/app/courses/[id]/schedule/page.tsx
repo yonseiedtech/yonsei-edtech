@@ -74,41 +74,41 @@ const MODE_OPTIONS: ClassSessionMode[] = [
 ];
 
 const MODE_COLORS: Record<ClassSessionMode, string> = {
-  in_person: "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900",
-  zoom: "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900",
-  assignment: "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900",
-  cancelled: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900",
-  field: "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-900",
-  exam: "bg-rose-50 text-rose-700 border-rose-200 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900",
+  in_person: "bg-success/5 text-success border-success/20",
+  zoom: "bg-cat-1/5 text-cat-1 border-cat-1/20",
+  assignment: "bg-warning/5 text-warning border-warning/20",
+  cancelled: "bg-destructive/5 text-destructive border-destructive/20",
+  field: "bg-cat-5/5 text-cat-5 border-cat-5/20",
+  exam: "bg-destructive/5 text-destructive border-destructive/20",
 };
 
 /** 비활성 모드 칩 — 항상 모드별 옅은 배경을 입혀 한눈에 구분되게 함 */
 const MODE_BTN_DIM: Record<ClassSessionMode, string> = {
-  in_person: "bg-emerald-50 text-emerald-700 border-emerald-200 hover:bg-emerald-100 dark:bg-emerald-950/40 dark:text-emerald-300 dark:border-emerald-900 dark:hover:bg-emerald-900/60",
-  zoom: "bg-blue-50 text-blue-700 border-blue-200 hover:bg-blue-100 dark:bg-blue-950/40 dark:text-blue-300 dark:border-blue-900 dark:hover:bg-blue-900/60",
-  assignment: "bg-amber-50 text-amber-700 border-amber-200 hover:bg-amber-100 dark:bg-amber-950/40 dark:text-amber-300 dark:border-amber-900 dark:hover:bg-amber-900/60",
-  cancelled: "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900 dark:hover:bg-rose-900/60",
-  field: "bg-purple-50 text-purple-700 border-purple-200 hover:bg-purple-100 dark:bg-purple-950/40 dark:text-purple-300 dark:border-purple-900 dark:hover:bg-purple-900/60",
-  exam: "bg-rose-50 text-rose-700 border-rose-200 hover:bg-rose-100 dark:bg-rose-950/40 dark:text-rose-300 dark:border-rose-900 dark:hover:bg-rose-900/60",
+  in_person: "bg-success/5 text-success border-success/20 hover:bg-success/10",
+  zoom: "bg-cat-1/5 text-cat-1 border-cat-1/20 hover:bg-cat-1/10",
+  assignment: "bg-warning/5 text-warning border-warning/20 hover:bg-warning/10",
+  cancelled: "bg-destructive/5 text-destructive border-destructive/20 hover:bg-destructive/10",
+  field: "bg-cat-5/5 text-cat-5 border-cat-5/20 hover:bg-cat-5/10",
+  exam: "bg-destructive/5 text-destructive border-destructive/20 hover:bg-destructive/10",
 };
 
 /** 활성 모드 칩 — 솔리드 배경 + 두꺼운 링으로 강하게 강조 */
 const MODE_BTN_ACTIVE: Record<ClassSessionMode, string> = {
-  in_person: "bg-emerald-500 text-white border-emerald-600 ring-2 ring-emerald-300 shadow-sm",
-  zoom: "bg-blue-500 text-white border-blue-600 ring-2 ring-blue-300 shadow-sm",
-  assignment: "bg-amber-500 text-white border-amber-600 ring-2 ring-amber-300 shadow-sm",
-  cancelled: "bg-rose-500 text-white border-rose-600 ring-2 ring-rose-300 shadow-sm",
-  field: "bg-purple-500 text-white border-purple-600 ring-2 ring-purple-300 shadow-sm",
-  exam: "bg-rose-500 text-white border-rose-600 ring-2 ring-rose-300 shadow-sm",
+  in_person: "bg-success text-white border-success ring-2 ring-success/30 shadow-sm",
+  zoom: "bg-cat-1 text-white border-cat-1 ring-2 ring-cat-1/30 shadow-sm",
+  assignment: "bg-warning text-white border-warning ring-2 ring-warning/30 shadow-sm",
+  cancelled: "bg-destructive text-white border-destructive ring-2 ring-destructive/30 shadow-sm",
+  field: "bg-cat-5 text-white border-cat-5 ring-2 ring-cat-5/30 shadow-sm",
+  exam: "bg-destructive text-white border-destructive ring-2 ring-destructive/30 shadow-sm",
 };
 
 const MODE_WEEK_BORDER: Record<ClassSessionMode, string> = {
-  in_person: "border-l-emerald-400 bg-emerald-50/30 dark:bg-emerald-950/20",
-  zoom: "border-l-blue-400 bg-blue-50/30 dark:bg-blue-950/20",
-  assignment: "border-l-amber-400 bg-amber-50/30 dark:bg-amber-950/20",
-  cancelled: "border-l-rose-400 bg-rose-50/30 dark:bg-rose-950/20",
-  field: "border-l-purple-400 bg-purple-50/30 dark:bg-purple-950/20",
-  exam: "border-l-rose-400 bg-rose-50/30 dark:bg-rose-950/20",
+  in_person: "border-l-success/40 bg-success/5",
+  zoom: "border-l-cat-1/40 bg-cat-1/5",
+  assignment: "border-l-warning/40 bg-warning/5",
+  cancelled: "border-l-destructive/40 bg-destructive/5",
+  field: "border-l-cat-5/40 bg-cat-5/5",
+  exam: "border-l-destructive/40 bg-destructive/5",
 };
 
 const WEEKDAY_KOR = ["일", "월", "화", "수", "목", "금", "토"];
@@ -801,7 +801,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
               )}
             >
               <div className="flex flex-wrap items-center gap-2">
-                <span className="rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                <span className="rounded-full bg-success px-2 py-0.5 text-[10px] font-bold text-white">
                   이번 주
                 </span>
                 <h2 className="text-base font-bold sm:text-lg">{cw.weekNo}주차</h2>
@@ -863,8 +863,8 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   </span>
                 )}
                 {cwTodos.length > 0 && (
-                  <span className={todoOpen > 0 ? "text-amber-700 dark:text-amber-400" : ""}>
-                    할 일 <strong className={todoOpen > 0 ? "text-amber-800 dark:text-amber-300" : "text-foreground"}>{todoOpen}</strong>
+                  <span className={todoOpen > 0 ? "text-warning" : ""}>
+                    할 일 <strong className={todoOpen > 0 ? "text-warning" : "text-foreground"}>{todoOpen}</strong>
                     {todoDone > 0 && <span className="opacity-60"> / {todoDone} 완료</span>}
                   </span>
                 )}
@@ -940,12 +940,12 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   )}
                 >
                   {master && (
-                    <div className="mb-2 flex flex-wrap items-center gap-1.5 border-b border-dashed border-slate-200 dark:border-slate-700 pb-2">
+                    <div className="mb-2 flex flex-wrap items-center gap-1.5 border-b border-dashed border-muted/40 pb-2">
                       <span className="text-[10px] font-medium text-muted-foreground">
                         수업 형태{classDates.length > 1 ? ` (${classDates.length}회 일괄)` : ""}:
                       </span>
                       {noWeekdays && (
-                        <span className="text-[10px] text-amber-700 dark:text-amber-400">
+                        <span className="text-[10px] text-warning">
                           강의 시간(요일) 설정이 필요합니다.
                         </span>
                       )}
@@ -986,7 +986,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                         {w.weekNo}주차
                       </Badge>
                       {classDates.length > 0 ? (
-                        <span className="text-xs font-medium text-slate-700 dark:text-slate-300">
+                        <span className="text-xs font-medium text-foreground">
                           {classDates.map((d) => formatClassDate(d)).join(", ")}
                         </span>
                       ) : (
@@ -1004,15 +1004,15 @@ function ScheduleContent({ courseId }: { courseId: string }) {
 
                   {/* 수업 운영 */}
                   {ws.length === 0 ? (
-                    <p className="mt-2 rounded-md border border-dashed border-slate-200 dark:border-slate-700 bg-slate-50/50 dark:bg-slate-800/40 px-3 py-2 text-[11px] text-muted-foreground">
-                      운영진이 등록한 변경사항 없음 · 기본 <span className="font-medium text-emerald-700 dark:text-emerald-400">대면</span> 진행
+                    <p className="mt-2 rounded-md border border-dashed border-muted/40 bg-muted/20 px-3 py-2 text-[11px] text-muted-foreground">
+                      운영진이 등록한 변경사항 없음 · 기본 <span className="font-medium text-success">대면</span> 진행
                     </p>
                   ) : (
                     <ul className="mt-2 space-y-1">
                       {ws.map((s) => (
                         <li
                           key={s.id}
-                          className="rounded-md bg-slate-50 dark:bg-slate-800/40 px-2 py-1.5"
+                          className="rounded-md bg-muted/30 px-2 py-1.5"
                         >
                           <div className="flex flex-wrap items-center gap-2">
                             <span className="text-[11px] font-medium">{s.date}</span>
@@ -1050,7 +1050,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                                       notes: s.notes ?? "",
                                     })
                                   }
-                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-slate-200 dark:hover:bg-slate-700 hover:text-primary"
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-muted/50 hover:text-primary"
                                   aria-label="일정 수정"
                                 >
                                   <Pencil size={13} />
@@ -1058,7 +1058,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                                 <button
                                   type="button"
                                   onClick={() => remove(s)}
-                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-rose-100 dark:hover:bg-rose-950/40 hover:text-destructive"
+                                  className="inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                                   aria-label="일정 삭제"
                                 >
                                   <Trash2 size={13} />
@@ -1089,23 +1089,23 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                         return (
                           <div
                             key={`my-att-${d}`}
-                            className="flex flex-wrap items-center gap-2 rounded-md border border-slate-200 dark:border-slate-700 bg-card px-2 py-1.5"
+                            className="flex flex-wrap items-center gap-2 rounded-md border border-muted/40 bg-card px-2 py-1.5"
                           >
-                            <span className="text-[11px] font-medium text-slate-700 dark:text-slate-300">
+                            <span className="text-[11px] font-medium text-foreground">
                               {d} 내 출석
                             </span>
                             {!enabled ? (
-                              <Badge variant="outline" className="border-slate-300 dark:border-slate-600 text-[10px] text-slate-600 dark:text-slate-400">
+                              <Badge variant="outline" className="border-muted/60 text-[10px] text-muted-foreground">
                                 비대상
                               </Badge>
                             ) : !recorded ? (
-                              <Badge variant="outline" className="border-slate-300 dark:border-slate-600 text-[10px] text-slate-600 dark:text-slate-400">
+                              <Badge variant="outline" className="border-muted/60 text-[10px] text-muted-foreground">
                                 미체크
                               </Badge>
                             ) : present ? (
-                              <Badge className="bg-emerald-500 text-white text-[10px]">출석</Badge>
+                              <Badge className="bg-success text-white text-[10px]">출석</Badge>
                             ) : (
-                              <Badge className="bg-rose-500 text-white text-[10px]">결석</Badge>
+                              <Badge className="bg-destructive text-white text-[10px]">결석</Badge>
                             )}
                             {myNote && (
                               <span className="text-[11px] text-muted-foreground">사유: {myNote}</span>
@@ -1127,25 +1127,25 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                         return (
                           <div
                             key={`att-${d}`}
-                            className="flex flex-wrap items-center gap-2 rounded-md border border-emerald-100 dark:border-emerald-900 bg-emerald-50/30 dark:bg-emerald-950/30 px-2 py-1.5"
+                            className="flex flex-wrap items-center gap-2 rounded-md border border-success/10 bg-success/5 px-2 py-1.5"
                           >
-                            <span className="text-[11px] font-medium text-emerald-800 dark:text-emerald-300">
+                            <span className="text-[11px] font-medium text-success">
                               {d} 출석
                             </span>
                             {sum.total > 0 ? (
-                              <span className="text-[11px] text-slate-600 dark:text-slate-400">
+                              <span className="text-[11px] text-muted-foreground">
                                 {sum.unmarked > 0
                                   ? `미체크 (${sum.total}명)`
                                   : `${sum.attended}/${sum.total} 출석 · 결석 ${sum.absent}`}
                               </span>
                             ) : (
-                              <span className="text-[11px] text-amber-700 dark:text-amber-400">수강생 없음</span>
+                              <span className="text-[11px] text-warning">수강생 없음</span>
                             )}
                             <button
                               type="button"
                               onClick={() => setAttendanceDate(d)}
                               disabled={!enabled || sum.total === 0}
-                              className="ml-auto inline-flex items-center gap-1 rounded-md border border-emerald-200 dark:border-emerald-800 bg-card px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-400 hover:bg-emerald-50 dark:hover:bg-emerald-950/40 disabled:cursor-not-allowed disabled:opacity-50"
+                              className="ml-auto inline-flex items-center gap-1 rounded-md border border-success/20 bg-card px-2 py-0.5 text-[11px] font-medium text-success hover:bg-success/5 disabled:cursor-not-allowed disabled:opacity-50"
                               title={!enabled ? "비대면·휴강·과제 회차는 비활성화" : ""}
                             >
                               {sum.unmarked > 0 ? "출석 체크" : "출석 수정"}
@@ -1157,21 +1157,21 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   )}
 
                   {/* 개인 메모 — 항상 표시 (인라인 추가 버튼) */}
-                  <div className="mt-3 rounded-md border border-blue-100 dark:border-blue-900 bg-blue-50/30 dark:bg-blue-950/30 p-2">
+                  <div className="mt-3 rounded-md border border-cat-1/10 bg-cat-1/5 p-2">
                     <div className="mb-1.5 flex items-center justify-between">
-                      <p className="text-[10px] font-medium text-blue-700 dark:text-blue-300">
+                      <p className="text-[10px] font-medium text-cat-1">
                         내 메모{ns.length > 0 ? ` (${ns.length})` : ""}
                       </p>
                       <button
                         type="button"
                         onClick={() => setNoteDraft({ date: firstClassDate, content: "" })}
-                        className="inline-flex items-center gap-1 rounded-md bg-blue-100 dark:bg-blue-950/40 px-2 py-0.5 text-[10px] font-medium text-blue-700 dark:text-blue-300 hover:bg-blue-200 dark:hover:bg-blue-900/60"
+                        className="inline-flex items-center gap-1 rounded-md bg-cat-1/10 px-2 py-0.5 text-[10px] font-medium text-cat-1 hover:bg-cat-1/20"
                       >
                         <Plus size={11} /> 메모 추가
                       </button>
                     </div>
                     {ns.length === 0 ? (
-                      <p className="text-[11px] text-blue-700/70 dark:text-blue-300/70">
+                      <p className="text-[11px] text-cat-1/70">
                         이번 주 ({dayLabel}) 수업 메모를 남겨보세요.
                       </p>
                     ) : (
@@ -1195,7 +1195,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                                     content: n.content,
                                   })
                                 }
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-blue-100 dark:hover:bg-blue-950/40 hover:text-primary"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-cat-1/10 hover:text-primary"
                                 aria-label="메모 수정"
                               >
                                 <Pencil size={14} />
@@ -1203,7 +1203,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                               <button
                                 type="button"
                                 onClick={() => deleteNote(n)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-rose-100 dark:hover:bg-rose-950/40 hover:text-destructive"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                                 aria-label="메모 삭제"
                               >
                                 <Trash2 size={14} />
@@ -1216,21 +1216,21 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   </div>
 
                   {/* 개인 할 일 — 항상 표시 (인라인 추가 버튼) */}
-                  <div className="mt-2 rounded-md border border-amber-100 dark:border-amber-900 bg-amber-50/30 dark:bg-amber-950/30 p-2">
+                  <div className="mt-2 rounded-md border border-warning/10 bg-warning/5 p-2">
                     <div className="mb-1.5 flex items-center justify-between">
-                      <p className="text-[10px] font-medium text-amber-700 dark:text-amber-300">
+                      <p className="text-[10px] font-medium text-warning">
                         내 할 일{ts.length > 0 ? ` (${ts.filter((t) => !t.completed).length}/${ts.length})` : ""}
                       </p>
                       <button
                         type="button"
                         onClick={() => setTodoDraft(blankTodoDraft(firstClassDate))}
-                        className="inline-flex items-center gap-1 rounded-md bg-amber-100 dark:bg-amber-950/40 px-2 py-0.5 text-[10px] font-medium text-amber-700 dark:text-amber-300 hover:bg-amber-200 dark:hover:bg-amber-900/60"
+                        className="inline-flex items-center gap-1 rounded-md bg-warning/10 px-2 py-0.5 text-[10px] font-medium text-warning hover:bg-warning/20"
                       >
                         <Plus size={11} /> 할 일 추가
                       </button>
                     </div>
                     {ts.length === 0 ? (
-                      <p className="text-[11px] text-amber-700/70 dark:text-amber-300/70">
+                      <p className="text-[11px] text-warning/70">
                         이번 주 과제·논문 읽기 등 할 일을 추가해보세요.
                       </p>
                     ) : (
@@ -1280,7 +1280,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                                     sessionDate: t.sessionDate,
                                   })
                                 }
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-amber-100 dark:hover:bg-amber-950/40 hover:text-primary"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-warning/10 hover:text-primary"
                                 aria-label="할 일 수정"
                               >
                                 <Pencil size={14} />
@@ -1288,7 +1288,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                               <button
                                 type="button"
                                 onClick={() => deleteTodo(t)}
-                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-rose-100 dark:hover:bg-rose-950/40 hover:text-destructive"
+                                className="inline-flex h-8 w-8 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                                 aria-label="할 일 삭제"
                               >
                                 <Trash2 size={14} />
@@ -1307,10 +1307,10 @@ function ScheduleContent({ courseId }: { courseId: string }) {
 
         {/* 학기 주차 범위 밖에 있는 잔존 변경 기록 */}
         {orphanSessions.length > 0 && (
-          <div className="mt-6 rounded-2xl border border-amber-200 dark:border-amber-900 bg-amber-50/40 dark:bg-amber-950/30 p-4">
-            <p className="mb-2 text-xs font-medium text-amber-900 dark:text-amber-200">
+          <div className="mt-6 rounded-2xl border border-warning/20 bg-warning/5 p-4">
+            <p className="mb-2 text-xs font-medium text-warning">
               주차에 매핑되지 않은 변경 기록 ({orphanSessions.length}건)
-              <span className="ml-2 text-amber-700/80 dark:text-amber-300/80">
+              <span className="ml-2 text-warning/80">
                 — 학기 범위 밖이거나 잘못된 날짜의 잔존 데이터입니다. 정리하려면 삭제하세요.
               </span>
             </p>
@@ -1320,7 +1320,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   key={s.id}
                   className="flex items-center gap-2 rounded-md bg-card px-2 py-1.5 text-[11px]"
                 >
-                  <span className="font-mono font-medium text-amber-900 dark:text-amber-200">{s.date}</span>
+                  <span className="font-mono font-medium text-warning">{s.date}</span>
                   <Badge variant="secondary" className="text-[10px]">
                     {CLASS_SESSION_MODE_LABELS[s.mode]}
                   </Badge>
@@ -1330,7 +1330,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   <button
                     type="button"
                     onClick={() => remove(s)}
-                    className="ml-auto inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-rose-100 dark:hover:bg-rose-950/40 hover:text-destructive"
+                    className="ml-auto inline-flex h-7 w-7 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     aria-label="잔존 일정 삭제"
                   >
                     <Trash2 size={13} />
@@ -1375,7 +1375,7 @@ function ScheduleContent({ courseId }: { courseId: string }) {
                   <button
                     type="button"
                     onClick={() => deleteTodo(t)}
-                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-rose-100 dark:hover:bg-rose-950/40 hover:text-destructive"
+                    className="inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-md text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                     aria-label="할 일 삭제"
                   >
                     <Trash2 size={14} />

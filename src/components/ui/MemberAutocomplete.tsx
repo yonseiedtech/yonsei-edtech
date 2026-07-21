@@ -76,7 +76,7 @@ export default function MemberAutocomplete({
           <button
             type="button"
             onClick={onClear}
-            className="ml-auto rounded p-1 text-muted-foreground hover:bg-muted hover:text-red-500"
+            className="ml-auto rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive"
             aria-label="선택 해제"
           >
             <X size={14} />

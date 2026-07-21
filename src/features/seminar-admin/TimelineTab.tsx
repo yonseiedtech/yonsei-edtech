@@ -374,8 +374,8 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
     <div className="space-y-6">
       {/* 내 담당 임박 (전체 세미나, D-3 이내·기한 초과) */}
       {myImminent.length > 0 && (
-        <div className="rounded-2xl border border-amber-300 bg-amber-50 p-4">
-          <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-amber-800">
+        <div className="rounded-2xl border border-warning/30 bg-warning/5 p-4">
+          <div className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-warning">
             <AlertTriangle size={15} />
             내 담당 임박 ({myImminent.length})
           </div>
@@ -393,7 +393,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                   variant="secondary"
                   className={cn(
                     "w-14 shrink-0 justify-center text-xs",
-                    diffDays < 0 && "bg-red-100 text-red-700",
+                    diffDays < 0 && "bg-destructive/10 text-destructive",
                   )}
                 >
                   {diffDays < 0 ? `지연 ${Math.abs(diffDays)}일` : diffDays === 0 ? "오늘" : `D-${diffDays}`}
@@ -469,7 +469,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
             <div className="flex items-center justify-between">
               <div className="flex items-center gap-2">
                 {isOnline ? (
-                  <Video size={16} className="text-blue-500" />
+                  <Video size={16} className="text-cat-1" />
                 ) : (
                   <MapPin size={16} className="text-muted-foreground" />
                 )}
@@ -523,7 +523,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                 <div className="mt-3 flex items-center gap-3">
                   <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                     <div
-                      className={cn("h-full rounded-full transition-all", pct === 100 ? "bg-green-500" : "bg-primary")}
+                      className={cn("h-full rounded-full transition-all", pct === 100 ? "bg-success" : "bg-primary")}
                       style={{ width: `${pct}%` }}
                     />
                   </div>
@@ -551,7 +551,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                     key={phase.id}
                     className={cn(
                       "transition-colors",
-                      overdue && "bg-red-50",
+                      overdue && "bg-destructive/5",
                     )}
                   >
                     {/* 메인 행 */}
@@ -562,9 +562,9 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                         className={cn(
                           "flex h-6 w-6 shrink-0 items-center justify-center rounded border-2 transition-colors",
                           phase.done
-                            ? "border-green-500 bg-green-500 text-white"
+                            ? "border-success bg-success text-success-foreground"
                             : overdue
-                              ? "border-red-400"
+                              ? "border-destructive/60"
                               : "border-muted-foreground/30",
                         )}
                       >
@@ -576,7 +576,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                         variant="secondary"
                         className={cn(
                           "w-14 shrink-0 justify-center text-xs",
-                          overdue && !phase.done && "bg-red-100 text-red-700",
+                          overdue && !phase.done && "bg-destructive/10 text-destructive",
                         )}
                       >
                         {formatDDay(phase.dDay)}
@@ -618,7 +618,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                         onChange={(e) => handleStatusChange(phase.id, e.target.value as TimelineStatus)}
                         className={cn(
                           "shrink-0 rounded border px-1.5 py-1 text-xs",
-                          getStatus(phase) === "doing" && "text-blue-600",
+                          getStatus(phase) === "doing" && "text-cat-1",
                           getStatus(phase) === "skipped" && "text-muted-foreground",
                         )}
                         title="진행 상태"
@@ -643,7 +643,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                       {/* 완료 시점 KST + 처리자 */}
                       {phase.done && phase.doneAt && (
                         <span
-                          className="shrink-0 text-[11px] text-green-600"
+                          className="shrink-0 text-[11px] text-success"
                           title={phase.doneBy ? `처리자: ${phase.doneBy}` : undefined}
                         >
                           {formatKST(phase.doneAt)}{phase.doneBy ? ` · ${phase.doneBy}` : ""}
@@ -660,7 +660,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                       </button>
                       <button
                         onClick={() => setDeleteConfirmId(phase.id)}
-                        className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+                        className="shrink-0 rounded p-1 text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
                         title="항목 삭제"
                       >
                         <Trash2 size={13} />

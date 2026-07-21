@@ -59,13 +59,13 @@ export default function QuestionItem({ board, question, user, likedSet, onChange
     <div
       className={cn(
         "rounded-lg border p-3 text-sm",
-        question.resolved ? "border-emerald-200 bg-emerald-50/40" : "bg-card",
+        question.resolved ? "border-success/20 bg-success/5" : "bg-card",
       )}
     >
       <div className="flex items-start justify-between gap-2">
         <div className="min-w-0 flex-1">
           <div className="mb-1 flex items-center gap-1.5">
-            {question.resolved && <CheckCircle2 size={14} className="text-emerald-600" />}
+            {question.resolved && <CheckCircle2 size={14} className="text-success" />}
             {/* F1: 익명 아님 && authorId 있을 때만 프로필 링크 */}
             {!question.anonymous && question.authorId ? (
               <Link href={`/profile/${question.authorId}`} className="text-[11px] text-muted-foreground hover:text-primary hover:underline">{name}</Link>
@@ -73,7 +73,7 @@ export default function QuestionItem({ board, question, user, likedSet, onChange
               <span className="text-[11px] text-muted-foreground">{name}</span>
             )}
             {question.resolved && (
-              <Badge variant="outline" className="border-emerald-400 text-[9px] text-emerald-700">
+              <Badge variant="outline" className="border-success/40 text-[9px] text-success">
                 해결됨
               </Badge>
             )}

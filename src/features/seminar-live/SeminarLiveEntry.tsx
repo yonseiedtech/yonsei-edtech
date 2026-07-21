@@ -26,11 +26,11 @@ export default function SeminarLiveEntry({ seminarId, isStaff }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="flex items-center gap-2">
           {live ? (
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-rose-600 px-2.5 py-1 text-[11px] font-bold text-white">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-2.5 py-1 text-[11px] font-bold text-white">
               <Radio size={12} /> LIVE
             </span>
           ) : (
-            <Presentation size={16} className="text-indigo-600" />
+            <Presentation size={16} className="text-cat-1" />
           )}
           <div>
             <p className="text-sm font-semibold">
@@ -47,7 +47,7 @@ export default function SeminarLiveEntry({ seminarId, isStaff }: Props) {
           {live && (
             <Link
               href={`/seminars/${seminarId}/live`}
-              className="inline-flex items-center gap-1 rounded-lg bg-rose-600 px-3 py-1.5 text-xs font-semibold text-white hover:bg-rose-700"
+              className="inline-flex items-center gap-1 rounded-lg bg-destructive px-3 py-1.5 text-xs font-semibold text-white hover:bg-destructive/90"
             >
               <Radio size={13} /> 지금 참여하기
             </Link>

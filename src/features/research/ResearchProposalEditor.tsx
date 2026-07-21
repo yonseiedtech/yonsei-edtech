@@ -578,7 +578,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
               <>
                 {savedAt && !saving && (
                   <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                    <CheckCircle2 size={12} className="text-emerald-500" />
+                    <CheckCircle2 size={12} className="text-success" />
                     {(() => {
                       const diff = Date.now() - new Date(savedAt).getTime();
                       if (diff < 60_000) return "방금 저장됨";
@@ -622,7 +622,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
                       active
                         ? "border-primary bg-primary/10 text-primary"
                         : filled
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 hover:border-emerald-300"
+                          ? "border-success/20 bg-success/5 text-success hover:border-success/30"
                           : "border-muted bg-card text-muted-foreground hover:border-primary/40",
                     )}
                     title={s.title}
@@ -747,7 +747,7 @@ export default function ResearchProposalEditor({ user, readOnly = false }: Props
           <div className="mt-6 flex flex-wrap items-center justify-between gap-3 border-t pt-4">
             <div className="flex items-center gap-2 text-xs text-muted-foreground">
               {filled ? (
-                <span className="flex items-center gap-1 text-emerald-600">
+                <span className="flex items-center gap-1 text-success">
                   <CheckCircle2 size={12} /> 작성됨
                 </span>
               ) : (

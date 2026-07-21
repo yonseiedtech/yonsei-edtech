@@ -142,7 +142,7 @@ export default function ResearchCockpit({ user, paper, writingMinutes }: Props) 
                     className={cn(
                       "mt-0.5 truncate text-center text-[11px]",
                       b && b.status !== "ok"
-                        ? "font-semibold text-amber-600 dark:text-amber-400"
+                        ? "font-semibold text-warning"
                         : "text-muted-foreground",
                     )}
                   >
@@ -175,7 +175,7 @@ export default function ResearchCockpit({ user, paper, writingMinutes }: Props) 
             href="/mypage/research?tab=feedback"
             className={cn(
               "flex items-center gap-0.5 hover:underline",
-              progress.pendingFeedbackTotal > 0 ? "font-semibold text-amber-600 dark:text-amber-400" : "",
+              progress.pendingFeedbackTotal > 0 ? "font-semibold text-warning" : "",
             )}
           >
             <GraduationCap size={11} />
@@ -186,7 +186,7 @@ export default function ResearchCockpit({ user, paper, writingMinutes }: Props) 
 
       {/* 분량 균형 힌트 — 가장 이탈이 큰 1건 (일반 관행 참고선) */}
       {worstBalance && (
-        <p className="mt-2.5 rounded-lg bg-amber-50/60 px-3 py-1.5 text-[11px] text-amber-800 dark:bg-amber-950/20 dark:text-amber-300">
+        <p className="mt-2.5 rounded-lg bg-warning/5 px-3 py-1.5 text-[11px] text-warning">
           {THESIS_CHAPTER_SHORT_LABELS[worstBalance.key]} 비중 {worstBalance.pct}% — 일반적 권장 범위(
           {worstBalance.recommended[0]}~{worstBalance.recommended[1]}%)를{" "}
           {worstBalance.status === "high" ? "웃돕니다" : "밑돕니다"}. 절대 규칙은 아니니 참고만 하세요.

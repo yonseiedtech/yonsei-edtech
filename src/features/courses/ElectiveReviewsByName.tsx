@@ -107,7 +107,7 @@ function StarRow({
             size={size}
             className={
               n <= value
-                ? "fill-amber-400 text-amber-400"
+                ? "fill-warning text-warning"
                 : "text-muted-foreground/40"
             }
           />
@@ -342,7 +342,7 @@ function NameCard({
           ) : (
             <div className="text-right">
               <span className="inline-flex items-center gap-0.5 text-sm font-semibold text-amber-600">
-                <Star size={13} className="fill-amber-400 text-amber-400" />
+                <Star size={13} className="fill-warning text-warning" />
                 {group.avgRating.toFixed(1)}
               </span>
               <p className="text-[10px] text-muted-foreground">

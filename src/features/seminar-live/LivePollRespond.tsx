@@ -44,7 +44,7 @@ function QuestionInput({
     <div className="space-y-2">
       <p className="text-xs font-semibold">
         {question.text}
-        {required && <span className="ml-0.5 text-rose-500">*</span>}
+        {required && <span className="ml-0.5 text-destructive">*</span>}
       </p>
 
       {type === "single" && (
@@ -57,8 +57,8 @@ function QuestionInput({
                 className={cn(
                   "flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-xs transition-colors",
                   checked
-                    ? "border-indigo-500 bg-indigo-50 text-indigo-800 dark:border-indigo-400 dark:bg-indigo-950/30 dark:text-indigo-200"
-                    : "border-border bg-background text-foreground hover:border-indigo-300",
+                    ? "border-cat-1 bg-cat-1/5 text-cat-1"
+                    : "border-border bg-background text-foreground hover:border-cat-1/30",
                 )}
               >
                 <input
@@ -99,8 +99,8 @@ function QuestionInput({
                 className={cn(
                   "flex cursor-pointer items-center gap-2 rounded-xl border px-3 py-2 text-xs transition-colors",
                   checked
-                    ? "border-indigo-500 bg-indigo-50 text-indigo-800 dark:border-indigo-400 dark:bg-indigo-950/30 dark:text-indigo-200"
-                    : "border-border bg-background text-foreground hover:border-indigo-300",
+                    ? "border-cat-1 bg-cat-1/5 text-cat-1"
+                    : "border-border bg-background text-foreground hover:border-cat-1/30",
                 )}
               >
                 <input

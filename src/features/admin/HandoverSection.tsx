@@ -26,7 +26,7 @@ const CURRENT_TERM = `${new Date().getFullYear()}-${new Date().getMonth() < 6 ? 
 const PRIORITY_COLORS = {
   high: "bg-destructive/5 text-destructive",
   medium: "bg-warning/5 text-warning",
-  low: "bg-green-50 text-green-700",
+  low: "bg-success/5 text-success",
 };
 const PRIORITY_LABELS = { high: "높음", medium: "보통", low: "낮음" };
 

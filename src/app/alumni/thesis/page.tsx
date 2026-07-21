@@ -289,7 +289,7 @@ export default function AlumniThesisListPage() {
                     type="checkbox"
                     checked={showOnlyRestricted}
                     onChange={(e) => setShowOnlyRestricted(e.target.checked)}
-                    className="h-3.5 w-3.5 rounded border-amber-400 accent-amber-700"
+                    className="h-3.5 w-3.5 rounded border-warning/40 accent-warning"
                   />
                   분석 제한 논문만 보기
                 </label>
@@ -383,7 +383,7 @@ export default function AlumniThesisListPage() {
                           "transition-shadow hover:shadow-md",
                           "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring",
                           restriction?.restricted
-                            ? "border-amber-300/70 bg-amber-50/30 dark:bg-amber-950/10"
+                            ? "border-warning/30 bg-warning/5"
                             : "hover:border-primary/30",
                         ]
                           .filter(Boolean)
@@ -397,7 +397,7 @@ export default function AlumniThesisListPage() {
                           </p>
                           {restriction?.restricted && (
                             <span
-                              className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300"
+                              className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-semibold text-warning"
                               title={`분석 제한 사유: ${restriction.reasons.join(", ")}`}
                               aria-label={`분석 제한: ${restriction.reasons.join(", ")}`}
                             >

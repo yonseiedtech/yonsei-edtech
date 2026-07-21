@@ -203,16 +203,16 @@ export default function ResearchDashboard({ papers, history, periodStart, period
 
 function MetricCard({ icon, label, value, hint, tone = "sky" }: { icon: React.ReactNode; label: string; value: string; hint?: string; tone?: "emerald" | "amber" | "sky" | "violet" }) {
   const ring: Record<string, string> = {
-    emerald: "ring-emerald-100 bg-emerald-50/40",
-    amber: "ring-amber-100 bg-amber-50/40",
-    sky: "ring-sky-100 bg-sky-50/40",
-    violet: "ring-blue-100 bg-blue-50/40",
+    emerald: "ring-success/10 bg-success/5",
+    amber: "ring-warning/10 bg-warning/5",
+    sky: "ring-cat-1/10 bg-cat-1/5",
+    violet: "ring-cat-1/10 bg-cat-1/5",
   };
   const text: Record<string, string> = {
-    emerald: "text-emerald-700",
-    amber: "text-amber-700",
-    sky: "text-sky-700",
-    violet: "text-blue-700",
+    emerald: "text-success",
+    amber: "text-warning",
+    sky: "text-cat-1",
+    violet: "text-cat-1",
   };
   return (
     <div className={`rounded-2xl border p-4 ring-1 ${ring[tone]}`}>

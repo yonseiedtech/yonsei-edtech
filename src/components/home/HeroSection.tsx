@@ -39,11 +39,11 @@ function AuroraBackground() {
       />
       <motion.div
         style={{ x: b2x, y: b2y }}
-        className="absolute -right-16 top-20 h-96 w-96 rounded-full bg-sky-300/30 blur-3xl"
+        className="absolute -right-16 top-20 h-96 w-96 rounded-full bg-cat-1/20 blur-3xl"
       />
       <motion.div
         style={{ x: b2y, y: b1x }}
-        className="absolute bottom-[-4rem] left-1/3 h-72 w-72 rounded-full bg-amber-200/30 blur-3xl"
+        className="absolute bottom-[-4rem] left-1/3 h-72 w-72 rounded-full bg-warning/20 blur-3xl"
       />
     </div>
   );
@@ -138,7 +138,7 @@ export default function HeroSection() {
             <h1 className="mt-4 text-4xl font-bold leading-tight tracking-tight text-foreground sm:text-5xl md:text-6xl lg:text-7xl">
               교육의 미래를
               <br />
-              <span className="bg-gradient-to-r from-primary via-sky-500 to-blue-500 bg-clip-text text-transparent">
+              <span className="bg-gradient-to-r from-primary via-cat-1 to-cat-1 bg-clip-text text-transparent">
                 함께 설계합니다
               </span>
             </h1>

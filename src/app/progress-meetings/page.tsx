@@ -35,10 +35,10 @@ const STATUS_META: Record<
   ProgressMeetingStatus,
   { label: string; icon: React.ElementType; cls: string }
 > = {
-  running: { label: "진행 중", icon: Play, cls: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200" },
-  paused: { label: "일시정지", icon: Pause, cls: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-200" },
-  planning: { label: "시작 전", icon: CalendarClock, cls: "bg-sky-50 text-sky-700 dark:bg-sky-950/40 dark:text-sky-200" },
-  completed: { label: "완료", icon: CheckCircle2, cls: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300" },
+  running: { label: "진행 중", icon: Play, cls: "bg-success/5 text-success" },
+  paused: { label: "일시정지", icon: Pause, cls: "bg-warning/5 text-warning" },
+  planning: { label: "시작 전", icon: CalendarClock, cls: "bg-info/5 text-info" },
+  completed: { label: "완료", icon: CheckCircle2, cls: "bg-muted text-muted-foreground" },
 };
 
 function totalEstimated(m: ProgressMeeting): number {
@@ -66,8 +66,8 @@ function MeetingCard({ meeting, activityTitle }: { meeting: ProgressMeeting; act
             <Badge variant="secondary" className={cn("text-[10px]", meta.cls)}>{meta.label}</Badge>
             {meeting.status === "running" && (
               <span className="relative flex h-2 w-2">
-                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-                <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+                <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
+                <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
               </span>
             )}
           </p>

@@ -102,7 +102,7 @@ export default function ReadingDrawer({ userId, chapter }: Props) {
   }
 
   return (
-    <div className="mt-3 rounded-xl border border-emerald-200/70 bg-emerald-50/30 dark:border-emerald-800/50 dark:bg-emerald-950/10">
+    <div className="mt-3 rounded-xl border border-success/20 bg-success/5">
       <button
         type="button"
         onClick={() => {
@@ -112,24 +112,24 @@ export default function ReadingDrawer({ userId, chapter }: Props) {
         aria-expanded={open}
         className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
       >
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-emerald-800 dark:text-emerald-200">
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-success">
           <BookOpen size={13} />
           읽기 서랍 — 내가 읽은 논문을 인용으로
-          <span className="font-normal text-emerald-700/70 dark:text-emerald-300/70">
+          <span className="font-normal text-success/70">
             (클릭하면 복사돼요)
           </span>
         </span>
         <ChevronRight
           size={14}
           className={cn(
-            "shrink-0 text-emerald-700/70 transition-transform dark:text-emerald-300/70",
+            "shrink-0 text-success/70 transition-transform",
             open && "rotate-90",
           )}
         />
       </button>
 
       {open && (
-        <div className="space-y-2 border-t border-emerald-200/60 px-3.5 py-3 dark:border-emerald-800/40">
+        <div className="space-y-2 border-t border-success/20 px-3.5 py-3">
           <div className="flex flex-wrap items-center gap-2">
             <div className="relative min-w-0 flex-1">
               <Search size={12} className="absolute left-2.5 top-1/2 -translate-y-1/2 text-muted-foreground" />
@@ -145,7 +145,7 @@ export default function ReadingDrawer({ userId, chapter }: Props) {
               onClick={() => setCompletedOnly((v) => !v)}
               className={cn(
                 "shrink-0 rounded-md border px-2 py-1 text-[10px] transition-colors",
-                completedOnly ? "border-emerald-500 bg-emerald-600 text-white" : "bg-card hover:bg-muted",
+                completedOnly ? "border-success bg-success text-white" : "bg-card hover:bg-muted",
               )}
             >
               완독만
@@ -159,7 +159,7 @@ export default function ReadingDrawer({ userId, chapter }: Props) {
               {papers.length === 0 ? (
                 <>
                   아직 읽기 노트가 없습니다 —{" "}
-                  <Link href="/mypage/research?tab=reading" className="text-emerald-700 underline dark:text-emerald-300">
+                  <Link href="/mypage/research?tab=reading" className="text-success underline">
                     논문 읽기
                   </Link>
                   에서 읽은 논문을 정리하면 여기서 바로 인용할 수 있어요.
@@ -182,7 +182,7 @@ export default function ReadingDrawer({ userId, chapter }: Props) {
                     <p className="min-w-0 flex-1 text-[11px] font-semibold leading-snug">
                       {p.title}
                       {typeof p.rating === "number" && (
-                        <span className="ml-1 inline-flex items-center gap-0.5 text-[9px] font-normal text-amber-600">
+                        <span className="ml-1 inline-flex items-center gap-0.5 text-[9px] font-normal text-warning">
                           <Star size={8} className="fill-current" />
                           {p.rating}
                         </span>
@@ -197,7 +197,7 @@ export default function ReadingDrawer({ userId, chapter }: Props) {
                   </p>
                   {note && (
                     <p className="mt-1 line-clamp-3 text-[11px] leading-relaxed text-foreground/80">
-                      <span className="font-semibold text-emerald-700 dark:text-emerald-300">{note.label} · </span>
+                      <span className="font-semibold text-success">{note.label} · </span>
                       {note.text}
                     </p>
                   )}
@@ -206,7 +206,7 @@ export default function ReadingDrawer({ userId, chapter }: Props) {
                     <button
                       type="button"
                       onClick={() => copy(cite, `인용 "${cite}" 복사 — 단락에 붙여넣으세요.`)}
-                      className="inline-flex items-center gap-1 rounded-full border border-emerald-400/60 px-2 py-0.5 text-[10px] text-emerald-700 transition-colors hover:bg-emerald-600 hover:text-white dark:text-emerald-300"
+                      className="inline-flex items-center gap-1 rounded-full border border-success/40 px-2 py-0.5 text-[10px] text-success transition-colors hover:bg-success hover:text-white"
                     >
                       <Copy size={9} />
                       {cite}
@@ -217,7 +217,7 @@ export default function ReadingDrawer({ userId, chapter }: Props) {
                         onClick={() =>
                           copy(`${note.text}${citeParen}.`, "요지+인용이 복사되었습니다 — 내 문장으로 다듬어 쓰세요.")
                         }
-                        className="inline-flex items-center gap-1 rounded-full border border-dashed border-emerald-400/60 px-2 py-0.5 text-[10px] text-emerald-700 transition-colors hover:bg-emerald-600 hover:text-white dark:text-emerald-300"
+                        className="inline-flex items-center gap-1 rounded-full border border-dashed border-success/40 px-2 py-0.5 text-[10px] text-success transition-colors hover:bg-success hover:text-white"
                       >
                         <Copy size={9} />
                         요지+인용 복사

@@ -67,7 +67,7 @@ export default function ImpersonationBanner() {
   if (!impersonatorUid) return null;
 
   return (
-    <div className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-amber-300 bg-amber-100 px-4 py-2 text-sm text-amber-900">
+    <div className="sticky top-0 z-50 flex items-center justify-between gap-3 border-b border-warning/30 bg-warning/10 px-4 py-2 text-sm text-warning">
       <div className="flex items-center gap-2">
         <AlertTriangle size={16} />
         <span>

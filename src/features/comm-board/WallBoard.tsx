@@ -53,12 +53,12 @@ import type { CommAnswer, CommBoard, CommQuestion, CommSortMode, User } from "@/
 import EmptyState from "@/components/ui/empty-state";
 
 const PALETTE = [
-  "border-amber-200 bg-amber-50 dark:border-amber-800/60 dark:bg-amber-950/20",
-  "border-sky-200 bg-sky-50 dark:border-sky-800/60 dark:bg-sky-950/20",
-  "border-rose-200 bg-rose-50 dark:border-rose-800/60 dark:bg-rose-950/20",
-  "border-emerald-200 bg-emerald-50 dark:border-emerald-800/60 dark:bg-emerald-950/20",
-  "border-violet-200 bg-violet-50 dark:border-violet-800/60 dark:bg-violet-950/20",
-  "border-orange-200 bg-orange-50 dark:border-orange-800/60 dark:bg-orange-950/20",
+  "border-warning/20 bg-warning/5",
+  "border-info/20 bg-info/5",
+  "border-destructive/20 bg-destructive/5",
+  "border-success/20 bg-success/5",
+  "border-cat-5/20 bg-cat-5/5",
+  "border-warning/20 bg-warning/5",
 ];
 
 function paletteOf(id: string): string {
@@ -645,8 +645,8 @@ export default function WallBoard({ boardId, variant }: Props) {
         {/* ── 라이브 인디케이터 ── */}
         <div className="fixed bottom-4 right-4 z-20 flex items-center gap-1.5 rounded-full border bg-card/90 px-3 py-1.5 text-[11px] text-muted-foreground shadow-md backdrop-blur">
           <span className="relative flex h-2 w-2">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-500 opacity-60" />
-            <span className="relative inline-flex h-2 w-2 rounded-full bg-emerald-500" />
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-success opacity-60" />
+            <span className="relative inline-flex h-2 w-2 rounded-full bg-success" />
           </span>
           실시간 · 노트 {questions.length}
         </div>
@@ -785,7 +785,7 @@ function NoteGrid({
                   disabled={!canResolve}
                   onClick={() => canResolve && onToggleResolved(q)}
                   title={canResolve ? "해결 표시 해제" : undefined}
-                  className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-200"
+                  className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success"
                 >
                   <CheckCircle2 size={10} /> 해결됨
                 </button>
@@ -794,7 +794,7 @@ function NoteGrid({
                   <button
                     type="button"
                     onClick={() => onToggleResolved(q)}
-                    className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground hover:border-emerald-400 hover:text-emerald-600"
+                    className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] text-muted-foreground hover:border-success/40 hover:text-success"
                   >
                     <CheckCircle2 size={10} /> 해결로 표시
                   </button>

@@ -14,7 +14,7 @@ export default function PromotionPreview() {
       <div className="mx-auto max-w-6xl px-4">
         <div className="flex items-center justify-between gap-3">
           <div className="flex items-center gap-2.5">
-            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <div className="flex h-9 w-9 items-center justify-center rounded-xl bg-success/10 text-success">
               <Megaphone size={18} aria-hidden />
             </div>
             <h2 className="text-xl font-bold tracking-tight sm:text-2xl">홍보게시판</h2>

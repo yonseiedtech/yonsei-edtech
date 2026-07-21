@@ -104,11 +104,11 @@ export default function AttendeeNotesPanel({
     <div className="rounded-2xl border bg-card p-4">
       {/* 발표자 노트 (읽기 전용 callout) */}
       {lectureNote && (
-        <div className="mb-3 rounded-xl border border-indigo-200 bg-indigo-50/60 px-3 py-2.5 dark:border-indigo-900 dark:bg-indigo-950/30">
-          <p className="mb-1 text-[11px] font-semibold text-indigo-700 dark:text-indigo-300">
+        <div className="mb-3 rounded-xl border border-cat-1/20 bg-cat-1/5 px-3 py-2.5">
+          <p className="mb-1 text-[11px] font-semibold text-cat-1">
             발표자 노트
           </p>
-          <p className="whitespace-pre-wrap text-xs leading-relaxed text-indigo-900 dark:text-indigo-100">
+          <p className="whitespace-pre-wrap text-xs leading-relaxed text-foreground">
             {lectureNote}
           </p>
         </div>
@@ -136,7 +136,7 @@ export default function AttendeeNotesPanel({
           className={cn(
             "w-full resize-y rounded-xl border border-border bg-background px-3 py-2.5",
             "text-sm text-foreground placeholder:text-muted-foreground",
-            "focus:outline-none focus:ring-2 focus:ring-indigo-500/40",
+            "focus:outline-none focus:ring-2 focus:ring-cat-1/40",
             "dark:bg-muted/10",
           )}
         />
@@ -155,11 +155,10 @@ export default function AttendeeNotesPanel({
                 type="button"
                 onClick={() => onJumpToSlide?.(n.slide)}
                 className={cn(
-                  "inline-flex items-center rounded-lg border border-indigo-200 bg-indigo-50/60 px-2.5 py-1",
-                  "text-[11px] font-medium text-indigo-700 transition-colors",
-                  "dark:border-indigo-900 dark:bg-indigo-950/30 dark:text-indigo-300",
+                  "inline-flex items-center rounded-lg border border-cat-1/20 bg-cat-1/5 px-2.5 py-1",
+                  "text-[11px] font-medium text-cat-1 transition-colors",
                   onJumpToSlide
-                    ? "cursor-pointer hover:border-indigo-400 hover:bg-indigo-100/70 dark:hover:bg-indigo-900/50"
+                    ? "cursor-pointer hover:border-cat-1/50 hover:bg-cat-1/10"
                     : "cursor-default",
                 )}
                 aria-label={`슬라이드 ${n.slide + 1}로 이동`}

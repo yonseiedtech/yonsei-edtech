@@ -25,7 +25,7 @@ export default function SectionError({
 
   return (
     <div className="mx-auto flex min-h-[50vh] w-full max-w-md flex-col items-center justify-center px-4 py-16 text-center">
-      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-dashed border-rose-200 bg-rose-50 text-rose-400 dark:border-rose-800 dark:bg-rose-950/40 dark:text-rose-300">
+      <div className="mb-5 flex h-14 w-14 items-center justify-center rounded-2xl border-2 border-dashed border-destructive/20 bg-destructive/5 text-destructive/50">
         <AlertTriangle size={26} strokeWidth={1.5} aria-hidden />
       </div>
       <h2 className="text-lg font-bold">{sectionLabel} 화면을 불러오지 못했어요</h2>

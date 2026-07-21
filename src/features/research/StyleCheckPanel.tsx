@@ -30,8 +30,8 @@ const CHAPTER_ORDER: WritingPaperChapterKey[] = [
 ];
 
 const CATEGORY_META: Record<StyleCategory, { icon: typeof Languages; accent: string }> = {
-  translationese: { icon: Languages, accent: "text-rose-600 dark:text-rose-400" },
-  "tense-voice": { icon: Clock, accent: "text-blue-600 dark:text-blue-400" },
+  translationese: { icon: Languages, accent: "text-destructive" },
+  "tense-voice": { icon: Clock, accent: "text-cat-1" },
 };
 
 /** message("문체 점검 — 라벨: "예문". 힌트") 에서 라벨만 뽑기 */
@@ -119,7 +119,7 @@ export default function StyleCheckPanel({ sections }: { sections: LintSections }
       {total === 0 ? (
         <Card className="rounded-2xl border-dashed">
           <CardContent className="flex flex-col items-center gap-2 py-10 text-center">
-            <CheckCircle2 className="h-6 w-6 text-emerald-500" />
+            <CheckCircle2 className="h-6 w-6 text-success" />
             <p className="text-sm text-muted-foreground">
               {hasText
                 ? "번역투·시제/태 패턴이 발견되지 않았습니다."
@@ -162,8 +162,8 @@ export default function StyleCheckPanel({ sections }: { sections: LintSections }
                                   className={cn(
                                     "text-[10px]",
                                     i.severity === "warn"
-                                      ? "border-amber-300 bg-amber-50 text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-200"
-                                      : "border-slate-300 bg-slate-50 text-slate-700 dark:border-slate-700 dark:bg-slate-900/40 dark:text-slate-300",
+                                      ? "border-warning/30 bg-warning/5 text-warning"
+                                      : "border-muted bg-muted/30 text-muted-foreground",
                                   )}
                                 >
                                   {i.severity === "warn" ? "점검" : "참고"}
@@ -201,7 +201,7 @@ export default function StyleCheckPanel({ sections }: { sections: LintSections }
           })
       )}
 
-      <div className="flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+      <div className="flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-3 text-xs text-warning">
         <AlertTriangle className="mt-0.5 h-3.5 w-3.5 shrink-0" aria-hidden />
         <p>
           이 점검은 규칙 기반(정규식)이라 맥락을 완전히 이해하지 못합니다. 정당한 용법까지 표시될 수

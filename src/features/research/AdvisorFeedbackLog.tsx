@@ -41,10 +41,10 @@ import {
 } from "@/types";
 
 const SOURCE_COLORS: Record<FeedbackSource, string> = {
-  advisor: "bg-blue-50 text-blue-700 dark:bg-blue-950/40 dark:text-blue-200",
-  committee: "bg-purple-50 text-purple-700 dark:bg-purple-950/40 dark:text-purple-200",
-  peer: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-200",
-  self: "bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300",
+  advisor: "bg-cat-1/5 text-cat-1",
+  committee: "bg-cat-5/5 text-cat-5",
+  peer: "bg-success/5 text-success",
+  self: "bg-muted text-muted-foreground",
 };
 
 // QA P2: toISOString()은 UTC 기준 — KST 00:00~08:59 에 전날 날짜가 찍히는 Sprint 47 회귀 방지
@@ -269,7 +269,7 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
             <GraduationCap size={18} className="text-primary" />
             지도 노트
             {pendingCount > 0 && (
-              <Badge className="bg-amber-50 text-amber-700 text-[10px] dark:bg-amber-950/40 dark:text-amber-200">
+              <Badge className="bg-warning/5 text-warning text-[10px]">
                 미반영 {pendingCount}건
               </Badge>
             )}
@@ -390,7 +390,7 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
 
       {/* ── 반영 완료 다이얼로그 (인라인) ── */}
       {resolveTarget && (
-        <div className="rounded-2xl border-2 border-emerald-300 bg-emerald-50/50 p-4 dark:border-emerald-800 dark:bg-emerald-950/20">
+        <div className="rounded-2xl border-2 border-success/30 bg-success/5 p-4">
           <p className="text-sm font-bold">반영 완료 처리</p>
           <p className="mt-1 text-xs text-muted-foreground line-clamp-2">{resolveTarget.content}</p>
           <Textarea
@@ -402,7 +402,7 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
           />
           <div className="mt-2 flex justify-end gap-2">
             <Button variant="outline" size="sm" onClick={() => { setResolveTarget(null); setResolutionNote(""); }}>취소</Button>
-            <Button size="sm" className="bg-emerald-600 hover:bg-emerald-700" onClick={handleResolve} disabled={saving}>
+            <Button size="sm" className="bg-success hover:bg-success/90" onClick={handleResolve} disabled={saving}>
               {saving && <Loader2 size={13} className="mr-1 animate-spin" />}
               반영 완료
             </Button>
@@ -444,9 +444,9 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
               >
                 <div className="flex flex-wrap items-center gap-2">
                   {applied ? (
-                    <CheckCircle2 size={15} className="shrink-0 text-emerald-600" />
+                    <CheckCircle2 size={15} className="shrink-0 text-success" />
                   ) : (
-                    <CircleDashed size={15} className="shrink-0 text-amber-500" />
+                    <CircleDashed size={15} className="shrink-0 text-warning" />
                   )}
                   <span className="text-xs font-semibold tabular-nums">{n.meetingDate}</span>
                   <Badge variant="secondary" className={cn("text-[10px]", SOURCE_COLORS[n.source] ?? "")}>
@@ -466,7 +466,7 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
                         <Button
                           variant="outline"
                           size="sm"
-                          className="h-7 gap-1 text-xs text-emerald-700"
+                          className="h-7 gap-1 text-xs text-success"
                           onClick={() => { setResolveTarget(n); setResolutionNote(""); }}
                         >
                           <Check size={12} />반영 완료
@@ -509,7 +509,7 @@ export default function AdvisorFeedbackLog({ userId, readOnly = false }: Props) 
                 )}
 
                 {applied && n.resolutionNote && (
-                  <p className="mt-2 rounded-lg bg-emerald-50/60 p-2 text-xs text-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-200">
+                  <p className="mt-2 rounded-lg bg-success/5 p-2 text-xs text-success">
                     <span className="font-semibold">반영 메모:</span> {n.resolutionNote}
                   </p>
                 )}

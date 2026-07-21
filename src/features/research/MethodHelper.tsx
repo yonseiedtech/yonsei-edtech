@@ -180,7 +180,7 @@ export default function MethodHelper({
   const statDesc = activeStat ? STAT_METHOD_DESCRIPTIONS[activeStat] : null;
 
   return (
-    <div className="mt-3 rounded-xl border border-teal-200/70 bg-teal-50/30 dark:border-teal-800/50 dark:bg-teal-950/10">
+    <div className="mt-3 rounded-xl border border-info/20 bg-info/5">
       <button
         type="button"
         onClick={() => {
@@ -190,24 +190,24 @@ export default function MethodHelper({
         aria-expanded={open}
         className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
       >
-        <span className="flex items-center gap-1.5 text-xs font-semibold text-teal-800 dark:text-teal-200">
+        <span className="flex items-center gap-1.5 text-xs font-semibold text-info">
           <Compass size={13} />
           연구 방법·분석 도우미 — 설계 9종 · 통계 8종 찾아보기
         </span>
         <ChevronRight
           size={14}
           className={cn(
-            "shrink-0 text-teal-700/70 transition-transform dark:text-teal-300/70",
+            "shrink-0 text-info/70 transition-transform",
             open && "rotate-90",
           )}
         />
       </button>
 
       {open && (
-        <div className="space-y-4 border-t border-teal-200/60 px-3.5 py-3 dark:border-teal-800/40">
+        <div className="space-y-4 border-t border-info/20 px-3.5 py-3">
           {/* ── 연구 설계 ── */}
           <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-teal-700/80 dark:text-teal-300/80">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-info/80">
               연구 설계 — 어떤 설계로 연구할 것인가
             </p>
             <div className="flex flex-wrap gap-1">
@@ -219,7 +219,7 @@ export default function MethodHelper({
                   className={cn(
                     "rounded-lg border px-2 py-1 text-[11px] transition-colors",
                     activeDesign === d.key
-                      ? "border-teal-500 bg-teal-600 font-medium text-white"
+                      ? "border-info bg-info font-medium text-white"
                       : "bg-card hover:bg-muted",
                   )}
                 >
@@ -232,16 +232,16 @@ export default function MethodHelper({
                 <p className="text-xs font-bold">{design.label}</p>
                 <dl className="mt-1.5 space-y-1 text-[11px] leading-relaxed">
                   <div>
-                    <dt className="inline font-semibold text-teal-700 dark:text-teal-300">정의 · </dt>
+                    <dt className="inline font-semibold text-info">정의 · </dt>
                     <dd className="inline text-foreground/85">{design.definition}</dd>
                   </div>
                   <div>
-                    <dt className="inline font-semibold text-teal-700 dark:text-teal-300">언제 쓰나 · </dt>
+                    <dt className="inline font-semibold text-info">언제 쓰나 · </dt>
                     <dd className="inline text-foreground/85">{design.whenToUse}</dd>
                   </div>
                   {design.caution && (
                     <div>
-                      <dt className="inline font-semibold text-amber-700 dark:text-amber-400">주의 · </dt>
+                      <dt className="inline font-semibold text-warning">주의 · </dt>
                       <dd className="inline text-foreground/85">{design.caution}</dd>
                     </div>
                   )}
@@ -251,7 +251,7 @@ export default function MethodHelper({
                     <button
                       type="button"
                       onClick={() => onInsertDesign(design)}
-                      className="rounded-full border border-dashed border-teal-500/60 px-2 py-0.5 text-[10px] font-medium text-teal-700 transition-colors hover:bg-teal-600 hover:text-white dark:text-teal-300"
+                      className="rounded-full border border-dashed border-info/60 px-2 py-0.5 text-[10px] font-medium text-info transition-colors hover:bg-info hover:text-white"
                     >
                       + 연구 설계 섹션에 기술 골격 삽입
                     </button>
@@ -259,7 +259,7 @@ export default function MethodHelper({
                   {design.archiveHref && (
                     <Link
                       href={design.archiveHref}
-                      className="rounded-full border border-teal-300/60 px-2 py-0.5 text-[10px] text-teal-700 transition-colors hover:bg-teal-100 dark:border-teal-700/60 dark:text-teal-300 dark:hover:bg-teal-900/40"
+                      className="rounded-full border border-info/30 px-2 py-0.5 text-[10px] text-info transition-colors hover:bg-info/10"
                     >
                       아카이브 개념 보기
                     </Link>
@@ -271,7 +271,7 @@ export default function MethodHelper({
 
           {/* ── 통계 분석 ── */}
           <div>
-            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-teal-700/80 dark:text-teal-300/80">
+            <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-info/80">
               통계 분석 — 무엇으로 검증할 것인가
             </p>
             <div className="flex flex-wrap gap-1">
@@ -283,9 +283,9 @@ export default function MethodHelper({
                   className={cn(
                     "rounded-lg border px-2 py-1 text-[11px] transition-colors",
                     activeStat === m
-                      ? "border-teal-500 bg-teal-600 font-medium text-white"
+                      ? "border-info bg-info font-medium text-white"
                       : "bg-card hover:bg-muted",
-                    selectedMethods.includes(m) && activeStat !== m && "border-teal-400/70",
+                    selectedMethods.includes(m) && activeStat !== m && "border-info/40",
                   )}
                 >
                   {STAT_METHOD_LABELS[m]}
@@ -298,19 +298,19 @@ export default function MethodHelper({
                 <p className="text-xs font-bold">{STAT_METHOD_LABELS[activeStat]}</p>
                 <dl className="mt-1.5 space-y-1 text-[11px] leading-relaxed">
                   <div>
-                    <dt className="inline font-semibold text-teal-700 dark:text-teal-300">정의 · </dt>
+                    <dt className="inline font-semibold text-info">정의 · </dt>
                     <dd className="inline text-foreground/85">{statDesc.definition}</dd>
                   </div>
                   <div>
-                    <dt className="inline font-semibold text-teal-700 dark:text-teal-300">언제 쓰나 · </dt>
+                    <dt className="inline font-semibold text-info">언제 쓰나 · </dt>
                     <dd className="inline text-foreground/85">{statDesc.whenToUse}</dd>
                   </div>
                 </dl>
-                <p className="mt-2 text-[10px] font-semibold text-teal-700/80 dark:text-teal-300/80">기본 가정 검정</p>
+                <p className="mt-2 text-[10px] font-semibold text-info/80">기본 가정 검정</p>
                 <ul className="mt-0.5 space-y-0.5">
                   {(assumptionsByMethod[activeStat] ?? []).map((a, ai) => (
                     <li key={ai} className="flex gap-1.5 text-[11px] leading-relaxed text-foreground/80">
-                      <span className="mt-0.5 shrink-0 text-teal-600">·</span>
+                      <span className="mt-0.5 shrink-0 text-info">·</span>
                       {a}
                     </li>
                   ))}
@@ -320,7 +320,7 @@ export default function MethodHelper({
                     <button
                       type="button"
                       onClick={() => onInsertAnalysis(activeStat)}
-                      className="rounded-full border border-dashed border-teal-500/60 px-2 py-0.5 text-[10px] font-medium text-teal-700 transition-colors hover:bg-teal-600 hover:text-white dark:text-teal-300"
+                      className="rounded-full border border-dashed border-info/60 px-2 py-0.5 text-[10px] font-medium text-info transition-colors hover:bg-info hover:text-white"
                     >
                       + 자료 분석 섹션에 기술 문장 삽입
                     </button>
@@ -329,7 +329,7 @@ export default function MethodHelper({
                     <button
                       type="button"
                       onClick={() => (hasProfile ? onAddMethod(activeStat) : onOpenProfile())}
-                      className="inline-flex items-center gap-0.5 rounded-full border border-teal-500/60 px-2 py-0.5 text-[10px] font-medium text-teal-700 transition-colors hover:bg-teal-600 hover:text-white dark:text-teal-300"
+                      className="inline-flex items-center gap-0.5 rounded-full border border-info/60 px-2 py-0.5 text-[10px] font-medium text-info transition-colors hover:bg-info hover:text-white"
                       title="내 연구 방향에 추가하면 연구 결과 장에서 가정 검정 가이드가 자동 표시됩니다"
                     >
                       <Plus size={10} />
@@ -339,7 +339,7 @@ export default function MethodHelper({
                   {archiveByMethod[activeStat] && (
                     <Link
                       href={archiveByMethod[activeStat]!}
-                      className="rounded-full border border-teal-300/60 px-2 py-0.5 text-[10px] text-teal-700 transition-colors hover:bg-teal-100 dark:border-teal-700/60 dark:text-teal-300 dark:hover:bg-teal-900/40"
+                      className="rounded-full border border-info/30 px-2 py-0.5 text-[10px] text-info transition-colors hover:bg-info/10"
                     >
                       아카이브 개념 보기
                     </Link>

@@ -111,10 +111,10 @@ interface DiagnosisReportProps {
 
 /** 준비도 수준 라벨·색상 */
 function readinessLevel(pct: number): { label: string; color: string; ring: string } {
-  if (pct >= 80) return { label: "우수", color: "text-emerald-600 dark:text-emerald-400", ring: "stroke-emerald-500" };
-  if (pct >= 60) return { label: "양호", color: "text-sky-600 dark:text-sky-400", ring: "stroke-sky-500" };
-  if (pct >= 40) return { label: "보통", color: "text-amber-600 dark:text-amber-400", ring: "stroke-amber-500" };
-  return { label: "보완 필요", color: "text-rose-600 dark:text-rose-400", ring: "stroke-rose-500" };
+  if (pct >= 80) return { label: "우수", color: "text-success", ring: "stroke-success" };
+  if (pct >= 60) return { label: "양호", color: "text-cat-1", ring: "stroke-cat-1" };
+  if (pct >= 40) return { label: "보통", color: "text-warning", ring: "stroke-warning" };
+  return { label: "보완 필요", color: "text-destructive", ring: "stroke-destructive" };
 }
 
 /** 원형 게이지 (SVG) */
@@ -241,21 +241,21 @@ export default function DiagnosisReport({
         <button
           type="button"
           onClick={onRetryMore ?? onRetry}
-          className="animate-in fade-in slide-in-from-bottom-1 duration-500 mt-4 flex w-full items-center gap-3 rounded-2xl border border-violet-200 bg-gradient-to-r from-violet-50 to-violet-100/50 p-4 text-left transition-all hover:border-violet-300 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-violet-400/50 focus-visible:ring-offset-2 dark:border-violet-800/50 dark:from-violet-950/30 dark:to-violet-900/20"
+          className="animate-in fade-in slide-in-from-bottom-1 duration-500 mt-4 flex w-full items-center gap-3 rounded-2xl border border-cat-5/20 bg-gradient-to-r from-cat-5/5 to-cat-5/10 p-4 text-left transition-all hover:border-cat-5/30 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-cat-5/50 focus-visible:ring-offset-2"
         >
-          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-200/50 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300">
-            <span className="absolute inline-flex h-full w-full animate-ping rounded-xl bg-violet-300/40 opacity-60 dark:bg-violet-700/30" />
+          <span className="relative flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-cat-5/20 text-cat-5">
+            <span className="absolute inline-flex h-full w-full animate-ping rounded-xl bg-cat-5/40 opacity-60" />
             <Sparkles className="relative h-5 w-5" aria-hidden />
           </span>
           <span className="min-w-0 flex-1">
-            <span className="block text-sm font-semibold text-violet-900 dark:text-violet-200">
+            <span className="block text-sm font-semibold text-cat-5">
               남은 {remainingQuestions}문항을 더 풀어 준비도를 높여보세요
             </span>
-            <span className="mt-0.5 block text-xs text-violet-700/80 dark:text-violet-300/70">
+            <span className="mt-0.5 block text-xs text-cat-5/70">
               아직 맞추지 못한 문항을 추가로 진단하면 영역 숙련도가 올라갑니다.
             </span>
           </span>
-          <ArrowRight className="h-5 w-5 shrink-0 text-violet-700 dark:text-violet-300" aria-hidden />
+          <ArrowRight className="h-5 w-5 shrink-0 text-cat-5" aria-hidden />
         </button>
       )}
 
@@ -290,12 +290,12 @@ export default function DiagnosisReport({
                     className={cn(
                       "h-full rounded-full transition-all duration-700",
                       pct >= 80
-                        ? "bg-emerald-500"
+                        ? "bg-success"
                         : pct >= 60
-                          ? "bg-sky-500"
+                          ? "bg-cat-1"
                           : pct >= 40
-                            ? "bg-amber-500"
-                            : "bg-rose-500",
+                            ? "bg-warning"
+                            : "bg-destructive",
                     )}
                     style={{ width: `${pct}%` }}
                   />
@@ -378,10 +378,10 @@ export default function DiagnosisReport({
 
       {/* 약점 개념 → 학습 자산 원클릭 동선 (H3: 개념 설명·이론 계보·암기카드) */}
       {weakConcepts.length > 0 && (
-        <Card className="mt-6 rounded-2xl border-amber-200 bg-amber-50/40 shadow-sm dark:border-amber-800 dark:bg-amber-950/20">
+        <Card className="mt-6 rounded-2xl border-warning/20 bg-warning/5 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="flex items-center gap-2 text-base">
-              <Lightbulb className="h-4 w-4 text-amber-500" aria-hidden />
+              <Lightbulb className="h-4 w-4 text-warning" aria-hidden />
               보완하면 좋은 개념 ({weakConcepts.length})
             </CardTitle>
           </CardHeader>
@@ -398,7 +398,7 @@ export default function DiagnosisReport({
                   <div className="flex items-center gap-2">
                     <Badge
                       variant="outline"
-                      className="border-violet-200 bg-violet-50 text-violet-800 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300"
+                      className="border-cat-5/20 bg-cat-5/5 text-cat-5"
                     >
                       {c.name}
                     </Badge>
@@ -455,12 +455,12 @@ export default function DiagnosisReport({
       {/* 저장 상태 + 재진단 */}
       <div className="mt-8 flex flex-col items-center gap-3">
         {saveState === "saved" && (
-          <p className="text-xs text-emerald-600 dark:text-emerald-400">
+          <p className="text-xs text-success">
             결과가 저장되었습니다. 마이페이지에서 다시 확인할 수 있습니다.
           </p>
         )}
         {saveState === "error" && (
-          <p className="flex items-center gap-1 text-xs text-rose-600 dark:text-rose-400">
+          <p className="flex items-center gap-1 text-xs text-destructive">
             <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
             결과 저장에 실패했습니다. (진단 점수는 위에 그대로 표시됩니다)
           </p>
@@ -561,10 +561,10 @@ function WrongCardsSection({
   const allSaved = savedCount === wrongItems.length;
 
   return (
-    <Card className="mt-6 rounded-2xl border-sky-200 bg-sky-50/40 shadow-sm dark:border-sky-800 dark:bg-sky-950/20">
+    <Card className="mt-6 rounded-2xl border-cat-1/20 bg-cat-1/5 shadow-sm">
       <CardHeader className="pb-2">
         <CardTitle className="flex items-center gap-2 text-base">
-          <Layers className="h-4 w-4 text-sky-500" aria-hidden />
+          <Layers className="h-4 w-4 text-cat-1" aria-hidden />
           틀린 문항 복습 카드 ({wrongItems.length})
         </CardTitle>
       </CardHeader>
@@ -592,7 +592,7 @@ function WrongCardsSection({
         </div>
 
         {!loggedIn && (
-          <p className="mb-3 flex items-center gap-1 text-xs text-amber-700 dark:text-amber-400">
+          <p className="mb-3 flex items-center gap-1 text-xs text-warning">
             <AlertTriangle className="h-3.5 w-3.5" aria-hidden />
             로그인하면 암기카드로 저장할 수 있어요.
           </p>
@@ -615,7 +615,7 @@ function WrongCardsSection({
                     {seed.conceptName && (
                       <Badge
                         variant="outline"
-                        className="mt-1.5 border-violet-200 bg-violet-50 text-[10px] text-violet-800 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300"
+                        className="mt-1.5 border-cat-5/20 bg-cat-5/5 text-[10px] text-cat-5"
                       >
                         {seed.conceptName}
                       </Badge>
@@ -662,7 +662,7 @@ function WrongCardsSection({
                       </p>
                     )}
                     {myAnswerById[seed.questionId] && (
-                      <p className="mb-2 whitespace-pre-line rounded-md bg-rose-50 px-2 py-1.5 text-sm leading-relaxed text-rose-700 dark:bg-rose-950/30 dark:text-rose-300">
+                      <p className="mb-2 whitespace-pre-line rounded-md bg-destructive/5 px-2 py-1.5 text-sm leading-relaxed text-destructive">
                         내 답 (오답): {myAnswerById[seed.questionId]}
                       </p>
                     )}
@@ -732,7 +732,7 @@ function FullReviewSection({ reviewItems }: { reviewItems: ReviewItem[] }) {
         </div>
 
         {visible.length === 0 ? (
-          <p className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-3 text-sm text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/20 dark:text-emerald-300">
+          <p className="rounded-xl border border-success/20 bg-success/5 p-3 text-sm text-success">
             틀린 문항이 없습니다. 모두 정답이에요!
           </p>
         ) : (
@@ -744,7 +744,7 @@ function FullReviewSection({ reviewItems }: { reviewItems: ReviewItem[] }) {
                   "rounded-xl border p-3",
                   item.correct
                     ? "border-border bg-card/70"
-                    : "border-rose-200 bg-rose-50/40 dark:border-rose-800/60 dark:bg-rose-950/20",
+                    : "border-destructive/20 bg-destructive/5",
                 )}
               >
                 <div className="flex items-start gap-2">
@@ -752,8 +752,8 @@ function FullReviewSection({ reviewItems }: { reviewItems: ReviewItem[] }) {
                     className={cn(
                       "mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full text-[11px] font-semibold",
                       item.correct
-                        ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                        : "bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300",
+                        ? "bg-success/10 text-success"
+                        : "bg-destructive/10 text-destructive",
                     )}
                     aria-hidden
                   >
@@ -774,14 +774,14 @@ function FullReviewSection({ reviewItems }: { reviewItems: ReviewItem[] }) {
                         className={cn(
                           "whitespace-pre-line rounded-md px-2 py-1.5 text-sm leading-relaxed",
                           item.correct
-                            ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300"
-                            : "bg-rose-50 text-rose-700 dark:bg-rose-950/30 dark:text-rose-300",
+                            ? "bg-success/5 text-success"
+                            : "bg-destructive/5 text-destructive",
                         )}
                       >
                         내 답{item.correct ? " (정답)" : " (오답)"}: {item.myAnswerText || "(미응답)"}
                       </p>
                       {!item.correct && (
-                        <p className="whitespace-pre-line rounded-md bg-emerald-50 px-2 py-1.5 text-sm leading-relaxed text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                        <p className="whitespace-pre-line rounded-md bg-success/5 px-2 py-1.5 text-sm leading-relaxed text-success">
                           정답: {item.answerText || "(정답 정보 없음)"}
                         </p>
                       )}

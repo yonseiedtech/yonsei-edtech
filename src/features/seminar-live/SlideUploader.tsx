@@ -166,7 +166,7 @@ export default function SlideUploader({ seminarId, onUploaded }: SlideUploaderPr
           <span className="text-xs text-muted-foreground">{label}</span>
         )}
         {phase.kind === "done" && (
-          <span className="text-xs font-medium text-indigo-600 dark:text-indigo-400">
+          <span className="text-xs font-medium text-cat-1">
             업로드 완료
           </span>
         )}
@@ -176,7 +176,7 @@ export default function SlideUploader({ seminarId, onUploaded }: SlideUploaderPr
         <div className="mt-3 space-y-1">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className="h-full rounded-full bg-indigo-500 transition-all duration-300"
+              className="h-full rounded-full bg-cat-1 transition-all duration-300"
               style={{ width: `${pct}%` }}
             />
           </div>

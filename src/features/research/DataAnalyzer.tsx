@@ -399,7 +399,7 @@ export default function DataAnalyzer({ open, onOpenChange, onInsertText, readOnl
         )}
 
         {!data && raw.trim().length > 0 && (
-          <p className="flex items-center gap-1.5 text-[11px] text-amber-600">
+          <p className="flex items-center gap-1.5 text-[11px] text-warning">
             <Loader2 size={11} />
             데이터를 인식하지 못했습니다 — 첫 행에 변수명, 둘째 행부터 값이 오도록 붙여넣으세요.
           </p>

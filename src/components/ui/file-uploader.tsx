@@ -100,7 +100,7 @@ export default function FileUploader({ folder, accept, multiple = false, value =
               <button
                 type="button"
                 onClick={() => onChange(value.filter((_, idx) => idx !== i))}
-                className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+                className="shrink-0 rounded p-1 text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
               >
                 <X size={14} />
               </button>

@@ -710,7 +710,7 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
                     <Badge
                       key={id}
                       variant="outline"
-                      className="cursor-pointer text-[10px] hover:bg-rose-50 hover:text-rose-700"
+                      className="cursor-pointer text-[10px] hover:bg-destructive/5 hover:text-destructive"
                       onClick={() => toggleStat(id)}
                     >
                       {s ? s.name : id.slice(0, 6) + "…"} ×
@@ -795,7 +795,7 @@ export default function ResearchMethodForm({ initial, userId }: Props) {
                     <Badge
                       key={id}
                       variant="outline"
-                      className="cursor-pointer text-[10px] hover:bg-rose-50 hover:text-rose-700"
+                      className="cursor-pointer text-[10px] hover:bg-destructive/5 hover:text-destructive"
                       onClick={() => toggleThesis(id)}
                     >
                       {t ? t.title : id.slice(0, 6) + "…"} ×

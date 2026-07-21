@@ -609,12 +609,12 @@ function CourseRow({
               </Badge>
             )}
             {current === "student" && (
-              <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <span className="inline-flex items-center rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
                 수강 중
               </span>
             )}
             {current === "auditor" && (
-              <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+              <span className="inline-flex items-center rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-semibold text-warning">
                 청강 중
               </span>
             )}
@@ -694,11 +694,11 @@ function ToggleChip({
   const palette =
     color === "emerald"
       ? active
-        ? "bg-emerald-100 text-emerald-800 border-emerald-300"
-        : "bg-card text-muted-foreground border-border hover:bg-emerald-50"
+        ? "bg-success/10 text-success border-success/30"
+        : "bg-card text-muted-foreground border-border hover:bg-success/5"
       : active
-      ? "bg-amber-100 text-amber-800 border-amber-300"
-      : "bg-card text-muted-foreground border-border hover:bg-amber-50";
+      ? "bg-warning/10 text-warning border-warning/30"
+      : "bg-card text-muted-foreground border-border hover:bg-warning/5";
   return (
     <button
       type="button"
@@ -899,7 +899,7 @@ function ComprehensiveExamPanel() {
         응시 예정 학기를 미리 등록(소요조사)하고, 본인 수강 과목 중 2과목을 선택해 주세요. 신청·결과는 나중에 직접 갱신 가능합니다. 등록한 정보는 운영진(전공대표·학회장)이 학기별로 모아 확인합니다.
       </p>
       {!isEligible && (
-        <p className="mt-2 rounded-lg border border-amber-200 bg-amber-50/70 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+        <p className="mt-2 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-[11px] text-warning">
           종합시험 소요 등록은 <b>누적학기 3학기 이상</b> 회원만 가능합니다. (현재: {accumulated}학기)
         </p>
       )}
@@ -1162,11 +1162,11 @@ function TaReportSection({
 
   return (
     <div className="space-y-4">
-      <div className="rounded-2xl border border-blue-200 bg-blue-50/50 p-4 dark:border-blue-800 dark:bg-blue-950/30">
-        <div className="flex items-center gap-2 text-sm font-semibold text-blue-800 dark:text-blue-300">
+      <div className="rounded-2xl border border-cat-1/20 bg-cat-1/5 p-4">
+        <div className="flex items-center gap-2 text-sm font-semibold text-cat-1">
           <ShieldCheck size={14} aria-hidden /> 조교 리포트 — 운영진 전용
         </div>
-        <p className="mt-1 text-[11px] text-blue-800/80 dark:text-blue-400">
+        <p className="mt-1 text-[11px] text-cat-1/80">
           {year}년 {SEMESTER_TERM_LABELS[term]} · 등록 {totalEnrollments}건
           (수강 {totalStudents} · 청강 {totalAuditors} · TA {totalTAs}
           {totalOrphans > 0 ? ` · 과목 매칭 실패 ${totalOrphans}` : ""})
@@ -1174,18 +1174,18 @@ function TaReportSection({
       </div>
 
       {totalOrphans > 0 && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50/60 p-4 dark:border-amber-800 dark:bg-amber-950/30">
-          <p className="text-xs font-semibold text-amber-900 dark:text-amber-300">
+        <div className="rounded-2xl border border-warning/20 bg-warning/5 p-4">
+          <p className="text-xs font-semibold text-warning">
             과목 정보가 없는 수강생 {totalOrphans}명
           </p>
-          <p className="mt-1 text-[11px] text-amber-900/80 dark:text-amber-400">
+          <p className="mt-1 text-[11px] text-warning/80">
             등록 시점에는 존재했으나 이후 과목이 삭제되었거나 학기/연도 정보가 다른 데이터입니다. 운영콘솔의 수강과목에서 정리해 주세요.
           </p>
           <div className="mt-2 flex flex-wrap gap-1.5">
             {orphanEnrollments.map((e) => (
               <span
                 key={e.id}
-                className="inline-flex items-center gap-1 rounded-full border border-amber-300 bg-card pl-2 pr-0.5 py-0.5 text-[11px] text-amber-900 dark:border-amber-700 dark:text-amber-300"
+                className="inline-flex items-center gap-1 rounded-full border border-warning/30 bg-card pl-2 pr-0.5 py-0.5 text-[11px] text-warning"
               >
                 <Link
                   href={e.userId ? `/profile/${e.userId}` : "#"}
@@ -1193,7 +1193,7 @@ function TaReportSection({
                 >
                   {e.studentName}
                   {e.role && e.role !== "student" && (
-                    <span className="ml-1 text-[10px] text-amber-900/70 dark:text-amber-300/70">
+                    <span className="ml-1 text-[10px] text-warning/70">
                       · {ENROLLMENT_ROLE_LABELS[e.role]}
                     </span>
                   )}
@@ -1203,7 +1203,7 @@ function TaReportSection({
                   onClick={() => handleDelete(e)}
                   disabled={deletingId === e.id}
                   aria-label="수강 등록 삭제"
-                  className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-amber-900/70 hover:bg-destructive/10 hover:text-destructive disabled:opacity-40 dark:text-amber-300/70"
+                  className="ml-0.5 inline-flex h-4 w-4 items-center justify-center rounded-full text-warning/70 hover:bg-destructive/10 hover:text-destructive disabled:opacity-40"
                 >
                   <Trash2 size={10} />
                 </button>

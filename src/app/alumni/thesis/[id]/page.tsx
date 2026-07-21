@@ -889,7 +889,7 @@ export default function AlumniThesisDetailPage() {
               {saveMsg && (
                 <p
                   className={`mt-3 text-xs ${
-                    saveMsg.startsWith("✓") ? "text-emerald-700" : "text-destructive"
+                    saveMsg.startsWith("✓") ? "text-success" : "text-destructive"
                   }`}
                 >
                   {saveMsg}
@@ -900,7 +900,7 @@ export default function AlumniThesisDetailPage() {
           {!editing && saveMsg && (
             <p
               className={`mt-3 text-xs ${
-                saveMsg.startsWith("✓") ? "text-emerald-700" : "text-destructive"
+                saveMsg.startsWith("✓") ? "text-success" : "text-destructive"
               }`}
             >
               {saveMsg}
@@ -1019,10 +1019,10 @@ function ArchivePickerField({
                     "rounded-md border px-2 py-1 text-[11px] transition-colors",
                     active
                       ? type === "concept"
-                        ? "border-violet-300 bg-violet-100 text-violet-800"
+                        ? "border-cat-5/30 bg-cat-5/10 text-cat-5"
                         : type === "variable"
-                          ? "border-blue-300 bg-blue-100 text-blue-800"
-                          : "border-emerald-300 bg-emerald-100 text-emerald-800"
+                          ? "border-cat-1/30 bg-cat-1/10 text-cat-1"
+                          : "border-success/30 bg-success/10 text-success"
                       : "border-muted bg-card text-muted-foreground hover:bg-muted/50",
                   )}
                 >
@@ -1072,8 +1072,8 @@ function RelatedList({
   emptyText: string;
 }) {
   const accentMap = {
-    indigo: { reason: "text-indigo-700" },
-    amber: { reason: "text-amber-700" },
+    indigo: { reason: "text-cat-1" },
+    amber: { reason: "text-warning" },
   } as const;
   const a = accentMap[accent];
   const PAGE = 5;

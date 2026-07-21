@@ -129,22 +129,22 @@ export default function MethodStructurePanel({
   return (
     <>
       {/* ── A. 측정도구 신뢰도 표 ── */}
-      <div className="mt-3 rounded-xl border border-sky-200/70 bg-sky-50/40 dark:border-sky-800/50 dark:bg-sky-950/10">
+      <div className="mt-3 rounded-xl border border-cat-1/20 bg-cat-1/5">
         <button
           type="button"
           onClick={() => setInstOpen((v) => !v)}
           aria-expanded={instOpen}
           className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
         >
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-sky-800 dark:text-sky-200">
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-cat-1">
             <Ruler size={13} />
             {qual ? "자료 수집 도구 표" : "측정도구 신뢰도 표"}
             {instruments.length > 0 && (
-              <span className="rounded-full bg-sky-100 px-1.5 py-0.5 text-[10px] font-bold text-sky-700 dark:bg-sky-900/50 dark:text-sky-300">
+              <span className="rounded-full bg-cat-1/10 px-1.5 py-0.5 text-[10px] font-bold text-cat-1">
                 {instruments.filter((i) => i.name.trim()).length}개 도구
               </span>
             )}
-            <span className="font-normal text-sky-700/80 dark:text-sky-300/80">
+            <span className="font-normal text-cat-1/80">
               {qual
                 ? "면담 가이드·관찰지의 출처와 구성을 표로 — 개발·검토 과정이 엄격성의 근거"
                 : "도구별 α를 표로 — 선행·본 연구 함께 보고하면 방어가 강해집니다"}
@@ -152,11 +152,11 @@ export default function MethodStructurePanel({
           </span>
           <ChevronRight
             size={14}
-            className={cn("shrink-0 text-sky-700/70 transition-transform dark:text-sky-300/70", instOpen && "rotate-90")}
+            className={cn("shrink-0 text-cat-1/70 transition-transform", instOpen && "rotate-90")}
           />
         </button>
         {instOpen && (
-          <div className="space-y-2 border-t border-sky-200/60 px-3.5 py-3 dark:border-sky-800/40">
+          <div className="space-y-2 border-t border-cat-1/20 px-3.5 py-3">
             {instruments.length === 0 && (
               <p className="rounded-lg border border-dashed bg-card/50 px-3 py-3 text-center text-[11px] text-muted-foreground">
                 아직 도구가 없습니다 — &lsquo;도구 추가&rsquo;로 {qual ? "수집 도구마다" : "측정 변인마다"} 한 행씩 채우세요.
@@ -219,7 +219,7 @@ export default function MethodStructurePanel({
               </div>
             )}
             {qual && instruments.some((i) => i.alphaPrior.trim() || i.alphaCurrent.trim()) && (
-              <p className="rounded-lg bg-amber-50 px-2 py-1 text-[10px] text-amber-700 dark:bg-amber-950/30 dark:text-amber-300">
+              <p className="rounded-lg bg-warning/5 px-2 py-1 text-[10px] text-warning">
                 ⚠ 양적 모드에서 입력한 신뢰도 α 값이 남아 있어요 — 질적 표에는 표시·삽입되지 않습니다(데이터는 보존).
               </p>
             )}
@@ -233,22 +233,22 @@ export default function MethodStructurePanel({
       </div>
 
       {/* ── B. 연구 절차 타임라인 ── */}
-      <div className="mt-3 rounded-xl border border-violet-200/70 bg-violet-50/40 dark:border-violet-800/50 dark:bg-violet-950/10">
+      <div className="mt-3 rounded-xl border border-cat-5/20 bg-cat-5/5">
         <button
           type="button"
           onClick={() => setProcOpen((v) => !v)}
           aria-expanded={procOpen}
           className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
         >
-          <span className="flex items-center gap-1.5 text-xs font-semibold text-violet-800 dark:text-violet-200">
+          <span className="flex items-center gap-1.5 text-xs font-semibold text-cat-5">
             <CalendarRange size={13} />
             연구 절차 타임라인
             {procedure.length > 0 && (
-              <span className="rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-bold text-violet-700 dark:bg-violet-900/50 dark:text-violet-300">
+              <span className="rounded-full bg-cat-5/10 px-1.5 py-0.5 text-[10px] font-bold text-cat-5">
                 {procedure.length}단계
               </span>
             )}
-            <span className="font-normal text-violet-700/80 dark:text-violet-300/80">
+            <span className="font-normal text-cat-5/80">
               {qual
                 ? "모집 → 자료 수집 → 분석 → 참여자 확인 흐름을 표로"
                 : mixed
@@ -258,11 +258,11 @@ export default function MethodStructurePanel({
           </span>
           <ChevronRight
             size={14}
-            className={cn("shrink-0 text-violet-700/70 transition-transform dark:text-violet-300/70", procOpen && "rotate-90")}
+            className={cn("shrink-0 text-cat-5/70 transition-transform", procOpen && "rotate-90")}
           />
         </button>
         {procOpen && (
-          <div className="space-y-2 border-t border-violet-200/60 px-3.5 py-3 dark:border-violet-800/40">
+          <div className="space-y-2 border-t border-cat-5/20 px-3.5 py-3">
             {(procedure.length === 0 || mixed) && !readOnly && (
               <div className="flex flex-wrap items-center gap-2 rounded-lg border border-dashed bg-card/50 px-3 py-2.5">
                 <p className="text-[11px] text-muted-foreground">표준 골격으로 시작할 수 있어요:</p>

@@ -412,7 +412,7 @@ export default function ResearchJourneyGuide({ userId, current, readOnly }: Prop
                       isCurrent
                         ? "bg-primary text-primary-foreground"
                         : status === "rich"
-                          ? "bg-emerald-500/15 text-emerald-600 dark:text-emerald-400"
+                          ? "bg-success/15 text-success"
                           : "bg-muted text-muted-foreground",
                     )}
                   >
@@ -439,9 +439,9 @@ export default function ResearchJourneyGuide({ userId, current, readOnly }: Prop
                     className={cn(
                       "shrink-0 rounded-full px-1.5 py-0.5 text-[9px] font-medium",
                       status === "rich"
-                        ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                        ? "bg-success/10 text-success"
                         : status === "started"
-                          ? "bg-amber-500/10 text-amber-600 dark:text-amber-400"
+                          ? "bg-warning/10 text-warning"
                           : "bg-muted text-muted-foreground",
                     )}
                   >

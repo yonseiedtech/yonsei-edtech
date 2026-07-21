@@ -174,7 +174,7 @@ export default function ResearchQuestionSyncPanel({
                 type="button"
                 onClick={() => removeAt(i)}
                 aria-label={`연구문제 ${i + 1} 삭제`}
-                className="mt-2 rounded-md p-1.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/40 dark:hover:text-rose-300"
+                className="mt-2 rounded-md p-1.5 text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
               >
                 <Trash2 size={14} />
               </button>

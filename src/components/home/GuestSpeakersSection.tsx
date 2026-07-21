@@ -34,7 +34,7 @@ function SpeakerCard({ s }: { s: Seminar }) {
       onMouseMove={onMove}
       onMouseLeave={onLeave}
       style={{ rotateX: sx, rotateY: sy, transformPerspective: 1000 }}
-      className="group relative flex h-[360px] w-[260px] shrink-0 snap-center flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-2xl hover:shadow-amber-200/40"
+      className="group relative flex h-[360px] w-[260px] shrink-0 snap-center flex-col overflow-hidden rounded-2xl border bg-card shadow-sm transition-shadow hover:shadow-2xl hover:shadow-warning/20"
     >
       {/* glow follows cursor */}
       <motion.div
@@ -44,7 +44,7 @@ function SpeakerCard({ s }: { s: Seminar }) {
       />
 
       {/* photo */}
-      <div className="relative h-[60%] w-full overflow-hidden bg-gradient-to-br from-amber-50 via-white to-sky-50">
+      <div className="relative h-[60%] w-full overflow-hidden bg-gradient-to-br from-warning/5 via-white to-cat-1/5">
         {s.speakerPhotoUrl ? (
           <Image
             src={s.speakerPhotoUrl}
@@ -54,7 +54,7 @@ function SpeakerCard({ s }: { s: Seminar }) {
             className="object-cover transition-transform duration-500 group-hover:scale-[1.06]"
           />
         ) : (
-          <div className="flex h-full w-full items-center justify-center text-amber-400">
+          <div className="flex h-full w-full items-center justify-center text-warning">
             <Mic size={64} strokeWidth={1.2} />
           </div>
         )}
@@ -101,7 +101,7 @@ export default function GuestSpeakersSection() {
         <div className="flex items-end justify-between gap-4">
           <div>
             <div className="flex items-center gap-2">
-              <Mic size={20} className="text-amber-600" />
+              <Mic size={20} className="text-warning" />
               <h2 className="text-xl font-bold">우리 학회에 도움을 주신 연사분들</h2>
             </div>
             <p className="mt-1 text-xs text-muted-foreground">

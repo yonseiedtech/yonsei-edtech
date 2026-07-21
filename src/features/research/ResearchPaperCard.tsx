@@ -20,9 +20,9 @@ interface Props {
 }
 
 const READ_STATUS_LABEL: Record<PaperReadStatus, { label: string; icon: typeof Clock; color: string }> = {
-  to_read: { label: "읽을 예정", icon: Clock, color: "bg-amber-50 text-amber-700 border-amber-200" },
-  reading: { label: "읽는 중", icon: BookOpen, color: "bg-blue-50 text-blue-700 border-blue-200" },
-  completed: { label: "완독", icon: CheckCircle2, color: "bg-emerald-50 text-emerald-700 border-emerald-200" },
+  to_read: { label: "읽을 예정", icon: Clock, color: "bg-warning/5 text-warning border-warning/20" },
+  reading: { label: "읽는 중", icon: BookOpen, color: "bg-cat-1/5 text-cat-1 border-cat-1/20" },
+  completed: { label: "완독", icon: CheckCircle2, color: "bg-success/5 text-success border-success/20" },
 };
 
 const STATUS_CYCLE: PaperReadStatus[] = ["to_read", "reading", "completed"];
@@ -101,7 +101,7 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpda
     <article className="group rounded-2xl border bg-card p-5 transition hover:border-primary/40 hover:shadow-sm">
       <div className="flex items-start justify-between gap-2">
         <div className="flex items-center gap-2 text-xs">
-          <Badge variant="secondary" className={isThesis ? "bg-blue-50 text-blue-700" : "bg-blue-50 text-blue-700"}>
+          <Badge variant="secondary" className={isThesis ? "bg-cat-1/5 text-cat-1" : "bg-cat-1/5 text-cat-1"}>
             <TypeIcon size={11} className="mr-1" />
             {isThesis ? `학위논문${paper.thesisLevel === "master" ? " · 석사" : paper.thesisLevel === "doctoral" ? " · 박사" : ""}` : "학술논문"}
           </Badge>
@@ -125,7 +125,7 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpda
             </Badge>
           )}
           {paper.rating && (
-            <span className="inline-flex items-center gap-0.5 text-amber-500">
+            <span className="inline-flex items-center gap-0.5 text-warning">
               {Array.from({ length: paper.rating }).map((_, i) => (
                 <Star key={i} size={11} fill="currentColor" strokeWidth={0} />
               ))}
@@ -212,7 +212,7 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpda
             const e = Date.parse(paper.readCompletedAt);
             if (!Number.isFinite(s) || !Number.isFinite(e) || e < s) return null;
             const days = Math.round((e - s) / 86400000);
-            return <span className="text-emerald-700">· 소요 {days}일</span>;
+            return <span className="text-success">· 소요 {days}일</span>;
           })()}
         </div>
       )}
@@ -264,7 +264,7 @@ export default function ResearchPaperCard({ paper, onEdit, onDelete, onQuickUpda
                 stopTimer();
                 toast.success(`「${paper.title || "(제목 없음)"}」 읽기 종료됨`);
               }}
-              className="inline-flex items-center gap-0.5 rounded-md border border-rose-200 bg-rose-50 px-2 py-1 text-[11px] font-medium text-rose-700 hover:bg-rose-100"
+              className="inline-flex items-center gap-0.5 rounded-md border border-destructive/20 bg-destructive/5 px-2 py-1 text-[11px] font-medium text-destructive hover:bg-destructive/10"
               aria-label="읽기 측정 종료"
               title="읽기 측정 종료"
             >

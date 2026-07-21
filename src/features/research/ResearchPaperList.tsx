@@ -347,7 +347,7 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
               분석 노트 ({hasPeriodFilter ? `${periodFiltered.length}/${published.length}` : published.length})
             </h3>
             {hasPeriodFilter && (
-              <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[10px] text-blue-700">
+              <span className="rounded-full bg-cat-1/5 px-2 py-0.5 text-[10px] text-cat-1">
                 기간: {formatPeriodLabel(periodStart, periodEnd)}
               </span>
             )}
@@ -385,15 +385,15 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
 
         {/* 임시 저장 섹션 */}
         {drafts.length > 0 && (
-          <div className="mt-4 rounded-2xl border border-amber-200 bg-amber-50/40 p-4">
+          <div className="mt-4 rounded-2xl border border-warning/20 bg-warning/5 p-4">
             <div className="flex items-center justify-between gap-2">
               <div className="flex items-center gap-1.5">
-                <FileEdit size={14} className="text-amber-700" />
-                <h4 className="text-sm font-semibold text-amber-900">
+                <FileEdit size={14} className="text-warning" />
+                <h4 className="text-sm font-semibold text-warning">
                   임시 저장 ({drafts.length})
                 </h4>
               </div>
-              <span className="text-[11px] text-amber-700/80">
+              <span className="text-[11px] text-warning/80">
                 이어서 작성하거나 삭제할 수 있어요
               </span>
             </div>
@@ -403,14 +403,14 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
                 return (
                   <li
                     key={d.id}
-                    className="flex flex-wrap items-center gap-2 rounded-2xl border border-amber-200/70 bg-card px-3 py-2.5"
+                    className="flex flex-wrap items-center gap-2 rounded-2xl border border-warning/20 bg-card px-3 py-2.5"
                   >
                     <div className="min-w-0 flex-1">
                       <p className="truncate text-sm font-medium text-foreground">
                         {d.title?.trim() || "(제목 없음)"}
                       </p>
                       <p className="mt-0.5 flex items-center gap-1.5 text-[11px] text-muted-foreground">
-                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 font-mono font-semibold text-amber-800">
+                        <span className="rounded-full bg-warning/10 px-1.5 py-0.5 font-mono font-semibold text-warning">
                           Step {Math.min(Math.max(stepNum, 1), 5)}/5
                         </span>
                         {d.updatedAt && (
@@ -430,7 +430,7 @@ export default function ResearchPaperList({ user, readOnly = false, periodStart,
                         <Button
                           size="sm"
                           variant="outline"
-                          className="h-8 border-amber-300 text-amber-800 hover:bg-amber-100"
+                          className="h-8 border-warning/30 text-warning hover:bg-warning/10"
                           onClick={() => openEdit(d)}
                         >
                           <Pencil size={12} className="mr-1" />

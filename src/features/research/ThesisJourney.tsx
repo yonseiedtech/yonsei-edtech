@@ -447,7 +447,7 @@ export default function ThesisJourney({ user, editable = true }: Props) {
               )}
               {outputChip(stage.stage) && (
                 <p className="mt-1">
-                  <span className="inline-flex items-center rounded-full bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+                  <span className="inline-flex items-center rounded-full bg-success/5 px-2 py-0.5 text-[11px] font-medium text-success">
                     내 산출물 · {outputChip(stage.stage)}
                   </span>
                 </p>
@@ -488,7 +488,7 @@ export default function ThesisJourney({ user, editable = true }: Props) {
           {/* 방법론 팁 */}
           <div className="mt-3 rounded-lg bg-muted/40 p-3">
             <p className="flex items-center gap-1 text-[11px] font-semibold text-muted-foreground">
-              <Lightbulb size={12} className="text-amber-500" />
+              <Lightbulb size={12} className="text-warning" />
               이 단계의 연구방법론 팁
             </p>
             <ul className="mt-1.5 space-y-1.5">

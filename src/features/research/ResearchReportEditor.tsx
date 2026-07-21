@@ -761,7 +761,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
             <div className="flex shrink-0 items-center gap-2">
               {savedAt && !saving && (
                 <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
-                  <CheckCircle2 size={12} className="text-emerald-500" />
+                  <CheckCircle2 size={12} className="text-success" />
                   {(() => {
                     const diff = Date.now() - new Date(savedAt).getTime();
                     if (diff < 60_000) return "방금 저장됨";
@@ -935,7 +935,7 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                         "rounded-2xl border-2 p-3 text-left transition-all",
                         active
                           ? "border-[#003876] bg-[#003876]/5 shadow-sm"
-                          : "border-muted bg-card hover:border-[#003876]/40 hover:bg-blue-50/40",
+                          : "border-muted bg-card hover:border-[#003876]/40 hover:bg-cat-1/5",
                       )}
                     >
                       <p className="text-sm font-bold">{opt.label}</p>
@@ -945,9 +945,9 @@ export default function ResearchReportEditor({ user, readOnly = false }: Props) 
                 })}
               </div>
               {form.outcomePriorityDomain && (
-                <div className="mt-3 rounded-lg border-l-4 border-l-amber-400 bg-amber-50/60 p-3 text-xs leading-relaxed">
-                  <p className="font-semibold text-amber-900">📋 처치 적합성·차시 가이드</p>
-                  <div className="mt-1.5 space-y-1 text-amber-900/90">
+                <div className="mt-3 rounded-lg border-l-4 border-l-warning bg-warning/5 p-3 text-xs leading-relaxed">
+                  <p className="font-semibold text-warning">📋 처치 적합성·차시 가이드</p>
+                  <div className="mt-1.5 space-y-1 text-warning/90">
                     {form.outcomePriorityDomain === "cognitive" && (
                       <>
                         <p>✅ 적합 차시: <strong>2~6차시 (단기 가능)</strong></p>
@@ -1784,7 +1784,7 @@ function Field16Definition({ form, setField, readOnly }: FieldStepProps) {
           </div>
         )}
 
-        <div className="rounded-lg border border-dashed bg-amber-50/40 px-3 py-2 text-[11px] text-amber-900">
+        <div className="rounded-lg border border-dashed bg-warning/5 px-3 py-2 text-[11px] text-warning">
           <p className="font-medium">템플릿 (참고용)</p>
           <p className="mt-1 leading-relaxed">
             <span className="rounded bg-card px-1 py-0.5 font-mono">[환경]</span>에서{" "}
@@ -2047,7 +2047,7 @@ function TheoryCardEditor({ index, total, card, readOnly, onChange, onRemove, on
               type="button"
               onClick={onRemove}
               title="이론 카드 삭제"
-              className="rounded-md p-2.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600"
+              className="rounded-md p-2.5 text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
             >
               <Trash2 size={13} />
             </button>
@@ -2147,7 +2147,7 @@ function TheoryCardEditor({ index, total, card, readOnly, onChange, onRemove, on
                         type="button"
                         onClick={() => removeConcept(k.id)}
                         title="개념 삭제"
-                        className="rounded-md p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600"
+                        className="rounded-md p-1 text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
                       >
                         <X size={12} />
                       </button>

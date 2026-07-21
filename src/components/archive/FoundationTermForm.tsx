@@ -548,7 +548,7 @@ export default function FoundationTermForm({ initial, userId }: Props) {
                         <div className="flex items-center gap-2">
                           <Badge
                             variant="outline"
-                            className="bg-primary/5 cursor-pointer text-[10px] hover:bg-rose-50 hover:text-rose-700"
+                            className="bg-primary/5 cursor-pointer text-[10px] hover:bg-destructive/5 hover:text-destructive"
                             onClick={() =>
                               updateConfusion(c.id, { confusedTermId: undefined })
                             }
@@ -830,7 +830,7 @@ function PickerCard({
                   <Badge
                     key={id}
                     variant="outline"
-                    className="cursor-pointer text-[10px] hover:bg-rose-50 hover:text-rose-700"
+                    className="cursor-pointer text-[10px] hover:bg-destructive/5 hover:text-destructive"
                     onClick={() => onToggle(id)}
                   >
                     {item ? item.name : id.slice(0, 6) + "…"} ×

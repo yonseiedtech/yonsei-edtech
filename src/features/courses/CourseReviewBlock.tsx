@@ -62,7 +62,7 @@ function StarRow({
         >
           <Star
             size={size}
-            className={n <= value ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40"}
+            className={n <= value ? "fill-warning text-warning" : "text-muted-foreground/40"}
           />
         </button>
       ))}
@@ -136,8 +136,8 @@ export default function CourseReviewBlock({
             <span className="text-muted-foreground">아직 후기가 없습니다.</span>
           ) : (
             <>
-              <span className="inline-flex items-center gap-0.5 font-semibold text-amber-600">
-                <Star size={12} className="fill-amber-400 text-amber-400" />
+              <span className="inline-flex items-center gap-0.5 font-semibold text-warning">
+                <Star size={12} className="fill-warning text-warning" />
                 {summary.avg.toFixed(1)}
               </span>
               <span className="text-muted-foreground">·</span>

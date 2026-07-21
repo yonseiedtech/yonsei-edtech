@@ -193,7 +193,7 @@ export default function AnswerThread({
               key={a.id}
               className={cn(
                 "rounded border px-2.5 py-1.5 text-xs",
-                accepted ? "border-emerald-300 bg-emerald-50" : "bg-card",
+                accepted ? "border-success/30 bg-success/5" : "bg-card",
               )}
             >
               <div className="flex items-center justify-between gap-1">
@@ -205,7 +205,7 @@ export default function AnswerThread({
                     name
                   )}
                   {accepted && (
-                    <Badge variant="outline" className="border-emerald-400 text-[9px] text-emerald-700">
+                    <Badge variant="outline" className="border-success/40 text-[9px] text-success">
                       채택됨
                     </Badge>
                   )}
@@ -228,7 +228,7 @@ export default function AnswerThread({
                       title={accepted ? "채택 해제" : "채택"}
                       className={cn(
                         "rounded p-0.5",
-                        accepted ? "text-emerald-600" : "text-muted-foreground hover:text-emerald-600",
+                        accepted ? "text-success" : "text-muted-foreground hover:text-success",
                       )}
                     >
                       <Check size={12} />
@@ -294,7 +294,7 @@ export default function AnswerThread({
                 question.authorId === user.id &&
                 a.authorId &&
                 a.authorId !== user.id && (
-                  <div className="mt-1.5 flex items-center gap-1.5 border-t border-emerald-200/60 pt-1.5">
+                  <div className="mt-1.5 flex items-center gap-1.5 border-t border-success/20 pt-1.5">
                     <span className="text-[10px] text-muted-foreground">도움이 되었다면</span>
                     <KudosInlineButton
                       me={user}

@@ -260,8 +260,8 @@ function ArchiveConceptRecommender({
               className={cn(
                 "rounded-full px-2.5 py-1 text-xs font-medium transition-colors",
                 picked
-                  ? "cursor-not-allowed bg-emerald-200 text-emerald-700"
-                  : "bg-card text-emerald-900 ring-1 ring-emerald-300 hover:bg-emerald-100",
+                  ? "cursor-not-allowed bg-success/20 text-success"
+                  : "bg-card text-success ring-1 ring-success/30 hover:bg-success/10",
               )}
               title={c.description ?? ""}
               aria-label={`${c.name} 개념 추가`}
@@ -423,14 +423,14 @@ function ResearchLogicMap({
   }
 
   function fillBg(percent: number) {
-    if (percent >= 80) return "border-emerald-300 bg-emerald-50/80";
-    if (percent >= 40) return "border-amber-300 bg-amber-50/80";
-    return "border-rose-300 bg-rose-50/80";
+    if (percent >= 80) return "border-success/30 bg-success/5";
+    if (percent >= 40) return "border-warning/30 bg-warning/5";
+    return "border-destructive/30 bg-destructive/5";
   }
   function lineColor(strength: number) {
-    if (strength >= 80) return "stroke-emerald-600";
-    if (strength >= 40) return "stroke-amber-600";
-    return "stroke-rose-500";
+    if (strength >= 80) return "stroke-success";
+    if (strength >= 40) return "stroke-warning";
+    return "stroke-destructive";
   }
   // Sprint 76: 연결강도 비례 두께 (1.8 ~ 4)
   function lineWidth(strength: number) {
@@ -584,13 +584,13 @@ function ChapterCelebration({
       initial={{ scale: 0.92, opacity: 0 }}
       animate={{ scale: 1, opacity: 1 }}
       transition={{ duration: 0.45, ease: "easeOut" }}
-      className="rounded-2xl border-2 border-emerald-200 bg-gradient-to-br from-emerald-50 to-teal-50/50 p-4 text-center sm:p-6"
+      className="rounded-2xl border-2 border-success/20 bg-gradient-to-br from-success/5 to-info/5 p-4 text-center sm:p-6"
     >
       <motion.div
         initial={{ scale: 0, rotate: -90 }}
         animate={{ scale: 1, rotate: 0 }}
         transition={{ delay: 0.18, type: "spring", stiffness: 220, damping: 12 }}
-        className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-emerald-500 shadow-lg sm:h-14 sm:w-14"
+        className="mx-auto flex h-12 w-12 items-center justify-center rounded-full bg-success shadow-lg sm:h-14 sm:w-14"
       >
         <PartyPopper size={22} className="text-white sm:hidden" />
         <PartyPopper size={26} className="hidden text-white sm:block" />
@@ -600,11 +600,11 @@ function ChapterCelebration({
         initial={{ opacity: 0, y: 8 }}
         animate={{ opacity: 1, y: 0 }}
         transition={{ delay: 0.35, duration: 0.3 }}
-        className="mt-2.5 text-base font-bold text-emerald-900 sm:text-lg"
+        className="mt-2.5 text-base font-bold text-success sm:text-lg"
       >
         🎉 {completedChapterIdx + 1}장 완료!
       </motion.p>
-      <p className="text-sm text-emerald-800">
+      <p className="text-sm text-success">
         {fromMeta.label} ({fromAnswered}/{fromTotal})
       </p>
 
@@ -617,7 +617,7 @@ function ChapterCelebration({
             transition={{ delay: 0.4 + idx * 0.05 }}
             className={cn(
               "h-2 w-2 rounded-full",
-              idx <= completedChapterIdx ? "bg-emerald-500" : "bg-emerald-200",
+              idx <= completedChapterIdx ? "bg-success" : "bg-success/20",
             )}
           />
         ))}
@@ -827,8 +827,8 @@ function TheoryNameRenderer({ form, setField }: { form: FormState; setField: Set
                 className={cn(
                   "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] transition-colors",
                   active
-                    ? "border-emerald-600 bg-emerald-600 text-white"
-                    : "border-emerald-300 bg-card text-emerald-900 hover:bg-emerald-100",
+                    ? "border-success bg-success text-white"
+                    : "border-success/30 bg-card text-success hover:bg-success/10",
                 )}
               >
                 <span className="font-medium">{preset.name}</span>
@@ -943,7 +943,7 @@ const SLIDES: SlideDef[] = [
                 "rounded-2xl border-2 px-4 py-4 text-base font-semibold transition-all",
                 active
                   ? "border-[#003876] bg-[#003876]/5 text-[#003876] shadow-sm"
-                  : "border-muted bg-card text-muted-foreground hover:border-[#003876]/40 hover:bg-blue-50/40",
+                  : "border-muted bg-card text-muted-foreground hover:border-[#003876]/40 hover:bg-cat-1/5",
               )}
             >
               {opt.label}
@@ -1084,12 +1084,12 @@ const SLIDES: SlideDef[] = [
     render: (form) => {
       const phenomena = form.problemPhenomena.filter((p) => p.trim()).slice(0, 3);
       return (
-        <div className="rounded-2xl border-2 border-dashed border-cyan-200 bg-cyan-50/50 p-4 text-sm">
-          <p className="font-semibold text-cyan-900">정의한 현장 문제 미리보기</p>
+        <div className="rounded-2xl border-2 border-dashed border-info/20 bg-info/5 p-4 text-sm">
+          <p className="font-semibold text-info">정의한 현장 문제 미리보기</p>
           {phenomena.length === 0 ? (
             <p className="mt-2 text-muted-foreground">아직 현상이 입력되지 않았어요.</p>
           ) : (
-            <ul className="mt-2 space-y-1 text-cyan-900/90">
+            <ul className="mt-2 space-y-1 text-info/90">
               {phenomena.map((p, i) => (
                 <li key={i} className="line-clamp-2">• {p}</li>
               ))}
@@ -1162,9 +1162,9 @@ const SLIDES: SlideDef[] = [
     render: (form) => {
       const env = form.envLearning.trim();
       return env ? (
-        <div className="rounded-2xl border-2 border-dashed border-cyan-200 bg-cyan-50/60 p-3 text-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-cyan-700">정의한 학습 환경</p>
-          <p className="mt-1 whitespace-pre-wrap text-cyan-900/90 line-clamp-3">{env}</p>
+        <div className="rounded-2xl border-2 border-dashed border-info/20 bg-info/5 p-3 text-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-info">정의한 학습 환경</p>
+          <p className="mt-1 whitespace-pre-wrap text-info/90 line-clamp-3">{env}</p>
         </div>
       ) : (
         <p className="text-sm italic text-muted-foreground">앞 단계 답변이 비어있어요.</p>
@@ -1233,9 +1233,9 @@ const SLIDES: SlideDef[] = [
     render: (form) => {
       const profile = form.learnerProfile.trim();
       return profile ? (
-        <div className="rounded-2xl border-2 border-dashed border-purple-200 bg-purple-50/60 p-3 text-sm">
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-purple-700">분석한 학습자</p>
-          <p className="mt-1 text-purple-900/90 line-clamp-2">{profile}</p>
+        <div className="rounded-2xl border-2 border-dashed border-cat-5/20 bg-cat-5/5 p-3 text-sm">
+          <p className="text-[11px] font-semibold uppercase tracking-wider text-cat-5">분석한 학습자</p>
+          <p className="mt-1 text-cat-5/90 line-clamp-2">{profile}</p>
         </div>
       ) : (
         <p className="text-sm italic text-muted-foreground">앞 단계 답변이 비어있어요.</p>
@@ -1278,7 +1278,7 @@ const SLIDES: SlideDef[] = [
                     "rounded-2xl border-2 p-3 text-left transition-all",
                     active
                       ? "border-[#003876] bg-[#003876]/5 shadow-sm"
-                      : "border-muted bg-card hover:border-[#003876]/40 hover:bg-blue-50/40",
+                      : "border-muted bg-card hover:border-[#003876]/40 hover:bg-cat-1/5",
                   )}
                 >
                   <p className="text-sm font-bold">{opt.label}</p>
@@ -1443,9 +1443,9 @@ const SLIDES: SlideDef[] = [
             </div>
           )}
           {profile && (
-            <div className="rounded-2xl border-2 border-dashed border-purple-200 bg-purple-50/60 p-3 text-sm">
-              <p className="text-[11px] font-semibold uppercase tracking-wider text-purple-700">학습자 프로필</p>
-              <p className="mt-1 text-purple-900/90 line-clamp-2">{profile}</p>
+            <div className="rounded-2xl border-2 border-dashed border-cat-5/20 bg-cat-5/5 p-3 text-sm">
+              <p className="text-[11px] font-semibold uppercase tracking-wider text-cat-5">학습자 프로필</p>
+              <p className="mt-1 text-cat-5/90 line-clamp-2">{profile}</p>
             </div>
           )}
           {outcome && (
@@ -1492,7 +1492,7 @@ const SLIDES: SlideDef[] = [
       return (
         <div className="space-y-1">
           {profile && (
-            <p className="rounded-md bg-purple-50 px-2 py-1.5 text-[11px] text-purple-900">
+            <p className="rounded-md bg-cat-5/5 px-2 py-1.5 text-[11px] text-cat-5">
               👥 학습자: <strong className="ml-0.5">{profile.slice(0, 80)}</strong>
             </p>
           )}
@@ -1630,7 +1630,7 @@ const SLIDES: SlideDef[] = [
             </p>
           )}
           {profile && (
-            <p className="rounded-md bg-purple-50 px-2 py-1.5 text-[11px] text-purple-900">
+            <p className="rounded-md bg-cat-5/5 px-2 py-1.5 text-[11px] text-cat-5">
               👥 학습자: <strong className="ml-0.5">{profile.slice(0, 80)}</strong>
             </p>
           )}
@@ -1817,13 +1817,13 @@ export default function ResearchReportInterview({
       <div className="relative h-1.5 w-full bg-muted">
         <div className="flex h-full w-full overflow-hidden">
           <motion.div
-            className="h-full bg-emerald-500"
+            className="h-full bg-success"
             animate={{ width: `${answeredPct}%` }}
             transition={{ duration: 0.4 }}
             title={`작성 완료 ${answeredRealCount}/${totalReal} (${Math.round(answeredPct)}%)`}
           />
           <motion.div
-            className="h-full bg-rose-300"
+            className="h-full bg-destructive/30"
             animate={{ width: `${100 - answeredPct}%` }}
             transition={{ duration: 0.4 }}
             title={`미작성 ${totalReal - answeredRealCount}개`}
@@ -2067,7 +2067,7 @@ function PreviousAnswerCard({
         <button
           type="button"
           onClick={() => onJump(firstRef.targetIdx)}
-          className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-amber-600 px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-amber-700 sm:text-sm"
+          className="mt-3 inline-flex items-center gap-1.5 rounded-lg bg-warning px-4 py-2 text-xs font-semibold text-white shadow-sm transition-colors hover:bg-warning/90 sm:text-sm"
         >
           <ArrowRight size={14} />
           답변하러 가기
@@ -2163,8 +2163,8 @@ function SlideNavigator({
                       isCurrent
                         ? "border-primary bg-primary/30 ring-2 ring-primary/40"
                         : answered
-                        ? "border-emerald-500 bg-emerald-500"
-                        : "border-rose-400 bg-rose-100 hover:bg-rose-200",
+                        ? "border-success bg-success"
+                        : "border-destructive/40 bg-destructive/10 hover:bg-destructive/20",
                     )}
                   >
                     {answered && !isCurrent && (

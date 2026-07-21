@@ -138,7 +138,7 @@ function LabDetailContent({ id }: { id: string }) {
             )}
             <button
               onClick={onDeleteLab}
-              className="inline-flex items-center gap-1 rounded-lg border border-red-200 px-2 py-1 text-xs text-red-600 hover:bg-red-50"
+              className="inline-flex items-center gap-1 rounded-lg border border-destructive/20 px-2 py-1 text-xs text-destructive hover:bg-destructive/5"
             >
               <Trash2 size={12} /> 삭제
             </button>
@@ -232,7 +232,7 @@ function LabDetailContent({ id }: { id: string }) {
                 {(c.authorId === user?.id || canManageLabs(user)) && (
                   <button
                     onClick={() => deleteComment({ id: c.id, labId: id })}
-                    className="text-xs text-muted-foreground hover:text-red-600"
+                    className="text-xs text-muted-foreground hover:text-destructive"
                   >
                     삭제
                   </button>

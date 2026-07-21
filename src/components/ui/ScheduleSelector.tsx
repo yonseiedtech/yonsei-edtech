@@ -191,7 +191,7 @@ export default function ScheduleSelector({
                   <button
                     type="button"
                     onClick={() => clearDate(date)}
-                    className="text-[10px] text-muted-foreground hover:text-red-500"
+                    className="text-[10px] text-muted-foreground hover:text-destructive"
                   >
                     초기화
                   </button>

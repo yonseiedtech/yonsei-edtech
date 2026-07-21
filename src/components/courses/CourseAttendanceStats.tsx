@@ -35,9 +35,9 @@ interface WeekRow {
 }
 
 function attendanceColor(rate: number): string {
-  if (rate >= 0.9) return "bg-emerald-50 text-emerald-700 border-emerald-200";
-  if (rate >= 0.75) return "bg-amber-50 text-amber-700 border-amber-200";
-  return "bg-rose-50 text-rose-700 border-rose-200";
+  if (rate >= 0.9) return "bg-success/5 text-success border-success/20";
+  if (rate >= 0.75) return "bg-warning/5 text-warning border-warning/20";
+  return "bg-destructive/5 text-destructive border-destructive/20";
 }
 
 export function CourseAttendanceStats({ enrollments, sessions, weeks }: Props) {
@@ -119,7 +119,7 @@ export function CourseAttendanceStats({ enrollments, sessions, weeks }: Props) {
               평균 {Math.round(overall.rate * 100)}%
             </Badge>
             {overall.atRisk > 0 && (
-              <Badge variant="secondary" className="bg-rose-50 text-[10px] text-rose-700">
+              <Badge variant="secondary" className="bg-destructive/5 text-[10px] text-destructive">
                 관심 {overall.atRisk}명
               </Badge>
             )}
