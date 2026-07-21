@@ -23,6 +23,9 @@ import {
   HACKATHON_FAQ,
 } from "@/features/hackathon/config";
 
+// D-day·색상 임계값이 빌드 시점에 고정되지 않도록 1시간 주기 재생성 (리뷰 M-2)
+export const revalidate = 3600;
+
 export const metadata: Metadata = {
   title: HACKATHON_EVENT.title,
   description:

@@ -151,11 +151,16 @@ export default function HackathonDdayConsole() {
   function downloadParticipantsCsv() {
     const header = "이름,팀희망,아이디어,공감수,신청일";
     const rows = entries.map((e) => {
-      const escape = (v: string) => `"${v.replace(/"/g, '""')}"`;
+      // 수식 인젝션 방어: =,+,-,@,탭,CR 로 시작하는 셀은 ' prefix 로 무력화 (Excel/Sheets DDE·HYPERLINK 차단)
+      const escape = (v: string) => {
+        const flat = v.replace(/\r?\n/g, " ");
+        const safe = /^[=+\-@\t\r]/.test(flat) ? `'${flat}` : flat;
+        return `"${safe.replace(/"/g, '""')}"`;
+      };
       return [
         escape(e.authorName ?? ""),
         escape(e.presenter ?? ""),
-        escape((e.body ?? "").replace(/\n/g, " ")),
+        escape(e.body ?? ""),
         String(e.likeCount ?? 0),
         (e.createdAt ?? "").slice(0, 10),
       ].join(",");

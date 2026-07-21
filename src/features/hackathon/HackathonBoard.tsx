@@ -709,7 +709,9 @@ export default function HackathonBoard() {
               // H1: 관심 영역 태그 파싱
               const entryArea = extractArea(entry.body);
               const displayBody = entryArea
-                ? entry.body.slice(entryArea.length + 2).trim() || entry.body
+                ? entry.body
+                    .slice(entry.body.startsWith(`${entryArea}: `) ? entryArea.length + 2 : entryArea.length + 1)
+                    .trim() || entry.body
                 : entry.body;
               return (
                 <li
