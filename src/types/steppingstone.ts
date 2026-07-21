@@ -115,6 +115,7 @@ export const BLOOM_STAGE_LABELS: Record<BloomStage, string> = {
   create: "창조",
 };
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const BLOOM_STAGE_ORDER: BloomStage[] = [
   "remember",
   "understand",

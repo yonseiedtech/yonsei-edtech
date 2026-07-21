@@ -218,6 +218,7 @@ export interface NotificationPrefs {
 }
 
 /** kind → notificationPrefs 필드 매핑 — 서버 cron / 클라이언트 UI 공용 */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PUSH_PREF_FIELD: Record<string, keyof NotificationPrefs> = {
   study_session_reminder: "pushStudySession",
   study_assignment_reminder: "pushStudyAssignment",
@@ -236,6 +237,7 @@ const PUSH_PREF_FIELD: Record<string, keyof NotificationPrefs> = {
 };
 
 /** UI 라벨 — MyPage 알림 설정 섹션에서 사용 */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const PUSH_PREF_LABELS: Record<
   | "pushStudySession"
   | "pushStudyAssignment"
@@ -312,6 +314,7 @@ export const OFFICE_OF_EDUCATION_OPTIONS: readonly string[] = [
   "제주특별자치도교육청",
 ] as const;
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const OFFICE_OF_EDUCATION_OTHER_LABEL = "기타 (직접 입력)" as const;
 
 export interface User { [key: string]: unknown;

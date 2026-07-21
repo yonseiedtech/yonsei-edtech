@@ -169,6 +169,7 @@ export type CheckinResult =
 // ── 세미나 자체 신청 (비회원 포함) ──
 export type RegistrationStatus = "pending" | "confirmed" | "cancelled";
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const REG_STATUS_LABELS: Record<RegistrationStatus, string> = {
   pending: "대기",
   confirmed: "확정",

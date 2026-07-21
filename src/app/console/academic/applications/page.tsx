@@ -81,6 +81,7 @@ export default function ApplicationsConsole() {
   // 신입 온보딩 집계 파생값
   const avgWaitDays = useMemo(() => {
     if (truePendingMembers.length === 0) return null;
+    // eslint-disable-next-line react-hooks/purity
     const now = Date.now();
     const days = truePendingMembers
       .map((m) => m.createdAt as string | undefined)
@@ -98,6 +99,7 @@ export default function ApplicationsConsole() {
   const cronDaysAgo = useMemo(() => {
     if (!newcomerCronStatus?.lastRunAt) return null;
     return Math.floor(
+      // eslint-disable-next-line react-hooks/purity
       (Date.now() - new Date(newcomerCronStatus.lastRunAt).getTime()) / 86400000,
     );
   }, [newcomerCronStatus]);

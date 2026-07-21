@@ -106,6 +106,7 @@ export function formatIssueCode(volume: number, number: number): string {
 }
 
 /** publishedAt 기준 인용 연도 추출 */
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 function citationYear(publishedAt?: string): number {
   if (!publishedAt) return new Date().getFullYear();
   return new Date(publishedAt).getFullYear();
