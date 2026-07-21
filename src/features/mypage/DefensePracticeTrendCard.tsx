@@ -68,23 +68,23 @@ export default function DefensePracticeTrendCard({ userId }: { userId: string })
   // 1회만 있으면 안내 문구.
   if (points.length < 2) {
     return (
-      <div className="rounded-2xl border-2 border-indigo-200/60 bg-gradient-to-br from-indigo-50 to-indigo-100/60 p-5 dark:border-indigo-800/40 dark:from-indigo-950/20 dark:to-indigo-900/10">
+      <div className="rounded-2xl border-2 border-cat-1/20 bg-gradient-to-br from-cat-1/5 to-cat-1/10 p-5">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-200/40 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-cat-1/10 text-cat-1">
             <Mic size={22} />
           </div>
           <div className="min-w-0 flex-1">
             <h3 className="text-base font-bold">심사 연습 추세</h3>
             <p className="mt-0.5 text-sm text-muted-foreground">
               한 번 더 연습하면 회차별 점수 추세를 그래프로 보여드려요. 지금 점수는{" "}
-              <b className="tabular-nums text-indigo-700 dark:text-indigo-300">
+              <b className="tabular-nums text-cat-1">
                 {Math.round(points[0].score)}
               </b>
               점이에요.
             </p>
             <Link
               href="/steppingstone/thesis-defense"
-              className="mt-3 inline-flex items-center gap-1 rounded-full bg-indigo-600 px-3 py-1.5 text-[12px] font-semibold text-white shadow-sm transition-colors hover:bg-indigo-700 dark:bg-indigo-500 dark:hover:bg-indigo-600"
+              className="mt-3 inline-flex items-center gap-1 rounded-full bg-cat-1 px-3 py-1.5 text-[12px] font-semibold text-white shadow-sm transition-colors hover:bg-cat-1/90"
             >
               심사 연습하러 가기
               <ArrowRight size={12} />
@@ -118,15 +118,15 @@ export default function DefensePracticeTrendCard({ userId }: { userId: string })
   const TrendIcon = delta > 0 ? TrendingUp : delta < 0 ? TrendingDown : Minus;
   const trendColor =
     delta > 0
-      ? "text-emerald-600 dark:text-emerald-400"
+      ? "text-success"
       : delta < 0
-        ? "text-rose-500 dark:text-rose-400"
+        ? "text-destructive"
         : "text-muted-foreground";
 
   return (
-    <div className="rounded-2xl border-2 border-indigo-200/60 bg-gradient-to-br from-indigo-50 to-indigo-100/60 p-5 dark:border-indigo-800/40 dark:from-indigo-950/20 dark:to-indigo-900/10">
+    <div className="rounded-2xl border-2 border-cat-1/20 bg-gradient-to-br from-cat-1/5 to-cat-1/10 p-5">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-indigo-200/40 text-indigo-700 dark:bg-indigo-900/30 dark:text-indigo-300">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-cat-1/10 text-cat-1">
           <Mic size={22} />
         </div>
         <div className="min-w-0 flex-1">
@@ -136,7 +136,7 @@ export default function DefensePracticeTrendCard({ userId }: { userId: string })
               최근 {n}회
             </span>
           </div>
-          <p className="mt-0.5 flex items-center gap-1.5 text-sm text-indigo-900 dark:text-indigo-200">
+          <p className="mt-0.5 flex items-center gap-1.5 text-sm text-cat-1">
             최근 점수 <b className="tabular-nums">{Math.round(last)}</b>점
             <span className={`inline-flex items-center gap-0.5 text-[12px] font-semibold ${trendColor}`}>
               <TrendIcon size={13} />
@@ -162,15 +162,15 @@ export default function DefensePracticeTrendCard({ userId }: { userId: string })
           y1={yAt(50)}
           x2={W - PAD_X}
           y2={yAt(50)}
-          className="stroke-indigo-200 dark:stroke-indigo-800"
+          className="stroke-cat-1/20"
           strokeWidth={1}
           strokeDasharray="3 3"
         />
-        <polygon points={areaPath} className="fill-indigo-500/10 dark:fill-indigo-400/10" />
+        <polygon points={areaPath} className="fill-cat-1/10" />
         <polyline
           points={linePath}
           fill="none"
-          className="stroke-indigo-500 dark:stroke-indigo-400"
+          className="stroke-cat-1"
           strokeWidth={2}
           strokeLinejoin="round"
           strokeLinecap="round"
@@ -183,8 +183,8 @@ export default function DefensePracticeTrendCard({ userId }: { userId: string })
             r={i === n - 1 ? 3.5 : 2.5}
             className={
               i === n - 1
-                ? "fill-indigo-600 dark:fill-indigo-300"
-                : "fill-indigo-400 dark:fill-indigo-500"
+                ? "fill-cat-1"
+                : "fill-cat-1/60"
             }
           />
         ))}
@@ -196,7 +196,7 @@ export default function DefensePracticeTrendCard({ userId }: { userId: string })
         </p>
         <Link
           href="/steppingstone/thesis-defense"
-          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-indigo-300 px-3 py-1.5 text-[12px] font-semibold text-indigo-700 transition-colors hover:bg-indigo-100 dark:border-indigo-700 dark:text-indigo-300 dark:hover:bg-indigo-900/40"
+          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-cat-1/30 px-3 py-1.5 text-[12px] font-semibold text-cat-1 transition-colors hover:bg-cat-1/10"
         >
           <Mic size={12} />
           연습 이어가기

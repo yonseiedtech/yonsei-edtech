@@ -40,7 +40,7 @@ export default function LearningEffectCard({ userId }: { userId: string }) {
   if (isLoading) {
     return (
       <div
-        className="h-24 animate-pulse rounded-2xl border-2 border-violet-200/60 bg-violet-50/50 dark:border-violet-800/40 dark:bg-violet-950/20"
+        className="h-24 animate-pulse rounded-2xl border-2 border-cat-5/20 bg-cat-5/5"
         aria-busy="true"
         aria-label="학습효과 분석 불러오는 중"
       />
@@ -52,9 +52,9 @@ export default function LearningEffectCard({ userId }: { userId: string }) {
   // 데이터 부족 — 진단 2회 미만 또는 약점 개념 0. 진단/암기카드로 유도.
   if (data.status === "insufficient") {
     return (
-      <div className="rounded-2xl border-2 border-violet-200/60 bg-gradient-to-br from-violet-50 to-violet-100/60 p-5 dark:border-violet-800/40 dark:from-violet-950/20 dark:to-violet-900/10">
+      <div className="rounded-2xl border-2 border-cat-5/20 bg-gradient-to-br from-cat-5/5 to-cat-5/10 p-5">
         <div className="flex items-start gap-4">
-          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-200/40 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+          <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-cat-5/10 text-cat-5">
             <TrendingUp size={22} />
           </div>
           <div className="min-w-0 flex-1">
@@ -67,14 +67,14 @@ export default function LearningEffectCard({ userId }: { userId: string }) {
             <div className="mt-3 flex flex-wrap gap-2">
               <Link
                 href="/diagnosis"
-                className="inline-flex items-center gap-1 rounded-full bg-violet-600 px-3 py-1.5 text-[12px] font-semibold text-white shadow-sm transition-colors hover:bg-violet-700 dark:bg-violet-500 dark:hover:bg-violet-600"
+                className="inline-flex items-center gap-1 rounded-full bg-cat-5 px-3 py-1.5 text-[12px] font-semibold text-white shadow-sm transition-colors hover:bg-cat-5/90"
               >
                 진단하러 가기
                 <ArrowRight size={12} />
               </Link>
               <Link
                 href="/flashcards"
-                className="inline-flex items-center gap-1 rounded-full border border-violet-300 px-3 py-1.5 text-[12px] font-semibold text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-900/40"
+                className="inline-flex items-center gap-1 rounded-full border border-cat-5/30 px-3 py-1.5 text-[12px] font-semibold text-cat-5 transition-colors hover:bg-cat-5/10"
               >
                 <Layers size={12} />
                 암기카드 복습
@@ -92,25 +92,25 @@ export default function LearningEffectCard({ userId }: { userId: string }) {
   const hasReviewedSample = aggregate.reviewedTotal > 0;
 
   return (
-    <div className="rounded-2xl border-2 border-violet-200/60 bg-gradient-to-br from-violet-50 to-violet-100/60 p-5 dark:border-violet-800/40 dark:from-violet-950/20 dark:to-violet-900/10">
+    <div className="rounded-2xl border-2 border-cat-5/20 bg-gradient-to-br from-cat-5/5 to-cat-5/10 p-5">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-200/40 text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-cat-5/10 text-cat-5">
           <TrendingUp size={22} />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="flex items-center gap-1.5 text-base font-bold">
             복습 → 재진단 학습효과
-            <Sparkles size={14} className="text-amber-500" />
+            <Sparkles size={14} className="text-warning" />
           </h3>
 
           {/* 상단 한 줄 인사이트 — 상관/경향 표현(인과 주장 금지). */}
-          <p className="mt-1 text-sm text-violet-900 dark:text-violet-200">
+          <p className="mt-1 text-sm text-cat-5">
             {hasReviewedSample ? (
               <>
                 복습한 약점 개념 <b className="tabular-nums">{aggregate.reviewedTotal}</b>개 중{" "}
                 <b className="tabular-nums">{aggregate.reviewedImproved}</b>개가 다음 진단에서 개선됐어요
                 {reviewedRate !== null && (
-                  <span className="text-violet-700/80 dark:text-violet-300/80"> ({reviewedRate}%)</span>
+                  <span className="text-cat-5/80"> ({reviewedRate}%)</span>
                 )}
                 {aggregate.notReviewedTotal > 0 && (
                   <span className="text-muted-foreground">
@@ -135,13 +135,13 @@ export default function LearningEffectCard({ userId }: { userId: string }) {
         {concepts.map((c) => (
           <li
             key={c.conceptId}
-            className="flex items-center gap-2 rounded-xl border border-violet-200 bg-violet-50/60 px-3 py-2 dark:border-violet-800 dark:bg-violet-950/30"
+            className="flex items-center gap-2 rounded-xl border border-cat-5/20 bg-cat-5/5 px-3 py-2"
           >
-            <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-violet-900 dark:text-violet-200">
+            <span className="min-w-0 flex-1 truncate text-[13px] font-semibold text-cat-5">
               {c.conceptName}
             </span>
             {c.reviewed ? (
-              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-violet-600/80 dark:text-violet-300/70">
+              <span className="inline-flex shrink-0 items-center gap-1 text-[11px] text-cat-5/70">
                 <RotateCcw size={11} />
                 복습 {c.reviewCount}회
               </span>
@@ -149,12 +149,12 @@ export default function LearningEffectCard({ userId }: { userId: string }) {
               <span className="shrink-0 text-[11px] text-muted-foreground">복습 기록 없음</span>
             )}
             {c.improved ? (
-              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+              <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success">
                 <TrendingUp size={11} />
                 개선
               </span>
             ) : (
-              <span className="shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+              <span className="shrink-0 rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning">
                 유지
               </span>
             )}
@@ -169,14 +169,14 @@ export default function LearningEffectCard({ userId }: { userId: string }) {
       <div className="mt-3 flex flex-wrap gap-2">
         <Link
           href="/flashcards"
-          className="inline-flex items-center gap-1 rounded-full border border-violet-300 px-3 py-1.5 text-[12px] font-semibold text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-900/40"
+          className="inline-flex items-center gap-1 rounded-full border border-cat-5/30 px-3 py-1.5 text-[12px] font-semibold text-cat-5 transition-colors hover:bg-cat-5/10"
         >
           <Layers size={12} />
           약점 개념 복습하기
         </Link>
         <Link
           href="/diagnosis"
-          className="inline-flex items-center gap-1 rounded-full border border-violet-300 px-3 py-1.5 text-[12px] font-semibold text-violet-700 transition-colors hover:bg-violet-100 dark:border-violet-700 dark:text-violet-300 dark:hover:bg-violet-900/40"
+          className="inline-flex items-center gap-1 rounded-full border border-cat-5/30 px-3 py-1.5 text-[12px] font-semibold text-cat-5 transition-colors hover:bg-cat-5/10"
         >
           <RotateCcw size={12} />
           재진단하기

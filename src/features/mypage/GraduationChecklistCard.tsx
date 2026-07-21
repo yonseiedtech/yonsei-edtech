@@ -49,7 +49,7 @@ export default function GraduationChecklistCard({ userId }: Props) {
   return (
     <div id="graduation-checklist" className="scroll-mt-24 rounded-2xl border-2 border-success/20 bg-gradient-to-br from-success/5 to-success/10 p-5">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-200/40 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
           <GraduationCap size={22} />
         </div>
         <div className="min-w-0 flex-1">
@@ -157,7 +157,7 @@ export default function GraduationChecklistCard({ userId }: Props) {
                   "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
                   m.done
                     ? "border-success bg-success text-white"
-                    : "border-muted-foreground/40 bg-card hover:border-emerald-400",
+                    : "border-muted-foreground/40 bg-card hover:border-success/60",
                   savingKey === m.key && "opacity-50"
                 )}
                 aria-label={`${m.label} ${m.done ? "체크 해제" : "체크"}`}

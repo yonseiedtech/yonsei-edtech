@@ -175,7 +175,7 @@ export default function GuestPollVoter({ eventId, candidateSlots, pollDeadline }
   return (
     <section className="mb-6 rounded-2xl border bg-card p-4">
       <h2 className="mb-3 flex items-center gap-1.5 text-sm font-bold">
-        <CalendarCheck size={15} className="text-indigo-600 dark:text-indigo-400" />
+        <CalendarCheck size={15} className="text-cat-1" />
         일정 투표 참여
       </h2>
 

@@ -343,7 +343,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
   }
 
   return (
-    <div className="fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-blue-50 via-white to-slate-100">
+    <div className="fixed inset-0 z-50 flex h-[100dvh] flex-col overflow-hidden bg-gradient-to-br from-cat-1/5 via-background to-background">
       <audio
         ref={audioRef}
         src={BGM_URL}
@@ -433,7 +433,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
               </p>
               {/* Sprint 67-AE/AF: 인터뷰 대상 표시 (모든 회원에게 노출) */}
               {meta.targetCriteria && (
-                <div className="mx-auto mt-4 inline-flex max-w-md items-center gap-1.5 rounded-full border border-blue-200 bg-blue-50/60 px-3 py-1 text-[11px] text-blue-900 dark:border-blue-900 dark:bg-blue-950/30 dark:text-blue-200">
+                <div className="mx-auto mt-4 inline-flex max-w-md items-center gap-1.5 rounded-full border border-cat-1/20 bg-cat-1/5 px-3 py-1 text-[11px] text-cat-1">
                   <Target size={11} />
                   <span>대상: {describeInterviewTarget(meta.targetCriteria)}</span>
                 </div>
@@ -441,12 +441,12 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
               <p className="mt-6 text-sm text-muted-foreground">총 {total}개의 질문</p>
               {/* Sprint 67-AE: 인터뷰 대상자 필터 — 비매칭 시 응답 불가 안내 */}
               {!canRespond ? (
-                <div className="mx-auto mt-8 max-w-md rounded-lg border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                <div className="mx-auto mt-8 max-w-md rounded-lg border border-warning/20 bg-warning/5 p-4 text-sm text-warning">
                   <p className="font-semibold">이 인터뷰는 특정 대상에게만 열려 있습니다</p>
                   <p className="mt-1 text-xs">
                     대상: {describeInterviewTarget(meta.targetCriteria)}
                   </p>
-                  <p className="mt-2 text-[11px] text-amber-800/80 dark:text-amber-200/80">
+                  <p className="mt-2 text-[11px] text-warning/80">
                     응답 권한이 필요한 경우 운영진에게 문의하세요.
                   </p>
                 </div>
@@ -539,7 +539,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                           className={`block w-full rounded-2xl border-2 px-4 py-3 text-left text-base transition-all ${
                             selected
                               ? "border-[#003876] bg-[#003876]/5 font-semibold text-[#003876] shadow-sm"
-                              : "border-muted bg-card hover:border-[#003876]/40 hover:bg-blue-50/40"
+                              : "border-muted bg-card hover:border-[#003876]/40 hover:bg-cat-1/5"
                           }`}
                         >
                           <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 align-middle" style={{ borderColor: selected ? "#003876" : "#cbd5e1" }}>
@@ -628,7 +628,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                             className={`block w-full rounded-2xl border-2 px-4 py-3 text-left text-base transition-all ${
                               selected
                                 ? "border-[#003876] bg-[#003876]/5 font-semibold text-[#003876] shadow-sm"
-                                : "border-muted bg-card hover:border-[#003876]/40 hover:bg-blue-50/40"
+                                : "border-muted bg-card hover:border-[#003876]/40 hover:bg-cat-1/5"
                             }`}
                           >
                             <span
@@ -772,9 +772,9 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                           className={`flex aspect-square items-center justify-center rounded-2xl border-4 text-6xl font-bold transition-all sm:text-7xl ${
                             selected
                               ? isO
-                                ? "border-emerald-500 bg-emerald-50 text-emerald-600 shadow-lg"
-                                : "border-rose-500 bg-rose-50 text-rose-600 shadow-lg"
-                              : "border-muted bg-card text-muted-foreground hover:border-[#003876]/40 hover:bg-blue-50/40"
+                                ? "border-success bg-success/10 text-success shadow-lg"
+                                : "border-destructive bg-destructive/10 text-destructive shadow-lg"
+                              : "border-muted bg-card text-muted-foreground hover:border-[#003876]/40 hover:bg-cat-1/5"
                           }`}
                         >
                           {isO ? "⭕" : "❌"}
