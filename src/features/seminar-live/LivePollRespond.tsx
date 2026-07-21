@@ -236,7 +236,7 @@ function AggregationView({ q, agg }: { q: PollQuestion; agg: QuestionAggregation
     return (
       <div className="space-y-1.5">
         <p className="text-[11px] font-medium">
-          평균 <span className="text-indigo-600 dark:text-indigo-400">{agg.average.toFixed(1)}</span>점
+          평균 <span className="text-cat-1">{agg.average.toFixed(1)}</span>점
           <span className="ml-1.5 text-muted-foreground">/ 5 · {total}명 응답</span>
         </p>
         {([1, 2, 3, 4, 5] as const).map((n) => {
@@ -246,7 +246,7 @@ function AggregationView({ q, agg }: { q: PollQuestion; agg: QuestionAggregation
               <span className="w-5 text-right tabular-nums text-muted-foreground">{n}점</span>
               <div className="h-1.5 flex-1 rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-amber-400 transition-all duration-300"
+                  className="h-full rounded-full bg-warning transition-all duration-300"
                   style={{ width: `${total > 0 ? Math.round((count / total) * 100) : 0}%` }}
                 />
               </div>
@@ -425,7 +425,7 @@ export default function LivePollRespond({ pollId }: Props) {
   if (submitted && poll) {
     return (
       <section className="rounded-2xl border bg-card p-4">
-        <p className="text-sm font-semibold text-indigo-600 dark:text-indigo-400">
+        <p className="text-sm font-semibold text-cat-1">
           응답 완료! 감사합니다.
         </p>
         {poll.showResults && (

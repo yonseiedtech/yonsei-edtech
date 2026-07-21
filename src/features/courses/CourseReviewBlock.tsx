@@ -226,14 +226,14 @@ export default function CourseReviewBlock({
                           )}
                         </div>
                         {r.examNotes && (
-                          <p className="mt-0.5 whitespace-pre-wrap text-blue-900/70">
+                          <p className="mt-0.5 whitespace-pre-wrap text-cat-1/70">
                             {r.examNotes}
                           </p>
                         )}
                       </div>
                     )}
                     {(r.assignmentType || r.assignmentFrequency || r.assignmentNotes) && (
-                      <div className="mt-1 rounded border border-violet-100 bg-violet-50/40 p-1.5 text-[10px] text-violet-900/80">
+                      <div className="mt-1 rounded border border-cat-5/10 bg-cat-5/5 p-1.5 text-[10px] text-cat-5/80">
                         <div className="flex flex-wrap gap-2">
                           {r.assignmentType && (
                             <span>
@@ -248,14 +248,14 @@ export default function CourseReviewBlock({
                           )}
                         </div>
                         {r.assignmentNotes && (
-                          <p className="mt-0.5 whitespace-pre-wrap text-violet-900/70">
+                          <p className="mt-0.5 whitespace-pre-wrap text-cat-5/70">
                             {r.assignmentNotes}
                           </p>
                         )}
                       </div>
                     )}
                     {r.recommendedFor && (
-                      <p className="mt-1 text-[10px] text-emerald-800/80">
+                      <p className="mt-1 text-[10px] text-success/80">
                         🎯 추천 대상: {r.recommendedFor}
                       </p>
                     )}
@@ -519,8 +519,8 @@ function ReviewComposeDialog({
             </div>
           </div>
 
-          <fieldset className="rounded-md border border-blue-200 bg-blue-50/30 p-3">
-            <legend className="px-1 text-xs font-semibold text-blue-900">시험 운영</legend>
+          <fieldset className="rounded-md border border-cat-1/20 bg-cat-1/5 p-3">
+            <legend className="px-1 text-xs font-semibold text-cat-1">시험 운영</legend>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground">중간고사</label>
@@ -560,8 +560,8 @@ function ReviewComposeDialog({
             />
           </fieldset>
 
-          <fieldset className="rounded-md border border-violet-200 bg-violet-50/30 p-3">
-            <legend className="px-1 text-xs font-semibold text-violet-900">과제 운영</legend>
+          <fieldset className="rounded-md border border-cat-5/20 bg-cat-5/5 p-3">
+            <legend className="px-1 text-xs font-semibold text-cat-5">과제 운영</legend>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground">과제 유형</label>

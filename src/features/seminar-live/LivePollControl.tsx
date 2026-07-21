@@ -173,7 +173,7 @@ function PollRow({ poll, isActive, onSetLive, settingLive, liveCount, liveAggs }
             className={cn(
               "h-7 px-2.5 text-[11px]",
               isActive &&
-                "border-indigo-400 text-indigo-700 hover:bg-indigo-50 dark:border-indigo-600 dark:text-indigo-300 dark:hover:bg-indigo-950/30",
+                "border-cat-1/40 text-cat-1 hover:bg-cat-1/5",
             )}
             onClick={() => void onSetLive(poll)}
             disabled={settingLive}
@@ -185,7 +185,7 @@ function PollRow({ poll, isActive, onSetLive, settingLive, liveCount, liveAggs }
 
       {/* 활성 설문 집계 결과 */}
       {isActive && expanded && liveAggs && (
-        <div className="mt-3 space-y-3 border-t border-indigo-200 pt-3 dark:border-indigo-900">
+        <div className="mt-3 space-y-3 border-t border-cat-1/20 pt-3">
           {poll.questions.map((q) => {
             const agg = liveAggs[q.id];
             if (!agg) return null;
@@ -369,7 +369,7 @@ export default function LivePollControl({ seminarId, activePollId, onPushPoll }:
       {/* 헤더 */}
       <div className="flex items-center justify-between">
         <h3 className="flex items-center gap-1.5 text-sm font-bold">
-          <Radio size={14} className="text-indigo-600 dark:text-indigo-400" />
+          <Radio size={14} className="text-cat-1" />
           라이브 설문
         </h3>
         {!formOpen && (
@@ -387,7 +387,7 @@ export default function LivePollControl({ seminarId, activePollId, onPushPoll }:
 
       {/* 빠른 설문 만들기 폼 */}
       {formOpen && (
-        <div className="rounded-xl border border-dashed border-indigo-300 bg-indigo-50/40 p-3 space-y-3 dark:border-indigo-800 dark:bg-indigo-950/20">
+        <div className="rounded-xl border border-dashed border-cat-1/30 bg-cat-1/5 p-3 space-y-3">
           <div className="flex items-center justify-between">
             <p className="text-xs font-semibold">빠른 설문 만들기</p>
             <button
@@ -427,7 +427,7 @@ export default function LivePollControl({ seminarId, activePollId, onPushPoll }:
                   setOptions(["", ""]);
                 }
               }}
-              className="h-7 rounded-lg border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-indigo-400"
+              className="h-7 rounded-lg border border-border bg-background px-2 text-[11px] focus:outline-none focus:ring-1 focus:ring-cat-1/40"
             >
               {(Object.entries(QUESTION_TYPE_LABELS) as [QuestionType, string][]).map(
                 ([val, label]) => (
@@ -466,7 +466,7 @@ export default function LivePollControl({ seminarId, activePollId, onPushPoll }:
               <button
                 type="button"
                 onClick={addOption}
-                className="flex items-center gap-1 text-[11px] text-indigo-600 hover:text-indigo-800 dark:text-indigo-400 dark:hover:text-indigo-200"
+                className="flex items-center gap-1 text-[11px] text-cat-1 hover:text-cat-1/80"
               >
                 <Plus size={11} />
                 선택지 추가

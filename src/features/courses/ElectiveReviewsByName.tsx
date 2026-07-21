@@ -458,7 +458,7 @@ function ReviewItem({ review }: { review: CourseReview }) {
             {review.recommend && (
               <Badge
                 variant="outline"
-                className="border-emerald-200 bg-emerald-50 text-[9px] text-emerald-700"
+                className="border-success/20 bg-success/5 text-[9px] text-success"
               >
                 추천
               </Badge>
@@ -473,7 +473,7 @@ function ReviewItem({ review }: { review: CourseReview }) {
             </span>
           </div>
           {review.ratingReason && (
-            <p className="text-[11px] italic text-amber-700/80">
+            <p className="text-[11px] italic text-warning/80">
               ★ {review.ratingReason}
             </p>
           )}
@@ -505,7 +505,7 @@ function ReviewItem({ review }: { review: CourseReview }) {
                 )}
               </div>
               {review.examNotes && (
-                <p className="mt-0.5 whitespace-pre-wrap text-blue-900/70">
+                <p className="mt-0.5 whitespace-pre-wrap text-cat-1/70">
                   {review.examNotes}
                 </p>
               )}
@@ -514,7 +514,7 @@ function ReviewItem({ review }: { review: CourseReview }) {
           {(review.assignmentType ||
             review.assignmentFrequency ||
             review.assignmentNotes) && (
-            <div className="rounded border border-violet-100 bg-violet-50/40 p-1.5 text-[10px] text-violet-900/80">
+            <div className="rounded border border-cat-5/10 bg-cat-5/5 p-1.5 text-[10px] text-cat-5/80">
               <div className="flex flex-wrap gap-2">
                 {review.assignmentType && (
                   <span>
@@ -529,14 +529,14 @@ function ReviewItem({ review }: { review: CourseReview }) {
                 )}
               </div>
               {review.assignmentNotes && (
-                <p className="mt-0.5 whitespace-pre-wrap text-violet-900/70">
+                <p className="mt-0.5 whitespace-pre-wrap text-cat-5/70">
                   {review.assignmentNotes}
                 </p>
               )}
             </div>
           )}
           {review.recommendedFor && (
-            <p className="text-[10px] text-emerald-800/80">
+            <p className="text-[10px] text-success/80">
               🎯 추천 대상: {review.recommendedFor}
             </p>
           )}
@@ -756,8 +756,8 @@ function ComposeDialog({
             </div>
           </div>
 
-          <fieldset className="rounded-md border border-blue-200 bg-blue-50/30 p-3">
-            <legend className="px-1 text-xs font-semibold text-blue-900">시험 운영</legend>
+          <fieldset className="rounded-md border border-cat-1/20 bg-cat-1/5 p-3">
+            <legend className="px-1 text-xs font-semibold text-cat-1">시험 운영</legend>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground">중간고사</label>
@@ -793,8 +793,8 @@ function ComposeDialog({
             />
           </fieldset>
 
-          <fieldset className="rounded-md border border-violet-200 bg-violet-50/30 p-3">
-            <legend className="px-1 text-xs font-semibold text-violet-900">과제 운영</legend>
+          <fieldset className="rounded-md border border-cat-5/20 bg-cat-5/5 p-3">
+            <legend className="px-1 text-xs font-semibold text-cat-5">과제 운영</legend>
             <div className="grid grid-cols-2 gap-3">
               <div>
                 <label className="text-xs text-muted-foreground">과제 유형</label>
