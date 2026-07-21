@@ -502,25 +502,30 @@ export default function FlashcardStudy() {
               size="lg"
               onClick={() => grade(false)}
               disabled={grading}
-              className="min-w-[7rem] border-rose-300 text-rose-700 hover:bg-rose-50 dark:border-rose-800 dark:text-rose-300 dark:hover:bg-rose-950/30"
+              title="틀림 (1 또는 ←)"
+              className="min-w-[7rem] border-destructive/40 text-destructive hover:bg-destructive/5"
             >
               <X className="mr-1.5 h-4 w-4" aria-hidden />
               틀림
+              <kbd className="ml-1.5 hidden rounded border bg-background/50 px-1 py-px font-mono text-[9px] leading-none opacity-50 md:inline-block">1</kbd>
             </Button>
             <Button
               size="lg"
               onClick={() => grade(true)}
               disabled={grading}
-              className="min-w-[7rem] bg-emerald-600 hover:bg-emerald-700"
+              title="맞음 (2 또는 →)"
+              className="min-w-[7rem] bg-success hover:bg-success/90"
             >
               <Check className="mr-1.5 h-4 w-4" aria-hidden />
               맞음
+              <kbd className="ml-1.5 hidden rounded border border-white/30 bg-white/10 px-1 py-px font-mono text-[9px] leading-none opacity-70 md:inline-block">2</kbd>
             </Button>
           </>
         ) : (
-          <Button size="lg" onClick={() => setFlipped(true)} className="min-w-[10rem]">
+          <Button size="lg" onClick={() => setFlipped(true)} className="min-w-[10rem]" title="정답 확인 (Space)">
             <RotateCw className="mr-1.5 h-4 w-4" aria-hidden />
             정답 확인
+            <kbd className="ml-1.5 hidden rounded border border-white/30 bg-white/10 px-1 py-px font-mono text-[9px] leading-none opacity-70 md:inline-block">Space</kbd>
           </Button>
         )}
       </div>
