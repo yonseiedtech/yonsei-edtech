@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   GraduationCap,
   Microscope,
@@ -21,8 +21,10 @@ import {
   Images,
   ClipboardCheck,
   Rocket,
+  Zap,
   X,
 } from "lucide-react";
+import { HACKATHON_AWARDS_ANNOUNCE_DATE } from "@/features/hackathon/config";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 
@@ -96,8 +98,25 @@ export default function BottomNav() {
   const { user } = useAuthStore();
   // 현재 경로가 1차 탭에 없고 "더보기" 시트 항목(진단·아카이브·리더보드 등)에 해당하면
   // 더보기 버튼을 활성으로 표시 — 깊은 표면에서도 위치를 잃지 않게.
+  // 에듀테크 해커톤 진입점 — 수상 발표일+7일 이내에만 노출 (hydration 안전)
+  const [showHackathon, setShowHackathon] = useState(false);
+  useEffect(() => {
+    const cutoff = new Date(HACKATHON_AWARDS_ANNOUNCE_DATE);
+    cutoff.setDate(cutoff.getDate() + 7);
+    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/CSR 불일치 방지용 마운트 후 1회 플래그 (의도적)
+    setShowHackathon(new Date() <= cutoff);
+  }, []);
+
+  const moreItems = useMemo((): NavItem[] => {
+    if (!showHackathon) return MORE_ITEMS;
+    const idx = MORE_ITEMS.findIndex((item) => item.href === "/activities/internal");
+    const result = [...MORE_ITEMS];
+    result.splice(idx + 1, 0, { href: "/hackathon", label: "에듀테크 해커톤", icon: Zap });
+    return result;
+  }, [showHackathon]);
+
   const primaryActive = ITEMS.some((item) => isActive(pathname, item));
-  const moreActive = !primaryActive && MORE_ITEMS.some((item) => isActive(pathname, item));
+  const moreActive = !primaryActive && moreItems.some((item) => isActive(pathname, item));
   const [moreOpen, setMoreOpen] = useState(false);
   const sheetRef = useRef<HTMLDivElement>(null);
   const moreButtonRef = useRef<HTMLButtonElement>(null);
@@ -193,7 +212,7 @@ export default function BottomNav() {
               </button>
             </div>
             <ul className="grid grid-cols-3 gap-2">
-              {MORE_ITEMS.map((item) => {
+              {moreItems.map((item) => {
                 const Icon = item.icon;
                 const active = isActive(pathname, item);
                 return (

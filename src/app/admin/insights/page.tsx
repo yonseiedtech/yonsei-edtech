@@ -112,6 +112,11 @@ const FunnelSection = dynamic(
   { ssr: false },
 );
 
+const MentoringPoolCard = dynamic(
+  () => import("@/features/insights/MentoringPoolCard"),
+  { ssr: false },
+);
+
 const WebVitalsSection = dynamic(
   () => import("@/features/insights/WebVitalsSection"),
   { ssr: false },
@@ -172,6 +177,9 @@ function InsightsInner() {
           </div>
         </TabsContent>
         <TabsContent value="opkpi" className="mt-4 space-y-4">
+          {/* PM GAP-H: 멘토 풀 카운트 — 멘토 토글 ON 회원·요청·수락 집계 */}
+          <MentoringPoolCard />
+
           {/* C-5(2026-07-04): 기능 채택률 — 개강 채택 전환 사이클 KPI */}
           <AdoptionSection />
 

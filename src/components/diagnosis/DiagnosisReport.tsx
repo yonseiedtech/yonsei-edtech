@@ -440,6 +440,68 @@ export default function DiagnosisReport({
       {/* 진단↔학습↔증명 순환 안내 — 약점 학습 자산이 '학습' 단계에 편입됨을 시각화 */}
       <DiagnosisLoopSteps active="learn" className="mt-6" />
 
+      {/* 다음에 할 일 안내 + 오답 복습 주요 CTA (UX FLOW-2) */}
+      <Card className="mt-6 rounded-2xl shadow-sm">
+        <CardHeader className="pb-2">
+          <CardTitle className="flex items-center gap-2 text-base">
+            <ListChecks className="h-4 w-4 text-primary" aria-hidden />
+            다음에 할 일
+          </CardTitle>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <ol className="space-y-2.5">
+            <li className="flex items-start gap-2.5 text-sm">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+                1
+              </span>
+              <span>
+                <strong className="text-foreground">아카이브 탐색</strong>
+                <span className="ml-1 text-muted-foreground">— 약점 개념의 배경 이론을 아카이브에서 살펴보세요.</span>
+              </span>
+            </li>
+            <li className="flex items-start gap-2.5 text-sm">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cat-1/10 text-[11px] font-bold text-cat-1">
+                2
+              </span>
+              <span>
+                <strong className="text-foreground">오답 복습</strong>
+                <span className="ml-1 text-muted-foreground">— 틀린 문항을 암기카드로 저장하고 간격반복으로 복습하세요.</span>
+              </span>
+            </li>
+            <li className="flex items-start gap-2.5 text-sm">
+              <span className="flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/10 text-[11px] font-bold text-success">
+                3
+              </span>
+              <span>
+                <strong className="text-foreground">재진단</strong>
+                <span className="ml-1 text-muted-foreground">— 개념을 익힌 뒤 다시 진단해 준비도를 높이세요.</span>
+              </span>
+            </li>
+          </ol>
+          {wrongItems.length > 0 && (
+            <Link href={FLASHCARDS_HREF} className="block">
+              <Button className="w-full gap-2" size="lg">
+                <Layers className="h-4 w-4" aria-hidden />
+                오답 암기카드 바로 복습하기
+                <ArrowRight className="h-4 w-4" aria-hidden />
+              </Button>
+            </Link>
+          )}
+          <div className="flex flex-wrap gap-2">
+            <Link href="/archive">
+              <Button variant="outline" size="sm">
+                <BookOpen className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+                아카이브 탐색
+              </Button>
+            </Link>
+            <Button variant="outline" size="sm" onClick={onRetry}>
+              <RotateCcw className="mr-1.5 h-3.5 w-3.5" aria-hidden />
+              재진단하기
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* 틀린 문항 복습 카드 — 오답을 암기카드로 저장 */}
       {wrongItems.length > 0 && (
         <WrongCardsSection

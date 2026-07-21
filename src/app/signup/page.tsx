@@ -73,7 +73,7 @@ function SignupContent() {
 
               <Link href={startHref} className="block">
                 <Button className="mt-6 w-full gap-1.5" size="lg">
-                  바로 시작하기
+                  대시보드에서 시작하기
                   <ArrowRight size={16} />
                 </Button>
               </Link>
@@ -141,6 +141,7 @@ function SignupContent() {
                 <li>• 운영진이 가입 정보를 확인 후 수동으로 승인합니다.</li>
                 <li>• 평균 <strong>1~2 영업일</strong> 이내 처리됩니다.</li>
                 <li>• 승인 완료 시 로그인이 가능해집니다.</li>
+                <li>• 승인 완료 시 이메일로 알림이 발송됩니다.</li>
               </ul>
             </div>
 

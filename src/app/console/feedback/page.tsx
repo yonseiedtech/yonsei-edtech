@@ -17,7 +17,7 @@ import {
   Filter,
 } from "lucide-react";
 import { toast } from "sonner";
-import { userFeedbackApi } from "@/lib/bkend";
+import { notificationsApi, userFeedbackApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -123,13 +123,36 @@ export default function ConsoleFeedbackPage() {
   });
 
   const { mutate: changeStatus } = useMutation({
-    mutationFn: ({
+    mutationFn: async ({
       id,
       status,
+      userId,
     }: {
       id: string;
       status: NonNullable<UserFeedback["status"]>;
-    }) => userFeedbackApi.update(id, { status }),
+      /** 제출자 id — 익명(undefined)이면 알림 스킵 */
+      userId?: string;
+    }) => {
+      await userFeedbackApi.update(id, { status });
+      // 제출자 인앱 알림 — in-progress/resolved 전환 시만, 익명 제출 스킵
+      if (userId && (status === "in-progress" || status === "resolved")) {
+        await notificationsApi
+          .create({
+            userId,
+            type: "admin_nudge",
+            title: status === "resolved" ? "피드백이 반영되었습니다" : "피드백이 처리 중입니다",
+            message:
+              status === "resolved"
+                ? "남겨주신 피드백이 반영되었습니다. 감사합니다."
+                : "남겨주신 피드백을 처리 중입니다. 완료되면 다시 알려드립니다.",
+            read: false,
+            createdAt: new Date().toISOString(),
+          })
+          .catch(() => {
+            // 알림 실패는 메인 기능을 블로킹하지 않음
+          });
+      }
+    },
     onSuccess: () => {
       toast.success("상태가 변경되었습니다.");
       qc.invalidateQueries({ queryKey: ["console", "user-feedback"] });
@@ -285,6 +308,7 @@ export default function ConsoleFeedbackPage() {
                       changeStatus({
                         id: fb.id,
                         status: e.target.value as NonNullable<UserFeedback["status"]>,
+                        userId: fb.userId,
                       })
                     }
                     className="rounded-md border border-input bg-background px-2 py-1 text-xs focus:outline-none focus:ring-2 focus:ring-ring"

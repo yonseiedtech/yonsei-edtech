@@ -305,6 +305,28 @@ export default function HackathonBoard() {
   }
 
   /**
+   * 합류 신청 — 다른 팀의 "팀원 찾는 중" 카드에서 제출 섹션으로 스크롤 + 팀 정보 프리필.
+   * 기존 "합류 희망" 표시(handleJoinToggle)의 다음 단계로, sessionStorage + CustomEvent 로
+   * HackathonSubmissions 제출 폼을 프리필한다.
+   */
+  function handleJoinApply(entry: CommQuestion) {
+    if (!user) return;
+    const prefill = {
+      teamName: entry.authorName ?? "",
+      members: user.name,
+    };
+    sessionStorage.setItem("hackathon_prefill", JSON.stringify(prefill));
+    window.dispatchEvent(new CustomEvent("hackathon:prefill", { detail: prefill }));
+    document.getElementById("hackathon-submission")?.scrollIntoView({
+      behavior: "smooth",
+    });
+    toast.success(
+      "제출 폼에 팀 정보를 입력했습니다. 팀원을 확인하고 신청을 완료하세요.",
+      { duration: 3000 },
+    );
+  }
+
+  /**
    * 팀 확정 — 내 아이디어 카드에 합류 희망자 + 본인을 포함해
    * sessionStorage + CustomEvent 로 HackathonSubmissions 제출 폼을 프리필한다.
    */
@@ -773,9 +795,9 @@ export default function HackathonBoard() {
                     </div>
                   )}
 
-                  {/* ── 합류 희망 버튼 — "팀원 찾는 중"이고 본인 카드가 아닐 때 ── */}
+                  {/* ── 합류 희망 + 합류 신청 — "팀원 찾는 중"이고 본인 카드가 아닐 때 ── */}
                   {isWantTeam && !mine && (
-                    <div className="mt-2.5">
+                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
                       <button
                         type="button"
                         onClick={() => handleJoinToggle(entry)}
@@ -798,6 +820,17 @@ export default function HackathonBoard() {
                           </>
                         )}
                       </button>
+                      {/* 합류 신청 — 접수 기간에만 노출. 합류 희망 표시의 다음 단계 */}
+                      {registrationOpen && (
+                        <button
+                          type="button"
+                          onClick={() => handleJoinApply(entry)}
+                          className="inline-flex items-center gap-1.5 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                        >
+                          <ArrowRight size={12} />
+                          이 팀에 합류 신청
+                        </button>
+                      )}
                     </div>
                   )}
                 </li>
