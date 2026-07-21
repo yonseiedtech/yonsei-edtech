@@ -64,8 +64,8 @@ const STATIC_FALLBACK: RoadmapItem[] = [
     order: 1,
     title: "1학기차 — 적응과 시작",
     shortTag: "정착",
-    color: "text-blue-700 dark:text-blue-300",
-    bgColor: "border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20",
+    color: "text-cat-1",
+    bgColor: "border-cat-1/20 bg-cat-1/5",
     bloomStage: "understand",
     items: [
       "신입생 OT 참여 + 학회 가입 신청",
@@ -80,8 +80,8 @@ const STATIC_FALLBACK: RoadmapItem[] = [
     order: 2,
     title: "2학기차 — 연구주제 모색",
     shortTag: "탐색",
-    color: "text-emerald-700 dark:text-emerald-300",
-    bgColor: "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20",
+    color: "text-success",
+    bgColor: "border-success/20 bg-success/5",
     bloomStage: "apply",
     items: [
       "관심 분야 키워드·연구 주제 명확화 (마이페이지)",
@@ -96,8 +96,8 @@ const STATIC_FALLBACK: RoadmapItem[] = [
     order: 3,
     title: "3학기차 — 본격 연구",
     shortTag: "본격",
-    color: "text-amber-700 dark:text-amber-300",
-    bgColor: "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20",
+    color: "text-warning",
+    bgColor: "border-warning/20 bg-warning/5",
     bloomStage: "analyze",
     items: [
       "논문 주제 1차 구체화 + 지도교수 협의",
@@ -112,8 +112,8 @@ const STATIC_FALLBACK: RoadmapItem[] = [
     order: 4,
     title: "4학기차 — 논문 집필",
     shortTag: "집필",
-    color: "text-rose-700 dark:text-rose-300",
-    bgColor: "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20",
+    color: "text-destructive",
+    bgColor: "border-destructive/20 bg-destructive/5",
     bloomStage: "evaluate",
     items: [
       "학위논문 초고 작성 (지도교수와 격주 미팅 권장)",
@@ -128,8 +128,8 @@ const STATIC_FALLBACK: RoadmapItem[] = [
     order: 5,
     title: "디펜스 학기 — 심사 준비",
     shortTag: "심사",
-    color: "text-purple-700 dark:text-purple-300",
-    bgColor: "border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/20",
+    color: "text-cat-5",
+    bgColor: "border-cat-5/20 bg-cat-5/5",
     bloomStage: "create",
     items: [
       "디펜스 연습 (음성 채점·따라 읽기) 매주 1회",
@@ -144,8 +144,8 @@ const STATIC_FALLBACK: RoadmapItem[] = [
     order: 7,
     title: "졸업 후 — 동문 단계",
     shortTag: "동문",
-    color: "text-slate-700 dark:text-slate-300",
-    bgColor: "border-slate-200 bg-slate-50/50 dark:border-slate-900 dark:bg-slate-950/20",
+    color: "text-muted-foreground",
+    bgColor: "border-border bg-muted/5",
     bloomStage: "create",
     items: [
       "졸업생 회원으로 전환 + 본인 학위논문 등록",
@@ -201,7 +201,7 @@ function ProgressBar({ value, className, mastered }: ProgressBarProps) {
         className={cn(
           "h-full rounded-full transition-all duration-500",
           mastered
-            ? "bg-emerald-500 dark:bg-emerald-400"
+            ? "bg-success"
             : "bg-primary"
         )}
         style={{ width: `${Math.min(100, Math.max(0, value))}%` }}
@@ -325,7 +325,7 @@ function StageCard({ stage, isMine, isLoggedIn, onProgressChange }: StageCardPro
             className={cn(
               "text-[11px] font-bold tabular-nums",
               isMastered
-                ? "text-emerald-600 dark:text-emerald-400"
+                ? "text-success"
                 : "text-muted-foreground"
             )}
           >
@@ -480,20 +480,20 @@ export default function SemesterRoadmap() {
       {isLoggedIn && gradSummary && (
         <Link
           href="/mypage#graduation-checklist"
-          className="mb-4 flex items-center gap-3 rounded-2xl border border-emerald-200 bg-emerald-50/50 px-4 py-3 transition-colors hover:bg-emerald-50 dark:border-emerald-900 dark:bg-emerald-950/20 dark:hover:bg-emerald-950/30"
+          className="mb-4 flex items-center gap-3 rounded-2xl border border-success/20 bg-success/5 px-4 py-3 transition-colors hover:bg-success/10"
         >
-          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+          <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
             <GraduationCap size={16} />
           </span>
           <div className="min-w-0 flex-1">
             <div className="flex items-center gap-2">
               <p className="text-sm font-bold">졸업요건 충족률</p>
-              <span className="text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
+              <span className="text-sm font-bold tabular-nums text-success">
                 {gradSummary.percent}%
               </span>
             </div>
             {gradSummary.allMet ? (
-              <p className="mt-0.5 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+              <p className="mt-0.5 text-[11px] font-medium text-success">
                 모든 졸업요건을 충족했습니다 🎓
               </p>
             ) : (
@@ -523,14 +523,14 @@ export default function SemesterRoadmap() {
           className={cn(
             "mb-6 rounded-2xl border-2 p-4 transition-all",
             isAllMastered
-              ? "border-emerald-300 bg-emerald-50/60 dark:border-emerald-800 dark:bg-emerald-950/20"
+              ? "border-success/30 bg-success/5"
               : "border-primary/20 bg-primary/5"
           )}
         >
           <div className="flex items-center justify-between gap-3">
             <div className="flex items-center gap-2">
               {isAllMastered ? (
-                <Trophy size={16} className="shrink-0 text-emerald-600 dark:text-emerald-400" />
+                <Trophy size={16} className="shrink-0 text-success" />
               ) : (
                 <Brain size={16} className="shrink-0 text-primary" />
               )}
@@ -547,7 +547,7 @@ export default function SemesterRoadmap() {
               className={cn(
                 "shrink-0 text-xl font-bold tabular-nums",
                 isAllMastered
-                  ? "text-emerald-600 dark:text-emerald-400"
+                  ? "text-success"
                   : "text-primary"
               )}
             >
@@ -563,7 +563,7 @@ export default function SemesterRoadmap() {
             className="mt-3"
           />
           {isAllMastered && (
-            <p className="mt-2 text-[11px] font-semibold text-emerald-700 dark:text-emerald-400">
+            <p className="mt-2 text-[11px] font-semibold text-success">
               모든 학기 단계를 숙달했습니다. 축하합니다!
             </p>
           )}

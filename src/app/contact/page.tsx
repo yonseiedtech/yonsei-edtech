@@ -125,7 +125,7 @@ export default function ContactPage() {
               {/* 응답 안내 */}
               <div className="space-y-1.5 text-xs text-muted-foreground">
                 <p className="flex items-center gap-1.5">
-                  <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-emerald-500" aria-hidden />
+                  <span className="inline-block h-1.5 w-1.5 shrink-0 rounded-full bg-success" aria-hidden />
                   운영진이 <span className="font-semibold text-foreground">24시간 이내</span> 답변 드립니다.
                 </p>
                 <p className="flex items-center gap-1.5">

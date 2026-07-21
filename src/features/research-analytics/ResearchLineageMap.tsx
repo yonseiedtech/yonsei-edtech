@@ -244,7 +244,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
               }
             }}
             disabled={!canZoomIn}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md border bg-card text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md border bg-card text-muted-foreground transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-muted/5"
             aria-label="확대 (간격 줄이기)"
             title="확대"
           >
@@ -259,7 +259,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
               }
             }}
             disabled={!canZoomOut}
-            className="inline-flex h-7 w-7 items-center justify-center rounded-md border bg-card text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
+            className="inline-flex h-7 w-7 items-center justify-center rounded-md border bg-card text-muted-foreground transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-muted/5"
             aria-label="축소 (간격 늘리기)"
             title="축소"
           >
@@ -277,7 +277,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
           type="button"
           onClick={() => setStartIdx((i) => Math.max(0, i - 1))}
           disabled={safeStart === 0}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md border bg-card text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md border bg-card text-muted-foreground transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-muted/5"
           aria-label="이전 시대"
         >
           <ChevronLeft size={16} />
@@ -295,7 +295,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
                 className={`rounded-md px-2 py-1 text-[11px] font-medium transition ${
                   inView
                     ? "bg-primary/10 text-primary"
-                    : "text-muted-foreground hover:bg-slate-50"
+                    : "text-muted-foreground hover:bg-muted/5"
                 }`}
               >
                 {e.label}
@@ -307,7 +307,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
           type="button"
           onClick={() => setStartIdx((i) => Math.min(maxStart, i + 1))}
           disabled={safeStart === maxStart}
-          className="inline-flex h-8 w-8 items-center justify-center rounded-md border bg-card text-slate-700 transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-slate-50"
+          className="inline-flex h-8 w-8 items-center justify-center rounded-md border bg-card text-muted-foreground transition disabled:cursor-not-allowed disabled:opacity-30 hover:enabled:bg-muted/5"
           aria-label="다음 시대"
         >
           <ChevronRight size={16} />
@@ -406,7 +406,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
                   fontSize={11}
                   fontWeight={active ? 700 : 500}
                   fill="currentColor"
-                  className={dim ? "text-slate-400 dark:text-slate-500" : "text-foreground"}
+                  className={dim ? "text-muted-foreground" : "text-foreground"}
                   style={{
                     fontFamily:
                       "'Pretendard Variable', Pretendard, -apple-system, BlinkMacSystemFont, sans-serif",
@@ -427,11 +427,11 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
 
       <div className="mt-3 flex flex-wrap items-center justify-center gap-x-4 gap-y-1 text-[11px] text-muted-foreground">
         <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-3 w-3 rounded-full border-2 border-amber-400 bg-slate-200" />
+          <span className="inline-block h-3 w-3 rounded-full border-2 border-warning/40 bg-muted/20" />
           신규 등장 키워드
         </span>
         <span className="inline-flex items-center gap-1">
-          <span className="inline-block h-1 w-6 bg-slate-400" />
+          <span className="inline-block h-1 w-6 bg-muted/40" />
           시대 간 연결 (굵기 = 비중)
         </span>
         <span>원 크기 = 해당 시대 등장 빈도</span>

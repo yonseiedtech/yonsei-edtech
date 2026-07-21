@@ -71,7 +71,7 @@ export default function NewsletterMagazinePage({
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-slate-50">
+      <div className="min-h-screen bg-background">
         <div className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur">
           <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3">
             <Skeleton className="h-4 w-20" />
@@ -103,7 +103,7 @@ export default function NewsletterMagazinePage({
   const rightSection = pageIndex === 0 ? null : sortedSections[(pageIndex - 1) * 2 + 1];
 
   return (
-    <div className="min-h-screen bg-slate-50">
+    <div className="min-h-screen bg-background">
       {/* 상단 바 */}
       <div className="sticky top-0 z-20 border-b bg-card/95 backdrop-blur">
         <div className="mx-auto flex max-w-7xl items-center justify-between gap-2 px-4 py-3">
@@ -180,7 +180,7 @@ export default function NewsletterMagazinePage({
             {/* 가로 스크롤 sticky 섹션 chip 네비게이션 */}
             <nav
               aria-label="섹션 바로가기"
-              className="sticky top-[52px] z-10 -mx-4 mb-4 border-b bg-slate-50/95 px-4 py-2 backdrop-blur"
+              className="sticky top-[52px] z-10 -mx-4 mb-4 border-b bg-background/95 px-4 py-2 backdrop-blur"
             >
               <div className="flex gap-1.5 overflow-x-auto pb-1 [scrollbar-width:none] [&::-webkit-scrollbar]:hidden">
                 <a
@@ -308,7 +308,7 @@ function CoverCard({
   issue: { issueNumber: number; title: string; subtitle: string; publishDate: string; editorName: string; coverColor?: string };
   large?: boolean;
 }) {
-  const grad = issue.coverColor || "from-indigo-900 to-slate-800";
+  const grad = issue.coverColor || "from-cat-1 to-foreground";
   return (
     <div
       className={cn(

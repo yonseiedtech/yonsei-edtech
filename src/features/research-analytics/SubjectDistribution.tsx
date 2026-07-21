@@ -205,7 +205,7 @@ export default function SubjectDistribution({ theses }: { theses: AlumniThesis[]
                   className="grid grid-cols-[76px_minmax(0,1fr)_56px] items-center gap-2 text-[11px]"
                 >
                   <span className="truncate text-right text-muted-foreground">{bucket.label}</span>
-                  <div className="h-4 w-full overflow-hidden rounded-md bg-slate-50">
+                  <div className="h-4 w-full overflow-hidden rounded-md bg-muted/5">
                     <div
                       className="flex h-full transition-[width] duration-500"
                       style={{ width: `${widthRel}%` }}

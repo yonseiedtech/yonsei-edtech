@@ -102,10 +102,10 @@ export default function PopupListView() {
                       <span
                         className={cn(
                           "inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium",
-                          isLive && "bg-emerald-50 text-emerald-700",
-                          isUpcoming && "bg-blue-50 text-blue-700",
-                          isExpired && "bg-gray-100 text-gray-500",
-                          !p.active && !isExpired && "bg-amber-50 text-amber-700",
+                          isLive && "bg-success/5 text-success",
+                          isUpcoming && "bg-cat-1/5 text-cat-1",
+                          isExpired && "bg-muted text-muted-foreground",
+                          !p.active && !isExpired && "bg-warning/5 text-warning",
                         )}
                       >
                         {isLive ? "노출중" : isUpcoming ? "예정" : isExpired ? "만료" : "비활성"}
@@ -147,7 +147,7 @@ export default function PopupListView() {
                             if (confirm(`"${p.title}" 팝업을 삭제할까요?`)) deleteMutation.mutate(p.id);
                           }}
                           title="삭제"
-                          className="rounded-md p-1.5 text-red-500 hover:bg-red-50"
+                          className="rounded-md p-1.5 text-destructive hover:bg-destructive/5"
                         >
                           <Trash2 size={14} />
                         </button>

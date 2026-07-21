@@ -258,7 +258,7 @@ export default function ChatWidget() {
                   transition={{ duration: 0.15 }}
                   className={cn(
                     "absolute top-1/2 -translate-y-1/2 flex items-center gap-2 whitespace-nowrap rounded-full px-3 py-2 text-white shadow-xl",
-                    "bg-blue-800",
+                    "bg-cat-1",
                     pillOnLeft ? "right-full mr-2" : "left-full ml-2",
                   )}
                   style={{ maxWidth: 280 }}
@@ -317,7 +317,7 @@ export default function ChatWidget() {
                 active
                   ? active.type === "reading"
                     ? "bg-primary"
-                    : "bg-blue-800"
+                    : "bg-cat-1"
                   : "bg-primary",
               )}
               whileHover={{ scale: 1.05 }}
@@ -357,7 +357,7 @@ export default function ChatWidget() {
               <MessageCircle className={cn("h-6 w-6 relative z-10", isPaused && "animate-pulse opacity-70")} />
               {/* 누적 cycle 배지 (포모도로 ●) */}
               {active && cycleCount > 0 && (
-                <span className="absolute -top-1 -right-1 z-20 flex h-5 min-w-5 items-center justify-center rounded-full bg-amber-500 px-1 text-[10px] font-bold text-white shadow">
+                <span className="absolute -top-1 -right-1 z-20 flex h-5 min-w-5 items-center justify-center rounded-full bg-warning px-1 text-[10px] font-bold text-white shadow">
                   {cycleCount}
                 </span>
               )}

@@ -71,68 +71,68 @@ const TYPE_CONFIG: Record<
 > = {
   seminar: {
     label: "세미나",
-    barBg: "bg-blue-100 dark:bg-blue-900/50",
-    barText: "text-blue-800 dark:text-blue-200",
-    barBorder: "border-blue-300 dark:border-blue-700",
-    iconBg: "bg-blue-100 dark:bg-blue-900/40",
-    iconText: "text-blue-700 dark:text-blue-300",
+    barBg: "bg-cat-1/10",
+    barText: "text-cat-1",
+    barBorder: "border-cat-1/30",
+    iconBg: "bg-cat-1/10",
+    iconText: "text-cat-1",
     icon: Presentation,
   },
   project: {
     label: "프로젝트",
-    barBg: "bg-emerald-100 dark:bg-emerald-900/50",
-    barText: "text-emerald-800 dark:text-emerald-200",
-    barBorder: "border-emerald-300 dark:border-emerald-700",
-    iconBg: "bg-emerald-100 dark:bg-emerald-900/40",
-    iconText: "text-emerald-700 dark:text-emerald-300",
+    barBg: "bg-success/10",
+    barText: "text-success",
+    barBorder: "border-success/30",
+    iconBg: "bg-success/10",
+    iconText: "text-success",
     icon: Users,
   },
   study: {
     label: "스터디",
-    barBg: "bg-purple-100 dark:bg-purple-900/50",
-    barText: "text-purple-800 dark:text-purple-200",
-    barBorder: "border-purple-300 dark:border-purple-700",
-    iconBg: "bg-purple-100 dark:bg-purple-900/40",
-    iconText: "text-purple-700 dark:text-purple-300",
+    barBg: "bg-cat-5/10",
+    barText: "text-cat-5",
+    barBorder: "border-cat-5/30",
+    iconBg: "bg-cat-5/10",
+    iconText: "text-cat-5",
     icon: BookOpen,
   },
   external: {
     label: "대외활동",
-    barBg: "bg-amber-100 dark:bg-amber-900/50",
-    barText: "text-amber-800 dark:text-amber-200",
-    barBorder: "border-amber-300 dark:border-amber-700",
-    iconBg: "bg-amber-100 dark:bg-amber-900/40",
-    iconText: "text-amber-700 dark:text-amber-300",
+    barBg: "bg-warning/10",
+    barText: "text-warning",
+    barBorder: "border-warning/30",
+    iconBg: "bg-warning/10",
+    iconText: "text-warning",
     icon: Globe,
   },
   course: {
     label: "수업",
-    barBg: "bg-slate-100 dark:bg-slate-800/60",
-    barText: "text-slate-700 dark:text-slate-300",
-    barBorder: "border-slate-300 dark:border-slate-600",
-    iconBg: "bg-slate-100 dark:bg-slate-800/50",
-    iconText: "text-slate-600 dark:text-slate-400",
+    barBg: "bg-muted",
+    barText: "text-muted-foreground",
+    barBorder: "border-muted/30",
+    iconBg: "bg-muted",
+    iconText: "text-muted-foreground",
     icon: GraduationCap,
   },
   networking: {
     label: "모임·행사",
-    barBg: "bg-rose-100 dark:bg-rose-900/50",
-    barText: "text-rose-800 dark:text-rose-200",
-    barBorder: "border-rose-300 dark:border-rose-700",
-    iconBg: "bg-rose-100 dark:bg-rose-900/40",
-    iconText: "text-rose-700 dark:text-rose-300",
+    barBg: "bg-destructive/10",
+    barText: "text-destructive",
+    barBorder: "border-destructive/30",
+    iconBg: "bg-destructive/10",
+    iconText: "text-destructive",
     icon: PartyPopper,
   },
 };
 
 // 카테고리 필터 뱃지용 컬러 (active 상태)
 const CAT_ACTIVE_CLASS: Record<CalendarEvent["type"], string> = {
-  seminar:  "bg-blue-100 text-blue-700 border-blue-300 dark:bg-blue-900/50 dark:text-blue-200 dark:border-blue-700",
-  project:  "bg-emerald-100 text-emerald-700 border-emerald-300 dark:bg-emerald-900/50 dark:text-emerald-200 dark:border-emerald-700",
-  study:    "bg-purple-100 text-purple-700 border-purple-300 dark:bg-purple-900/50 dark:text-purple-200 dark:border-purple-700",
-  external: "bg-amber-100 text-amber-700 border-amber-300 dark:bg-amber-900/50 dark:text-amber-200 dark:border-amber-700",
-  course:   "bg-slate-100 text-slate-600 border-slate-300 dark:bg-slate-800/60 dark:text-slate-300 dark:border-slate-600",
-  networking: "bg-rose-100 text-rose-700 border-rose-300 dark:bg-rose-900/50 dark:text-rose-200 dark:border-rose-700",
+  seminar:    "bg-cat-1/10 text-cat-1 border-cat-1/30",
+  project:    "bg-success/10 text-success border-success/30",
+  study:      "bg-cat-5/10 text-cat-5 border-cat-5/30",
+  external:   "bg-warning/10 text-warning border-warning/30",
+  course:     "bg-muted text-muted-foreground border-muted/30",
+  networking: "bg-destructive/10 text-destructive border-destructive/30",
 };
 
 const PUBLIC_FILTER_OPTIONS: { value: CalendarEvent["type"] | "all"; label: string }[] = [
@@ -742,8 +742,8 @@ export default function CalendarPage() {
                       key={w}
                       className={cn(
                         "py-2",
-                        idx === 0 && "text-rose-500 dark:text-rose-400",
-                        idx === 6 && "text-blue-500 dark:text-blue-400",
+                        idx === 0 && "text-destructive",
+                        idx === 6 && "text-cat-1",
                       )}
                     >
                       {w}
@@ -800,11 +800,11 @@ export default function CalendarPage() {
                                     cell.inMonth &&
                                       !cell.isToday &&
                                       dow === 0 &&
-                                      "text-rose-500 dark:text-rose-400",
+                                      "text-destructive",
                                     cell.inMonth &&
                                       !cell.isToday &&
                                       dow === 6 &&
-                                      "text-blue-500 dark:text-blue-400",
+                                      "text-cat-1",
                                   )}
                                 >
                                   {cell.day}

@@ -169,7 +169,7 @@ export default function NetworkAnalyticsReport({ graph }: Props) {
                 <span className="w-16 shrink-0 text-xs text-muted-foreground">{gen}기</span>
                 <div className="relative h-4 flex-1 overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full bg-emerald-500 transition-all dark:bg-emerald-400"
+                    className="h-full bg-success transition-all"
                     style={{ width: `${(count / maxGenCount) * 100}%` }}
                   />
                 </div>
@@ -223,7 +223,7 @@ export default function NetworkAnalyticsReport({ graph }: Props) {
             {stats.suggestedMatches.map((m, i) => (
               <li
                 key={i}
-                className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-amber-50/40 px-3 py-2 text-sm dark:bg-amber-950/10"
+                className="flex flex-wrap items-center justify-between gap-2 rounded-md border bg-warning/5 px-3 py-2 text-sm"
               >
                 <span className="flex flex-wrap items-center gap-1.5">
                   <span className="font-medium">{m.a.name}</span>
@@ -232,7 +232,7 @@ export default function NetworkAnalyticsReport({ graph }: Props) {
                   <span className="font-medium">{m.b.name}</span>
                   <span className="text-xs text-muted-foreground">({m.b.generation}기)</span>
                 </span>
-                <span className="text-[10px] text-amber-700 dark:text-amber-300">{m.reason}</span>
+                <span className="text-[10px] text-warning">{m.reason}</span>
               </li>
             ))}
           </ul>
@@ -259,7 +259,7 @@ function StatCard({
         className={cn(
           "mx-auto mb-1.5 flex h-8 w-8 items-center justify-center rounded-full",
           tone === "warning"
-            ? "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+            ? "bg-warning/10 text-warning"
             : "bg-primary/10 text-primary",
         )}
       >

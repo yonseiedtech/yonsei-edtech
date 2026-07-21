@@ -309,7 +309,7 @@ export default function KeywordCloud({
           })}
         </div>
         {dropped > 0 && (
-          <span className="text-[10.5px] text-amber-700">
+          <span className="text-[10.5px] text-warning">
             ⓘ 공간 부족으로 {dropped}개 키워드는 표시되지 않았습니다
           </span>
         )}
@@ -356,7 +356,7 @@ export default function KeywordCloud({
           </label>
         </div>
         {filteredCounts.length === 0 && (
-          <p className="mt-2 text-[10.5px] text-amber-700">
+          <p className="mt-2 text-[10.5px] text-warning">
             ⓘ 선택한 기간에 해당하는 키워드가 없습니다
           </p>
         )}

@@ -16,7 +16,7 @@ export default function OfflinePage() {
       <div className="animate-in fade-in slide-in-from-bottom-4 duration-500 w-full max-w-md">
         {/* 아이콘 영역 */}
         <div className="mb-8 flex flex-col items-center">
-          <div className="flex h-20 w-20 items-center justify-center rounded-3xl border-2 border-dashed border-amber-200 bg-amber-50 text-amber-400 shadow-sm dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+          <div className="flex h-20 w-20 items-center justify-center rounded-3xl border-2 border-dashed border-warning/20 bg-warning/5 text-warning shadow-sm">
             <WifiOff size={36} strokeWidth={1.5} aria-hidden />
           </div>
         </div>

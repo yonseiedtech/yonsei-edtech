@@ -37,15 +37,15 @@ export default function SeminarPresentPage() {
   }, [session?.deckId]);
 
   if (loading) {
-    return <div className="flex h-screen items-center justify-center bg-neutral-950 text-neutral-400">불러오는 중…</div>;
+    return <div className="flex h-screen items-center justify-center bg-muted text-muted-foreground">불러오는 중…</div>;
   }
 
   const active = session && (session.status === "live" || session.status === "paused");
 
   return (
-    <div className="flex h-screen flex-col bg-neutral-950 text-white">
+    <div className="flex h-screen flex-col bg-muted text-white">
       {/* 상단 바 */}
-      <div className="flex items-center justify-between gap-3 border-b border-neutral-800 px-6 py-3">
+      <div className="flex items-center justify-between gap-3 border-b border-muted px-6 py-3">
         <span className="inline-flex items-center gap-1.5 rounded-full bg-destructive px-3 py-1 text-sm font-bold">
           <Radio size={15} /> LIVE
         </span>
@@ -77,24 +77,24 @@ export default function SeminarPresentPage() {
         </div>
 
         {/* 사이드바: QR + Q&A 티커 */}
-        <aside className="flex w-80 shrink-0 flex-col border-l border-neutral-800">
-          <div className="flex flex-col items-center gap-2 border-b border-neutral-800 p-5">
+        <aside className="flex w-80 shrink-0 flex-col border-l border-muted">
+          <div className="flex flex-col items-center gap-2 border-b border-muted p-5">
             {joinUrl && (
               <div className="rounded-xl bg-white p-2">
                 <QRCodeSVG value={joinUrl} size={128} />
               </div>
             )}
-            <p className="text-center text-xs text-neutral-400">
+            <p className="text-center text-xs text-muted-foreground">
               휴대폰으로 QR을 스캔하거나<br />참여코드로 접속해 질문·설문에 참여하세요.
             </p>
           </div>
-          <div className="min-h-0 flex-1 overflow-hidden bg-neutral-900">
+          <div className="min-h-0 flex-1 overflow-hidden bg-muted">
             {session?.qaBoardId ? (
               <div className="h-full overflow-y-auto p-2">
                 <WallBoard boardId={session.qaBoardId} variant="present" />
               </div>
             ) : (
-              <div className="p-5 text-center text-xs text-neutral-500">Q&A 대기 중</div>
+              <div className="p-5 text-center text-xs text-muted-foreground">Q&A 대기 중</div>
             )}
           </div>
         </aside>

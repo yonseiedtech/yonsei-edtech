@@ -109,26 +109,26 @@ function NetworkPageContent() {
         <div
           role="note"
           aria-label="Connectivism 이론 맥락 안내"
-          className="mt-5 flex items-start gap-3 rounded-2xl border border-blue-200/70 bg-blue-50/60 p-4 dark:border-blue-800/50 dark:bg-blue-950/20"
+          className="mt-5 flex items-start gap-3 rounded-2xl border border-cat-1/20 bg-cat-1/5 p-4"
         >
           <div
             aria-hidden
-            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-blue-100 text-blue-700 dark:bg-blue-900/50 dark:text-blue-300"
+            className="mt-0.5 flex h-8 w-8 shrink-0 items-center justify-center rounded-xl bg-cat-1/10 text-cat-1"
           >
             <BookOpen size={15} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+            <p className="text-sm font-semibold text-foreground">
               학습 공동체 연결망 — Connectivism 이론 기반
             </p>
-            <p className="mt-0.5 text-xs leading-relaxed text-blue-800/80 dark:text-blue-200/70">
+            <p className="mt-0.5 text-xs leading-relaxed text-foreground/80">
               본 네트워킹 맵은 학회 학습 공동체의 연결망을 시각화합니다.{" "}
               <strong className="font-semibold">Connectivism 이론(Siemens, 2005)</strong>에 따르면
               학습은 사람·자원·도구·도메인 등 다양한 정보 노드 간의 연결에서 일어납니다.
               연결망을 형성·유지·확장하는 능력 자체가 학습이며, 각 회원이 맺는 관계는
               지식 흐름의 경로가 됩니다.
             </p>
-            <p className="mt-1 text-[11px] text-blue-700/60 dark:text-blue-300/50">
+            <p className="mt-1 text-[11px] text-cat-1/60">
               Siemens, G. (2005). Connectivism: A learning theory for the digital age.{" "}
               <em>International Journal of Instructional Technology and Distance Learning, 2</em>(1), 3–10.
             </p>
@@ -217,14 +217,14 @@ function NetworkPageContent() {
                       <span className="flex items-center gap-2">
                         <span
                           aria-hidden
-                          className="inline-block h-2.5 w-2.5 rounded-full bg-blue-400"
+                          className="inline-block h-2.5 w-2.5 rounded-full bg-cat-1/50"
                         />
                         본인
                       </span>
                       <span className="flex items-center gap-2">
                         <span
                           aria-hidden
-                          className="inline-block h-2.5 w-2.5 rounded-full bg-emerald-400"
+                          className="inline-block h-2.5 w-2.5 rounded-full bg-success/50"
                         />
                         1촌 연결
                       </span>

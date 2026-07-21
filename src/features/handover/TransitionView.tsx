@@ -63,12 +63,12 @@ export default function TransitionView() {
 
   return (
     <div className="space-y-4">
-      <div className="rounded-lg border border-amber-200 bg-amber-50 p-4">
+      <div className="rounded-lg border border-warning/20 bg-warning/5 p-4">
         <div className="flex items-start gap-2">
-          <AlertTriangle size={16} className="mt-0.5 text-amber-600" />
+          <AlertTriangle size={16} className="mt-0.5 text-warning" />
           <div>
-            <p className="text-sm font-medium text-amber-800">운영진 교체 안내</p>
-            <p className="mt-1 text-xs text-amber-700">
+            <p className="text-sm font-medium text-warning">운영진 교체 안내</p>
+            <p className="mt-1 text-xs text-warning/80">
               이 기능은 임기 변경 시 운영진 역할을 일괄 교체합니다.
               기존 운영진은 졸업생(alumni)으로 변경되고, 선택한 회원에게 새 역할이 부여됩니다.
               교체 전 업무수행철 작성을 완료해 주세요.

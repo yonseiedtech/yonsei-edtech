@@ -241,7 +241,7 @@ function StepConsentBlock({
           type="checkbox"
           checked={checked}
           onChange={(e) => onCheck(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300"
+          className="h-4 w-4 rounded border-muted/30"
         />
         <span className="text-sm">
           위 내용에 동의합니다{required ? " (필수)" : " (선택)"}

@@ -107,7 +107,7 @@ function StackedBars({
               className="grid grid-cols-[76px_minmax(0,1fr)_64px] items-center gap-2 text-[11px]"
             >
               <span className="truncate text-right text-muted-foreground">{bucket.label}</span>
-              <div className="h-4 w-full overflow-hidden rounded-md bg-slate-50">
+              <div className="h-4 w-full overflow-hidden rounded-md bg-muted/5">
                 <div
                   className="flex h-full transition-[width] duration-500"
                   style={{ width: `${widthRel}%` }}
@@ -258,7 +258,7 @@ export default function ResearchTypeChart({ theses }: { theses: AlumniThesis[] }
         <div className="mb-3 flex items-baseline justify-between gap-2">
           <h4 className="text-sm font-bold">
             초록 기반 연구 방법
-            <span className="ml-2 rounded-full bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700">
+            <span className="ml-2 rounded-full bg-success/5 px-2 py-0.5 text-[10px] font-medium text-success">
               NEW · 초록 키워드 매칭
             </span>
           </h4>
@@ -320,7 +320,7 @@ export default function ResearchTypeChart({ theses }: { theses: AlumniThesis[] }
       </div>
 
       {insight && (
-        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-[12px] text-amber-900 animate-in fade-in slide-in-from-bottom-1 duration-300">
+        <div className="rounded-lg border border-warning/20 bg-warning/5 px-4 py-3 text-[12px] text-foreground animate-in fade-in slide-in-from-bottom-1 duration-300">
           <span className="font-semibold">📊 자동 인사이트:</span> {insight}
         </div>
       )}

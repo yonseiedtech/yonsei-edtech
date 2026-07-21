@@ -143,22 +143,19 @@ const STATUS_CONFIG: Record<
   },
   running: {
     icon: Loader2,
-    colorClass: "text-blue-600 dark:text-blue-400",
+    colorClass: "text-cat-1",
     spin: true,
-    badgeClass:
-      "bg-blue-100 text-blue-700 dark:bg-blue-950/40 dark:text-blue-300",
+    badgeClass: "bg-cat-1/10 text-cat-1",
   },
   completed: {
     icon: CheckCircle2,
-    colorClass: "text-emerald-600 dark:text-emerald-400",
-    badgeClass:
-      "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300",
+    colorClass: "text-success",
+    badgeClass: "bg-success/10 text-success",
   },
   failed: {
     icon: AlertCircle,
-    colorClass: "text-rose-500 dark:text-rose-400",
-    badgeClass:
-      "bg-rose-100 text-rose-700 dark:bg-rose-950/40 dark:text-rose-300",
+    colorClass: "text-destructive",
+    badgeClass: "bg-destructive/10 text-destructive",
   },
 };
 
@@ -357,13 +354,13 @@ export default function AgentsPage() {
           icon={Activity}
           label="진행"
           value={stats.running}
-          iconContainerClass="bg-blue-100 text-blue-600 dark:bg-blue-950/40 dark:text-blue-400"
+          iconContainerClass="bg-cat-1/10 text-cat-1"
         />
         <StatCard
           icon={CheckCircle2}
           label="완료"
           value={stats.completed}
-          iconContainerClass="bg-emerald-100 text-emerald-600 dark:bg-emerald-950/40 dark:text-emerald-400"
+          iconContainerClass="bg-success/10 text-success"
         />
       </section>
 

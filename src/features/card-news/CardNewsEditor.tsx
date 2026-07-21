@@ -284,7 +284,7 @@ export default function CardNewsEditor({ initial, isNew }: Props) {
               자동 저장 중…
             </span>
           ) : dirty ? (
-            <span className="text-xs text-amber-600">변경됨 · 자동 저장 대기</span>
+            <span className="text-xs text-warning">변경됨 · 자동 저장 대기</span>
           ) : savedAt ? (
             <span className="text-xs text-muted-foreground">
               저장됨 · {savedAt.toLocaleTimeString("ko-KR")}

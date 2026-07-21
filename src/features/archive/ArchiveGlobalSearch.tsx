@@ -53,7 +53,7 @@ const GROUP_META: Record<
   variable: { label: "변인", color: "text-info", listHref: "/archive/variable" },
   measurement: { label: "측정도구", color: "text-success", listHref: "/archive/measurement" },
   "research-methods": { label: "연구방법", color: "text-info", listHref: "/archive/research-methods" },
-  "statistical-methods": { label: "통계방법", color: "text-cyan-600", listHref: "/archive/statistical-methods" },
+  "statistical-methods": { label: "통계방법", color: "text-info", listHref: "/archive/statistical-methods" },
   "foundation-terms": { label: "기초용어", color: "text-info", listHref: "/archive/foundation-terms" },
   // 글쓰기 리스트는 ?q= 딥링크 미지원 → "모두 보기" 미노출(기존 동작 유지).
   "writing-tips": { label: "글쓰기", color: "text-destructive" },
@@ -206,7 +206,7 @@ export default function ArchiveGlobalSearch() {
       name: x.name as string,
       href: `/archive/research-methods/${x.id}`,
     }), "/archive/research-methods");
-    push("통계방법", "text-cyan-600", statistical.data?.data, ["name", "summary", "accessibleSummary"], (x) => ({
+    push("통계방법", "text-info", statistical.data?.data, ["name", "summary", "accessibleSummary"], (x) => ({
       id: x.id as string,
       name: x.name as string,
       href: `/archive/statistical-methods/${x.id}`,

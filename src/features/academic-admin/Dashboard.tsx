@@ -175,14 +175,14 @@ export default function AcademicDashboard() {
         </div>
 
         <div className="rounded-2xl border bg-card p-5">
-          <h2 className="flex items-center gap-2 font-semibold text-amber-600"><AlertTriangle size={16} />주의 필요</h2>
+          <h2 className="flex items-center gap-2 font-semibold text-warning"><AlertTriangle size={16} />주의 필요</h2>
           {warnings.length === 0 ? (
             <p className="mt-4 text-sm text-muted-foreground">현재 주의가 필요한 항목이 없습니다.</p>
           ) : (
             <div className="mt-3 space-y-2">
               {warnings.map((w, i) => (
-                <Link key={i} href={w.link} className="flex items-center gap-2 rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-sm hover:bg-amber-100">
-                  <AlertTriangle size={14} className="shrink-0 text-amber-500" />
+                <Link key={i} href={w.link} className="flex items-center gap-2 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-sm hover:bg-warning/10">
+                  <AlertTriangle size={14} className="shrink-0 text-warning" />
                   <span className="flex-1">{w.message}</span>
                 </Link>
               ))}

@@ -84,7 +84,7 @@ function ReceivedCardInner() {
   const isSelf = viewer?.id === owner.id;
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10">
+    <div className="min-h-screen bg-background py-10">
       <div className="mx-auto max-w-md px-4">
         <div className="mb-4 flex items-center gap-2">
           <BackButton href={`/directory/${owner.id}`} label="프로필로" />

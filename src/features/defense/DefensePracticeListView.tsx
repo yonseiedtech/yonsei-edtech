@@ -800,7 +800,7 @@ function OnboardingEmptyState({
               아래 추천 템플릿을 선택하면 1초 만에 첫 세트를 만들 수 있어요.
             </p>
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
-              <div className="rounded-lg border bg-card p-3 dark:bg-zinc-900/60">
+              <div className="rounded-lg border bg-card p-3">
                 <div className="flex items-center gap-2">
                   <ListChecks size={14} className="text-cat-1" />
                   <p className="text-xs font-semibold">1. 질문 준비</p>
@@ -809,7 +809,7 @@ function OnboardingEmptyState({
                   템플릿을 가져오거나 직접 질문·모범 답변을 작성합니다.
                 </p>
               </div>
-              <div className="rounded-lg border bg-card p-3 dark:bg-zinc-900/60">
+              <div className="rounded-lg border bg-card p-3">
                 <div className="flex items-center gap-2">
                   <Mic size={14} className="text-destructive" />
                   <p className="text-xs font-semibold">2. 마이크로 답변</p>
@@ -818,7 +818,7 @@ function OnboardingEmptyState({
                   녹음 또는 타이핑으로 답하면 자동 전사·채점됩니다.
                 </p>
               </div>
-              <div className="rounded-lg border bg-card p-3 dark:bg-zinc-900/60">
+              <div className="rounded-lg border bg-card p-3">
                 <div className="flex items-center gap-2">
                   <Target size={14} className="text-success" />
                   <p className="text-xs font-semibold">3. 비교·복기</p>

@@ -1690,10 +1690,10 @@ export default function DefensePracticeRunner({
                       const active = readAlongDifficulty === d;
                       const color =
                         d === "easy"
-                          ? "border-emerald-500 bg-emerald-500 text-white"
+                          ? "border-success bg-success text-white"
                           : d === "normal"
-                          ? "border-amber-500 bg-amber-500 text-white"
-                          : "border-rose-500 bg-rose-500 text-white";
+                          ? "border-warning bg-warning text-white"
+                          : "border-destructive bg-destructive text-white";
                       return (
                         <button
                           key={d}
@@ -1703,7 +1703,7 @@ export default function DefensePracticeRunner({
                             "rounded-md border px-2.5 py-1 text-[11px] font-medium transition-colors",
                             active
                               ? color
-                              : "border-zinc-200 bg-background text-muted-foreground hover:text-foreground dark:border-zinc-700",
+                              : "border-muted/40 bg-background text-muted-foreground hover:text-foreground",
                           )}
                         >
                           {label}
@@ -1771,12 +1771,12 @@ export default function DefensePracticeRunner({
                       return (
                         <div className="space-y-4">
                           <div className="flex flex-col items-center gap-1 text-center">
-                            <CheckCircle2 size={36} className="text-emerald-500" />
+                            <CheckCircle2 size={36} className="text-success" />
                             <p className="text-base font-semibold">전체 따라 읽기 완료!</p>
                             <p className="text-xs text-muted-foreground">
                               총 {expectedSegments.length}개 {unitLabel}을 모두 통과했습니다.
                               {wantRecordingRef.current === false && recording === false && (
-                                <span className="ml-1 text-emerald-600">· 녹음 자동 종료됨</span>
+                                <span className="ml-1 text-success">· 녹음 자동 종료됨</span>
                               )}
                             </p>
                           </div>
@@ -1849,7 +1849,7 @@ export default function DefensePracticeRunner({
 
                             {editingExpected ? (
                               <div className="p-3">
-                                <p className="mb-1.5 text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-200">
+                                <p className="mb-1.5 text-[10px] font-semibold uppercase text-success">
                                   모범 답변 (전체)
                                 </p>
                                 <Textarea
@@ -1877,21 +1877,21 @@ export default function DefensePracticeRunner({
                                           className={cn(
                                             "rounded-full px-2 py-0.5 text-[10px] font-semibold",
                                             passed
-                                              ? "bg-emerald-500 text-white"
+                                              ? "bg-success text-white"
                                               : log
-                                              ? "bg-amber-500 text-white"
-                                              : "bg-zinc-300 text-zinc-700 dark:bg-zinc-700 dark:text-zinc-200",
+                                              ? "bg-warning text-white"
+                                              : "bg-muted text-muted-foreground",
                                           )}
                                         >
                                           {log ? `${score}점` : "기록 없음"}
                                         </span>
                                       </div>
                                       <div className="flex flex-col gap-2">
-                                        <div className="rounded-md bg-emerald-50 p-2 dark:bg-emerald-950/30">
-                                          <p className="mb-0.5 text-[10px] font-semibold uppercase text-emerald-700 dark:text-emerald-200">
+                                        <div className="rounded-md bg-success/5 p-2">
+                                          <p className="mb-0.5 text-[10px] font-semibold uppercase text-success">
                                             모범 답변
                                           </p>
-                                          <p className="whitespace-pre-wrap leading-relaxed text-emerald-950 dark:text-emerald-50">
+                                          <p className="whitespace-pre-wrap leading-relaxed text-success">
                                             {renderWithScholarHighlight(seg)}
                                           </p>
                                         </div>
@@ -1969,10 +1969,10 @@ export default function DefensePracticeRunner({
                             className={cn(
                               "rounded-lg border-2 p-4 text-lg leading-relaxed sm:text-xl",
                               passed
-                                ? "border-emerald-500 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100"
+                                ? "border-success bg-success/5 text-success"
                                 : score >= threshold * 0.6
-                                ? "border-amber-400 bg-amber-50 text-amber-950 dark:bg-amber-950/30 dark:text-amber-50"
-                                : "border-zinc-300 bg-background dark:border-zinc-700",
+                                ? "border-warning/70 bg-warning/5 text-warning"
+                                : "border-muted/40 bg-background",
                             )}
                           >
                             {renderWithScholarHighlight(target)}
@@ -1986,11 +1986,11 @@ export default function DefensePracticeRunner({
                                 {score}점 / 기준 {threshold}점
                               </span>
                             </div>
-                            <div className="relative h-2 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                            <div className="relative h-2 overflow-hidden rounded-full bg-muted/40">
                               <div
                                 className={cn(
                                   "h-full transition-[width] duration-150",
-                                  passed ? "bg-emerald-500" : score >= threshold * 0.6 ? "bg-amber-500" : "bg-rose-400",
+                                  passed ? "bg-success" : score >= threshold * 0.6 ? "bg-warning" : "bg-destructive/80",
                                 )}
                                 style={{ width: `${score}%` }}
                               />
@@ -2064,8 +2064,8 @@ export default function DefensePracticeRunner({
                               className={cn(
                                 "rounded-lg border-2 p-3 text-sm",
                                 readAlongResult.passed
-                                  ? "border-emerald-500 bg-emerald-50 text-emerald-950 dark:bg-emerald-950/40 dark:text-emerald-100"
-                                  : "border-rose-400 bg-rose-50 text-rose-950 dark:bg-rose-950/40 dark:text-rose-100",
+                                  ? "border-success bg-success/5 text-success"
+                                  : "border-destructive/70 bg-destructive/5 text-destructive",
                               )}
                             >
                               <p className="font-semibold">
@@ -2182,7 +2182,7 @@ export default function DefensePracticeRunner({
                       </span>
                     )}
                     {recording && (transcripts[current.id] || interim) && (
-                      <span className="ml-1 inline-block h-3 w-1 animate-pulse bg-rose-500 align-middle" />
+                      <span className="ml-1 inline-block h-3 w-1 animate-pulse bg-destructive align-middle" />
                     )}
                     {/* 첫 전사까지 카운트다운 — 사용자 대기 시간 가시화 */}
                     {shouldShowWaitCountdown() && (
@@ -2190,7 +2190,7 @@ export default function DefensePracticeRunner({
                         <span className="text-[10px] uppercase tracking-wider text-muted-foreground">전사 대기</span>
                         <span
                           key={waitCountdown}
-                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-rose-500 text-base font-bold text-white animate-in zoom-in duration-200"
+                          className="inline-flex h-7 w-7 items-center justify-center rounded-full bg-destructive text-base font-bold text-white animate-in zoom-in duration-200"
                         >
                           {waitCountdown}
                         </span>
@@ -2220,7 +2220,7 @@ export default function DefensePracticeRunner({
                       </Button>
                     )
                   ) : (
-                    <p className="text-xs text-amber-600">
+                    <p className="text-xs text-warning">
                       이 브라우저는 음성 인식을 지원하지 않습니다. 직접 입력해주세요.
                     </p>
                   )}
@@ -2257,11 +2257,11 @@ export default function DefensePracticeRunner({
                   (current.expectedAnswer ?? "").trim().length === 0 &&
                   (transcripts[current.id] ?? "").trim().length > 0 &&
                   !expectedRegisterSkipped.has(current.id) && (
-                    <div className="mt-3 rounded-lg border border-emerald-200 bg-emerald-50/60 p-3 dark:border-emerald-900/50 dark:bg-emerald-950/30">
-                      <p className="text-sm font-semibold text-emerald-900 dark:text-emerald-100">
+                    <div className="mt-3 rounded-lg border border-success/20 bg-success/5 p-3">
+                      <p className="text-sm font-semibold text-success">
                         💡 이 질문에는 아직 모범 답변이 없습니다
                       </p>
-                      <p className="mt-1 text-xs text-emerald-800/80 dark:text-emerald-200/80">
+                      <p className="mt-1 text-xs text-success/80">
                         지금 입력한 답변을 모범 답변으로 등록하면 다음 시도부터 비교 채점에 활용되고, 따라 읽기 모드에서도 사용할 수 있습니다.
                       </p>
                       <div className="mt-2 flex flex-wrap items-center gap-2">
@@ -2302,16 +2302,16 @@ export default function DefensePracticeRunner({
                         className={cn(
                           "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold",
                           sttStatus === "speaking"
-                            ? "bg-emerald-500 text-white"
+                            ? "bg-success text-white"
                             : sttStatus === "listening"
-                            ? "bg-blue-500 text-white"
+                            ? "bg-cat-1 text-white"
                             : sttStatus === "processing"
-                            ? "bg-amber-500 text-white"
+                            ? "bg-warning text-white"
                             : sttStatus === "starting" || sttStatus === "restarting"
-                            ? "bg-zinc-500 text-white"
+                            ? "bg-muted-foreground text-white"
                             : sttStatus === "error"
-                            ? "bg-rose-600 text-white"
-                            : "bg-zinc-300 text-zinc-700",
+                            ? "bg-destructive text-white"
+                            : "bg-muted text-muted-foreground",
                         )}
                       >
                         {sttStatus === "speaking" && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-card" />}
@@ -2330,12 +2330,12 @@ export default function DefensePracticeRunner({
                     {/* 마이크 입력 신호 미터 — DOM 직접 갱신으로 60fps 확보 */}
                     <div className="flex items-center gap-2">
                       <span className="w-12 shrink-0 text-muted-foreground">레벨</span>
-                      <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                      <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted/40">
                         <div
                           ref={levelBarRef}
                           className={cn(
                             "absolute inset-y-0 left-0",
-                            micLevel > 50 ? "bg-emerald-500" : micLevel > 15 ? "bg-amber-500" : "bg-zinc-400",
+                            micLevel > 50 ? "bg-success" : micLevel > 15 ? "bg-warning" : "bg-muted-foreground",
                           )}
                           style={{ width: "0%", willChange: "width" }}
                         />
@@ -2343,12 +2343,12 @@ export default function DefensePracticeRunner({
                       <span className="w-8 shrink-0 text-right tabular-nums text-muted-foreground">{micLevel}</span>
                     </div>
                     {/* 이퀄라이저 — DOM ref 직접 조작 (React state 미사용, transition 제거 → 부드러운 60fps) */}
-                    <div className="flex items-end gap-[2px] h-12 rounded-md bg-zinc-50 dark:bg-zinc-900/60 px-2 py-1">
+                    <div className="flex items-end gap-[2px] h-12 rounded-md bg-muted/30 px-2 py-1">
                       {Array.from({ length: EQ_BARS }, (_, i) => (
                         <div
                           key={i}
                           ref={(el) => { barRefs.current[i] = el; }}
-                          className="flex-1 rounded-sm bg-zinc-300 dark:bg-zinc-700"
+                          className="flex-1 rounded-sm bg-muted"
                           style={{ height: "4%", willChange: "height" }}
                         />
                       ))}
@@ -2380,7 +2380,7 @@ export default function DefensePracticeRunner({
                       </div>
                     )}
                     {noSpeechHint && (
-                      <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100">
+                      <div className="rounded-md border border-warning/30 bg-warning/5 p-2 text-[11px] text-warning">
                         <p className="font-semibold">5초간 음성이 감지되지 않았어요</p>
                         <ul className="mt-1 list-disc space-y-0.5 pl-4">
                           <li>위 마이크 바가 움직이는지 확인 (움직이면 마이크는 OK)</li>
@@ -2419,7 +2419,7 @@ export default function DefensePracticeRunner({
                         </Button>
                       )
                     ) : (
-                      <p className="text-xs text-amber-600">
+                      <p className="text-xs text-warning">
                         이 브라우저는 음성 인식을 지원하지 않습니다.
                       </p>
                     )}
@@ -2435,16 +2435,16 @@ export default function DefensePracticeRunner({
                           className={cn(
                             "inline-flex items-center gap-1 rounded-full px-2 py-0.5 font-semibold",
                             sttStatus === "speaking"
-                              ? "bg-emerald-500 text-white"
+                              ? "bg-success text-white"
                               : sttStatus === "listening"
-                              ? "bg-blue-500 text-white"
+                              ? "bg-cat-1 text-white"
                               : sttStatus === "processing"
-                              ? "bg-amber-500 text-white"
+                              ? "bg-warning text-white"
                               : sttStatus === "starting" || sttStatus === "restarting"
-                              ? "bg-zinc-500 text-white"
+                              ? "bg-muted-foreground text-white"
                               : sttStatus === "error"
-                              ? "bg-rose-600 text-white"
-                              : "bg-zinc-300 text-zinc-700",
+                              ? "bg-destructive text-white"
+                              : "bg-muted text-muted-foreground",
                           )}
                         >
                           {sttStatus === "speaking" && <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-card" />}
@@ -2462,7 +2462,7 @@ export default function DefensePracticeRunner({
                             <span className="text-[10px] uppercase tracking-wider text-muted-foreground">전사 대기</span>
                             <span
                               key={waitCountdown}
-                              className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-rose-500 text-[11px] font-bold text-white"
+                              className="inline-flex h-5 w-5 items-center justify-center rounded-full bg-destructive text-[11px] font-bold text-white"
                             >
                               {waitCountdown}
                             </span>
@@ -2472,12 +2472,12 @@ export default function DefensePracticeRunner({
                       {/* 따라 읽기 모드: 마이크 레벨 미터도 함께 노출 (진단 용이) */}
                       <div className="flex items-center gap-2">
                         <span className="w-12 shrink-0 text-muted-foreground">레벨</span>
-                        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-zinc-200 dark:bg-zinc-800">
+                        <div className="relative h-2 flex-1 overflow-hidden rounded-full bg-muted/40">
                           <div
                             ref={levelBarRef}
                             className={cn(
                               "absolute inset-y-0 left-0",
-                              micLevel > 50 ? "bg-emerald-500" : micLevel > 15 ? "bg-amber-500" : "bg-zinc-400",
+                              micLevel > 50 ? "bg-success" : micLevel > 15 ? "bg-warning" : "bg-muted-foreground",
                             )}
                             style={{ width: "0%", willChange: "width" }}
                           />
@@ -2485,7 +2485,7 @@ export default function DefensePracticeRunner({
                         <span className="w-8 shrink-0 text-right tabular-nums text-muted-foreground">{micLevel}</span>
                       </div>
                       {noSpeechHint && (
-                        <div className="rounded-md border border-amber-300 bg-amber-50 p-2 text-[11px] text-amber-900 dark:border-amber-700/60 dark:bg-amber-950/40 dark:text-amber-100">
+                        <div className="rounded-md border border-warning/30 bg-warning/5 p-2 text-[11px] text-warning">
                           5초간 음성이 감지되지 않았어요 — 마이크 레벨이 움직이는지 먼저 확인하세요.
                         </div>
                       )}
@@ -2521,7 +2521,7 @@ export default function DefensePracticeRunner({
                         모범 답변이 작성되지 않아 비교할 수 없습니다.
                       </p>
                     ) : !transcripts[current.id] ? (
-                      <div className="whitespace-pre-wrap rounded-md bg-emerald-50 p-3 text-sm leading-relaxed text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100">
+                      <div className="whitespace-pre-wrap rounded-md bg-success/5 p-3 text-sm leading-relaxed text-success">
                         <p className="mb-1 text-[11px] font-semibold uppercase opacity-70">모범 답변</p>
                         {current.expectedAnswer}
                       </div>
@@ -2549,10 +2549,10 @@ export default function DefensePracticeRunner({
                 className={cn(
                   "mt-2 inline-flex items-baseline gap-1 rounded-full px-4 py-1.5 text-3xl font-bold text-white",
                   averageScore >= 80
-                    ? "bg-emerald-600"
+                    ? "bg-success"
                     : averageScore >= 60
-                    ? "bg-amber-500"
-                    : "bg-rose-500",
+                    ? "bg-warning"
+                    : "bg-destructive",
                 )}
               >
                 {averageScore}<span className="text-base font-normal">점</span>
@@ -2571,10 +2571,10 @@ export default function DefensePracticeRunner({
                         className={cn(
                           "text-white",
                           score >= 80
-                            ? "bg-emerald-600"
+                            ? "bg-success"
                             : score >= 60
-                            ? "bg-amber-500"
-                            : "bg-rose-500",
+                            ? "bg-warning"
+                            : "bg-destructive",
                         )}
                       >
                         {score}점
@@ -2600,9 +2600,9 @@ export default function DefensePracticeRunner({
                               {r?.transcript || <span className="italic">미응답</span>}
                             </p>
                           </div>
-                          <div className="rounded-md bg-emerald-50 p-2 dark:bg-emerald-950/40">
-                            <p className="mb-1 font-semibold text-emerald-900 dark:text-emerald-100">모범 답변</p>
-                            <p className="whitespace-pre-wrap text-emerald-900/80 dark:text-emerald-100/80">
+                          <div className="rounded-md bg-success/5 p-2">
+                            <p className="mb-1 font-semibold text-success">모범 답변</p>
+                            <p className="whitespace-pre-wrap text-success/80">
                               {q.expectedAnswer || <span className="italic">미작성</span>}
                             </p>
                           </div>
