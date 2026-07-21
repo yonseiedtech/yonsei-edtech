@@ -958,6 +958,20 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
     return () => window.removeEventListener("beforeunload", handler);
   }, [dirty, readOnly]);
 
+  // L1: Ctrl/Cmd+S 단축키 저장
+  useEffect(() => {
+    if (readOnly) return;
+    const handler = (e: KeyboardEvent) => {
+      if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        handleSave();
+      }
+    };
+    window.addEventListener("keydown", handler);
+    return () => window.removeEventListener("keydown", handler);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [readOnly]);
+
   // 첫 작성자 온보딩: 프로파일 미설정 + 본문 거의 없음 → 연구 방향 선택 유도
   useEffect(() => {
     if (!hydrated || readOnly || !paper || profileDismissed || profileOpen) return;
@@ -2549,9 +2563,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             {!readOnly && (
               <>
                 {/* 사용성 평가 반영: 임시저장/저장 이중 버튼 → 저장 1개로 통합 (savedAt 표시가 상태를 대신) */}
-                <Button size="sm" onClick={() => handleSave()} disabled={saving || (!dirty && !!savedAt)}>
+                <Button size="sm" onClick={() => handleSave()} disabled={saving || (!dirty && !!savedAt)} title="저장 (Ctrl+S)">
                   <Save size={12} className="mr-1" />
                   {saving ? "저장 중…" : dirty ? "저장" : "저장됨"}
+                  <kbd className="ml-1.5 hidden rounded border bg-background/50 px-1 py-px font-mono text-[9px] leading-none opacity-50 md:inline-block">S</kbd>
                 </Button>
               </>
             )}
@@ -3689,9 +3704,10 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             <Button size="sm" variant="outline" onClick={handleSaveVersion} disabled={versionBusy} title="라벨을 붙여 버전 스냅샷 저장">
               버전 저장
             </Button>
-            <Button size="sm" onClick={() => handleSave()} disabled={saving || (!dirty && !!savedAt)}>
+            <Button size="sm" onClick={() => handleSave()} disabled={saving || (!dirty && !!savedAt)} title="저장 (Ctrl+S)">
               <Save size={12} className="mr-1" />
               {saving ? "저장 중…" : dirty ? "저장" : "저장됨"}
+              <kbd className="ml-1.5 hidden rounded border bg-background/50 px-1 py-px font-mono text-[9px] leading-none opacity-50 md:inline-block">S</kbd>
             </Button>
           </div>
         </div>
