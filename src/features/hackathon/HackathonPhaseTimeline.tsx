@@ -196,9 +196,9 @@ export default function HackathonPhaseTimeline() {
         if (dday === null) return null;
         const urgent = dday <= 3;
         return (
-          <div className={`mt-4 flex items-center justify-between gap-2 rounded-xl border px-4 py-2.5 ${urgent ? "border-destructive/30 bg-destructive/5" : "border-amber-300/40 bg-amber-50 dark:border-amber-700/40 dark:bg-amber-950/20"}`}>
+          <div className={`mt-4 flex items-center justify-between gap-2 rounded-xl border px-4 py-2.5 ${urgent ? "border-destructive/30 bg-destructive/5" : "border-warning/40 bg-warning/10"}`}>
             <div className="flex items-center gap-2">
-              <span className={`text-sm font-bold tabular-nums ${urgent ? "text-destructive" : "text-amber-700 dark:text-amber-400"}`}>
+              <span className={`text-sm font-bold tabular-nums ${urgent ? "text-destructive" : "text-warning"}`}>
                 제출 마감 D-{dday}
               </span>
               <span className="text-xs text-muted-foreground">산출물을 제출하세요</span>
