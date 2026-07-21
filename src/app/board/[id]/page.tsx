@@ -240,15 +240,15 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
           )}
 
           {post.type === "interview" && post.interview ? (
-            <div className="mt-6 rounded-2xl border border-blue-200 bg-gradient-to-br from-blue-50 to-slate-50 p-6">
-              <div className="flex items-center gap-2 text-[#003876]">
+            <div className="mt-6 rounded-2xl border border-cat-1/20 bg-gradient-to-br from-cat-1/5 to-background p-6">
+              <div className="flex items-center gap-2 text-primary">
                 <Mic size={18} />
                 <span className="text-sm font-bold">온라인 인터뷰</span>
-                <Badge variant="outline" className="border-blue-300 bg-card text-[#003876] text-[10px]">
+                <Badge variant="outline" className="border-cat-1/40 bg-card text-primary text-[10px]">
                   {post.interview.questions.length}문항
                 </Badge>
                 {post.interview.deadline && (
-                  <Badge variant="outline" className="border-amber-300 bg-card text-amber-700 text-[10px]">
+                  <Badge variant="outline" className="border-warning/40 bg-card text-warning text-[10px]">
                     마감 {new Date(post.interview.deadline).toLocaleDateString("ko-KR")}
                   </Badge>
                 )}
@@ -256,7 +256,7 @@ function PostDetailContent({ params }: { params: Promise<{ id: string }> }) {
                 {post.interview.targetCriteria && (
                   <Badge
                     variant="outline"
-                    className="border-blue-300 bg-card text-[#003876] text-[10px] gap-1"
+                    className="border-cat-1/40 bg-card text-primary text-[10px] gap-1"
                     title={describeInterviewTarget(post.interview.targetCriteria)}
                   >
                     <Target size={9} />

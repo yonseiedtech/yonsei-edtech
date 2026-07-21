@@ -142,7 +142,7 @@ export default function LinkedPaperPicker({ open, onOpenChange, userId, onSelect
                         <div className="flex items-center gap-2">
                           <Badge
                             variant="outline"
-                            className={p.paperType === "thesis" ? "border-violet-300 bg-violet-50 text-violet-700" : "border-blue-300 bg-blue-50 text-blue-700"}
+                            className={p.paperType === "thesis" ? "border-cat-5/30 bg-cat-5/10 text-cat-5" : "border-cat-1/30 bg-cat-1/10 text-cat-1"}
                           >
                             {p.paperType === "thesis"
                               ? p.thesisLevel === "doctoral"

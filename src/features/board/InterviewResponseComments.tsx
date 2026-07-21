@@ -140,7 +140,7 @@ export default function InterviewResponseComments({
               <li
                 key={c.id}
                 className={`rounded-lg border p-3 text-sm ${
-                  isInterviewee ? "border-blue-200 bg-blue-50/40" : "bg-muted/30"
+                  isInterviewee ? "border-cat-1/20 bg-cat-1/5" : "bg-muted/30"
                 }`}
               >
                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
@@ -155,7 +155,7 @@ export default function InterviewResponseComments({
                     </span>
                   )}
                   {roleLabel && !isInterviewee && (
-                    <span className="rounded-full bg-blue-100 px-1.5 py-0.5 text-[10px] font-medium text-blue-700">
+                    <span className="rounded-full bg-cat-1/10 px-1.5 py-0.5 text-[10px] font-medium text-cat-1">
                       {roleLabel}
                     </span>
                   )}

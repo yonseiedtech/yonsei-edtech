@@ -63,13 +63,13 @@ export default function LinkedPaperCard({ paper, authorIsMe, onLoginRequired }: 
   }
 
   return (
-    <div className="mt-6 rounded-2xl border border-violet-200 bg-gradient-to-br from-violet-50 to-slate-50 p-5">
-      <div className="flex items-center gap-2 text-violet-800">
+    <div className="mt-6 rounded-2xl border border-cat-5/20 bg-gradient-to-br from-cat-5/5 to-background p-5">
+      <div className="flex items-center gap-2 text-cat-5">
         <BookOpenCheck size={18} />
         <span className="text-sm font-bold">리뷰한 논문</span>
         <Badge
           variant="outline"
-          className={paper.paperType === "thesis" ? "border-violet-300 bg-card text-violet-700" : "border-blue-300 bg-card text-blue-700"}
+          className={paper.paperType === "thesis" ? "border-cat-5/30 bg-card text-cat-5" : "border-cat-1/30 bg-card text-cat-1"}
         >
           {paper.paperType === "thesis"
             ? paper.thesisLevel === "doctoral"
@@ -92,7 +92,7 @@ export default function LinkedPaperCard({ paper, authorIsMe, onLoginRequired }: 
               href={paper.url}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-blue-600 underline"
+              className="inline-flex items-center gap-1 text-cat-1 underline"
             >
               <ExternalLink size={11} />
               원문 보기

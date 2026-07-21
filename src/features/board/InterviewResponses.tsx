@@ -160,8 +160,8 @@ export default function InterviewResponses({ postId, meta, storedResponseCount }
           <span
             className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-[11px] font-medium ${
               isPublic
-                ? "bg-blue-50 text-blue-700"
-                : "bg-blue-50 text-blue-700"
+                ? "bg-cat-1/10 text-cat-1"
+                : "bg-cat-1/10 text-cat-1"
             }`}
             title={isPublic ? "공유 모드" : "인터뷰 모드"}
           >
@@ -195,7 +195,7 @@ export default function InterviewResponses({ postId, meta, storedResponseCount }
             <article
               key={r.id}
               className={`rounded-2xl border bg-card p-5 ${
-                r.status !== "submitted" ? "border-amber-300 bg-amber-50/40" : ""
+                r.status !== "submitted" ? "border-warning/30 bg-warning/5" : ""
               }`}
             >
               <div className="flex items-center justify-between">
@@ -218,7 +218,7 @@ export default function InterviewResponses({ postId, meta, storedResponseCount }
                   {r.status !== "submitted" && (
                     <Badge
                       variant="outline"
-                      className="border-amber-400 text-[10px] text-amber-700"
+                      className="border-warning/40 text-[10px] text-warning"
                     >
                       임시저장
                     </Badge>
@@ -261,7 +261,7 @@ export default function InterviewResponses({ postId, meta, storedResponseCount }
                         )}
                         {fillBlankNode}
                         {choiceLabel && (
-                          <p className="mt-1 inline-block rounded-md bg-blue-50 px-2 py-0.5 text-sm font-semibold text-[#003876]">
+                          <p className="mt-1 inline-block rounded-md bg-cat-1/10 px-2 py-0.5 text-sm font-semibold text-primary">
                             {choiceLabel}
                           </p>
                         )}
@@ -287,7 +287,7 @@ export default function InterviewResponses({ postId, meta, storedResponseCount }
                               {labels.map((l, i) => (
                                 <span
                                   key={i}
-                                  className="rounded-md bg-blue-50 px-2 py-0.5 text-sm font-semibold text-[#003876]"
+                                  className="rounded-md bg-cat-1/10 px-2 py-0.5 text-sm font-semibold text-primary"
                                 >
                                   ✓ {l}
                                 </span>

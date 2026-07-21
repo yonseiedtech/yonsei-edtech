@@ -49,7 +49,7 @@ function HBar({ label, sub, ratio }: { label: string; sub: string; ratio: number
       <span className="w-20 shrink-0 truncate text-muted-foreground">{label}</span>
       <div className="h-4 min-w-0 flex-1 overflow-hidden rounded bg-muted">
         <div
-          className="h-full rounded bg-indigo-500 dark:bg-indigo-400"
+          className="h-full rounded bg-cat-1"
           style={{ width: `${Math.max(2, Math.min(100, ratio * 100))}%` }}
         />
       </div>
@@ -190,7 +190,7 @@ export default function NetworkingStats({ events }: { events: NetworkingEvent[] 
               <div key={t.id} className="flex min-w-0 flex-1 flex-col items-center justify-end gap-1">
                 <span className="text-[10px] tabular-nums text-muted-foreground">{t.count}</span>
                 <div
-                  className="w-full rounded-t bg-emerald-500 dark:bg-emerald-400"
+                  className="w-full rounded-t bg-success"
                   style={{ height: `${Math.max(4, (t.count / maxTrend) * 72)}px` }}
                   title={`${t.title}: ${t.count}명`}
                 />
@@ -228,7 +228,7 @@ export default function NetworkingStats({ events }: { events: NetworkingEvent[] 
             </div>
             <div className="mt-1 h-2.5 overflow-hidden rounded bg-muted">
               <div
-                className="h-full rounded bg-amber-500 dark:bg-amber-400"
+                className="h-full rounded bg-warning"
                 style={{ width: `${Math.min(100, fee.rate * 100)}%` }}
               />
             </div>
@@ -249,7 +249,7 @@ export default function NetworkingStats({ events }: { events: NetworkingEvent[] 
             {noShow.att > 0 && (
               <div className="mt-1 h-2.5 overflow-hidden rounded bg-muted">
                 <div
-                  className="h-full rounded bg-rose-500 dark:bg-rose-400"
+                  className="h-full rounded bg-destructive"
                   style={{ width: `${Math.min(100, noShow.rate * 100)}%` }}
                 />
               </div>

@@ -16,6 +16,7 @@ import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { ListChecks, Trash2, ExternalLink, Plus, Loader2 } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -241,13 +242,11 @@ export default function SeminarConnectedTodos({ seminarId, seminarTitle, seminar
       )}
 
       {todos.length === 0 ? (
-        <div className="p-6 text-center text-sm text-muted-foreground">
-          이 세미나에 연동된 운영 업무가 아직 없습니다.
-          <br />
-          <span className="mt-1 inline-block text-[11px]">
-            위 <b>업무 추가</b> 또는 대시보드의 <b>나의 할 일 → + 추가 → 세미나</b> 탭에서 추가할 수 있어요.
-          </span>
-        </div>
+        <EmptyState
+          icon={ListChecks}
+          title="연동된 운영 업무가 없습니다"
+          description="업무 추가 버튼 또는 나의 할 일 → + 추가 → 세미나 탭에서 추가할 수 있습니다."
+        />
       ) : (
         <ul className="divide-y">
           {todos.map((t) => (

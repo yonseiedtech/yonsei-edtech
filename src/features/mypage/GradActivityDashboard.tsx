@@ -51,19 +51,19 @@ import { cn } from "@/lib/utils";
 /** 영역 대표색 → 정적 tailwind 클래스 (JIT purge 안전: 문자열 전부 명시) */
 const AREA_COLOR_CLASS: Record<string, { border: string; accent: string; chip: string }> = {
   indigo: {
-    border: "border-l-indigo-500 dark:border-l-indigo-400",
-    accent: "text-indigo-600 dark:text-indigo-400",
-    chip: "bg-indigo-50 text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-300",
+    border: "border-l-cat-1",
+    accent: "text-cat-1",
+    chip: "bg-cat-1/10 text-cat-1",
   },
   teal: {
-    border: "border-l-teal-500 dark:border-l-teal-400",
-    accent: "text-teal-600 dark:text-teal-400",
-    chip: "bg-teal-50 text-teal-700 dark:bg-teal-950/40 dark:text-teal-300",
+    border: "border-l-info",
+    accent: "text-info",
+    chip: "bg-info/10 text-info",
   },
   amber: {
-    border: "border-l-amber-500 dark:border-l-amber-400",
-    accent: "text-amber-600 dark:text-amber-400",
-    chip: "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
+    border: "border-l-warning",
+    accent: "text-warning",
+    chip: "bg-warning/10 text-warning",
   },
 };
 

@@ -50,17 +50,17 @@ export default function PollViewer({ poll, myVote, canVote, onSubmit }: Props) {
   }
 
   return (
-    <div className="space-y-3 rounded-lg border bg-blue-50/30 p-4">
+    <div className="space-y-3 rounded-lg border bg-cat-1/5 p-4">
       <div className="flex items-start justify-between gap-2">
         <h4 className="flex items-center gap-2 text-sm font-medium">
-          <BarChart3 size={14} className="text-blue-600" />
+          <BarChart3 size={14} className="text-cat-1" />
           {poll.question || "투표"}
         </h4>
         <div className="flex flex-wrap items-center gap-1 text-[10px]">
-          {poll.multi && <span className="rounded bg-blue-100 px-1.5 py-0.5 text-blue-700">복수선택</span>}
+          {poll.multi && <span className="rounded bg-cat-1/10 px-1.5 py-0.5 text-cat-1">복수선택</span>}
           {poll.anonymous && <span className="rounded bg-muted px-1.5 py-0.5 text-muted-foreground">익명</span>}
           {poll.deadline && (
-            <span className={cn("rounded px-1.5 py-0.5", deadlinePassed ? "bg-red-100 text-red-700" : "bg-green-100 text-green-700")}>
+            <span className={cn("rounded px-1.5 py-0.5", deadlinePassed ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success")}>
               {deadlinePassed ? "마감" : `~${new Date(poll.deadline).toLocaleString("ko-KR")}`}
             </span>
           )}
@@ -87,7 +87,7 @@ export default function PollViewer({ poll, myVote, canVote, onSubmit }: Props) {
             >
               {showResults && (
                 <div
-                  className="absolute inset-y-0 left-0 bg-blue-100"
+                  className="absolute inset-y-0 left-0 bg-cat-1/10"
                   style={{ width: `${pct}%` }}
                   aria-hidden
                 />

@@ -75,7 +75,7 @@ export default function InterviewResponseReactions({
             disabled={isToggling || isLoading}
             className={`inline-flex items-center gap-1 rounded-full border transition ${sizeCls} ${
               isMine
-                ? "border-blue-400 bg-blue-50 text-blue-800"
+                ? "border-cat-1/40 bg-cat-1/10 text-cat-1"
                 : "border-input bg-card text-muted-foreground hover:bg-muted"
             } ${isToggling || isLoading ? "opacity-60" : ""}`}
             aria-pressed={isMine}

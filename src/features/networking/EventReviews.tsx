@@ -103,7 +103,7 @@ export default function EventReviews({
           행사 후기
           {reviews.length > 0 && (
             <span className="inline-flex items-center gap-0.5 font-normal text-muted-foreground">
-              — <Star size={11} className="fill-amber-400 text-amber-400" /> {avg} ({reviews.length}건)
+              — <Star size={11} className="fill-warning text-warning" /> {avg} ({reviews.length}건)
             </span>
           )}
         </p>
@@ -131,12 +131,12 @@ export default function EventReviews({
                   size={24}
                   className={cn(
                     "transition-colors",
-                    n <= rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground/40",
+                    n <= rating ? "fill-warning text-warning" : "text-muted-foreground/40",
                   )}
                 />
               </button>
             ))}
-            <span className="ml-1 min-w-8 text-sm font-semibold text-amber-600 dark:text-amber-400">
+            <span className="ml-1 min-w-8 text-sm font-semibold text-warning">
               {rating > 0 ? `${rating}점` : ""}
             </span>
           </div>
@@ -162,7 +162,7 @@ export default function EventReviews({
         <ul className="mt-2 space-y-1.5">
           {reviews.slice(0, 6).map((r) => (
             <li key={r.id} className="flex items-start gap-2 text-xs">
-              <span className="inline-flex shrink-0 items-center gap-0.5 font-medium text-amber-600 dark:text-amber-400">
+              <span className="inline-flex shrink-0 items-center gap-0.5 font-medium text-warning">
                 <Star size={10} className="fill-current" />
                 {r.rating}
               </span>

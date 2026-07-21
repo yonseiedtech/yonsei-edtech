@@ -43,6 +43,7 @@ import {
   type SeminarAttendee,
 } from "@/types";
 import { canAccessSeminarHostDashboard, isSeminarHost } from "@/lib/host-helpers";
+import EmptyState from "@/components/ui/empty-state";
 
 interface PageProps {
   params: Promise<{ id: string }>;
@@ -303,9 +304,7 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
           신청자 ({regs.length})
         </h2>
         {regs.length === 0 ? (
-          <div className="rounded-2xl border border-dashed bg-muted/20 p-8 text-center text-sm text-muted-foreground">
-            아직 신청자가 없습니다.
-          </div>
+          <EmptyState icon={Users} title="아직 신청자가 없습니다." />
         ) : (
           <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
             {regs.map((r) => {
@@ -480,9 +479,7 @@ function SeminarHostInner({ seminarId }: { seminarId: string }) {
             </p>
           </header>
           {publishedRetros.length === 0 ? (
-            <p className="py-6 text-center text-sm text-muted-foreground">
-              아직 공개된 회고가 없습니다.
-            </p>
+            <EmptyState icon={Sparkles} title="아직 공개된 회고가 없습니다." compact />
           ) : (
             <div className="space-y-4">
               {publishedRetros.map((r) => (

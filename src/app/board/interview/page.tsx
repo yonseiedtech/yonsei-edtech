@@ -47,15 +47,15 @@ export default function InterviewBoardPage() {
         <Separator className="mt-6" />
 
         {/* ── 맥락 배너 — Cognitive Apprenticeship 채널 안내 ── */}
-        <div className="mt-5 flex items-start gap-3 rounded-2xl border border-sky-200 bg-gradient-to-br from-sky-50 to-slate-50 p-4 shadow-sm dark:border-sky-800 dark:from-sky-950/30 dark:to-slate-950/40">
+        <div className="mt-5 flex items-start gap-3 rounded-2xl border border-cat-1/20 bg-gradient-to-br from-cat-1/5 to-background p-4 shadow-sm">
           <div
-            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300"
+            className="mt-0.5 flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cat-1/10 text-cat-1"
             aria-hidden="true"
           >
             <GraduationCap size={18} />
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-sm font-semibold text-sky-800 dark:text-sky-200">
+            <p className="text-sm font-semibold text-cat-1">
               암묵지 채널 — Cognitive Apprenticeship
             </p>
             <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
@@ -65,7 +65,7 @@ export default function InterviewBoardPage() {
             </p>
           </div>
           <div
-            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-sky-100 text-sky-700 dark:bg-sky-900/50 dark:text-sky-300"
+            className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cat-1/10 text-cat-1"
             aria-hidden="true"
           >
             <Users size={18} />

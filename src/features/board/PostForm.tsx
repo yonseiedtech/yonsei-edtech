@@ -366,10 +366,10 @@ export default function PostForm({ mode = "create", initialData, initialCategory
 
           {/* 교육공학 논문 리뷰 — 첨부 논문 */}
           {category === "paper_review" && (
-            <div className="rounded-2xl border border-violet-200 bg-violet-50/40 p-4">
+            <div className="rounded-2xl border border-cat-5/20 bg-cat-5/5 p-4">
               <div className="flex items-center gap-2">
-                <BookOpenCheck size={16} className="text-violet-700" />
-                <p className="text-sm font-medium text-violet-800">리뷰할 논문 첨부</p>
+                <BookOpenCheck size={16} className="text-cat-5" />
+                <p className="text-sm font-medium text-cat-5">리뷰할 논문 첨부</p>
               </div>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 내 논문 읽기에 저장한 논문에서 가져오거나 메타데이터를 직접 입력하세요. 다른 회원이 이 글에서 논문을 자기 읽기 목록에 저장할 수 있습니다.
@@ -381,7 +381,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
                       <div className="flex items-center gap-2">
                         <Badge
                           variant="outline"
-                          className={linkedPaper.paperType === "thesis" ? "border-violet-300 bg-violet-50 text-violet-700" : "border-blue-300 bg-blue-50 text-blue-700"}
+                          className={linkedPaper.paperType === "thesis" ? "border-cat-5/30 bg-cat-5/10 text-cat-5" : "border-cat-1/30 bg-cat-1/10 text-cat-1"}
                         >
                           {linkedPaper.paperType === "thesis"
                             ? linkedPaper.thesisLevel === "doctoral"
@@ -398,7 +398,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
                         <div className="text-xs text-muted-foreground">
                           {linkedPaper.doi && <span className="mr-2">DOI: {linkedPaper.doi}</span>}
                           {linkedPaper.url && (
-                            <a href={linkedPaper.url} target="_blank" rel="noopener noreferrer" className="text-blue-600 underline">
+                            <a href={linkedPaper.url} target="_blank" rel="noopener noreferrer" className="text-cat-1 underline">
                               원문 링크
                             </a>
                           )}
@@ -432,8 +432,8 @@ export default function PostForm({ mode = "create", initialData, initialCategory
 
           {/* 온라인 인터뷰 (인터뷰 게시판 + staff 이상) */}
           {category === "interview" && isAtLeast(user, "staff") && (
-            <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-4">
-              <p className="text-sm font-medium text-blue-800">🎙️ 온라인 인터뷰 설정</p>
+            <div className="rounded-2xl border border-cat-1/20 bg-cat-1/5 p-4">
+              <p className="text-sm font-medium text-cat-1">🎙️ 온라인 인터뷰 설정</p>
               <p className="mt-0.5 text-xs text-muted-foreground">
                 인터뷰 게시판 글은 자동으로 온라인 인터뷰로 발행됩니다. 소개문과 질문을 입력하세요.
               </p>

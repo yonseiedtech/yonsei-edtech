@@ -8,6 +8,7 @@ import { isAtLeast } from "@/lib/permissions";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Upload, Download, Trash2, FileText, Loader2 } from "lucide-react";
+import EmptyState from "@/components/ui/empty-state";
 import { toast } from "sonner";
 import type { Seminar, SeminarMaterial } from "@/types";
 
@@ -133,9 +134,7 @@ export default function MaterialsSection({ seminar }: Props) {
 
       {/* 자료 목록 */}
       {materials.length === 0 ? (
-        <p className="py-8 text-center text-sm text-muted-foreground">
-          등록된 자료가 없습니다.
-        </p>
+        <EmptyState icon={FileText} title="등록된 자료가 없습니다." />
       ) : (
         <div className="space-y-2">
           {materials.map((m) => (

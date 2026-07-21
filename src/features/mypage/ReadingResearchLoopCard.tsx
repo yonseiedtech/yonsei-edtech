@@ -93,16 +93,16 @@ export default function ReadingResearchLoopCard({ userId }: { userId: string }) 
   if (!hasReading && !hasWriting) return null;
 
   return (
-    <div className="rounded-2xl border-2 border-emerald-200/60 bg-gradient-to-br from-emerald-50 to-emerald-100/60 p-5 dark:border-emerald-800/40 dark:from-emerald-950/20 dark:to-emerald-900/10">
+    <div className="rounded-2xl border-2 border-success/20 bg-gradient-to-br from-success/5 to-success/10 p-5">
       <div className="flex items-start gap-4">
-        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-200/40 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success">
           <BookOpenCheck size={22} />
         </div>
         <div className="min-w-0 flex-1">
           <h3 className="text-base font-bold">읽기 → 연구 진척</h3>
 
           {/* 기간 병치 한 줄 — 인과 아님, 경향만 */}
-          <p className="mt-1 text-sm text-emerald-900 dark:text-emerald-200">
+          <p className="mt-1 text-sm text-foreground">
             최근 4주 읽기{" "}
             <b className="tabular-nums">{readingCount}</b>편
             {hasWriting && (
@@ -124,14 +124,14 @@ export default function ReadingResearchLoopCard({ userId }: { userId: string }) 
           <div className="mt-3 flex flex-wrap gap-2">
             <Link
               href="/mypage/research"
-              className="inline-flex items-center gap-1 rounded-full border border-emerald-300 px-3 py-1.5 text-[12px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-700 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
+              className="inline-flex items-center gap-1 rounded-full border border-success/30 px-3 py-1.5 text-[12px] font-semibold text-success transition-colors hover:bg-success/10"
             >
               <BookOpenCheck size={12} />
               읽기 기록
             </Link>
             <Link
               href="/research"
-              className="inline-flex items-center gap-1 rounded-full border border-emerald-300 px-3 py-1.5 text-[12px] font-semibold text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-700 dark:text-emerald-300 dark:hover:bg-emerald-900/40"
+              className="inline-flex items-center gap-1 rounded-full border border-success/30 px-3 py-1.5 text-[12px] font-semibold text-success transition-colors hover:bg-success/10"
             >
               <PenLine size={12} />
               논문 작성

@@ -85,8 +85,8 @@ export default function GuestRsvpBanner() {
   if (!token) return null;
 
   return (
-    <div className="mb-6 rounded-2xl border border-indigo-200 bg-indigo-50/60 p-4 dark:border-indigo-900 dark:bg-indigo-950/30">
-      <p className="flex items-center gap-1.5 text-sm font-semibold text-indigo-700 dark:text-indigo-200">
+    <div className="mb-6 rounded-2xl border border-cat-1/30 bg-cat-1/10 p-4">
+      <p className="flex items-center gap-1.5 text-sm font-semibold text-cat-1">
         <Info size={15} /> 게스트 신청 확인
       </p>
       {loading && !data ? (

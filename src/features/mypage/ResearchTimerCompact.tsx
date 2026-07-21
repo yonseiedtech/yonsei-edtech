@@ -71,7 +71,7 @@ export default function ResearchTimerCompact() {
         <span
           className={cn(
             "inline-flex h-2 w-2 rounded-full",
-            isPaused ? "bg-amber-500" : "animate-pulse bg-emerald-500",
+            isPaused ? "bg-warning" : "animate-pulse bg-success",
           )}
           aria-hidden
         />
@@ -93,7 +93,7 @@ export default function ResearchTimerCompact() {
               type="button"
               onClick={resume}
               title="재개"
-              className="rounded-md p-1.5 text-emerald-600 transition-colors hover:bg-emerald-50 dark:hover:bg-emerald-950/30"
+              className="rounded-md p-1.5 text-success transition-colors hover:bg-success/10"
             >
               <Play size={14} />
             </button>
@@ -102,7 +102,7 @@ export default function ResearchTimerCompact() {
               type="button"
               onClick={pause}
               title="일시정지"
-              className="rounded-md p-1.5 text-amber-600 transition-colors hover:bg-amber-50 dark:hover:bg-amber-950/30"
+              className="rounded-md p-1.5 text-warning transition-colors hover:bg-warning/10"
             >
               <Pause size={14} />
             </button>
@@ -111,7 +111,7 @@ export default function ResearchTimerCompact() {
             type="button"
             onClick={stop}
             title="세션 종료"
-            className="rounded-md p-1.5 text-rose-600 transition-colors hover:bg-rose-50 dark:hover:bg-rose-950/30"
+            className="rounded-md p-1.5 text-destructive transition-colors hover:bg-destructive/10"
           >
             <Square size={14} />
           </button>

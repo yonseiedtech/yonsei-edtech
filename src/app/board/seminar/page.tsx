@@ -14,17 +14,17 @@ export default function SeminarBoardPage() {
         <Link
           href="/seminars"
           aria-label="세미나 공간으로 이동"
-          className="group flex items-center justify-between rounded-2xl border border-emerald-200 bg-gradient-to-br from-emerald-50 to-slate-50 p-4 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-emerald-800 dark:from-emerald-950/30 dark:to-slate-950/40"
+          className="group flex items-center justify-between rounded-2xl border border-success/20 bg-gradient-to-br from-success/5 to-background p-4 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <div className="flex items-center gap-3">
             <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-success/10 text-success"
               aria-hidden="true"
             >
               <Presentation size={18} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-emerald-800 dark:text-emerald-200">
+              <p className="text-sm font-semibold text-success">
                 발표 자료는 &quot;세미나 공간&quot;에서 관리됩니다
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -35,7 +35,7 @@ export default function SeminarBoardPage() {
           <ArrowRight
             size={16}
             aria-hidden="true"
-            className="shrink-0 text-emerald-400 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-emerald-500"
+            className="shrink-0 text-success/60 transition-transform duration-200 group-hover:translate-x-0.5"
           />
         </Link>
       </div>
@@ -51,7 +51,7 @@ export default function SeminarBoardPage() {
           <BookOpen
             size={24}
             aria-hidden="true"
-            className="text-emerald-600 dark:text-emerald-400"
+            className="text-success"
           />
         }
       />

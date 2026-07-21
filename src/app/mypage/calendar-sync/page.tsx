@@ -123,7 +123,7 @@ function CalendarSyncContent() {
               aria-label="공개 캘린더 URL 복사"
               title="URL 복사"
             >
-              {copiedKey === "public" ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+              {copiedKey === "public" ? <Check size={14} className="text-success" /> : <Copy size={14} />}
             </button>
           </div>
 
@@ -178,7 +178,7 @@ function CalendarSyncContent() {
                   aria-label="개인 캘린더 URL 복사"
                   title="URL 복사"
                 >
-                  {copiedKey === "personal" ? <Check size={14} className="text-green-600" /> : <Copy size={14} />}
+                  {copiedKey === "personal" ? <Check size={14} className="text-success" /> : <Copy size={14} />}
                 </button>
               </div>
 

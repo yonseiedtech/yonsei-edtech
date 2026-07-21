@@ -124,24 +124,24 @@ export default function GatheringEventCard({
             {NETWORKING_EVENT_TYPE_LABELS[ev.type]}
           </span>
           {isPrivate && (
-            <span className="inline-flex items-center gap-1 rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-200">
+            <span className="inline-flex items-center gap-1 rounded-full bg-cat-1/10 px-2 py-0.5 text-[11px] font-medium text-cat-1">
               <Lock size={10} /> 비공개
             </span>
           )}
           {/* staff 전체 조회(2026-07-19)로 미발행 이벤트도 목록에 노출 — 발행 상태 구분 배지 */}
           {ev.published === false && (
-            <span className="rounded-full border border-dashed border-amber-400 bg-amber-50 px-2 py-0.5 text-[11px] font-medium text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+            <span className="rounded-full border border-dashed border-warning/40 bg-warning/10 px-2 py-0.5 text-[11px] font-medium text-warning">
               미발행
             </span>
           )}
           {ev.status === "cancelled" && (
-            <span className="rounded-full bg-rose-100 px-2 py-0.5 text-[11px] font-medium text-rose-700">취소됨</span>
+            <span className="rounded-full bg-destructive/10 px-2 py-0.5 text-[11px] font-medium text-destructive">취소됨</span>
           )}
           {!past && ev.status !== "cancelled" && closed && !isPollPending && (
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[11px] font-medium text-slate-600">신청 마감</span>
+            <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">신청 마감</span>
           )}
           {isPollPending && ev.status !== "cancelled" && (
-            <span className="rounded-full bg-indigo-100 px-2 py-0.5 text-[11px] font-medium text-indigo-700 dark:bg-indigo-950/60 dark:text-indigo-200">일정 조율 중</span>
+            <span className="rounded-full bg-cat-1/10 px-2 py-0.5 text-[11px] font-medium text-cat-1">일정 조율 중</span>
           )}
           {showMyStatus && activeStatus && (
             <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-[11px] font-semibold text-primary">
@@ -149,7 +149,7 @@ export default function GatheringEventCard({
             </span>
           )}
           {dday && (
-            <span className="rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+            <span className="rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning">
               {ddayPrefix}{dday}
             </span>
           )}
@@ -162,7 +162,7 @@ export default function GatheringEventCard({
 
         <dl className="mt-2.5 flex flex-wrap gap-x-4 gap-y-1.5 text-xs text-muted-foreground">
           {isPollPending ? (
-            <span className="inline-flex items-center gap-1 font-medium text-indigo-600 dark:text-indigo-400">
+            <span className="inline-flex items-center gap-1 font-medium text-cat-1">
               <CalendarDays size={13} />일정 조율 중
               {ev.pollPeriodStart && ev.pollPeriodEnd && (
                 <span className="text-muted-foreground"> ({ev.pollPeriodStart.slice(5)}~{ev.pollPeriodEnd.slice(5)})</span>

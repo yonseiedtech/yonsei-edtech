@@ -20,6 +20,7 @@ import {
 } from "@/features/seminar/useSeminar";
 import { toast } from "sonner";
 import type { SeminarSession } from "@/types";
+import EmptyState from "@/components/ui/empty-state";
 
 interface Props {
   sessions: SeminarSession[];
@@ -221,16 +222,11 @@ export default function SessionProgram({
           ))}
         </div>
       ) : (
-        <div className="flex flex-col items-center py-6 text-center">
-          <Clock size={32} className="text-muted-foreground/30" />
-          <p className="mt-2 text-sm text-muted-foreground">등록된 세션이 없습니다.</p>
-          {isStaff && (
-            <Button variant="outline" size="sm" className="mt-3" onClick={openAdd}>
-              <Plus size={14} className="mr-1" />
-              세션 추가
-            </Button>
-          )}
-        </div>
+        <EmptyState
+          icon={Clock}
+          title="등록된 세션이 없습니다."
+          {...(isStaff ? { actionLabel: "세션 추가", onAction: openAdd } : {})}
+        />
       )}
 
       {/* 세션 추가/수정 Dialog */}

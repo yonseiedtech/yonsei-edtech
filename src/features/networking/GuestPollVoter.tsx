@@ -145,7 +145,7 @@ export default function GuestPollVoter({ eventId, candidateSlots, pollDeadline }
   // 투표 마감 — 확정 대기 안내만 표시
   if (pollClosed) {
     return (
-      <div className="mb-6 rounded-2xl border border-rose-200 bg-rose-50/60 px-4 py-3 text-sm font-medium text-rose-700 dark:border-rose-900 dark:bg-rose-950/30 dark:text-rose-200">
+      <div className="mb-6 rounded-2xl border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm font-medium text-destructive">
         투표가 마감되었습니다. 아래에서 집계 결과를 확인하세요.
       </div>
     );
@@ -156,7 +156,7 @@ export default function GuestPollVoter({ eventId, candidateSlots, pollDeadline }
     return (
       <section className="mb-6 rounded-2xl border bg-card p-4">
         <h2 className="mb-2 flex items-center gap-1.5 text-sm font-bold">
-          <CalendarCheck size={15} className="text-indigo-600 dark:text-indigo-400" />
+          <CalendarCheck size={15} className="text-cat-1" />
           일정 투표 참여
         </h2>
         <p className="mb-3 text-xs text-muted-foreground">
@@ -237,8 +237,8 @@ export default function GuestPollVoter({ eventId, candidateSlots, pollDeadline }
       ) : (
         /* 슬롯 토글 — 날짜별 그룹 */
         <>
-          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-indigo-200 bg-indigo-50/60 px-3 py-2 dark:border-indigo-900 dark:bg-indigo-950/30">
-            <p className="text-[11px] text-indigo-800 dark:text-indigo-100">
+          <div className="mb-3 flex flex-wrap items-center justify-between gap-2 rounded-xl border border-cat-1/20 bg-cat-1/5 px-3 py-2">
+            <p className="text-[11px] text-cat-1">
               비로그인 투표 중 ·{" "}
               <b>{guestVoter.name}</b> 님 · 선택 {guestSlots.size}개
               {saving && (
@@ -252,7 +252,7 @@ export default function GuestPollVoter({ eventId, candidateSlots, pollDeadline }
                 setGuestSlots(new Set());
                 setGuestFormOpen(false);
               }}
-              className="text-[11px] text-indigo-600 underline underline-offset-2 hover:text-indigo-800 dark:text-indigo-300 dark:hover:text-indigo-100"
+              className="text-[11px] text-cat-1 underline underline-offset-2 hover:text-cat-1/80"
             >
               다시 입력
             </button>
@@ -282,8 +282,8 @@ export default function GuestPollVoter({ eventId, candidateSlots, pollDeadline }
                         className={cn(
                           "inline-flex items-center gap-1 rounded-lg border px-3 py-1.5 text-xs font-medium tabular-nums transition-colors disabled:opacity-60",
                           active
-                            ? "border-indigo-600 bg-indigo-600 text-white dark:border-indigo-400 dark:bg-indigo-500"
-                            : "border-border bg-background text-muted-foreground hover:border-indigo-400 hover:text-foreground",
+                            ? "border-cat-1 bg-cat-1 text-white"
+                            : "border-border bg-background text-muted-foreground hover:border-cat-1/40 hover:text-foreground",
                         )}
                       >
                         {active && <Check size={11} />}

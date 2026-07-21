@@ -119,8 +119,8 @@ export default function MyInterviewAnswersDialog({
               variant="outline"
               className={
                 response.status === "submitted"
-                  ? "bg-green-50 text-green-700"
-                  : "bg-amber-50 text-amber-700"
+                  ? "bg-success/10 text-success"
+                  : "bg-warning/10 text-warning"
               }
             >
               {response.status === "submitted" ? "제출 완료" : "임시 저장"}
@@ -176,7 +176,7 @@ export default function MyInterviewAnswersDialog({
                   )}
                   {fillBlankNode}
                   {choiceLabel && (
-                    <p className="mt-1 inline-block rounded-md bg-blue-50 px-2 py-0.5 text-sm font-semibold text-[#003876]">
+                    <p className="mt-1 inline-block rounded-md bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary">
                       {choiceLabel}
                     </p>
                   )}
@@ -197,7 +197,7 @@ export default function MyInterviewAnswersDialog({
                       {multiChoiceLabels.map((l, i) => (
                         <span
                           key={i}
-                          className="rounded-md bg-blue-50 px-2 py-0.5 text-sm font-semibold text-[#003876]"
+                          className="rounded-md bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary"
                         >
                           ✓ {l}
                         </span>

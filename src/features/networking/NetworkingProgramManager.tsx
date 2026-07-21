@@ -113,7 +113,7 @@ export default function NetworkingProgramManager({ eventId, canEdit }: Props) {
               <div className="min-w-0">
                 <p className="flex items-center gap-2 text-sm font-medium">
                   {(p.startTime || p.endTime) && (
-                    <span className="inline-flex items-center gap-1 text-xs text-teal-700">
+                    <span className="inline-flex items-center gap-1 text-xs text-info">
                       <Clock size={12} />
                       {p.startTime}
                       {p.endTime ? `–${p.endTime}` : ""}
@@ -135,7 +135,7 @@ export default function NetworkingProgramManager({ eventId, canEdit }: Props) {
                 <button
                   type="button"
                   onClick={() => deleteM.mutate(p.id)}
-                  className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600"
+                  className="shrink-0 rounded-md p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                   aria-label="삭제"
                 >
                   <Trash2 size={14} />

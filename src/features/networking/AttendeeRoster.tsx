@@ -91,7 +91,7 @@ export default function AttendeeRoster({
           className={cn(
             "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors disabled:opacity-50",
             optedIn
-              ? "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/30 dark:text-emerald-300"
+              ? "border-success/30 bg-success/10 text-success"
               : "border-border bg-background text-muted-foreground hover:border-primary/40",
           )}
         >

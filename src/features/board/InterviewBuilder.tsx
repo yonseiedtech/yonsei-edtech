@@ -47,7 +47,7 @@ function fillBlankPreview(prompt: string): ReactNode {
         <span key={i}>
           {p}
           {i < parts.length - 1 && (
-            <span className="mx-1 inline-block min-w-[60px] border-b-2 border-blue-500 px-2 text-center text-blue-700">
+            <span className="mx-1 inline-block min-w-[60px] border-b-2 border-cat-1/50 px-2 text-center text-cat-1">
               ___
             </span>
           )}
@@ -163,12 +163,12 @@ export default function InterviewBuilder({ value, onChange }: Props) {
   }
 
   return (
-    <div className="rounded-2xl border border-blue-200 bg-blue-50/40 p-5">
+    <div className="rounded-2xl border border-cat-1/20 bg-cat-1/5 p-5">
       <div className="flex items-center gap-2">
-        <Sparkles size={16} className="text-blue-600" />
-        <h3 className="font-bold text-blue-900">온라인 인터뷰 설계</h3>
+        <Sparkles size={16} className="text-cat-1" />
+        <h3 className="font-bold text-cat-1">온라인 인터뷰 설계</h3>
       </div>
-      <p className="mt-1 text-xs text-blue-700/80">
+      <p className="mt-1 text-xs text-cat-1/80">
         질문을 순서대로 등록하면, 응답자는 대화형 UI로 한 질문씩 답변합니다.
       </p>
 
@@ -200,8 +200,8 @@ export default function InterviewBuilder({ value, onChange }: Props) {
             <label
               className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 transition ${
                 (value.responseVisibility ?? "public") === "staff_only"
-                  ? "border-blue-500 bg-blue-100/60 ring-2 ring-blue-300 dark:bg-blue-950/40"
-                  : "border-input bg-card hover:bg-blue-50/40 dark:bg-card dark:hover:bg-blue-950/20"
+                  ? "border-cat-1/50 bg-cat-1/10 ring-2 ring-cat-1/30"
+                  : "border-input bg-card hover:bg-cat-1/5"
               }`}
             >
               <input
@@ -214,7 +214,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
               />
               <div className="flex-1">
                 <div className="flex items-center gap-1 text-sm font-semibold">
-                  <Lock size={14} className="text-blue-700 dark:text-blue-300" />
+                  <Lock size={14} className="text-cat-1" />
                   비공개 (1:1 인터뷰)
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -225,8 +225,8 @@ export default function InterviewBuilder({ value, onChange }: Props) {
             <label
               className={`flex cursor-pointer items-start gap-2 rounded-lg border p-3 transition ${
                 (value.responseVisibility ?? "public") === "public"
-                  ? "border-blue-500 bg-blue-100/60 ring-2 ring-blue-300 dark:bg-blue-950/40"
-                  : "border-input bg-card hover:bg-blue-50/40 dark:bg-card dark:hover:bg-blue-950/20"
+                  ? "border-cat-1/50 bg-cat-1/10 ring-2 ring-cat-1/30"
+                  : "border-input bg-card hover:bg-cat-1/5"
               }`}
             >
               <input
@@ -239,7 +239,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
               />
               <div className="flex-1">
                 <div className="flex items-center gap-1 text-sm font-semibold">
-                  <Globe size={14} className="text-blue-700 dark:text-blue-300" />
+                  <Globe size={14} className="text-cat-1" />
                   공개 (실시간 공유)
                 </div>
                 <p className="mt-0.5 text-xs text-muted-foreground">
@@ -269,7 +269,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
         </div>
 
         {value.questions.length === 0 && (
-          <div className="mt-3 rounded-lg border border-dashed border-blue-300 bg-card p-6 text-center text-sm text-muted-foreground">
+          <div className="mt-3 rounded-lg border border-dashed border-cat-1/30 bg-card p-6 text-center text-sm text-muted-foreground">
             아직 질문이 없습니다. &quot;질문 추가&quot;로 시작하세요.
           </div>
         )}
@@ -281,7 +281,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
             return (
               <div key={q.id} className="rounded-lg border bg-card p-4">
                 <div className="flex items-start gap-3">
-                  <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-blue-100 text-xs font-bold text-blue-700">
+                  <span className="mt-1 flex h-7 w-7 shrink-0 items-center justify-center rounded-full bg-cat-1/10 text-xs font-bold text-cat-1">
                     Q{i + 1}
                   </span>
                   <div className="flex-1 space-y-2">
@@ -384,8 +384,8 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                     </div>
 
                     {(q.answerType === "single_choice" || q.answerType === "multi_choice") && (
-                      <div className="rounded-md border bg-blue-50/50 p-3">
-                        <p className="mb-2 text-xs font-semibold text-blue-700">
+                      <div className="rounded-md border bg-cat-1/5 p-3">
+                        <p className="mb-2 text-xs font-semibold text-cat-1">
                           선택지 {q.answerType === "multi_choice" ? "(복수 선택 가능)" : "(단일 선택)"}
                         </p>
                         <div className="space-y-2">
@@ -413,12 +413,12 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                         <button
                           type="button"
                           onClick={() => addChoice(q.id)}
-                          className="mt-2 inline-flex items-center gap-1 text-xs text-blue-700 hover:text-blue-900"
+                          className="mt-2 inline-flex items-center gap-1 text-xs text-cat-1 hover:text-cat-1"
                         >
                           <Plus size={12} />
                           선택지 추가
                         </button>
-                        <label className="mt-3 flex items-center gap-2 text-xs text-blue-800">
+                        <label className="mt-3 flex items-center gap-2 text-xs text-cat-1">
                           <input
                             type="checkbox"
                             checked={!!q.allowCustomOption}
@@ -432,31 +432,31 @@ export default function InterviewBuilder({ value, onChange }: Props) {
                     )}
 
                     {q.answerType === "ox" && (
-                      <p className="rounded-md bg-blue-50 p-2 text-xs text-blue-800">
+                      <p className="rounded-md bg-cat-1/5 p-2 text-xs text-cat-1">
                         응답자에게 ⭕ O / ❌ X 두 개의 버튼이 표시됩니다.
                       </p>
                     )}
 
                     {q.answerType === "multi_text" && (
-                      <p className="rounded-md bg-amber-50 p-2 text-xs text-amber-800">
+                      <p className="rounded-md bg-warning/10 p-2 text-xs text-warning">
                         응답자에게 짧은 텍스트 입력란을 {q.minCount ?? 1}~{q.maxCount ?? 5}개 표시합니다.
                         (예: &quot;키워드 3가지&quot; → 최소 3, 최대 3)
                       </p>
                     )}
 
                     {q.answerType === "fill_blank" && (
-                      <div className="rounded-md border border-emerald-200 bg-emerald-50/60 p-3 text-xs text-emerald-900">
+                      <div className="rounded-md border border-success/20 bg-success/5 p-3 text-xs text-success">
                         <p className="font-semibold">빈칸 채우기</p>
                         <p className="mt-1">
                           질문에 <code className="rounded bg-card px-1">(   )</code> 또는 <code className="rounded bg-card px-1">___</code>을 넣으면 그 자리에 응답자의 입력창이 표시됩니다.
                         </p>
                         {fillBlankPreview(q.prompt) ? (
                           <div className="mt-2 rounded bg-card p-2 text-sm text-foreground">
-                            <span className="text-xs font-semibold text-emerald-700">미리보기: </span>
+                            <span className="text-xs font-semibold text-success">미리보기: </span>
                             {fillBlankPreview(q.prompt)}
                           </div>
                         ) : (
-                          <p className="mt-2 text-amber-700">
+                          <p className="mt-2 text-warning">
                             ⚠️ 마커가 없습니다. 일반 텍스트 입력으로 표시됩니다.
                           </p>
                         )}
@@ -486,7 +486,7 @@ export default function InterviewBuilder({ value, onChange }: Props) {
               type="button"
               variant="outline"
               onClick={addQuestion}
-              className="border-blue-300 bg-card text-blue-700 hover:bg-blue-50 hover:text-blue-900"
+              className="border-cat-1/30 bg-card text-cat-1 hover:bg-cat-1/5"
             >
               <Plus size={16} className="mr-1" />
               질문 추가
@@ -610,21 +610,21 @@ function TargetCriteriaSection({
   const roles: InterviewTargetRole[] = ["general", "staff", "chair", "vice_chair", "major_rep", "ta", "alumni_rep"];
 
   return (
-    <div className="mt-5 rounded-lg border border-blue-200 bg-blue-50/40 p-4 dark:border-blue-900 dark:bg-blue-950/20">
+    <div className="mt-5 rounded-lg border border-cat-1/20 bg-cat-1/5 p-4">
       <div className="mb-3 flex items-center gap-2">
-        <Target size={14} className="text-blue-700 dark:text-blue-300" />
-        <h3 className="text-sm font-semibold text-blue-900 dark:text-blue-100">
+        <Target size={14} className="text-cat-1" />
+        <h3 className="text-sm font-semibold text-cat-1">
           인터뷰 대상자 (선택)
         </h3>
       </div>
-      <p className="mb-3 text-[11px] leading-relaxed text-blue-800/80 dark:text-blue-200/80">
+      <p className="mb-3 text-[11px] leading-relaxed text-cat-1/80">
         대상을 비워두면 모든 회원이 응답 가능합니다. 여러 카테고리 동시 사용 시 한 가지라도 일치하면 응답 가능 (OR 조건).
       </p>
 
       <div className="space-y-3">
         {/* 입학시점: 연도 + 학기 (전기/후기) */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-blue-900 dark:text-blue-100">
+          <label className="mb-1 block text-xs font-medium text-cat-1">
             입학시점 별 (연도 · 학기)
           </label>
           <div className="flex flex-wrap gap-1.5">
@@ -665,14 +665,14 @@ function TargetCriteriaSection({
               );
             })}
           </div>
-          <p className="mt-1 text-[10px] text-blue-800/70 dark:text-blue-200/70">
+          <p className="mt-1 text-[10px] text-cat-1/70">
             연도와 학기 함께 선택 시 둘 다 일치하는 회원만 매칭 (AND).
           </p>
         </div>
 
         {/* 누적 학기차 */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-blue-900 dark:text-blue-100">
+          <label className="mb-1 block text-xs font-medium text-cat-1">
             누적 학기차
           </label>
           <div className="flex flex-wrap gap-1.5">
@@ -698,7 +698,7 @@ function TargetCriteriaSection({
 
         {/* 계층/역할 */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-blue-900 dark:text-blue-100">
+          <label className="mb-1 block text-xs font-medium text-cat-1">
             계층 / 역할
           </label>
           <div className="flex flex-wrap gap-1.5">
@@ -724,7 +724,7 @@ function TargetCriteriaSection({
 
         {/* 특정 회원: 검색 → 결과 → 선택 chip */}
         <div>
-          <label className="mb-1 block text-xs font-medium text-blue-900 dark:text-blue-100">
+          <label className="mb-1 block text-xs font-medium text-cat-1">
             특정 회원 (이름·학번·이메일로 검색 후 선택)
           </label>
           <div className="relative">

@@ -14,17 +14,17 @@ export default function PaperReviewBoardPage() {
         <Link
           href="/mypage/research"
           aria-label="마이페이지 논문 읽기로 이동"
-          className="group flex items-center justify-between rounded-2xl border border-purple-200 bg-gradient-to-br from-purple-50 to-slate-50 p-4 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring dark:border-purple-800 dark:from-purple-950/30 dark:to-slate-950/40"
+          className="group flex items-center justify-between rounded-2xl border border-cat-5/20 bg-gradient-to-br from-cat-5/5 to-background p-4 shadow-sm transition-shadow hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
         >
           <div className="flex items-center gap-3">
             <div
-              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-purple-100 text-purple-700 dark:bg-purple-900/50 dark:text-purple-300"
+              className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-cat-5/10 text-cat-5"
               aria-hidden="true"
             >
               <BookMarked size={18} />
             </div>
             <div>
-              <p className="text-sm font-semibold text-purple-800 dark:text-purple-200">
+              <p className="text-sm font-semibold text-cat-5">
                 리뷰는 &quot;내 논문 읽기&quot;와 연동됩니다
               </p>
               <p className="mt-0.5 text-xs text-muted-foreground">
@@ -35,7 +35,7 @@ export default function PaperReviewBoardPage() {
           <ArrowRight
             size={16}
             aria-hidden="true"
-            className="shrink-0 text-purple-400 transition-transform duration-200 group-hover:translate-x-0.5 dark:text-purple-500"
+            className="shrink-0 text-cat-5/60 transition-transform duration-200 group-hover:translate-x-0.5"
           />
         </Link>
       </div>
@@ -51,7 +51,7 @@ export default function PaperReviewBoardPage() {
           <BookOpenCheck
             size={24}
             aria-hidden="true"
-            className="text-purple-600 dark:text-purple-400"
+            className="text-cat-5"
           />
         }
       />

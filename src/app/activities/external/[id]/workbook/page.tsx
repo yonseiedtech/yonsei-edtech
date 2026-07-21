@@ -18,6 +18,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import AuthGuard from "@/features/auth/AuthGuard";
+import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   workbookTasksApi,
@@ -554,12 +555,7 @@ function WorkbookPage({ activityId }: { activityId: string }) {
               불러오는 중…
             </div>
           ) : tasks.length === 0 ? (
-            <div className="rounded-2xl border bg-card p-8 text-center">
-              <ClipboardList size={32} className="mx-auto mb-3 text-muted-foreground" />
-              <p className="text-sm text-muted-foreground">
-                아직 등록된 과제가 없습니다.
-              </p>
-            </div>
+            <EmptyState icon={ClipboardList} title="아직 등록된 과제가 없습니다." />
           ) : (
             tasks.map((task) => (
               <TaskWidget

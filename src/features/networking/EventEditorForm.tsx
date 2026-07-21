@@ -459,8 +459,8 @@ export default function EventEditorForm({
                 className={cn(
                   "rounded-full border px-2.5 py-1 text-[11px] font-medium tabular-nums transition-colors",
                   active
-                    ? "border-indigo-600 bg-indigo-600 text-white dark:border-indigo-400 dark:bg-indigo-500"
-                    : "border-border bg-background text-muted-foreground hover:border-indigo-400 hover:text-foreground",
+                    ? "border-cat-1 bg-cat-1 text-white"
+                    : "border-border bg-background text-muted-foreground hover:border-cat-1/40 hover:text-foreground",
                 )}
               >
                 {t}
@@ -547,7 +547,7 @@ export default function EventEditorForm({
                 className={cn(
                   "rounded-md px-3 py-1 text-xs font-medium transition-colors",
                   form.schedulingMode === m
-                    ? "bg-indigo-600 text-white dark:bg-indigo-500"
+                    ? "bg-cat-1 text-white"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -606,12 +606,12 @@ export default function EventEditorForm({
               </select>
               {/* G11(2026-07-08): auto 는 마감일 필수(저장 차단), manual 은 마감 없음 경고 */}
               {form.pollDecisionMode === "auto" && !form.pollDeadline && (
-                <p className="mt-1 text-[11px] font-medium text-rose-600 dark:text-rose-400">
+                <p className="mt-1 text-[11px] font-medium text-destructive">
                   자동 확정은 투표 마감일이 필요합니다. 위에서 투표 마감을 설정하세요.
                 </p>
               )}
               {form.pollDecisionMode === "manual" && !form.pollDeadline && (
-                <p className="mt-1 text-[11px] text-amber-600 dark:text-amber-400">
+                <p className="mt-1 text-[11px] text-warning">
                   투표 마감이 없어 자동으로 종료되지 않습니다. 운영진이 직접 확정해야 합니다.
                 </p>
               )}
@@ -683,7 +683,7 @@ export default function EventEditorForm({
                 className={cn(
                   "rounded-md px-3 py-1 text-xs font-medium transition-colors",
                   form.visibility === v
-                    ? "bg-indigo-600 text-white dark:bg-indigo-500"
+                    ? "bg-cat-1 text-white"
                     : "text-muted-foreground hover:text-foreground",
                 )}
               >
@@ -715,7 +715,7 @@ export default function EventEditorForm({
                     {inviteSelections.map((m) => (
                       <span
                         key={m.id}
-                        className="inline-flex items-center gap-1 rounded-full bg-indigo-50 px-2.5 py-1 text-[11px] text-indigo-700 dark:bg-indigo-950/40 dark:text-indigo-200"
+                        className="inline-flex items-center gap-1 rounded-full bg-cat-1/10 px-2.5 py-1 text-[11px] text-cat-1"
                       >
                         {m.name}
                         <button
@@ -752,8 +752,8 @@ export default function EventEditorForm({
 
       {/* 저장 후 비공개 공유 링크 안내 */}
       {shareLink && (
-        <div className="mt-4 rounded-xl border border-indigo-200 bg-indigo-50/60 p-3 dark:border-indigo-900 dark:bg-indigo-950/30">
-          <p className="text-xs font-semibold text-indigo-700 dark:text-indigo-200">비공개 모임 공유 링크</p>
+        <div className="mt-4 rounded-xl border border-cat-1/20 bg-cat-1/5 p-3">
+          <p className="text-xs font-semibold text-cat-1">비공개 모임 공유 링크</p>
           <p className="mt-1 text-[11px] text-muted-foreground">이 링크를 아는 사람만 모임에 접근할 수 있습니다.</p>
           <div className="mt-2 flex items-center gap-2">
             <input

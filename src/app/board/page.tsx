@@ -31,7 +31,7 @@ const CATEGORIES: CategoryCard[] = [
     title: "자유게시판",
     description: "학회 생활, 일상, 관심사를 자유롭게 공유하세요.",
     icon: MessageSquare,
-    color: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+    color: "bg-cat-1/10 text-cat-1",
   },
   {
     key: "paper_review",
@@ -39,7 +39,7 @@ const CATEGORIES: CategoryCard[] = [
     title: "교육공학 논문 리뷰",
     description: "교육공학·에듀테크 관련 논문을 읽고 서로의 관점을 나눕니다.",
     icon: FileSearch,
-    color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+    color: "bg-cat-2/10 text-cat-2",
     badge: "학술",
   },
   {
@@ -48,7 +48,7 @@ const CATEGORIES: CategoryCard[] = [
     title: "인터뷰 게시판",
     description: "연구자·교육자 인터뷰, 진로 경험, 현장 이야기를 공유합니다.",
     icon: Mic2,
-    color: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+    color: "bg-cat-3/10 text-cat-3",
   },
   {
     key: "seminar",
@@ -56,7 +56,7 @@ const CATEGORIES: CategoryCard[] = [
     title: "세미나 자료",
     description: "세미나 발표 자료·정리 노트·후기를 아카이브합니다.",
     icon: BookOpen,
-    color: "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+    color: "bg-cat-5/10 text-cat-5",
   },
   {
     key: "promotion",
@@ -64,7 +64,7 @@ const CATEGORIES: CategoryCard[] = [
     title: "홍보·보도자료",
     description: "외부 공모전, 학술행사, 채용 정보를 공유합니다.",
     icon: Megaphone,
-    color: "bg-rose-50 text-rose-700 dark:bg-rose-950 dark:text-rose-300",
+    color: "bg-cat-4/10 text-cat-4",
   },
   {
     key: "resources",
@@ -72,7 +72,7 @@ const CATEGORIES: CategoryCard[] = [
     title: "자료실",
     description: "양식, 규정, 참고자료 등 학회 공식 파일을 내려받으세요.",
     icon: Archive,
-    color: "bg-slate-100 text-slate-700 dark:bg-slate-800 dark:text-slate-300",
+    color: "bg-cat-6/10 text-cat-6",
   },
   {
     key: "update",
@@ -80,7 +80,7 @@ const CATEGORIES: CategoryCard[] = [
     title: "업데이트 게시판",
     description: "홈페이지 기능 개선·변경 내역을 안내합니다.",
     icon: Zap,
-    color: "bg-sky-50 text-sky-700 dark:bg-sky-950 dark:text-sky-300",
+    color: "bg-info/10 text-info",
   },
   {
     key: "staff",
@@ -88,7 +88,7 @@ const CATEGORIES: CategoryCard[] = [
     title: "운영진 게시판",
     description: "운영진 전용 안건·회의록·결정사항 공유 공간입니다.",
     icon: Shield,
-    color: "bg-orange-50 text-orange-700 dark:bg-orange-950 dark:text-orange-300",
+    color: "bg-warning/10 text-warning",
     badge: "운영진",
     staffOnly: true,
   },
@@ -96,7 +96,7 @@ const CATEGORIES: CategoryCard[] = [
 
 // ── 색상 strip 도우미 ──────────────────────────────────────────────────────
 function stripColorClass(color: string): string {
-  // "text-blue-700" → "bg-blue-700", "dark:text-blue-300" → "dark:bg-blue-300"
+  // "text-cat-1" → "bg-cat-1", "text-success" → "bg-success"
   const parts = color.split(" ");
   const textPart = parts.find((c) => c.startsWith("text-") && !c.startsWith("text-slate"));
   if (!textPart) return "bg-primary";
