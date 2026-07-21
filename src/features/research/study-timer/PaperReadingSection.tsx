@@ -60,13 +60,13 @@ export default function PaperReadingSection() {
     <section className="rounded-2xl border bg-card p-4 shadow-sm">
       <div className="mb-3 flex items-center justify-between">
         <h3 className="flex items-center gap-2 text-sm font-semibold">
-          <BookOpenCheck className="h-4 w-4 text-teal-700" />
+          <BookOpenCheck className="h-4 w-4 text-info" />
           내 논문 읽기
         </h3>
         <button
           type="button"
           onClick={() => setModalOpen(true)}
-          className="inline-flex items-center gap-1 rounded-full bg-teal-600 px-2.5 py-1 text-xs font-medium text-white hover:bg-teal-700"
+          className="inline-flex items-center gap-1 rounded-full bg-info px-2.5 py-1 text-xs font-medium text-white hover:bg-info/90"
         >
           <Plus className="h-3.5 w-3.5" />
           읽기 기록
@@ -74,12 +74,12 @@ export default function PaperReadingSection() {
       </div>
 
       {owlOff && (
-        <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+        <div className="mb-3 flex items-center justify-between gap-2 rounded-xl border border-warning/20 bg-warning/5 px-3 py-2 text-xs text-warning">
           <span>🦉 떠다니는 읽기 타이머 부엉이가 꺼져 있어요</span>
           <button
             type="button"
             onClick={reactivateOwl}
-            className="shrink-0 rounded-full bg-amber-600 px-2.5 py-1 font-medium text-white hover:bg-amber-700"
+            className="shrink-0 rounded-full bg-warning px-2.5 py-1 font-medium text-white hover:bg-warning/90"
           >
             다시 켜기
           </button>
@@ -93,7 +93,7 @@ export default function PaperReadingSection() {
           <p className="text-[11px] text-muted-foreground">총 읽음(편)</p>
         </div>
         <div className="rounded-xl border bg-background p-2 text-center">
-          <p className="text-lg font-bold tabular-nums text-teal-700">{thisWeek}</p>
+          <p className="text-lg font-bold tabular-nums text-info">{thisWeek}</p>
           <p className="text-[11px] text-muted-foreground">이번 주(편)</p>
         </div>
         <div className="rounded-xl border bg-background p-2 text-center">
@@ -114,7 +114,7 @@ export default function PaperReadingSection() {
           <div
             className={cn(
               "h-full rounded-full transition-all",
-              goalPct >= 100 ? "bg-emerald-500" : "bg-teal-500",
+              goalPct >= 100 ? "bg-success" : "bg-info",
             )}
             style={{ width: `${goalPct}%` }}
           />
@@ -198,8 +198,8 @@ export default function PaperReadingSection() {
                 )}
               </div>
               {l.rating ? (
-                <span className="flex shrink-0 items-center gap-0.5 text-xs text-amber-500">
-                  <Star className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />
+                <span className="flex shrink-0 items-center gap-0.5 text-xs text-warning">
+                  <Star className="h-3.5 w-3.5 fill-warning text-warning" />
                   {l.rating}
                 </span>
               ) : null}

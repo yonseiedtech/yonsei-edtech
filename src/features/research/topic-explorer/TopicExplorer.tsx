@@ -34,10 +34,10 @@ import {
 } from "./topic-explorer-logic";
 
 const APPROACH_BADGE: Record<string, string> = {
-  "양적": "border-blue-300 bg-blue-50 text-blue-700 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-300",
-  "질적": "border-emerald-300 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300",
-  "혼합": "border-violet-300 bg-violet-50 text-violet-700 dark:border-violet-800 dark:bg-violet-950/40 dark:text-violet-300",
-  "개발·설계": "border-amber-300 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
+  "양적": "border-cat-1/30 bg-cat-1/5 text-cat-1",
+  "질적": "border-success/30 bg-success/5 text-success",
+  "혼합": "border-cat-5/30 bg-cat-5/5 text-cat-5",
+  "개발·설계": "border-warning/30 bg-warning/5 text-warning",
 };
 
 interface Props {
@@ -220,9 +220,9 @@ export default function TopicExplorer({ user }: Props) {
   return (
     <div className="space-y-4">
       {/* 안내 헤더 */}
-      <div className="rounded-2xl border bg-gradient-to-br from-amber-50 via-card to-card p-4 dark:from-amber-950/20">
+      <div className="rounded-2xl border bg-gradient-to-br from-warning/5 via-card to-card p-4">
         <p className="flex items-center gap-1.5 text-sm font-bold">
-          <Lightbulb size={15} className="text-amber-500" />
+          <Lightbulb size={15} className="text-warning" />
           주제 탐색 인터뷰
         </p>
         <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
@@ -266,7 +266,7 @@ export default function TopicExplorer({ user }: Props) {
                       <span className="flex items-center gap-1.5 text-sm font-medium">
                         {opt.label}
                         {isRecommended && user.occupation && (
-                          <Badge variant="outline" className="border-amber-300 bg-amber-50 text-[10px] text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+                          <Badge variant="outline" className="border-warning/30 bg-warning/5 text-[10px] text-warning">
                             프로필 기준: {OCCUPATION_LABELS[user.occupation]}
                           </Badge>
                         )}
@@ -361,7 +361,7 @@ export default function TopicExplorer({ user }: Props) {
                             <button
                               type="button"
                               onClick={() => void deleteExploration(h.id)}
-                              className="rounded-md p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600 dark:hover:bg-rose-950/30"
+                              className="rounded-md p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                               aria-label="기록 삭제"
                             >
                               <Trash2 size={13} />
@@ -406,9 +406,9 @@ export default function TopicExplorer({ user }: Props) {
           )}
 
           {/* 추천 주제 방향 */}
-          <Card className="rounded-2xl border-l-4 border-l-amber-400">
+          <Card className="rounded-2xl border-l-4 border-l-warning">
             <CardContent className="p-6">
-              <div className="flex items-center gap-2 text-amber-700 dark:text-amber-300">
+              <div className="flex items-center gap-2 text-warning">
                 <CheckCircle2 className="h-5 w-5" />
                 <span className="text-sm font-medium">추천 주제 방향</span>
               </div>
@@ -436,7 +436,7 @@ export default function TopicExplorer({ user }: Props) {
                 ))}
               </div>
               {result.caution && (
-                <div className="mt-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs leading-relaxed text-amber-900 dark:border-amber-900 dark:bg-amber-950/30 dark:text-amber-200">
+                <div className="mt-3 flex items-start gap-2 rounded-xl border border-warning/20 bg-warning/5 p-3 text-xs leading-relaxed text-warning">
                   <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0" aria-hidden />
                   <p>{result.caution}</p>
                 </div>
@@ -472,7 +472,7 @@ export default function TopicExplorer({ user }: Props) {
                         variant="outline"
                         className={`cursor-pointer px-3 py-1 text-xs hover:border-primary/40 ${
                           weakSet.has(c.id)
-                            ? "border-amber-400 bg-amber-50 text-amber-800 dark:border-amber-700 dark:bg-amber-950/40 dark:text-amber-200"
+                            ? "border-warning/40 bg-warning/5 text-warning"
                             : ""
                         }`}
                       >
@@ -495,7 +495,7 @@ export default function TopicExplorer({ user }: Props) {
                     최근 진단({fmtDate(latestDiagnostic.createdAt)}) 기준, 추천 개념 {conceptMatches.length}개 중{" "}
                     {weakMatchedCount > 0 ? (
                       <>
-                        <span className="font-semibold text-amber-700 dark:text-amber-300">{weakMatchedCount}개가 약점</span>으로
+                        <span className="font-semibold text-warning">{weakMatchedCount}개가 약점</span>으로
                         나타났어요. 아래 <span className="font-medium">약점</span> 배지가 붙은 개념부터 읽고, 진단으로 다시 확인해보세요.
                       </>
                     ) : (

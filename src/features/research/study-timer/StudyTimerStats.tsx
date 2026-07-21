@@ -140,22 +140,22 @@ export default function StudyTimerStats() {
 
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         <StatBox
-          icon={<Flame size={14} className="text-orange-500" />}
+          icon={<Flame size={14} className="text-warning" />}
           label="오늘"
           value={fmtMinutes(stats.todayMin)}
         />
         <StatBox
-          icon={<Clock size={14} className="text-blue-500" />}
+          icon={<Clock size={14} className="text-cat-1" />}
           label="이번주"
           value={fmtMinutes(stats.weekMin)}
         />
         <StatBox
-          icon={<BookOpen size={14} className="text-violet-500" />}
+          icon={<BookOpen size={14} className="text-cat-5" />}
           label="이번 학기"
           value={fmtMinutes(stats.semMin)}
         />
         <StatBox
-          icon={<Target size={14} className="text-emerald-500" />}
+          icon={<Target size={14} className="text-success" />}
           label="평균 집중도"
           value={stats.avgFocus !== null ? `${stats.avgFocus}/5` : "—"}
         />

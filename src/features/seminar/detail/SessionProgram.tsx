@@ -199,7 +199,7 @@ export default function SessionProgram({
                       {sess.endTime ? `~${sess.endTime}` : ""} ({sess.duration}분)
                     </>
                   ) : (
-                    <span className="text-amber-500">시간 미정</span>
+                    <span className="text-warning">시간 미정</span>
                   )}
                 </span>
                 {isStaff && (
@@ -266,7 +266,7 @@ export default function SessionProgram({
                         speakerBio: checked ? (seminarSpeakerBio ?? "") : "",
                       });
                     }}
-                    className="h-4 w-4 rounded border-gray-300"
+                    className="h-4 w-4 rounded border-muted"
                   />
                   <span className="font-medium">세미나 발표자와 동일</span>
                   <span className="text-xs text-muted-foreground">({seminarSpeaker})</span>

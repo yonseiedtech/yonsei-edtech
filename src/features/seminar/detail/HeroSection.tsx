@@ -18,9 +18,9 @@ import {
 } from "lucide-react";
 
 const STATUS_STYLES: Record<SeminarStatus, string> = {
-  draft: "bg-gray-100 text-gray-500",
+  draft: "bg-muted text-muted-foreground",
   upcoming: "bg-primary/10 text-primary",
-  ongoing: "bg-amber-100 text-amber-700",
+  ongoing: "bg-warning/10 text-warning",
   completed: "bg-muted text-muted-foreground",
   cancelled: "bg-destructive/10 text-destructive",
 };
@@ -68,12 +68,12 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
               {badge.label}
             </Badge>
             {(seminar.year || seminar.semester) && (
-              <Badge variant="secondary" className="bg-blue-50 text-xs text-blue-700 shadow-sm">
+              <Badge variant="secondary" className="bg-cat-1/5 text-xs text-cat-1 shadow-sm">
                 {formatSemester(seminar.year, seminar.semester)}
               </Badge>
             )}
             {seminar.isOnline && (
-              <Badge variant="secondary" className="bg-blue-50 text-xs text-blue-700">
+              <Badge variant="secondary" className="bg-cat-1/5 text-xs text-cat-1">
                 ONLINE
               </Badge>
             )}
@@ -87,8 +87,8 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
       {/* 이미지 아래: 세미나 정보 */}
       <div className="px-5 py-5 sm:px-8 sm:py-6">
         {computedStatus === "cancelled" && seminar.cancelReason && (
-          <div className="mb-4 flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-800">
-            <AlertCircle size={16} className="shrink-0 text-red-500" />
+          <div className="mb-4 flex items-center gap-2 rounded-lg border border-destructive/20 bg-destructive/5 px-4 py-3 text-sm text-destructive">
+            <AlertCircle size={16} className="shrink-0 text-destructive" />
             <span>취소 사유: {seminar.cancelReason}</span>
           </div>
         )}
@@ -100,7 +100,7 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
               <span>{seminar.date} {seminar.time}</span>
             </div>
             <div className="flex items-center gap-2">
-              {seminar.isOnline ? <Video size={16} className="text-blue-500" /> : <MapPin size={16} className="text-muted-foreground" />}
+              {seminar.isOnline ? <Video size={16} className="text-cat-1" /> : <MapPin size={16} className="text-muted-foreground" />}
               <span>{seminar.location}</span>
             </div>
             <div className="flex items-center gap-2">
@@ -128,7 +128,7 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
               href={seminar.onlineUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1 text-sm text-blue-600 underline hover:text-blue-800"
+              className="inline-flex items-center gap-1 text-sm text-cat-1 underline hover:text-cat-1"
             >
               <Video size={14} />
               ZOOM 접속 링크

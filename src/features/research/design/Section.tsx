@@ -65,10 +65,10 @@ export function Section({
             className={cn(
               "rounded-full px-1.5 py-0.5 text-[10px] font-medium",
               done
-                ? "bg-emerald-500/10 text-emerald-600 dark:text-emerald-400"
+                ? "bg-success/10 text-success"
                 : optional
                   ? "bg-muted text-muted-foreground"
-                  : "bg-amber-500/10 text-amber-600 dark:text-amber-400",
+                  : "bg-warning/10 text-warning",
             )}
           >
             {done ? "완성" : optional ? "선택" : "작성 전"}

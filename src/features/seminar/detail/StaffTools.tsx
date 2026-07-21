@@ -39,7 +39,7 @@ export default function StaffTools({
         <Button
           size="sm"
           variant="default"
-          className="bg-blue-600 hover:bg-blue-700 text-white"
+          className="bg-cat-1 hover:bg-cat-1/90 text-white"
           onClick={() => router.push(`/seminars/${seminarId}/host`)}
         >
           <Mic size={16} className="mr-1" />

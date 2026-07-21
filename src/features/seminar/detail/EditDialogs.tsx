@@ -114,7 +114,7 @@ export default function EditDialogs({
                 type="checkbox"
                 checked={infoForm.isOnline}
                 onChange={(e) => onInfoChange({ ...infoForm, isOnline: e.target.checked })}
-                className="h-4 w-4 rounded border-gray-300"
+                className="h-4 w-4 rounded border-muted"
               />
               온라인 (ZOOM)
             </label>
@@ -225,7 +225,7 @@ export default function EditDialogs({
                           updated[idx] = { ...updated[idx], required: e.target.checked };
                           onRegFieldsChange(updated);
                         }}
-                        className="h-3.5 w-3.5 rounded border-gray-300"
+                        className="h-3.5 w-3.5 rounded border-muted"
                       />
                       필수
                     </label>

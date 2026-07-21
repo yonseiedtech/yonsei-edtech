@@ -124,11 +124,11 @@ export function CollectionAnalysisSection({
               })}
 
               {statRecommend.cautions.length > 0 && (
-                <ul className="space-y-1 rounded-lg border border-amber-500/30 bg-amber-500/5 p-2.5">
+                <ul className="space-y-1 rounded-lg border border-warning/30 bg-warning/5 p-2.5">
                   {statRecommend.cautions.map((c, i) => (
                     <li
                       key={i}
-                      className="flex gap-1.5 text-[11px] leading-relaxed text-amber-700 dark:text-amber-300"
+                      className="flex gap-1.5 text-[11px] leading-relaxed text-warning"
                     >
                       <span aria-hidden>⚠</span>
                       <span>{c}</span>
@@ -226,7 +226,7 @@ export function CollectionAnalysisSection({
                       <button
                         type="button"
                         onClick={() => onToggleStatMethod(name)}
-                        className="mt-0.5 rounded-md p-0.5 text-muted-foreground hover:bg-rose-50 hover:text-rose-600"
+                        className="mt-0.5 rounded-md p-0.5 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
                         aria-label={`${name} 제거`}
                       >
                         <X size={12} />

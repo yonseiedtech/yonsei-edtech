@@ -145,14 +145,14 @@ export default function RegistrationSection({
             </div>
           )}
           {myWaitlistEntry && (
-            <div className="mt-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
+            <div className="mt-3 rounded-lg border border-warning/20 bg-warning/5 p-3">
               <div className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
-                  <Clock size={16} className="text-amber-600" />
-                  <span className="text-sm font-medium text-amber-800">
+                  <Clock size={16} className="text-warning" />
+                  <span className="text-sm font-medium text-warning">
                     대기 순번 {myWaitlistEntry.position}번
                   </span>
-                  <span className="text-xs text-amber-600">
+                  <span className="text-xs text-warning">
                     (전체 {waitlist.length}명 대기 중)
                   </span>
                 </div>
@@ -169,7 +169,7 @@ export default function RegistrationSection({
                   </Button>
                 )}
               </div>
-              <p className="mt-1 text-xs text-amber-600">자리가 생기면 자동으로 참가 확정되고 알림을 보내드립니다.</p>
+              <p className="mt-1 text-xs text-warning">자리가 생기면 자동으로 참가 확정되고 알림을 보내드립니다.</p>
             </div>
           )}
         </div>

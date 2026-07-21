@@ -263,7 +263,7 @@ export default function FloatingReadingTimer() {
           <div className="relative mb-1 max-w-[200px] rounded-2xl border bg-card px-3 py-1.5 pr-7 text-center shadow-lg">
             {offChoiceOpen ? (
               <div className="py-0.5 text-left">
-                <p className="mb-1.5 text-center text-[11px] font-medium text-indigo-900 dark:text-indigo-200">
+                <p className="mb-1.5 text-center text-[11px] font-medium text-cat-1">
                   부엉이를 어떻게 끌까요?
                 </p>
                 <button
@@ -290,13 +290,13 @@ export default function FloatingReadingTimer() {
                   <span className="mr-1 font-medium">{actLabel}</span>
                   {active.targetTitle}
                 </p>
-                <p className={`font-mono text-sm font-bold tabular-nums ${isPaused ? "text-muted-foreground" : "text-indigo-700"}`}>
+                <p className={`font-mono text-sm font-bold tabular-nums ${isPaused ? "text-muted-foreground" : "text-cat-1"}`}>
                   {fmt(elapsed)}
                   {isPaused && <span className="ml-1 text-[10px] font-normal">잠시 멈춤</span>}
                 </p>
               </>
             ) : (
-              <p className="text-xs font-medium text-indigo-900 dark:text-indigo-200">오늘도 함께 공부해요 🦉</p>
+              <p className="text-xs font-medium text-cat-1">오늘도 함께 공부해요 🦉</p>
             )}
             <button
               type="button"
@@ -342,7 +342,7 @@ export default function FloatingReadingTimer() {
                   ) : (
                     <button type="button" onClick={() => { pause(); setMenuOpen(false); }} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm hover:bg-muted">⏸️ 잠시 멈춤</button>
                   )}
-                  <button type="button" onClick={handleStop} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-rose-600 hover:bg-rose-50">⏹️ {isReading ? "그만 읽기" : "그만 쓰기"}</button>
+                  <button type="button" onClick={handleStop} className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-destructive hover:bg-destructive/10">⏹️ {isReading ? "그만 읽기" : "그만 쓰기"}</button>
                 </>
               ) : (
                 <>

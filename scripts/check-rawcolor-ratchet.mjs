@@ -30,8 +30,9 @@ import { join, dirname } from "node:path";
 // 최초 설정: 2026-07-20 기준 eslint-rawcolor-baseline.mjs 347 개.
 // 2026-07-21 라운드7: 322 → 293 (board·mypage·networking·seminar·flashcard 정화)
 // 2026-07-21 라운드7 계속: 293 → 283 (LearningStreak·NetworkingPoll·HabitTracker·EventEditorForm 등)
+// 2026-07-21 라운드8: 283 → 244 (research·seminar 디렉토리 정화)
 // ─────────────────────────────────────────────────────────────
-const CEILING = 283;
+const CEILING = 244;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const baselinePath = join(__dirname, "..", "eslint-rawcolor-baseline.mjs");

@@ -55,7 +55,7 @@ export function ProcedureSection({
               </div>
               {!readOnly && (
                 <button type="button" onClick={() => onRemoveStep(i)}
-                  className="mt-1 rounded-md p-1 text-muted-foreground hover:bg-rose-50 hover:text-rose-600">
+                  className="mt-1 rounded-md p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive">
                   <Trash2 size={13} />
                 </button>
               )}

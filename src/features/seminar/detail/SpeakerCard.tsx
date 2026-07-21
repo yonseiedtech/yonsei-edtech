@@ -53,7 +53,7 @@ function SpeakerBlock({ s, single }: { s: SeminarSpeaker; single: boolean }) {
         <div className="flex flex-wrap items-center gap-2">
           <span className={single ? "text-lg font-bold" : "text-base font-semibold"}>{s.name}</span>
           {s.type === "guest" ? (
-            <Badge variant="secondary" className="bg-amber-50 text-xs text-amber-700">
+            <Badge variant="secondary" className="bg-warning/5 text-xs text-warning">
               GUEST SPEAKER
             </Badge>
           ) : (

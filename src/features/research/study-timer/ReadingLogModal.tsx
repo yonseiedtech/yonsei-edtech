@@ -140,7 +140,7 @@ export default function ReadingLogModal({
       <DialogContent className="max-w-md">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
-            <span className="text-teal-700">
+            <span className="text-info">
               <ReadingMascot celebrate size={26} />
             </span>
             논문 읽기 기록
@@ -153,7 +153,7 @@ export default function ReadingLogModal({
               {PAPER_READING_SOURCE_LABELS[source]}
             </span>
             {durationMin != null && (
-              <span className="font-semibold text-teal-700">⏱ {durationMin}분 집중</span>
+              <span className="font-semibold text-info">⏱ {durationMin}분 집중</span>
             )}
           </div>
 
@@ -182,7 +182,7 @@ export default function ReadingLogModal({
                   className={cn(
                     "h-6 w-6",
                     n <= rating
-                      ? "fill-amber-400 text-amber-400"
+                      ? "fill-warning text-warning"
                       : "text-muted-foreground/40",
                   )}
                 />
@@ -216,7 +216,7 @@ export default function ReadingLogModal({
           <button
             type="button"
             onClick={() => setDeep((v) => !v)}
-            className="text-xs font-medium text-teal-700 hover:underline"
+            className="text-xs font-medium text-info hover:underline"
           >
             {deep ? "− 정독 기록 접기" : "+ 정독 기록 — 핵심 주장 · 방법 · 시사점"}
           </button>
