@@ -191,11 +191,11 @@ export default function ConsoleResearchPage() {
     },
   });
 
-  const baseUsers = profilesData?.data ?? [];
-  const reports = reportsData?.data ?? [];
-  const proposals = proposalsData?.data ?? [];
-  const designs = designsData?.data ?? [];
-  const writings = writingsData?.data ?? [];
+  const baseUsers = useMemo(() => (profilesData?.data ?? []) as User[], [profilesData]);
+  const reports = useMemo(() => (reportsData?.data ?? []) as ResearchReport[], [reportsData]);
+  const proposals = useMemo(() => (proposalsData?.data ?? []) as ResearchProposal[], [proposalsData]);
+  const designs = useMemo(() => (designsData?.data ?? []) as ResearchDesign[], [designsData]);
+  const writings = useMemo(() => (writingsData?.data ?? []) as WritingPaper[], [writingsData]);
 
   // 연구 데이터가 있지만 approved 회원 목록에 없는 userId(예: 관리자, 미승인)를 별도 조회.
   const baseUserIds = useMemo(() => new Set(baseUsers.map((u) => u.id)), [baseUsers]);

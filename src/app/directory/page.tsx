@@ -13,7 +13,6 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/page-header";
-import PageContainer from "@/components/ui/page-container";
 import EmptyState from "@/components/ui/empty-state";
 import { Shield, Lock, Mail, Download, Search, ArrowUpDown } from "lucide-react";
 import { cn } from "@/lib/utils";
@@ -158,12 +157,11 @@ export function DirectoryContent({
     staleTime: 5 * 60_000,
   });
   const allDir = useMemo(() => dirRes?.members ?? [], [dirRes]);
-  const byRole = (role: string) => allDir.filter((m) => m.role === role);
-  const staffMembers = useMemo(() => byRole("staff"), [allDir]);
-  const presidentMembers = useMemo(() => byRole("president"), [allDir]);
-  const advisors = useMemo(() => byRole("advisor"), [allDir]);
-  const regularMembers = useMemo(() => byRole("member"), [allDir]);
-  const alumniMembers = useMemo(() => byRole("alumni"), [allDir]);
+  const staffMembers = useMemo(() => allDir.filter((m) => m.role === "staff"), [allDir]);
+  const presidentMembers = useMemo(() => allDir.filter((m) => m.role === "president"), [allDir]);
+  const advisors = useMemo(() => allDir.filter((m) => m.role === "advisor"), [allDir]);
+  const regularMembers = useMemo(() => allDir.filter((m) => m.role === "member"), [allDir]);
+  const alumniMembers = useMemo(() => allDir.filter((m) => m.role === "alumni"), [allDir]);
   const staffLoading = dirLoading, presLoading = dirLoading, advLoading = dirLoading, memLoading = dirLoading, alumLoading = dirLoading;
 
   const isLoading = staffLoading || presLoading || advLoading || memLoading || alumLoading;
