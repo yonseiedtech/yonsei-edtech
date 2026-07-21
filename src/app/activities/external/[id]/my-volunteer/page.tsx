@@ -204,7 +204,7 @@ export default function MyVolunteerPage() {
                 className="flex items-start gap-2 rounded-md bg-muted/20 px-2 py-1.5 text-sm"
               >
                 {duty.checked ? (
-                  <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-emerald-600" />
+                  <CheckCircle2 size={14} className="mt-0.5 shrink-0 text-success" />
                 ) : (
                   <Circle size={14} className="mt-0.5 shrink-0 text-muted-foreground" />
                 )}
@@ -222,17 +222,17 @@ export default function MyVolunteerPage() {
 
       {/* 비상 연락처 */}
       {assignment.emergencyContact && (
-        <div className="rounded-2xl border-2 border-rose-200 bg-rose-50/60 p-4 dark:border-rose-900 dark:bg-rose-950/30">
-          <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-rose-900 dark:text-rose-100">
+        <div className="rounded-2xl border-2 border-destructive/20 bg-destructive/5 p-4">
+          <h3 className="mb-1 flex items-center gap-2 text-sm font-semibold text-destructive">
             <ShieldAlert size={14} /> 비상 연락처 (학회장 본부석)
           </h3>
           <a
             href={`tel:${assignment.emergencyContact.replace(/\D/g, "")}`}
-            className="inline-flex items-center gap-1 text-lg font-bold text-rose-700 hover:underline dark:text-rose-300"
+            className="inline-flex items-center gap-1 text-lg font-bold text-destructive hover:underline"
           >
             <Phone size={16} /> {assignment.emergencyContact}
           </a>
-          <p className="mt-1 text-[11px] text-rose-800/80 dark:text-rose-200/80">
+          <p className="mt-1 text-[11px] text-destructive/80">
             특이사항·돌발 상황 시 즉시 연락
           </p>
         </div>

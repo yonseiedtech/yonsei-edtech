@@ -32,12 +32,12 @@ export default function CollabResearchCard({ research, myRole }: Props) {
           </h3>
 
           {research.researchTopic && (
-            <p className="line-clamp-2 text-sm text-zinc-600">
+            <p className="line-clamp-2 text-sm text-muted-foreground">
               {research.researchTopic}
             </p>
           )}
 
-          <div className="flex items-center justify-between pt-1 text-xs text-zinc-500">
+          <div className="flex items-center justify-between pt-1 text-xs text-muted-foreground">
             <span className="inline-flex items-center gap-1">
               <Users size={14} /> {research.collaboratorCount}명
             </span>

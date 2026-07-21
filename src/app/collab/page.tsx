@@ -51,7 +51,7 @@ function CollabResearchListContent() {
         )}
 
         {isLoading ? (
-          <p className="py-10 text-center text-sm text-zinc-500">불러오는 중...</p>
+          <p className="py-10 text-center text-sm text-muted-foreground">불러오는 중...</p>
         ) : researches.length === 0 ? (
           <EmptyState
             icon={Users}

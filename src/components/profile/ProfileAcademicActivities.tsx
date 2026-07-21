@@ -330,8 +330,8 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                       isOther
                         ? "border-border bg-muted text-muted-foreground"
                         : group.semester === "first"
-                          ? "border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-300"
-                          : "border-amber-200 bg-amber-50 text-amber-700 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-300",
+                          ? "border-success/20 bg-success/5 text-success"
+                          : "border-warning/20 bg-warning/5 text-warning",
                     )}
                   >
                     <CalendarRange size={11} />
@@ -351,7 +351,7 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                           className={cn(
                             "rounded-2xl border px-4 py-3 transition-colors",
                             speaker
-                              ? "border-rose-200 bg-rose-50/40 hover:border-rose-300 dark:border-rose-800 dark:bg-rose-950/20 dark:hover:border-rose-700"
+                              ? "border-destructive/20 bg-destructive/5 hover:border-destructive/30"
                               : "hover:border-primary/40",
                           )}
                         >
@@ -361,13 +361,13 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                                 {speaker && (
                                   <Badge
                                     variant="secondary"
-                                    className="gap-0.5 bg-rose-100 text-[10px] font-semibold text-rose-700 dark:bg-rose-900/50 dark:text-rose-300"
+                                    className="gap-0.5 bg-destructive/10 text-[10px] font-semibold text-destructive"
                                   >
                                     <Mic size={9} /> 연사
                                   </Badge>
                                 )}
                               </div>
-                              <p className={cn("truncate text-sm", speaker ? "font-semibold text-rose-900 dark:text-rose-200" : "font-medium")}>
+                              <p className={cn("truncate text-sm", speaker ? "font-semibold text-destructive" : "font-medium")}>
                                 {s.title}
                               </p>
                               <p className="mt-0.5 text-[11px] text-muted-foreground">
@@ -392,20 +392,20 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                           "rounded-2xl border px-4 py-3 transition-all",
                           isNewlyReviewed && showNewBadge &&
                             "relative overflow-hidden border-primary/60 bg-primary/5 shadow-lg ring-2 ring-primary/40 animate-in slide-in-from-bottom-4 fade-in duration-700",
-                          hasReview && !isNewlyReviewed && "border-emerald-200 bg-emerald-50/30 dark:border-emerald-900 dark:bg-emerald-950/10",
+                          hasReview && !isNewlyReviewed && "border-success/20 bg-success/5",
                         )}
                       >
                         {/* NEW sparkle 효과 */}
                         {isNewlyReviewed && showNewBadge && (
                           <>
-                            <Sparkles className="absolute right-2 top-2 h-4 w-4 animate-pulse text-amber-400" />
-                            <Sparkles className="absolute right-8 top-3 h-3 w-3 animate-pulse text-amber-400 [animation-delay:0.3s]" />
+                            <Sparkles className="absolute right-2 top-2 h-4 w-4 animate-pulse text-warning" />
+                            <Sparkles className="absolute right-8 top-3 h-3 w-3 animate-pulse text-warning [animation-delay:0.3s]" />
                           </>
                         )}
                         <div className="min-w-0 relative">
                           <div className="flex flex-wrap items-center gap-1.5">
                             {isNewlyReviewed && showNewBadge && (
-                              <Badge className="gap-0.5 bg-amber-500 text-white text-[10px] font-bold animate-in zoom-in duration-500">
+                              <Badge className="gap-0.5 bg-warning text-white text-[10px] font-bold animate-in zoom-in duration-500">
                                 <Sparkles size={9} /> NEW
                               </Badge>
                             )}
@@ -420,8 +420,8 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                                 variant="secondary"
                                 className={cn(
                                   "gap-0.5 text-[10px] font-medium",
-                                  role.kind === "leader" && "bg-amber-50 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300",
-                                  role.kind === "role" && "bg-violet-50 text-violet-700 dark:bg-violet-950/40 dark:text-violet-300",
+                                  role.kind === "leader" && "bg-warning/5 text-warning",
+                                  role.kind === "role" && "bg-cat-5/5 text-cat-5",
                                   role.kind === "external" && role.type && EXTERNAL_PARTICIPANT_TYPE_COLORS[role.type],
                                 )}
                               >
@@ -452,13 +452,13 @@ export default function ProfileAcademicActivities({ owner }: Props) {
                             const isPast = eventDate ? eventDate < today : false;
                             return !isPast;
                           })() && (
-                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-amber-200/80 bg-amber-50/70 px-2.5 py-1.5 dark:border-amber-900 dark:bg-amber-950/20">
-                              <p className="flex-1 text-[11px] leading-snug text-amber-900 dark:text-amber-200">
+                            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 rounded-md border border-warning/20 bg-warning/5 px-2.5 py-1.5">
+                              <p className="flex-1 text-[11px] leading-snug text-warning">
                                 ✨ 후기 작성으로 대외활동 참여 경험을 등록하세요
                               </p>
                               <Link
                                 href={`/activities/external/${a.id}/review`}
-                                className="inline-flex items-center gap-1 rounded-md border border-amber-300 bg-card px-2 py-1 text-[11px] font-medium text-amber-900 hover:bg-amber-100 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100 dark:hover:bg-amber-900/40"
+                                className="inline-flex items-center gap-1 rounded-md border border-warning/30 bg-card px-2 py-1 text-[11px] font-medium text-warning hover:bg-warning/10"
                               >
                                 <MessageSquare size={11} /> 후기 작성
                               </Link>

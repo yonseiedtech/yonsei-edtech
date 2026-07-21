@@ -213,7 +213,7 @@ export default function ChatbotAdminPage() {
             variant="secondary"
             className={cn(
               "text-xs",
-              isVisible ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700",
+              isVisible ? "bg-success/5 text-success" : "bg-warning/5 text-warning",
             )}
           >
             {isVisible ? "노출중" : "숨김"}
@@ -235,7 +235,7 @@ export default function ChatbotAdminPage() {
               variant="secondary"
               className={cn(
                 "text-xs",
-                isVisible ? "bg-green-50 text-green-700" : "bg-amber-50 text-amber-700",
+                isVisible ? "bg-success/5 text-success" : "bg-warning/5 text-warning",
               )}
             >
               {isVisible ? "현재: 노출" : "현재: 숨김"}
@@ -358,7 +358,7 @@ export default function ChatbotAdminPage() {
                   <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
                     <div className="min-w-0 flex-1">
                       <div className="flex flex-wrap items-center gap-2">
-                        <Badge variant="secondary" className={qa.enabled ? "bg-green-50 text-green-700 text-[10px]" : "text-[10px]"}>
+                        <Badge variant="secondary" className={qa.enabled ? "bg-success/5 text-success text-[10px]" : "text-[10px]"}>
                           {qa.enabled ? "활성" : "비활성"}
                         </Badge>
                         {qa.keywords.map((k) => (

@@ -153,14 +153,14 @@ export default function StudyMaterialArchive({ progressList }: Props) {
               key={`${i.url}-${idx}`}
               className={cn(
                 "flex items-center gap-2 rounded-lg border bg-card px-3 py-2 text-xs",
-                i.category === "pre-read" && "border-blue-200 bg-blue-50/30",
+                i.category === "pre-read" && "border-cat-1/20 bg-cat-1/5",
               )}
             >
               <FileText
                 size={14}
                 className={cn(
                   "shrink-0",
-                  i.category === "pre-read" ? "text-blue-700" : "text-muted-foreground",
+                  i.category === "pre-read" ? "text-cat-1" : "text-muted-foreground",
                 )}
               />
               <div className="flex-1 min-w-0">
@@ -179,7 +179,7 @@ export default function StudyMaterialArchive({ progressList }: Props) {
                   <span className="truncate">{i.weekTitle}</span>
                   {i.weekDate && <span>· {i.weekDate}</span>}
                   {i.category === "pre-read" && (
-                    <Badge className="bg-blue-100 text-[9px] text-blue-800">
+                    <Badge className="bg-cat-1/20 text-[9px] text-cat-1">
                       <Sparkles size={9} className="mr-0.5" /> Pre-read
                     </Badge>
                   )}

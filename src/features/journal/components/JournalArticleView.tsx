@@ -96,7 +96,7 @@ export default function JournalArticleView({
 
         <h1 className="text-3xl font-bold leading-tight">{article.titleKo}</h1>
         {article.titleEn && (
-          <p className="text-lg italic text-zinc-600">{article.titleEn}</p>
+          <p className="text-lg italic text-muted-foreground">{article.titleEn}</p>
         )}
 
         {/* 저자 */}
@@ -108,18 +108,18 @@ export default function JournalArticleView({
               <span key={a.userId} className="inline-flex items-center gap-1">
                 <span className="font-medium">{a.displayName}</span>
                 {a.isFirstAuthor && (
-                  <Star size={11} className="text-amber-500" />
+                  <Star size={11} className="text-warning" />
                 )}
                 {a.isCorresponding && (
-                  <Crown size={11} className="text-violet-600" />
+                  <Crown size={11} className="text-cat-5" />
                 )}
-                <span className="text-xs text-zinc-500">({a.affiliation})</span>
+                <span className="text-xs text-muted-foreground">({a.affiliation})</span>
               </span>
             ))}
         </div>
 
         {/* 발간일·조회수 */}
-        <div className="flex items-center gap-4 text-xs text-zinc-500">
+        <div className="flex items-center gap-4 text-xs text-muted-foreground">
           {article.publishedAt && (
             <span>발간일: {new Date(article.publishedAt).toLocaleDateString("ko-KR")}</span>
           )}
@@ -151,18 +151,18 @@ export default function JournalArticleView({
           {article.abstractKo}
         </p>
         {article.keywordsKo.length > 0 && (
-          <p className="text-xs text-zinc-600">
+          <p className="text-xs text-muted-foreground">
             <strong>키워드:</strong> {article.keywordsKo.join(", ")}
           </p>
         )}
         {article.abstractEn && (
-          <details className="rounded border border-zinc-200 p-3">
+          <details className="rounded border border-muted p-3">
             <summary className="cursor-pointer text-sm font-medium">Abstract (English)</summary>
-            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-zinc-700">
+            <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">
               {article.abstractEn}
             </p>
             {(article.keywordsEn ?? []).length > 0 && (
-              <p className="mt-2 text-xs text-zinc-600">
+              <p className="mt-2 text-xs text-muted-foreground">
                 <strong>Keywords:</strong> {(article.keywordsEn ?? []).join(", ")}
               </p>
             )}
@@ -173,7 +173,7 @@ export default function JournalArticleView({
       {/* 본문 */}
       <section className="space-y-3">
         <h2 className="text-lg font-semibold">본문</h2>
-        <div className="prose prose-sm max-w-none whitespace-pre-wrap rounded border border-zinc-200 bg-white p-6 text-sm leading-relaxed">
+        <div className="prose prose-sm max-w-none whitespace-pre-wrap rounded border border-muted bg-background p-6 text-sm leading-relaxed">
           {article.content || "(본문 미입력)"}
         </div>
       </section>
@@ -210,7 +210,7 @@ export default function JournalArticleView({
                 {article.authors.map((a) => (
                   <li key={a.userId}>
                     <strong>{a.displayName}</strong>:{" "}
-                    <span className="text-zinc-600">
+                    <span className="text-muted-foreground">
                       {a.creditRoles.length === 0
                         ? "(역할 미지정)"
                         : a.creditRoles
@@ -250,7 +250,7 @@ export default function JournalArticleView({
         </h2>
         <Card>
           <CardContent className="p-4">
-            <p className="text-sm leading-relaxed text-zinc-700">{citation}</p>
+            <p className="text-sm leading-relaxed text-muted-foreground">{citation}</p>
             <Button
               type="button"
               size="sm"
@@ -269,7 +269,7 @@ export default function JournalArticleView({
       </section>
 
       {!isAuthenticated && !isPublic && (
-        <Card className="border-amber-200 bg-amber-50">
+        <Card className="border-warning/20 bg-warning/5">
           <CardContent className="p-4 text-sm">
             ⚠️ 이 논문은 학회 회원 또는 팀 멤버만 열람할 수 있습니다.
           </CardContent>

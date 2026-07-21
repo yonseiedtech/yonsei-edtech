@@ -42,12 +42,12 @@ export default function StringListEditor({
   return (
     <div className="space-y-2">
       {value.length === 0 && emptyLabel && (
-        <p className="text-xs text-zinc-500">{emptyLabel}</p>
+        <p className="text-xs text-muted-foreground">{emptyLabel}</p>
       )}
       {value.map((item, idx) => (
         <div key={idx} className="flex items-start gap-2">
           {itemPrefix && (
-            <span className="mt-2.5 shrink-0 text-xs font-medium text-zinc-500">
+            <span className="mt-2.5 shrink-0 text-xs font-medium text-muted-foreground">
               {itemPrefix}
               {idx + 1}.
             </span>

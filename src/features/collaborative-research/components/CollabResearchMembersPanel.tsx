@@ -69,7 +69,7 @@ export default function CollabResearchMembersPanel({
   if (isLoading) {
     return (
       <Card>
-        <CardContent className="p-6 text-center text-sm text-zinc-500">
+        <CardContent className="p-6 text-center text-sm text-muted-foreground">
           멤버 정보를 불러오는 중...
         </CardContent>
       </Card>
@@ -104,14 +104,14 @@ export default function CollabResearchMembersPanel({
                   <p className="text-sm font-medium">
                     {profile?.name ?? m.userId}
                     {isMe && (
-                      <span className="ml-1 text-xs text-zinc-500">(나)</span>
+                      <span className="ml-1 text-xs text-muted-foreground">(나)</span>
                     )}
                     {isMemberLeader && (
-                      <span className="ml-1 text-xs text-violet-600">★</span>
+                      <span className="ml-1 text-xs text-cat-5">★</span>
                     )}
                   </p>
                   {profile?.email && (
-                    <p className="text-xs text-zinc-500">{profile.email}</p>
+                    <p className="text-xs text-muted-foreground">{profile.email}</p>
                   )}
                 </div>
                 <CollabResearchRoleBadge role={m.role} size="sm" />
@@ -128,7 +128,7 @@ export default function CollabResearchMembersPanel({
                         role: e.target.value as CollabMemberRole,
                       })
                     }
-                    className="rounded border border-zinc-300 px-2 py-1 text-xs"
+                    className="rounded border border-border px-2 py-1 text-xs"
                   >
                     {ROLE_OPTIONS.map((r) => (
                       <option key={r} value={r}>
@@ -144,14 +144,14 @@ export default function CollabResearchMembersPanel({
                         removeMut.mutate(m.id);
                     }}
                   >
-                    <Trash2 size={14} className="text-red-500" />
+                    <Trash2 size={14} className="text-destructive" />
                   </Button>
                 </div>
               )}
 
               {/* CRediT 역할 — 본인은 직접 수정, leader 는 모두 수정 */}
               <div>
-                <p className="mb-1 text-xs text-zinc-600">기여 역할 (CRediT)</p>
+                <p className="mb-1 text-xs text-muted-foreground">기여 역할 (CRediT)</p>
                 <CreditRoleSelector
                   value={m.creditRoles}
                   onChange={(roles) =>

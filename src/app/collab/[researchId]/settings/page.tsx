@@ -53,7 +53,7 @@ function SettingsContent({ researchId }: { researchId: string }) {
   if (isLoading || !user) {
     return (
       <PageContainer>
-        <p className="py-12 text-center text-sm text-zinc-500">불러오는 중...</p>
+        <p className="py-12 text-center text-sm text-muted-foreground">불러오는 중...</p>
       </PageContainer>
     );
   }
@@ -62,9 +62,9 @@ function SettingsContent({ researchId }: { researchId: string }) {
     return (
       <PageContainer>
         <BackButton href="/collab" label="공동 연구 목록" />
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-destructive/20 bg-destructive/10">
           <CardContent className="flex items-center gap-3 p-6">
-            <AlertCircle className="text-red-500" />
+            <AlertCircle className="text-destructive" />
             <p className="text-sm">연구를 찾을 수 없거나 접근 권한이 없습니다.</p>
           </CardContent>
         </Card>
@@ -80,7 +80,7 @@ function SettingsContent({ researchId }: { researchId: string }) {
       <PageContainer>
         <BackButton href={`/collab/${researchId}`} label="대시보드" />
         <Card>
-          <CardContent className="p-6 text-center text-sm text-zinc-500">
+          <CardContent className="p-6 text-center text-sm text-muted-foreground">
             설정은 책임연구자(leader)만 접근할 수 있습니다.
           </CardContent>
         </Card>
@@ -122,7 +122,7 @@ function SettingsContent({ researchId }: { researchId: string }) {
             <CardTitle className="text-base">상태 관리</CardTitle>
           </CardHeader>
           <CardContent className="space-y-3">
-            <p className="text-sm text-zinc-600">
+            <p className="text-sm text-muted-foreground">
               현재 상태: <strong>{COLLAB_STATUS_LABELS[research.status]}</strong>
             </p>
             <div className="flex flex-wrap gap-2">
@@ -142,15 +142,15 @@ function SettingsContent({ researchId }: { researchId: string }) {
                 );
               })}
             </div>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted-foreground">
               archived 상태로 전이 시 더 이상 수정할 수 없습니다 (admin 복원 필요).
             </p>
           </CardContent>
         </Card>
 
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-destructive/20 bg-destructive/10">
           <CardHeader>
-            <CardTitle className="flex items-center gap-2 text-base text-red-700">
+            <CardTitle className="flex items-center gap-2 text-base text-destructive">
               <AlertTriangle size={16} /> 위험 영역
             </CardTitle>
           </CardHeader>

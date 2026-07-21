@@ -91,14 +91,14 @@ export default function PortfolioVerifyButtons({ kind, itemId, ownerId }: Props)
           <button
             type="button"
             onClick={approve}
-            className="inline-flex items-center gap-0.5 rounded-md border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[10px] font-medium text-emerald-700 hover:bg-emerald-100"
+            className="inline-flex items-center gap-0.5 rounded-md border border-success/20 bg-success/5 px-2 py-0.5 text-[10px] font-medium text-success hover:bg-success/10"
           >
             <Check size={10} /> 승인
           </button>
           <button
             type="button"
             onClick={() => setRejectOpen((v) => !v)}
-            className="inline-flex items-center gap-0.5 rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] font-medium text-rose-700 hover:bg-rose-100"
+            className="inline-flex items-center gap-0.5 rounded-md border border-destructive/20 bg-destructive/5 px-2 py-0.5 text-[10px] font-medium text-destructive hover:bg-destructive/10"
           >
             <X size={10} /> 반려
           </button>
@@ -128,7 +128,7 @@ export default function PortfolioVerifyButtons({ kind, itemId, ownerId }: Props)
               type="button"
               onClick={reject}
               disabled={update.isPending}
-              className="rounded bg-rose-600 px-2 py-0.5 text-[10px] font-medium text-white hover:bg-rose-700 disabled:opacity-60"
+              className="rounded bg-destructive px-2 py-0.5 text-[10px] font-medium text-white hover:bg-destructive/90 disabled:opacity-60"
             >
               반려 확정
             </button>

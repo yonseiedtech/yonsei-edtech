@@ -42,7 +42,7 @@ export default function CreditRoleSelector({ value, onChange, disabled, size = "
               size === "sm" ? "px-2 py-0.5 text-xs" : "px-2.5 py-1 text-sm",
               selected
                 ? "border-primary bg-primary text-primary-foreground"
-                : "border-zinc-300 bg-white text-zinc-700 hover:bg-zinc-50",
+                : "border-border bg-card text-foreground hover:bg-muted/5",
               disabled && "cursor-not-allowed opacity-60",
             )}
           >

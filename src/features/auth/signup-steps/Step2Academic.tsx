@@ -39,7 +39,7 @@ export default function Step2Academic({ form, enrollmentStatus, setEnrollmentSta
       {/* 신분 유형 */}
       <div>
         <label className="mb-1.5 block text-sm font-medium">신분 유형 <span className="text-destructive">*</span></label>
-        <p className="mb-2 rounded-md border border-blue-200 bg-blue-50 px-3 py-2 text-xs text-blue-900 dark:border-blue-800 dark:bg-blue-950/40 dark:text-blue-100">
+        <p className="mb-2 rounded-md border border-cat-1/20 bg-cat-1/5 px-3 py-2 text-xs text-cat-1">
           현재 시점 기준으로 선택해주세요. (재학·휴학·졸업 중 하나)
         </p>
         <div className="grid grid-cols-2 gap-2 sm:grid-cols-5">
@@ -64,7 +64,7 @@ export default function Step2Academic({ form, enrollmentStatus, setEnrollmentSta
       {/* 학부 정보 */}
       <div className="rounded-lg border bg-muted/20 p-4 space-y-3">
         <p className="text-sm font-medium">학부 정보 <span className="text-destructive">*</span></p>
-        <div className="rounded-md border border-amber-200 bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-900 dark:border-amber-800 dark:bg-amber-950/40 dark:text-amber-100">
+        <div className="rounded-md border border-warning/20 bg-warning/5 px-3 py-2 text-xs leading-relaxed text-warning">
           구성원분들 학부(대학) 전공 데이터(교육학 전공·비전공생 구분) 기반 세미나 기획을 위해 <b>학부(대학교) 정보</b>를 입력하는 영역입니다.
           <br />
           <b>대학원 정보가 아닙니다!</b> 학사 학위 취득 대학교 기준으로 작성해주세요.

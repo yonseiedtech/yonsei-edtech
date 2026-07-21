@@ -64,10 +64,10 @@ const STATUS_LABELS: Record<ChapterStatus, string> = {
 };
 
 const STATUS_COLORS: Record<ChapterStatus, string> = {
-  empty: "bg-zinc-100 text-zinc-600",
-  draft: "bg-blue-100 text-blue-700",
-  review: "bg-amber-100 text-amber-700",
-  approved: "bg-emerald-100 text-emerald-700",
+  empty: "bg-muted/50 text-muted-foreground",
+  draft: "bg-cat-1/15 text-cat-1",
+  review: "bg-warning/15 text-warning",
+  approved: "bg-success/15 text-success",
 };
 
 export default function ChaptersBoard({
@@ -104,7 +104,7 @@ export default function ChaptersBoard({
   };
 
   if (isLoading) {
-    return <p className="py-8 text-center text-sm text-zinc-500">불러오는 중...</p>;
+    return <p className="py-8 text-center text-sm text-muted-foreground">불러오는 중...</p>;
   }
 
   return (
@@ -116,7 +116,7 @@ export default function ChaptersBoard({
         </CardHeader>
         <CardContent className="space-y-1">
           {chapters.length === 0 && (
-            <p className="rounded bg-zinc-50 px-3 py-2 text-xs text-zinc-600">
+            <p className="rounded bg-muted/30 px-3 py-2 text-xs text-muted-foreground">
               아직 챕터가 없습니다.
             </p>
           )}
@@ -126,11 +126,11 @@ export default function ChaptersBoard({
               type="button"
               onClick={() => setSelectedId(c.id)}
               className={`block w-full rounded px-2 py-2 text-left text-sm transition-colors ${
-                selected?.id === c.id ? "bg-primary/10 text-primary" : "hover:bg-zinc-100"
+                selected?.id === c.id ? "bg-primary/10 text-primary" : "hover:bg-muted/50"
               }`}
             >
               <div className="flex items-center justify-between gap-2">
-                <span className="font-mono text-xs text-zinc-500">
+                <span className="font-mono text-xs text-muted-foreground">
                   {STANDARD_CHAPTER_LABELS[c.chapterKey] ?? c.chapterKey}
                 </span>
                 <span className={`rounded-full px-1.5 py-0.5 text-[10px] ${STATUS_COLORS[c.status]}`}>
@@ -138,7 +138,7 @@ export default function ChaptersBoard({
                 </span>
               </div>
               <div className="mt-0.5 line-clamp-1 text-sm font-medium">{c.title}</div>
-              <div className="mt-1 text-xs text-zinc-500">{c.charCount.toLocaleString()}자</div>
+              <div className="mt-1 text-xs text-muted-foreground">{c.charCount.toLocaleString()}자</div>
             </button>
           ))}
 
@@ -156,7 +156,7 @@ export default function ChaptersBoard({
                   챕터 추가
                 </Button>
               ) : (
-                <div className="mt-2 space-y-2 rounded border border-dashed border-zinc-300 p-2">
+                <div className="mt-2 space-y-2 rounded border border-dashed border-border p-2">
                   <select
                     value={newKey}
                     onChange={(e) => {
@@ -165,7 +165,7 @@ export default function ChaptersBoard({
                         setNewTitle(STANDARD_CHAPTER_LABELS[e.target.value] ?? "");
                       }
                     }}
-                    className="block w-full rounded border border-zinc-300 px-2 py-1 text-xs"
+                    className="block w-full rounded border border-border px-2 py-1 text-xs"
                   >
                     <option value="">키 선택 (또는 직접 입력)</option>
                     {STANDARD_CHAPTER_KEYS.map((k) => (
@@ -226,7 +226,7 @@ export default function ChaptersBoard({
           />
         ) : (
           <Card>
-            <CardContent className="p-12 text-center text-sm text-zinc-500">
+            <CardContent className="p-12 text-center text-sm text-muted-foreground">
               왼쪽에서 챕터를 선택하거나 새로 추가하세요.
             </CardContent>
           </Card>
@@ -293,7 +293,7 @@ function ChapterEditor({
                 value={status}
                 onChange={(e) => setStatus(e.target.value as ChapterStatus)}
                 disabled={!canEdit}
-                className="rounded border border-zinc-300 px-2 py-1 text-xs"
+                className="rounded border border-border px-2 py-1 text-xs"
               >
                 <option value="empty">{STATUS_LABELS.empty}</option>
                 <option value="draft">{STATUS_LABELS.draft}</option>
@@ -304,7 +304,7 @@ function ChapterEditor({
             </div>
           </div>
           {chapter.lastEditedAt && (
-            <p className="mt-1 text-xs text-zinc-500">
+            <p className="mt-1 text-xs text-muted-foreground">
               마지막 수정: {new Date(chapter.lastEditedAt).toLocaleString("ko-KR")}
               · {chapter.charCount.toLocaleString()}자
             </p>
@@ -321,7 +321,7 @@ function ChapterEditor({
           />
           {styleSummary.length > 0 && (
             <div className="flex flex-wrap items-center gap-1.5 rounded-lg border border-dashed bg-muted/30 px-2.5 py-1.5 text-[11px]">
-              <span className="inline-flex items-center gap-1 font-semibold text-rose-600 dark:text-rose-400">
+              <span className="inline-flex items-center gap-1 font-semibold text-destructive">
                 <Languages size={11} />
                 문체 점검
               </span>
@@ -361,7 +361,7 @@ function ChapterEditor({
             </div>
           )}
           {updateMut.isError && (
-            <div className="flex items-start gap-2 rounded border border-red-200 bg-red-50 p-3 text-sm text-red-800">
+            <div className="flex items-start gap-2 rounded border border-destructive/20 bg-destructive/10 p-3 text-sm text-destructive">
               <AlertTriangle size={16} className="mt-0.5 shrink-0" />
               <span>
                 다른 멤버가 먼저 저장했습니다. 페이지를 새로고침해 최신 본문을 받은 뒤
@@ -428,17 +428,17 @@ function ChapterCommentSection({
       </CardHeader>
       <CardContent className="space-y-3">
         {comments.length === 0 ? (
-          <p className="text-sm text-zinc-500">아직 댓글이 없습니다.</p>
+          <p className="text-sm text-muted-foreground">아직 댓글이 없습니다.</p>
         ) : (
           comments.map((c) => (
             <div
               key={c.id}
               className={`rounded border p-3 text-sm ${
-                c.resolvedAt ? "border-zinc-200 bg-zinc-50 opacity-70" : "border-zinc-200"
+                c.resolvedAt ? "border-border bg-muted/30 opacity-70" : "border-border"
               }`}
             >
               <div className="mb-1 flex items-center justify-between">
-                <span className="text-xs font-medium text-zinc-600">
+                <span className="text-xs font-medium text-muted-foreground">
                   {c.authorId.slice(0, 8)}… ·{" "}
                   {new Date(c.createdAt).toLocaleString("ko-KR")}
                 </span>
@@ -452,7 +452,7 @@ function ChapterCommentSection({
                           resolverId: c.resolvedAt ? null : currentUserId,
                         })
                       }
-                      className="text-xs text-zinc-500 hover:text-emerald-700"
+                      className="text-xs text-muted-foreground hover:text-success"
                     >
                       {c.resolvedAt ? "재오픈" : "해결"}
                     </button>
@@ -461,7 +461,7 @@ function ChapterCommentSection({
                     <button
                       type="button"
                       onClick={() => deleteMut.mutate(c.id)}
-                      className="text-xs text-red-500 hover:underline"
+                      className="text-xs text-destructive hover:underline"
                     >
                       삭제
                     </button>
@@ -470,7 +470,7 @@ function ChapterCommentSection({
               </div>
               <p className="whitespace-pre-wrap text-sm">{c.body}</p>
               {c.mentionedUserIds.length > 0 && (
-                <p className="mt-1 text-xs text-blue-600">
+                <p className="mt-1 text-xs text-cat-1">
                   멘션: {c.mentionedUserIds.map((u) => `@${u}`).join(" ")}
                 </p>
               )}
@@ -478,7 +478,7 @@ function ChapterCommentSection({
           ))
         )}
 
-        <div className="space-y-2 rounded border border-dashed border-zinc-300 p-3">
+        <div className="space-y-2 rounded border border-dashed border-border p-3">
           <Label htmlFor="comment-body" className="text-xs">
             새 댓글 (@username 으로 멘션 가능)
           </Label>

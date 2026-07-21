@@ -135,7 +135,7 @@ export default function ContributionsMatrix({ researchId }: Props) {
             <BarChart3 size={18} />
             활동량 매트릭스 ({members.length}명)
           </CardTitle>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             챕터 편집 +2 / 회의 기록 +3 / 마일스톤 완료 +5 / 발간 +10 ·{" "}
             <strong>발간 후 변경되는 누적 표시</strong>입니다.
           </p>
@@ -144,7 +144,7 @@ export default function ContributionsMatrix({ researchId }: Props) {
           <div className="overflow-x-auto">
             <table className="w-full min-w-[640px] text-sm">
               <thead>
-                <tr className="border-b text-left text-xs text-zinc-500">
+                <tr className="border-b text-left text-xs text-muted-foreground">
                   <th className="py-2 pr-4">멤버</th>
                   <th className="py-2 pr-4 text-center">
                     <FileText size={12} className="inline" /> 챕터
@@ -175,7 +175,7 @@ export default function ContributionsMatrix({ researchId }: Props) {
                     <tr key={m.id} className="border-b">
                       <td className="py-2 pr-4">
                         <span className="font-medium">{profile?.name ?? m.userId.slice(0, 8)}</span>
-                        <span className="ml-2 text-xs text-zinc-500">{m.role}</span>
+                        <span className="ml-2 text-xs text-muted-foreground">{m.role}</span>
                       </td>
                       <td className="py-2 pr-4 text-center">{a.chapterEdits}</td>
                       <td className="py-2 pr-4 text-center">{a.meetings}</td>
@@ -189,7 +189,7 @@ export default function ContributionsMatrix({ researchId }: Props) {
                 })}
                 {sortedMembers.length === 0 && (
                   <tr>
-                    <td colSpan={6} className="py-6 text-center text-sm text-zinc-500">
+                    <td colSpan={6} className="py-6 text-center text-sm text-muted-foreground">
                       멤버가 없습니다.
                     </td>
                   </tr>
@@ -204,7 +204,7 @@ export default function ContributionsMatrix({ researchId }: Props) {
       <Card>
         <CardHeader>
           <CardTitle className="text-base">CRediT 역할 분포</CardTitle>
-          <p className="mt-1 text-xs text-zinc-500">
+          <p className="mt-1 text-xs text-muted-foreground">
             각 표준 역할별로 채택한 멤버 명단. 멤버 페이지에서 본인 역할을 조정하세요.
           </p>
         </CardHeader>
@@ -217,16 +217,16 @@ export default function ContributionsMatrix({ researchId }: Props) {
                   key={role}
                   className={`rounded border p-2 ${
                     claimed.length === 0
-                      ? "border-zinc-200 bg-zinc-50"
+                      ? "border-border bg-muted/5"
                       : "border-primary/30 bg-primary/5"
                   }`}
                 >
                   <div className="flex items-center justify-between">
                     <p className="text-xs font-medium">{CREDIT_ROLE_LABELS[role]}</p>
-                    <span className="text-xs text-zinc-500">{claimed.length}명</span>
+                    <span className="text-xs text-muted-foreground">{claimed.length}명</span>
                   </div>
                   {claimed.length > 0 && (
-                    <p className="mt-1 text-xs text-zinc-700">
+                    <p className="mt-1 text-xs text-foreground">
                       {claimed
                         .map((m) => userMap.get(m.userId)?.name ?? m.userId.slice(0, 6))
                         .join(", ")}
@@ -269,7 +269,7 @@ function SummaryCell({ label, value }: { label: string; value: number | string }
   return (
     <div>
       <p className="text-2xl font-bold">{value}</p>
-      <p className="text-xs text-zinc-500">{label}</p>
+      <p className="text-xs text-muted-foreground">{label}</p>
     </div>
   );
 }

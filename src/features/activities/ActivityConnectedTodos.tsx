@@ -31,9 +31,9 @@ const PRIORITY_LABELS: Record<AdminTodo["priority"], string> = {
 };
 
 const PRIORITY_COLORS: Record<AdminTodo["priority"], string> = {
-  high: "bg-rose-50 text-rose-700",
-  medium: "bg-amber-50 text-amber-700",
-  low: "bg-slate-50 text-slate-700",
+  high: "bg-destructive/10 text-destructive",
+  medium: "bg-warning/10 text-warning",
+  low: "bg-muted/10 text-muted-foreground",
 };
 
 const STATUS_LABELS: Record<AdminTodo["status"], string> = {
@@ -100,10 +100,10 @@ export default function ActivityConnectedTodos({ activityId }: Props) {
 
   return (
     <div className="rounded-2xl border bg-card">
-      <div className="flex items-center justify-between gap-2 border-b bg-slate-50 px-4 py-2.5">
+      <div className="flex items-center justify-between gap-2 border-b bg-muted/5 px-4 py-2.5">
         <div className="flex items-center gap-2">
-          <ListChecks size={14} className="text-slate-600" />
-          <h3 className="text-sm font-semibold text-slate-700">
+          <ListChecks size={14} className="text-muted-foreground" />
+          <h3 className="text-sm font-semibold text-foreground">
             연동된 운영 업무 ({todos.length})
           </h3>
         </div>
@@ -136,9 +136,9 @@ export default function ActivityConnectedTodos({ activityId }: Props) {
                   variant="secondary"
                   className={cn(
                     "text-[10px]",
-                    t.status === "done" && "bg-green-50 text-green-700",
-                    t.status === "in_progress" && "bg-blue-50 text-blue-700",
-                    t.status === "todo" && "bg-slate-100 text-slate-700",
+                    t.status === "done" && "bg-success/10 text-success",
+                    t.status === "in_progress" && "bg-cat-1/10 text-cat-1",
+                    t.status === "todo" && "bg-muted/20 text-muted-foreground",
                   )}
                 >
                   {STATUS_LABELS[t.status]}
@@ -172,7 +172,7 @@ export default function ActivityConnectedTodos({ activityId }: Props) {
                 <Button
                   size="sm"
                   variant="ghost"
-                  className="h-7 px-2 text-muted-foreground hover:text-rose-600"
+                  className="h-7 px-2 text-muted-foreground hover:text-destructive"
                   onClick={() => remove(t)}
                   title="삭제"
                 >

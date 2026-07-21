@@ -97,14 +97,14 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
   // 비로그인 차단: 일반 회원 페이지
   if (access === "blocked") {
     return (
-      <div className="min-h-screen bg-slate-50 py-12">
+      <div className="min-h-screen bg-muted/30 py-12">
         <div className="mx-auto max-w-md px-4">
           <div className="rounded-2xl border bg-card p-8 text-center shadow-sm">
             <div className="mx-auto mb-4 flex h-14 w-14 items-center justify-center rounded-full bg-muted">
               <Lock size={22} className="text-muted-foreground" />
             </div>
             <h1 className="text-lg font-bold">{owner.name}</h1>
-            <p className="mt-4 text-sm text-slate-700">
+            <p className="mt-4 text-sm text-muted-foreground">
               회원 전용 프로필입니다. 자세한 정보를 보려면 로그인하세요.
             </p>
             <Link
@@ -146,7 +146,7 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
     !!viewer && !isOwner && !!owner.mentorOpen && isAlumni(owner) && !isAlumni(viewer);
 
   return (
-    <div className="min-h-screen bg-slate-50 py-10">
+    <div className="min-h-screen bg-muted/30 py-10">
       <div className="mx-auto max-w-2xl space-y-4 px-4">
         <div className="flex items-center gap-2.5 pb-2">
           <Image src="/yonsei-emblem.svg" alt="연세대학교" width={28} height={28} className="h-7 w-7" />
@@ -156,10 +156,10 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
 
         {/* 멘토 오픈 졸업생에게 조언 요청 — 재학생 후배 진입 (기존 쪽지) */}
         {showMentorRequest && (
-          <section className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4 dark:border-emerald-900 dark:bg-emerald-950/30">
+          <section className="rounded-2xl border border-success/20 bg-success/5 p-4">
             <div className="flex items-start gap-3">
               <div
-                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 text-emerald-700 dark:bg-emerald-900/50 dark:text-emerald-300"
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-success/10 text-success"
                 aria-hidden="true"
               >
                 <HeartHandshake size={18} />
@@ -173,7 +173,7 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
                     {owner.mentorTopics!.map((t) => (
                       <span
                         key={t}
-                        className="inline-flex items-center rounded-full bg-white/70 px-2 py-0.5 text-[11px] text-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200"
+                        className="inline-flex items-center rounded-full bg-background/70 px-2 py-0.5 text-[11px] text-success"
                       >
                         {t}
                       </span>
@@ -183,7 +183,7 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
                 <div className="mt-3 flex flex-wrap items-center gap-2">
                   <Link
                     href={`/mypage/messages?compose=${owner.id}&prefill=${encodeURIComponent("[조언 요청] ")}`}
-                    className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-700"
+                    className="inline-flex items-center gap-1.5 rounded-lg bg-success px-3 py-2 text-sm font-medium text-white transition-colors hover:bg-success/90"
                   >
                     쪽지로 조언 요청 <ChevronRight size={14} />
                   </Link>
@@ -193,12 +193,12 @@ export default function ProfileDetailView({ ownerId, initialOwner }: Props) {
                         ? `&topic=${encodeURIComponent(owner.mentorTopics[0])}`
                         : ""
                     }`}
-                    className="inline-flex items-center gap-1.5 rounded-lg border border-emerald-300 bg-white/70 px-3 py-2 text-sm font-medium text-emerald-800 transition-colors hover:bg-white dark:border-emerald-800 dark:bg-emerald-900/40 dark:text-emerald-200"
+                    className="inline-flex items-center gap-1.5 rounded-lg border border-success/30 bg-background/70 px-3 py-2 text-sm font-medium text-success transition-colors hover:bg-background"
                   >
                     공개 질문으로 남기기 <ChevronRight size={14} />
                   </Link>
                 </div>
-                <p className="mt-1.5 text-[11px] text-emerald-700/80 dark:text-emerald-300/70">
+                <p className="mt-1.5 text-[11px] text-success/80">
                   공개 질문은 멘토링 Q&A 보드에 남아 다른 후배에게도 도움이 됩니다.
                 </p>
               </div>

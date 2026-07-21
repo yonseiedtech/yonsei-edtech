@@ -7,7 +7,7 @@ export default function ProfileBio({ bio }: Props) {
   return (
     <section className="rounded-2xl border bg-card p-5 shadow-sm">
       <h2 className="mb-2 text-xs font-semibold uppercase tracking-wider text-muted-foreground">학회원 소개</h2>
-      <p className="whitespace-pre-wrap text-sm leading-relaxed text-slate-700">{bio}</p>
+      <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{bio}</p>
     </section>
   );
 }

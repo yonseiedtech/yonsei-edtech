@@ -435,10 +435,10 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
   const overallDelta = totalActualSec - totalEstimatedSec;
 
   const statusMap: Record<ProgressMeeting["status"], { label: string; cls: string }> = {
-    planning: { label: "준비 중", cls: "bg-slate-100 text-slate-700" },
-    running: { label: "진행 중", cls: "bg-emerald-50 text-emerald-700 animate-pulse" },
-    paused: { label: "일시정지", cls: "bg-amber-50 text-amber-700" },
-    completed: { label: "종료됨", cls: "bg-blue-50 text-blue-700" },
+    planning: { label: "준비 중", cls: "bg-muted/20 text-muted-foreground" },
+    running: { label: "진행 중", cls: "bg-success/10 text-success animate-pulse" },
+    paused: { label: "일시정지", cls: "bg-warning/10 text-warning" },
+    completed: { label: "종료됨", cls: "bg-cat-1/10 text-cat-1" },
   };
   const sm = statusMap[status];
 
@@ -458,7 +458,7 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
             variant="secondary"
             className={cn(
               "text-[10px]",
-              overallDelta > 0 ? "bg-rose-50 text-rose-700" : "bg-emerald-50 text-emerald-700",
+              overallDelta > 0 ? "bg-destructive/10 text-destructive" : "bg-success/10 text-success",
             )}
           >
             {overallDelta > 0 ? "초과" : "여유"} {fmtMMSS(Math.abs(overallDelta))}
@@ -515,7 +515,7 @@ function MeetingPanel({ meeting, canControl, weekLabel, onMutated }: PanelProps)
             <Button
               size="sm"
               variant="ghost"
-              className="text-rose-600 hover:bg-rose-50 hover:text-rose-700"
+              className="text-destructive hover:bg-destructive/10 hover:text-destructive"
               onClick={handleResetAll}
               title="모든 섹션의 시간 기록을 0으로 되돌리고 준비 중 상태로 전환"
             >
@@ -730,7 +730,7 @@ function SortableSection(props: SortableSectionProps) {
                 {...listeners}
                 aria-label="섹션 순서 드래그"
                 title="드래그로 순서 변경 (모바일은 길게 눌러 드래그)"
-                className="-ml-1 flex h-6 w-6 cursor-grab touch-none items-center justify-center rounded text-muted-foreground hover:bg-slate-100 hover:text-slate-700 active:cursor-grabbing"
+                className="-ml-1 flex h-6 w-6 cursor-grab touch-none items-center justify-center rounded text-muted-foreground hover:bg-muted/10 hover:text-foreground active:cursor-grabbing"
               >
                 <GripVertical size={14} />
               </button>
@@ -738,7 +738,7 @@ function SortableSection(props: SortableSectionProps) {
             <Badge variant="secondary" className="text-[10px]">#{i + 1}</Badge>
             {isActive && <Badge className="bg-primary text-[10px] text-white">진행 중</Badge>}
             {isDone && (
-              <Badge className="bg-emerald-50 text-[10px] text-emerald-700">
+              <Badge className="bg-success/10 text-[10px] text-success">
                 <CheckCircle2 size={10} className="mr-0.5" />완료
               </Badge>
             )}
@@ -747,7 +747,7 @@ function SortableSection(props: SortableSectionProps) {
               <span className="flex items-center gap-0.5"><Clock size={10} /> 예상 {s.estimatedMinutes}분</span>
               <span>실제 {fmtMMSS(live)}</span>
               {(isActive || isDone) && (
-                <span className={cn(overTime ? "text-rose-600" : "text-emerald-600")}>
+                <span className={cn(overTime ? "text-destructive" : "text-success")}>
                   {overTime && <AlertTriangle size={10} className="-mt-0.5 mr-0.5 inline" />}
                   {overTime ? "초과" : "여유"} {fmtMMSS(Math.abs(delta))}
                 </span>
@@ -765,7 +765,7 @@ function SortableSection(props: SortableSectionProps) {
                   </button>
                   <button
                     onClick={() => handleDuplicateSection(i)}
-                    className="rounded p-0.5 text-muted-foreground hover:text-blue-600"
+                    className="rounded p-0.5 text-muted-foreground hover:text-cat-1"
                     aria-label="섹션 복제"
                     title="섹션 복제 (재논의용 — 시간 0으로 초기화하여 다음 줄에 추가)"
                   >
@@ -773,7 +773,7 @@ function SortableSection(props: SortableSectionProps) {
                   </button>
                   <button
                     onClick={() => handleResetSection(i)}
-                    className="rounded p-0.5 text-muted-foreground hover:text-amber-600"
+                    className="rounded p-0.5 text-muted-foreground hover:text-warning"
                     aria-label="섹션 시간 초기화"
                     title="이 섹션의 시간 기록만 초기화"
                   >
@@ -784,8 +784,8 @@ function SortableSection(props: SortableSectionProps) {
                     className={cn(
                       "rounded p-0.5",
                       progressed
-                        ? "text-rose-400 hover:text-rose-600"
-                        : "text-muted-foreground hover:text-rose-500",
+                        ? "text-destructive/60 hover:text-destructive"
+                        : "text-muted-foreground hover:text-destructive",
                     )}
                     aria-label="섹션 삭제"
                     title={progressed ? "이미 진행된 섹션 — 삭제 시 추가 확인" : "섹션 삭제"}
@@ -799,7 +799,7 @@ function SortableSection(props: SortableSectionProps) {
 
           {/* 모바일 액션바 — 큰 터치 타겟 + 라벨 */}
           {canControl && (
-            <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-slate-100 pt-2 md:hidden">
+            <div className="mt-2 flex flex-wrap items-center gap-1 border-t border-border pt-2 md:hidden">
               <Button
                 type="button"
                 size="sm"
@@ -813,7 +813,7 @@ function SortableSection(props: SortableSectionProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="h-9 flex-1 min-w-[64px] px-2 text-[11px] text-muted-foreground hover:text-blue-600"
+                className="h-9 flex-1 min-w-[64px] px-2 text-[11px] text-muted-foreground hover:text-cat-1"
                 onClick={() => handleDuplicateSection(i)}
               >
                 <Copy size={14} className="mr-1" />복제
@@ -822,7 +822,7 @@ function SortableSection(props: SortableSectionProps) {
                 type="button"
                 size="sm"
                 variant="ghost"
-                className="h-9 flex-1 min-w-[64px] px-2 text-[11px] text-muted-foreground hover:text-amber-600"
+                className="h-9 flex-1 min-w-[64px] px-2 text-[11px] text-muted-foreground hover:text-warning"
                 onClick={() => handleResetSection(i)}
               >
                 <RotateCcw size={14} className="mr-1" />초기화
@@ -834,8 +834,8 @@ function SortableSection(props: SortableSectionProps) {
                 className={cn(
                   "h-9 flex-1 min-w-[64px] px-2 text-[11px]",
                   progressed
-                    ? "text-rose-500 hover:text-rose-700"
-                    : "text-muted-foreground hover:text-rose-600",
+                    ? "text-destructive hover:text-destructive"
+                    : "text-muted-foreground hover:text-destructive",
                 )}
                 onClick={() => handleRemoveSection(i)}
               >
@@ -848,7 +848,7 @@ function SortableSection(props: SortableSectionProps) {
       {(isActive || isDone) && !isEditing && (
         <div className="mt-1.5 h-1 w-full overflow-hidden rounded-full bg-muted">
           <div
-            className={cn("h-full transition-all duration-300", overTime ? "bg-rose-500" : "bg-primary")}
+            className={cn("h-full transition-all duration-300", overTime ? "bg-destructive" : "bg-primary")}
             style={{ width: `${pct}%` }}
           />
         </div>

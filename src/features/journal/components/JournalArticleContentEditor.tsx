@@ -103,7 +103,7 @@ export default function JournalArticleContentEditor({ article, disabled }: Props
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="art-title-ko">
-              제목 (한글) <span className="text-red-500">*</span>
+              제목 (한글) <span className="text-destructive">*</span>
             </Label>
             <Input
               id="art-title-ko"
@@ -124,7 +124,7 @@ export default function JournalArticleContentEditor({ article, disabled }: Props
           </div>
           <div>
             <Label htmlFor="art-abstract-ko">
-              초록 (한글) <span className="text-red-500">*</span>
+              초록 (한글) <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="art-abstract-ko"
@@ -179,7 +179,7 @@ export default function JournalArticleContentEditor({ article, disabled }: Props
         </CardHeader>
         <CardContent>
           {isImrad && (
-            <p className="mb-2 rounded bg-blue-50 px-3 py-2 text-xs text-blue-900">
+            <p className="mb-2 rounded bg-cat-1/5 px-3 py-2 text-xs text-cat-1">
               💡 정식 연구지는 <strong>IMRaD 구조</strong>를 권장합니다. 다음 섹션 헤더를 사용하세요:
               <br />
               <code className="text-xs">## 서론 / ## 방법 / ## 결과 / ## 논의 / ## 결론 / ## 참고문헌</code>
@@ -207,7 +207,7 @@ export default function JournalArticleContentEditor({ article, disabled }: Props
         </CardHeader>
         <CardContent className="space-y-3">
           {citations.map((c, idx) => (
-            <div key={c.id} className="space-y-2 rounded border border-zinc-200 p-2">
+            <div key={c.id} className="space-y-2 rounded border border-muted p-2">
               <div className="grid gap-2 sm:grid-cols-[120px_1fr_80px_auto]">
                 <select
                   value={c.type}
@@ -215,7 +215,7 @@ export default function JournalArticleContentEditor({ article, disabled }: Props
                     updateCitation(idx, "type", e.target.value as CitationType)
                   }
                   disabled={disabled}
-                  className="rounded border border-zinc-300 px-2 py-1 text-xs"
+                  className="rounded border border-muted px-2 py-1 text-xs"
                 >
                   {Object.entries(CITATION_TYPE_LABELS).map(([k, v]) => (
                     <option key={k} value={k}>
@@ -246,7 +246,7 @@ export default function JournalArticleContentEditor({ article, disabled }: Props
                   disabled={disabled}
                   title="제거"
                 >
-                  <X size={14} className="text-red-500" />
+                  <X size={14} className="text-destructive" />
                 </Button>
               </div>
               <Input

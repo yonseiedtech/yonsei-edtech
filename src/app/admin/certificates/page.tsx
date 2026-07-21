@@ -530,9 +530,9 @@ export default function CertificatesPage() {
 
       {/* 통계 */}
       <div className="flex flex-wrap gap-3 text-sm">
-        <span className="rounded-lg bg-gray-100 px-3 py-1.5 font-medium">전체 {certificates.length}건</span>
-        <span className="rounded-lg bg-blue-50 px-3 py-1.5 text-blue-700">수료증 {completionCount}건</span>
-        <span className="rounded-lg bg-amber-50 px-3 py-1.5 text-amber-700">감사장 {appreciationCount}건</span>
+        <span className="rounded-lg bg-muted/50 px-3 py-1.5 font-medium">전체 {certificates.length}건</span>
+        <span className="rounded-lg bg-cat-1/5 px-3 py-1.5 text-cat-1">수료증 {completionCount}건</span>
+        <span className="rounded-lg bg-warning/5 px-3 py-1.5 text-warning">감사장 {appreciationCount}건</span>
       </div>
 
       {/* 테이블 */}
@@ -548,7 +548,7 @@ export default function CertificatesPage() {
         <div className="overflow-x-auto rounded-2xl border bg-card">
           <table className="w-full text-xs sm:text-sm">
             <thead>
-              <tr className="border-b bg-gray-50 text-left">
+              <tr className="border-b bg-muted/30 text-left">
                 <th className="px-2 py-2 font-medium sm:px-4 sm:py-3 w-8">
                   <button
                     type="button"
@@ -588,7 +588,7 @@ export default function CertificatesPage() {
             </thead>
             <tbody>
               {filtered.map((c: Certificate) => (
-                <tr key={c.id} className="border-b last:border-b-0 hover:bg-gray-50">
+                <tr key={c.id} className="border-b last:border-b-0 hover:bg-muted/20">
                   <td className="px-2 py-2 sm:px-4 sm:py-3">
                     <button
                       type="button"
@@ -607,14 +607,14 @@ export default function CertificatesPage() {
                     <div className="flex flex-col gap-0.5">
                       <span>{c.recipientName}</span>
                       {c.recipientUserId ? (
-                        <Badge variant="secondary" className="w-fit bg-green-50 text-[10px] text-green-700">회원 연결됨</Badge>
+                        <Badge variant="secondary" className="w-fit bg-success/5 text-[10px] text-success">회원 연결됨</Badge>
                       ) : (
-                        <Badge variant="secondary" className="w-fit bg-gray-100 text-[10px] text-gray-600">게스트</Badge>
+                        <Badge variant="secondary" className="w-fit bg-muted/50 text-[10px] text-muted-foreground">게스트</Badge>
                       )}
                     </div>
                   </td>
                   <td className="px-2 py-2 sm:px-4 sm:py-3">
-                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${c.type === "completion" ? "bg-blue-50 text-blue-700" : "bg-amber-50 text-amber-700"}`}>
+                    <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${c.type === "completion" ? "bg-cat-1/5 text-cat-1" : "bg-warning/5 text-warning"}`}>
                       {c.type === "completion" ? <Award size={12} /> : <Heart size={12} />}
                       {c.type === "completion" ? "수료증" : c.type === "appointment" ? "임명장" : "감사장"}
                     </span>
@@ -624,19 +624,19 @@ export default function CertificatesPage() {
                   </td>
                   <td className="px-2 py-2 sm:px-4 sm:py-3">
                     {!c.recipientEmail ? (
-                      <Badge variant="secondary" className="bg-gray-100 text-[10px] text-gray-500" title="수신자 이메일 없음">
+                      <Badge variant="secondary" className="bg-muted/50 text-[10px] text-muted-foreground" title="수신자 이메일 없음">
                         <MailX size={10} className="mr-0.5" /> 이메일 없음
                       </Badge>
                     ) : c.emailSent ? (
-                      <Badge variant="secondary" className="bg-green-50 text-[10px] text-green-700" title={`발송: ${new Date(c.emailSent).toLocaleString("ko-KR")}`}>
+                      <Badge variant="secondary" className="bg-success/5 text-[10px] text-success" title={`발송: ${new Date(c.emailSent).toLocaleString("ko-KR")}`}>
                         <MailCheck size={10} className="mr-0.5" /> 보냄
                       </Badge>
                     ) : c.emailFailedAt ? (
-                      <Badge variant="secondary" className="bg-red-50 text-[10px] text-red-700" title={c.emailError || "발송 실패"}>
+                      <Badge variant="secondary" className="bg-destructive/5 text-[10px] text-destructive" title={c.emailError || "발송 실패"}>
                         <MailWarning size={10} className="mr-0.5" /> 실패
                       </Badge>
                     ) : (
-                      <Badge variant="secondary" className="bg-gray-100 text-[10px] text-gray-600">
+                      <Badge variant="secondary" className="bg-muted/50 text-[10px] text-muted-foreground">
                         대기
                       </Badge>
                     )}
@@ -663,7 +663,7 @@ export default function CertificatesPage() {
                           {linkingId === c.id ? <Loader2 size={14} className="animate-spin" /> : <Link2 size={14} />}
                         </Button>
                       )}
-                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-red-500 hover:bg-red-50 hover:text-red-700" onClick={() => handleDelete(c)} disabled={deleteMut.isPending} title="삭제">
+                      <Button size="sm" variant="ghost" className="h-7 w-7 p-0 text-destructive hover:bg-destructive/5 hover:text-destructive" onClick={() => handleDelete(c)} disabled={deleteMut.isPending} title="삭제">
                         <Trash2 size={14} />
                       </Button>
                     </div>

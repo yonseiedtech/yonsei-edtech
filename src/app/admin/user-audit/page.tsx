@@ -108,7 +108,7 @@ export default function UserAuditPage() {
                   {group}
                   <Badge variant="secondary">{data.groups[group].length}명</Badge>
                   {data.groups[group].some((r) => r.issues.length > 0) && (
-                    <Badge className="bg-amber-100 text-amber-800">
+                    <Badge className="bg-warning/10 text-warning">
                       이슈 {data.groups[group].filter((r) => r.issues.length > 0).length}
                     </Badge>
                   )}
@@ -126,13 +126,13 @@ export default function UserAuditPage() {
                     </thead>
                     <tbody className="divide-y">
                       {data.groups[group].map((u) => (
-                        <tr key={u.id} className={u.issues.length > 0 ? "bg-amber-50/40" : ""}>
+                        <tr key={u.id} className={u.issues.length > 0 ? "bg-warning/5" : ""}>
                           <td className="px-3 py-2 font-medium">{u.name || "-"}</td>
                           <td className="px-3 py-2 font-mono text-xs">{u.studentId || "-"}</td>
                           <td className="px-3 py-2 text-xs text-muted-foreground">{u.email || "-"}</td>
                           <td className="px-3 py-2 text-xs">
                             <div className="flex flex-wrap gap-1">
-                              <Badge variant={u.approved ? "secondary" : "outline"} className={u.approved ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700"}>
+                              <Badge variant={u.approved ? "secondary" : "outline"} className={u.approved ? "bg-success/5 text-success" : "bg-destructive/5 text-destructive"}>
                                 {u.approved ? "승인" : "미승인"}
                               </Badge>
                               {u.enrollmentStatus && (
@@ -142,14 +142,14 @@ export default function UserAuditPage() {
                           </td>
                           <td className="px-3 py-2">
                             {u.issues.length === 0 ? (
-                              <span className="inline-flex items-center gap-1 text-xs text-green-700">
+                              <span className="inline-flex items-center gap-1 text-xs text-success">
                                 <CheckCircle2 size={14} /> 정상
                               </span>
                             ) : (
                               <div className="flex flex-wrap items-center gap-1">
-                                <AlertCircle size={14} className="text-amber-600" />
+                                <AlertCircle size={14} className="text-warning" />
                                 {u.issues.map((i) => (
-                                  <Badge key={i} className="bg-amber-100 text-amber-800 text-[10px]">{i}</Badge>
+                                  <Badge key={i} className="bg-warning/10 text-warning text-[10px]">{i}</Badge>
                                 ))}
                               </div>
                             )}
@@ -170,7 +170,7 @@ export default function UserAuditPage() {
 
 function StatCard({ label, value, alert }: { label: string; value: number; alert?: boolean }) {
   return (
-    <div className={`rounded-2xl border bg-card p-4 ${alert && value > 0 ? "border-amber-300 bg-amber-50" : ""}`}>
+    <div className={`rounded-2xl border bg-card p-4 ${alert && value > 0 ? "border-warning/30 bg-warning/5" : ""}`}>
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="mt-1 text-2xl font-bold">{value}</p>
     </div>

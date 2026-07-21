@@ -43,7 +43,7 @@ export default function CollabResearchInviteInbox({ invites, recipientId }: Prop
 
   return (
     <section className="space-y-3">
-      <h2 className="flex items-center gap-2 text-sm font-semibold text-zinc-700">
+      <h2 className="flex items-center gap-2 text-sm font-semibold text-foreground">
         <Mail size={16} />
         받은 초대 ({invites.length})
       </h2>
@@ -57,12 +57,12 @@ export default function CollabResearchInviteInbox({ invites, recipientId }: Prop
                   <span className="ml-1 font-semibold">[{invite.researchTitle}]</span>
                   공동연구에 초대했습니다.
                 </p>
-                <div className="flex items-center gap-2 text-xs text-zinc-600">
+                <div className="flex items-center gap-2 text-xs text-muted-foreground">
                   <span>역할:</span>
                   <CollabResearchRoleBadge role={invite.proposedRole} size="sm" />
                 </div>
                 {invite.message && (
-                  <p className="rounded bg-white p-2 text-xs text-zinc-600">
+                  <p className="rounded bg-white p-2 text-xs text-muted-foreground">
                     “{invite.message}”
                   </p>
                 )}

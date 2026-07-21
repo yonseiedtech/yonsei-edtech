@@ -259,14 +259,14 @@ export default function CollabResearchMetaForm(props: Props) {
     <form onSubmit={handleSubmit} className="space-y-6">
       {/* 책임연구자 안내 (생성 모드 한정) */}
       {props.mode === "create" && (
-        <Card className="border-violet-200 bg-violet-50">
+        <Card className="border-cat-5/20 bg-cat-5/10">
           <CardContent className="flex items-start gap-3 p-4 text-sm">
-            <Crown className="mt-0.5 shrink-0 text-violet-600" size={18} />
+            <Crown className="mt-0.5 shrink-0 text-cat-5" size={18} />
             <div>
-              <p className="font-medium text-violet-900">
+              <p className="font-medium text-cat-5">
                 책임연구자(leader): <span className="font-semibold">{props.leaderName ?? "본인"}</span>
               </p>
-              <p className="mt-1 text-xs text-violet-700">
+              <p className="mt-1 text-xs text-cat-5">
                 팀을 생성한 사용자가 자동으로 책임연구자가 됩니다. 다른 회원에게 책임 이양은
                 Phase 4 (v2)에서 별도 워크플로우로 지원될 예정입니다. 지금은 공동연구자
                 (co-researcher) 역할로 추가하여 함께 운영하실 수 있습니다.
@@ -284,7 +284,7 @@ export default function CollabResearchMetaForm(props: Props) {
         <CardContent className="space-y-4">
           <div>
             <Label htmlFor="collab-title">
-              연구 제목 <span className="text-red-500">*</span>
+              연구 제목 <span className="text-destructive">*</span>
             </Label>
             <Input
               id="collab-title"
@@ -313,12 +313,12 @@ export default function CollabResearchMetaForm(props: Props) {
               onChange={(e) =>
                 update("collaborationType", e.target.value as CollaborationType)
               }
-              className="block w-full rounded border border-zinc-300 px-3 py-2 text-sm"
+              className="block w-full rounded border border-border px-3 py-2 text-sm"
             >
               <option value="peer">{COLLABORATION_TYPE_LABELS.peer}</option>
               <option value="society">{COLLABORATION_TYPE_LABELS.society}</option>
             </select>
-            <div className="rounded border border-blue-200 bg-blue-50 p-3 text-xs text-blue-900">
+            <div className="rounded border border-cat-1/20 bg-cat-1/10 p-3 text-xs text-cat-1">
               <p className="mb-1 font-semibold">
                 {COLLABORATION_TYPE_DESCRIPTIONS[state.collaborationType].title}
               </p>
@@ -348,7 +348,7 @@ export default function CollabResearchMetaForm(props: Props) {
         <CardContent className="space-y-5">
           <div>
             <Label htmlFor="collab-topic">
-              연구 주제 <span className="text-red-500">*</span>
+              연구 주제 <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="collab-topic"
@@ -360,7 +360,7 @@ export default function CollabResearchMetaForm(props: Props) {
           </div>
           <div>
             <Label htmlFor="collab-purpose">
-              연구 목적 <span className="text-red-500">*</span>
+              연구 목적 <span className="text-destructive">*</span>
             </Label>
             <Textarea
               id="collab-purpose"
@@ -420,7 +420,7 @@ export default function CollabResearchMetaForm(props: Props) {
                 onChange={(e) =>
                   update("methodologyKind", e.target.value as MethodologyKind | "")
                 }
-                className="block w-full rounded border border-zinc-300 px-3 py-2 text-sm"
+                className="block w-full rounded border border-border px-3 py-2 text-sm"
               >
                 <option value="">선택</option>
                 {Object.entries(METHODOLOGY_KIND_LABELS).map(([k, v]) => (
@@ -438,7 +438,7 @@ export default function CollabResearchMetaForm(props: Props) {
                 onChange={(e) =>
                   update("methodologyDesign", e.target.value as MethodologyDesign | "")
                 }
-                className="block w-full rounded border border-zinc-300 px-3 py-2 text-sm"
+                className="block w-full rounded border border-border px-3 py-2 text-sm"
               >
                 <option value="">선택</option>
                 {Object.entries(METHODOLOGY_DESIGN_LABELS).map(([k, v]) => (
@@ -452,38 +452,38 @@ export default function CollabResearchMetaForm(props: Props) {
 
           {/* 동적 정의·유의점 */}
           {kindInfo && (
-            <div className="rounded border border-emerald-200 bg-emerald-50 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-semibold text-emerald-800">
+            <div className="rounded border border-success/20 bg-success/10 p-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-success">
                 <Info size={13} />
                 연구 유형: {METHODOLOGY_KIND_LABELS[state.methodologyKind as MethodologyKind]}
               </p>
-              <p className="mt-1 text-xs text-emerald-900">{kindInfo.definition}</p>
-              <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-emerald-900">
+              <p className="mt-1 text-xs text-success">{kindInfo.definition}</p>
+              <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-success">
                 {kindInfo.cautions.map((c, i) => (
                   <li key={i}>{c}</li>
                 ))}
               </ul>
               {kindInfo.examples && (
-                <p className="mt-1 text-xs text-emerald-700">
+                <p className="mt-1 text-xs text-success">
                   💡 예시: {kindInfo.examples.join(" · ")}
                 </p>
               )}
             </div>
           )}
           {designInfo && (
-            <div className="rounded border border-blue-200 bg-blue-50 p-3">
-              <p className="flex items-center gap-1.5 text-xs font-semibold text-blue-800">
+            <div className="rounded border border-cat-1/20 bg-cat-1/10 p-3">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-cat-1">
                 <Info size={13} />
                 연구 설계: {METHODOLOGY_DESIGN_LABELS[state.methodologyDesign as MethodologyDesign]}
               </p>
-              <p className="mt-1 text-xs text-blue-900">{designInfo.definition}</p>
-              <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-blue-900">
+              <p className="mt-1 text-xs text-cat-1">{designInfo.definition}</p>
+              <ul className="mt-2 list-disc space-y-0.5 pl-5 text-xs text-cat-1">
                 {designInfo.cautions.map((c, i) => (
                   <li key={i}>{c}</li>
                 ))}
               </ul>
               {designInfo.examples && (
-                <p className="mt-1 text-xs text-blue-700">
+                <p className="mt-1 text-xs text-cat-1">
                   💡 예시: {designInfo.examples.join(" · ")}
                 </p>
               )}
@@ -492,8 +492,8 @@ export default function CollabResearchMetaForm(props: Props) {
 
           {/* 실험/통제집단 (실험연구·준실험연구에서만) */}
           {showsGroupPlan && (
-            <div className="space-y-3 rounded border border-amber-200 bg-amber-50 p-3">
-              <p className="text-xs font-semibold text-amber-900">
+            <div className="space-y-3 rounded border border-warning/20 bg-warning/10 p-3">
+              <p className="text-xs font-semibold text-warning">
                 실험집단·통제집단 구성 계획 ({METHODOLOGY_DESIGN_LABELS[state.methodologyDesign as MethodologyDesign]})
               </p>
               <div>
@@ -520,7 +520,7 @@ export default function CollabResearchMetaForm(props: Props) {
                   placeholder="예: 대학원생 25명, 동일 기간 동안 기존 강의식 영상만 제공"
                 />
               </div>
-              <p className="text-xs text-amber-800">
+              <p className="text-xs text-warning">
                 💡 무작위 할당(실험연구) 또는 사전검사 동질성 확보(준실험연구)로 두 집단의 비교가 가능해야 합니다.
               </p>
             </div>
@@ -559,7 +559,7 @@ export default function CollabResearchMetaForm(props: Props) {
             />
             {analysisOptions.length > 0 && (
               <div className="mt-2 space-y-1">
-                <p className="flex items-center gap-1 text-xs font-medium text-zinc-600">
+                <p className="flex items-center gap-1 text-xs font-medium text-muted-foreground">
                   <Lightbulb size={12} /> 추천 분석 기법 (클릭하면 위 텍스트에 추가됩니다)
                 </p>
                 <div className="flex flex-wrap gap-1.5">
@@ -576,7 +576,7 @@ export default function CollabResearchMetaForm(props: Props) {
                             : `• ${opt.name} — ${opt.desc}`,
                         )
                       }
-                      className="rounded-full border border-zinc-300 bg-white px-2 py-0.5 text-xs hover:border-primary hover:bg-primary/5"
+                      className="rounded-full border border-border bg-card px-2 py-0.5 text-xs hover:border-primary hover:bg-primary/5"
                     >
                       {opt.name}
                     </button>
@@ -622,7 +622,7 @@ export default function CollabResearchMetaForm(props: Props) {
                     id="collab-irb-status"
                     value={state.irbStatus}
                     onChange={(e) => update("irbStatus", e.target.value as IrbStatus | "")}
-                    className="block w-full rounded border border-zinc-300 px-3 py-2 text-sm"
+                    className="block w-full rounded border border-border px-3 py-2 text-sm"
                   >
                     <option value="">선택</option>
                     {Object.entries(IRB_STATUS_LABELS).map(([k, v]) => (
@@ -665,7 +665,7 @@ export default function CollabResearchMetaForm(props: Props) {
           <div className="grid gap-4 sm:grid-cols-3">
             <div>
               <Label htmlFor="collab-start">
-                시작일 <span className="text-red-500">*</span>
+                시작일 <span className="text-destructive">*</span>
               </Label>
               <Input
                 id="collab-start"

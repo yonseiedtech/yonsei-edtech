@@ -53,9 +53,9 @@ const STATUS_LABELS: Record<ActivityProgress["status"], string> = {
   completed: "완료",
 };
 const STATUS_BG: Record<ActivityProgress["status"], string> = {
-  planned: "bg-blue-50 text-blue-700 border-blue-200",
-  in_progress: "bg-amber-50 text-amber-700 border-amber-200",
-  completed: "bg-emerald-50 text-emerald-700 border-emerald-200",
+  planned: "bg-cat-1/10 text-cat-1 border-cat-1/20",
+  in_progress: "bg-warning/10 text-warning border-warning/20",
+  completed: "bg-success/10 text-success border-success/20",
 };
 
 interface Props {
@@ -543,21 +543,21 @@ export default function ActivityWeekDetailPage({
                     className={cn(
                       "flex items-center gap-2 rounded-lg border px-2.5 py-1.5 text-left text-xs transition",
                       attended
-                        ? "border-emerald-300 bg-emerald-50 text-emerald-800"
+                        ? "border-success/30 bg-success/10 text-success"
                         : "border-border bg-background text-foreground hover:border-primary/30",
                       !canEdit && "cursor-default opacity-80",
                       canEdit && "cursor-pointer",
                     )}
                   >
                     {attended ? (
-                      <CheckCircle2 size={14} className="shrink-0 text-emerald-600" />
+                      <CheckCircle2 size={14} className="shrink-0 text-success" />
                     ) : (
                       <Circle size={14} className="shrink-0 text-muted-foreground" />
                     )}
                     <span className="truncate">
                       {p.name}
                       {p.id === activity.leaderId && (
-                        <span className="ml-1 text-[10px] text-amber-600">(리더)</span>
+                        <span className="ml-1 text-[10px] text-warning">(리더)</span>
                       )}
                     </span>
                   </button>

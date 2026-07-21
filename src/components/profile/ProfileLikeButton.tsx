@@ -44,12 +44,12 @@ export default function ProfileLikeButton({ profileId, isOwner }: Props) {
         title={!viewer ? "로그인 후 좋아요를 누를 수 있어요." : likedByMe ? "좋아요 취소" : "좋아요"}
         className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60 ${
           likedByMe
-            ? "border-rose-200 bg-rose-50 text-rose-600 hover:bg-rose-100"
-            : "border-border bg-card text-muted-foreground hover:border-rose-200 hover:text-rose-600"
+            ? "border-destructive/20 bg-destructive/5 text-destructive hover:bg-destructive/10"
+            : "border-border bg-card text-muted-foreground hover:border-destructive/20 hover:text-destructive"
         }`}
         aria-pressed={likedByMe}
       >
-        <Heart size={14} className={likedByMe ? "fill-rose-500 text-rose-500" : ""} />
+        <Heart size={14} className={likedByMe ? "fill-destructive text-destructive" : ""} />
         <span>{count}</span>
       </button>
 

@@ -54,7 +54,7 @@ export default function MeetingsBoard({
   };
 
   if (isLoading) {
-    return <p className="py-8 text-center text-sm text-zinc-500">불러오는 중...</p>;
+    return <p className="py-8 text-center text-sm text-muted-foreground">불러오는 중...</p>;
   }
 
   return (
@@ -177,13 +177,13 @@ function MeetingCard({
           <div className="flex items-center justify-between">
             <div>
               <p className="font-medium">{meeting.title}</p>
-              <p className="text-xs text-zinc-500">
+              <p className="text-xs text-muted-foreground">
                 {new Date(meeting.scheduledAt).toLocaleString("ko-KR")}
                 {meeting.durationMinutes ? ` · ${meeting.durationMinutes}분` : ""}
                 · 참석 {meeting.attendeeIds.length}명
               </p>
             </div>
-            <span className="text-xs text-zinc-500">{expanded ? "접기" : "펼치기"}</span>
+            <span className="text-xs text-muted-foreground">{expanded ? "접기" : "펼치기"}</span>
           </div>
         </button>
 
@@ -192,7 +192,7 @@ function MeetingCard({
             {meeting.agenda && (
               <div>
                 <Label className="text-xs">의제</Label>
-                <p className="whitespace-pre-wrap rounded bg-zinc-50 p-2 text-sm">
+                <p className="whitespace-pre-wrap rounded bg-muted/5 p-2 text-sm">
                   {meeting.agenda}
                 </p>
               </div>

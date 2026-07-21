@@ -64,13 +64,13 @@ export default function CollabResearchHeader({ research, isLeader, activeTab }: 
             {COLLABORATION_TYPE_LABELS[research.collaborationType]}
           </Badge>
           <CollabResearchStatusBadge status={research.status} size="sm" />
-          <span className="text-xs text-zinc-500">
+          <span className="text-xs text-muted-foreground">
             {research.collaboratorCount}명 참여 · 시작 {research.startDate}
           </span>
         </div>
         <h1 className="text-2xl font-bold">{research.title}</h1>
         {research.researchTopic && (
-          <p className="mt-1 text-sm text-zinc-600">{research.researchTopic}</p>
+          <p className="mt-1 text-sm text-muted-foreground">{research.researchTopic}</p>
         )}
       </div>
 

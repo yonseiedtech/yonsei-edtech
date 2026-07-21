@@ -44,7 +44,7 @@ function DashboardContent({ researchId }: { researchId: string }) {
   if (isLoading) {
     return (
       <PageContainer>
-        <p className="py-12 text-center text-sm text-zinc-500">불러오는 중...</p>
+        <p className="py-12 text-center text-sm text-muted-foreground">불러오는 중...</p>
       </PageContainer>
     );
   }
@@ -53,9 +53,9 @@ function DashboardContent({ researchId }: { researchId: string }) {
     return (
       <PageContainer>
         <BackButton href="/collab" label="공동 연구 목록" />
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-destructive/20 bg-destructive/10">
           <CardContent className="flex items-center gap-3 p-6">
-            <AlertCircle className="text-red-500" />
+            <AlertCircle className="text-destructive" />
             <p className="text-sm">연구를 찾을 수 없습니다.</p>
           </CardContent>
         </Card>
@@ -116,7 +116,7 @@ function DashboardContent({ researchId }: { researchId: string }) {
               </CardHeader>
               <CardContent className="space-y-2 text-sm">
                 <p>
-                  <span className="text-zinc-500">유형:</span>{" "}
+                  <span className="text-muted-foreground">유형:</span>{" "}
                   {research.methodology.kind === "quantitative"
                     ? "양적"
                     : research.methodology.kind === "qualitative"
@@ -126,13 +126,13 @@ function DashboardContent({ researchId }: { researchId: string }) {
                 </p>
                 {research.methodology.sampling && (
                   <p>
-                    <span className="text-zinc-500">표집:</span>{" "}
+                    <span className="text-muted-foreground">표집:</span>{" "}
                     {research.methodology.sampling}
                   </p>
                 )}
                 {research.methodology.analysisMethod && (
                   <p>
-                    <span className="text-zinc-500">분석:</span>{" "}
+                    <span className="text-muted-foreground">분석:</span>{" "}
                     {research.methodology.analysisMethod}
                   </p>
                 )}
@@ -141,18 +141,18 @@ function DashboardContent({ researchId }: { researchId: string }) {
           )}
 
           {research.irbStatus?.required && (
-            <Card className="border-amber-200 bg-amber-50">
+            <Card className="border-warning/20 bg-warning/10">
               <CardHeader>
                 <CardTitle className="text-base">IRB 심의 상태</CardTitle>
               </CardHeader>
               <CardContent className="text-sm">
                 <p>
-                  <span className="text-zinc-600">상태:</span>{" "}
+                  <span className="text-muted-foreground">상태:</span>{" "}
                   {research.irbStatus.status ?? "미입력"}
                 </p>
                 {research.irbStatus.approvalNumber && (
                   <p>
-                    <span className="text-zinc-600">승인번호:</span>{" "}
+                    <span className="text-muted-foreground">승인번호:</span>{" "}
                     {research.irbStatus.approvalNumber}
                   </p>
                 )}
@@ -173,11 +173,11 @@ function DashboardContent({ researchId }: { researchId: string }) {
               {members.slice(0, 5).map((m) => (
                 <div key={m.id} className="flex items-center justify-between text-sm">
                   <span>{m.userId.slice(0, 8)}…</span>
-                  <span className="text-xs text-zinc-500">{m.role}</span>
+                  <span className="text-xs text-muted-foreground">{m.role}</span>
                 </div>
               ))}
               {members.length > 5 && (
-                <p className="text-xs text-zinc-500">+ {members.length - 5}명</p>
+                <p className="text-xs text-muted-foreground">+ {members.length - 5}명</p>
               )}
               <Button
                 size="sm"
@@ -198,11 +198,11 @@ function DashboardContent({ researchId }: { researchId: string }) {
             </CardHeader>
             <CardContent className="space-y-1 text-sm">
               <p>
-                <span className="text-zinc-500">시작:</span> {research.startDate}
+                <span className="text-muted-foreground">시작:</span> {research.startDate}
               </p>
               {research.targetEndDate && (
                 <p>
-                  <span className="text-zinc-500">목표:</span> {research.targetEndDate}
+                  <span className="text-muted-foreground">목표:</span> {research.targetEndDate}
                 </p>
               )}
             </CardContent>
@@ -223,7 +223,7 @@ function DashboardContent({ researchId }: { researchId: string }) {
                   <Pencil size={14} className="mr-1" /> 연구 메타 편집
                 </Button>
                 {/* Phase 2~3 액션은 추후 추가: 챕터·미팅·마일스톤·출판 */}
-                <p className="text-xs text-zinc-500">
+                <p className="text-xs text-muted-foreground">
                   공동 작성·연구지 출판 기능은 곧 출시됩니다 (Phase 2~3).
                 </p>
               </CardContent>

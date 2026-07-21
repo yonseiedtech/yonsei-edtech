@@ -53,7 +53,7 @@ export default function JournalReviewCommentSection({
       </CardHeader>
       <CardContent className="space-y-4">
         {comments.length === 0 ? (
-          <p className="text-sm text-zinc-500">아직 검수 코멘트가 없습니다.</p>
+          <p className="text-sm text-muted-foreground">아직 검수 코멘트가 없습니다.</p>
         ) : (
           comments.map((c) => {
             const reviewer = userMap.get(c.reviewerId);
@@ -82,7 +82,7 @@ export default function JournalReviewCommentSection({
         )}
 
         {canComment && (
-          <div className="space-y-2 rounded border border-dashed border-zinc-300 p-3">
+          <div className="space-y-2 rounded border border-dashed border-muted p-3">
             <div className="flex items-center gap-2">
               <Label htmlFor="rc-severity" className="mb-0 text-xs shrink-0">
                 심각도:
@@ -91,7 +91,7 @@ export default function JournalReviewCommentSection({
                 id="rc-severity"
                 value={severity}
                 onChange={(e) => setSeverity(e.target.value as ReviewCommentSeverity)}
-                className="rounded border border-zinc-300 px-2 py-1 text-xs"
+                className="rounded border border-muted px-2 py-1 text-xs"
               >
                 {SEVERITIES.map((s) => (
                   <option key={s} value={s}>

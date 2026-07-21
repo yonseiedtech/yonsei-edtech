@@ -178,11 +178,11 @@ export default function FormBuilder({ value, onChange }: Props) {
         </div>
         <div className="flex items-center gap-2">
           {saveState === "unsaved" ? (
-            <span className="flex items-center gap-1 text-[11px] font-medium text-amber-600">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500" />저장 대기 중
+            <span className="flex items-center gap-1 text-[11px] font-medium text-warning">
+              <span className="h-1.5 w-1.5 rounded-full bg-warning" />저장 대기 중
             </span>
           ) : (
-            <span className="flex items-center gap-1 text-[11px] font-medium text-emerald-600">
+            <span className="flex items-center gap-1 text-[11px] font-medium text-success">
               <Check size={12} />저장됨
             </span>
           )}
@@ -265,7 +265,7 @@ export default function FormBuilder({ value, onChange }: Props) {
                           placeholder={`옵션 ${oi + 1}`}
                           className="h-8 text-xs"
                         />
-                        <button type="button" onClick={() => update(i, { options: (f.options ?? []).filter((_, x) => x !== oi) })} className="shrink-0 rounded p-1 text-muted-foreground hover:text-red-500">
+                        <button type="button" onClick={() => update(i, { options: (f.options ?? []).filter((_, x) => x !== oi) })} className="shrink-0 rounded p-1 text-muted-foreground hover:text-destructive">
                           <Trash2 size={12} />
                         </button>
                       </div>
@@ -364,7 +364,7 @@ export default function FormBuilder({ value, onChange }: Props) {
               </div>
               <div className="flex flex-col gap-1">
                 <button type="button" title="복제" onClick={() => duplicate(i)} className="rounded p-1 text-muted-foreground hover:bg-muted"><Copy size={12} /></button>
-                <button type="button" title="삭제" onClick={() => remove(i)} className="rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"><Trash2 size={12} /></button>
+                <button type="button" title="삭제" onClick={() => remove(i)} className="rounded p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"><Trash2 size={12} /></button>
               </div>
             </div>
           </div>

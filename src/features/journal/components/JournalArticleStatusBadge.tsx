@@ -44,9 +44,9 @@ export function VisibilityBadge({
   size?: "sm" | "md";
 }) {
   const colors: Record<ArticleVisibility, string> = {
-    private: "bg-zinc-100 text-zinc-700",
-    society: "bg-blue-100 text-blue-700",
-    public: "bg-emerald-100 text-emerald-700",
+    private: "bg-muted/50 text-muted-foreground",
+    society: "bg-cat-1/10 text-cat-1",
+    public: "bg-success/10 text-success",
   };
   return (
     <span
@@ -69,9 +69,9 @@ export function PublicationTypeBadge({
   size?: "sm" | "md";
 }) {
   const colors: Record<PublicationType, string> = {
-    journal: "bg-violet-100 text-violet-700",
-    working_paper: "bg-blue-100 text-blue-700",
-    note: "bg-zinc-100 text-zinc-700",
+    journal: "bg-cat-5/10 text-cat-5",
+    working_paper: "bg-cat-1/10 text-cat-1",
+    note: "bg-muted/50 text-muted-foreground",
   };
   return (
     <span

@@ -487,11 +487,11 @@ export default function FeesPage() {
               <p className="text-xs text-muted-foreground">전체 회원</p>
             </div>
             <div className="rounded-lg border bg-card p-4 text-center">
-              <p className="text-3xl font-bold text-green-600">{stats.paid}</p>
+              <p className="text-3xl font-bold text-success">{stats.paid}</p>
               <p className="text-xs text-muted-foreground">납부 완료</p>
             </div>
             <div className="rounded-lg border bg-card p-4 text-center">
-              <p className="text-3xl font-bold text-red-500">{stats.unpaid}</p>
+              <p className="text-3xl font-bold text-destructive">{stats.unpaid}</p>
               <p className="text-xs text-muted-foreground">미납</p>
             </div>
             <div className="rounded-lg border bg-card p-4 text-center">
@@ -510,20 +510,20 @@ export default function FeesPage() {
             </div>
             <div className="rounded-lg border bg-card p-4">
               <p className="text-sm text-muted-foreground">총 납부 금액</p>
-              <p className="mt-1 text-2xl font-bold text-green-600">{stats.totalAmount.toLocaleString()}원</p>
+              <p className="mt-1 text-2xl font-bold text-success">{stats.totalAmount.toLocaleString()}원</p>
               <p className="mt-1 text-xs text-muted-foreground">면제 {stats.exempt}명</p>
             </div>
             <div className="rounded-lg border bg-card p-4">
               <p className="text-sm text-muted-foreground">총 수입 / 지출</p>
               <p className="mt-1 text-lg font-bold">
-                <span className="text-green-600">+{ledgerStats.income.toLocaleString()}</span>
+                <span className="text-success">+{ledgerStats.income.toLocaleString()}</span>
                 <span className="mx-1 text-muted-foreground">/</span>
-                <span className="text-red-500">-{ledgerStats.expense.toLocaleString()}</span>
+                <span className="text-destructive">-{ledgerStats.expense.toLocaleString()}</span>
               </p>
             </div>
             <div className="rounded-lg border bg-card p-4">
               <p className="text-sm text-muted-foreground">잔액</p>
-              <p className={cn("mt-1 text-2xl font-bold", ledgerStats.balance >= 0 ? "text-primary" : "text-red-500")}>
+              <p className={cn("mt-1 text-2xl font-bold", ledgerStats.balance >= 0 ? "text-primary" : "text-destructive")}>
                 {ledgerStats.balance >= 0 ? "+" : ""}{ledgerStats.balance.toLocaleString()}원
               </p>
             </div>
@@ -537,7 +537,7 @@ export default function FeesPage() {
             </div>
             <div className="mt-2 h-3 w-full overflow-hidden rounded-full bg-muted">
               <div
-                className="h-full rounded-full bg-green-500 transition-all"
+                className="h-full rounded-full bg-success transition-all"
                 style={{ width: `${paidRate}%` }}
               />
             </div>
@@ -597,10 +597,10 @@ export default function FeesPage() {
                   <>
                     <div className="flex flex-wrap gap-2 text-xs">
                       <Badge variant="secondary">전체 {reconcileStats.total}</Badge>
-                      <Badge className="bg-green-100 text-green-700 hover:bg-green-100">일치 {reconcileStats.matched}</Badge>
-                      <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">이미 납부 {reconcileStats.alreadyPaid}</Badge>
-                      <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">동명이인 {reconcileStats.ambiguous}</Badge>
-                      <Badge className="bg-red-100 text-red-700 hover:bg-red-100">미등록 {reconcileStats.notFound}</Badge>
+                      <Badge className="bg-success/10 text-success hover:bg-success/20">일치 {reconcileStats.matched}</Badge>
+                      <Badge className="bg-cat-1/10 text-cat-1 hover:bg-cat-1/20">이미 납부 {reconcileStats.alreadyPaid}</Badge>
+                      <Badge className="bg-warning/10 text-warning hover:bg-warning/20">동명이인 {reconcileStats.ambiguous}</Badge>
+                      <Badge className="bg-destructive/10 text-destructive hover:bg-destructive/20">미등록 {reconcileStats.notFound}</Badge>
                     </div>
 
                     <div className="max-h-[360px] overflow-auto rounded-lg border">
@@ -628,7 +628,7 @@ export default function FeesPage() {
                                 {rm.matched ? (
                                   <span className="font-medium">{rm.matched.name}</span>
                                 ) : rm.candidates.length > 1 ? (
-                                  <span className="text-yellow-700">
+                                  <span className="text-warning">
                                     {rm.candidates.map((c) => `${c.name}(${c.studentId ?? "-"})`).join(", ")}
                                   </span>
                                 ) : (
@@ -637,16 +637,16 @@ export default function FeesPage() {
                               </td>
                               <td className="px-2 py-1">
                                 {rm.status === "matched" && (
-                                  <Badge className="bg-green-100 text-green-700 hover:bg-green-100">일치</Badge>
+                                  <Badge className="bg-success/10 text-success hover:bg-success/20">일치</Badge>
                                 )}
                                 {rm.status === "already_paid" && (
-                                  <Badge className="bg-blue-100 text-blue-700 hover:bg-blue-100">이미 납부</Badge>
+                                  <Badge className="bg-cat-1/10 text-cat-1 hover:bg-cat-1/20">이미 납부</Badge>
                                 )}
                                 {rm.status === "ambiguous" && (
-                                  <Badge className="bg-yellow-100 text-yellow-800 hover:bg-yellow-100">동명이인</Badge>
+                                  <Badge className="bg-warning/10 text-warning hover:bg-warning/20">동명이인</Badge>
                                 )}
                                 {rm.status === "not_found" && (
-                                  <Badge className="bg-red-100 text-red-700 hover:bg-red-100">미등록</Badge>
+                                  <Badge className="bg-destructive/10 text-destructive hover:bg-destructive/20">미등록</Badge>
                                 )}
                               </td>
                             </tr>
@@ -732,9 +732,9 @@ export default function FeesPage() {
                     <Badge
                       variant="secondary"
                       className={cn("text-xs",
-                        m.status === "paid" ? "bg-green-50 text-green-700" :
-                        m.status === "exempt" ? "bg-blue-50 text-blue-700" :
-                        "bg-red-50 text-red-700",
+                        m.status === "paid" ? "bg-success/5 text-success" :
+                        m.status === "exempt" ? "bg-cat-1/5 text-cat-1" :
+                        "bg-destructive/5 text-destructive",
                       )}
                     >
                       {m.status === "paid" ? "납부" : m.status === "exempt" ? "면제" : "미납"}
@@ -748,7 +748,7 @@ export default function FeesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 gap-0.5 text-[10px] sm:gap-1 sm:text-xs text-green-600"
+                        className="h-7 gap-0.5 text-[10px] sm:gap-1 sm:text-xs text-success"
                         onClick={() => payMutation.mutate({ userId: m.id, userName: m.name, studentId: m.studentId ?? "", status: "paid" })}
                         disabled={payMutation.isPending}
                       >
@@ -760,7 +760,7 @@ export default function FeesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 gap-0.5 text-[10px] sm:gap-1 sm:text-xs text-red-500"
+                        className="h-7 gap-0.5 text-[10px] sm:gap-1 sm:text-xs text-destructive"
                         onClick={() => payMutation.mutate({ userId: m.id, userName: m.name, studentId: m.studentId ?? "", status: "unpaid" })}
                         disabled={payMutation.isPending}
                       >
@@ -772,7 +772,7 @@ export default function FeesPage() {
                       <Button
                         variant="outline"
                         size="sm"
-                        className="h-7 text-[10px] sm:text-xs text-blue-600"
+                        className="h-7 text-[10px] sm:text-xs text-cat-1"
                         onClick={() => payMutation.mutate({ userId: m.id, userName: m.name, studentId: m.studentId ?? "", status: "exempt" })}
                         disabled={payMutation.isPending}
                       >
@@ -792,25 +792,25 @@ export default function FeesPage() {
           {/* 요약 카드 */}
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <div className="rounded-lg border bg-card p-4 text-center">
-              <div className="flex items-center justify-center gap-1.5 text-green-600">
+              <div className="flex items-center justify-center gap-1.5 text-success">
                 <ArrowDownCircle size={16} />
                 <span className="text-xs font-medium">수입</span>
               </div>
-              <p className="mt-1 text-2xl font-bold text-green-600">{ledgerStats.income.toLocaleString()}원</p>
+              <p className="mt-1 text-2xl font-bold text-success">{ledgerStats.income.toLocaleString()}원</p>
             </div>
             <div className="rounded-lg border bg-card p-4 text-center">
-              <div className="flex items-center justify-center gap-1.5 text-red-500">
+              <div className="flex items-center justify-center gap-1.5 text-destructive">
                 <ArrowUpCircle size={16} />
                 <span className="text-xs font-medium">지출</span>
               </div>
-              <p className="mt-1 text-2xl font-bold text-red-500">{ledgerStats.expense.toLocaleString()}원</p>
+              <p className="mt-1 text-2xl font-bold text-destructive">{ledgerStats.expense.toLocaleString()}원</p>
             </div>
             <div className="rounded-lg border bg-card p-4 text-center">
               <div className="flex items-center justify-center gap-1.5 text-primary">
                 <Wallet size={16} />
                 <span className="text-xs font-medium">잔액</span>
               </div>
-              <p className={cn("mt-1 text-2xl font-bold", ledgerStats.balance >= 0 ? "text-primary" : "text-red-500")}>
+              <p className={cn("mt-1 text-2xl font-bold", ledgerStats.balance >= 0 ? "text-primary" : "text-destructive")}>
                 {ledgerStats.balance >= 0 ? "+" : ""}{ledgerStats.balance.toLocaleString()}원
               </p>
             </div>
@@ -854,7 +854,7 @@ export default function FeesPage() {
                 <div key={tx.id} className="flex flex-col gap-1 border-b px-4 py-3 text-sm sm:grid sm:grid-cols-[80px_100px_1fr_120px_60px] sm:items-center sm:gap-2">
                   <span className="text-xs text-muted-foreground">{tx.date}</span>
                   <div>
-                    <Badge variant="secondary" className={cn("text-xs", tx.type === "income" ? "bg-green-50 text-green-700" : "bg-red-50 text-red-700")}>
+                    <Badge variant="secondary" className={cn("text-xs", tx.type === "income" ? "bg-success/5 text-success" : "bg-destructive/5 text-destructive")}>
                       {tx.category}
                     </Badge>
                   </div>
@@ -862,7 +862,7 @@ export default function FeesPage() {
                     <span className="font-medium">{tx.description}</span>
                     {tx.memo && <span className="ml-2 text-xs text-muted-foreground">({tx.memo})</span>}
                   </div>
-                  <span className={cn("text-right font-medium", tx.type === "income" ? "text-green-600" : "text-red-500")}>
+                  <span className={cn("text-right font-medium", tx.type === "income" ? "text-success" : "text-destructive")}>
                     {tx.type === "income" ? "+" : "-"}{tx.amount.toLocaleString()}원
                   </span>
                   <div className="flex gap-1">
@@ -871,7 +871,7 @@ export default function FeesPage() {
                     </button>
                     <button
                       onClick={() => { if (confirm("삭제하시겠습니까?")) deleteTxMutation.mutate(tx.id); }}
-                      className="rounded p-1 text-muted-foreground hover:text-red-500"
+                      className="rounded p-1 text-muted-foreground hover:text-destructive"
                     >
                       <Trash2 size={14} />
                     </button>
@@ -962,7 +962,7 @@ export default function FeesPage() {
                   className={cn(
                     "flex-1 rounded-lg border py-2 text-sm font-medium transition-colors",
                     txForm.type === t
-                      ? t === "income" ? "border-green-500 bg-green-50 text-green-700" : "border-red-400 bg-red-50 text-red-600"
+                      ? t === "income" ? "border-success bg-success/5 text-success" : "border-destructive bg-destructive/5 text-destructive"
                       : "text-muted-foreground",
                   )}
                 >

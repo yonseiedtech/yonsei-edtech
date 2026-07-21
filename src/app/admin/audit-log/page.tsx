@@ -12,12 +12,12 @@ import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import EmptyState from "@/components/ui/empty-state";
 
 const CATEGORY_CONFIG: Record<string, { label: string; icon: React.ElementType; color: string }> = {
-  member: { label: "회원", icon: Users, color: "bg-blue-100 text-blue-700" },
-  role: { label: "역할", icon: Shield, color: "bg-purple-100 text-purple-700" },
-  seminar: { label: "세미나", icon: CalendarDays, color: "bg-green-100 text-green-700" },
-  post: { label: "게시글", icon: FileText, color: "bg-amber-100 text-amber-700" },
-  settings: { label: "설정", icon: Settings, color: "bg-slate-100 text-slate-700" },
-  system: { label: "시스템", icon: Server, color: "bg-red-100 text-red-700" },
+  member: { label: "회원", icon: Users, color: "bg-cat-1/10 text-cat-1" },
+  role: { label: "역할", icon: Shield, color: "bg-cat-5/10 text-cat-5" },
+  seminar: { label: "세미나", icon: CalendarDays, color: "bg-success/10 text-success" },
+  post: { label: "게시글", icon: FileText, color: "bg-warning/10 text-warning" },
+  settings: { label: "설정", icon: Settings, color: "bg-muted/50 text-muted-foreground" },
+  system: { label: "시스템", icon: Server, color: "bg-destructive/10 text-destructive" },
 };
 
 type CategoryFilter = "all" | AuditLog["category"];

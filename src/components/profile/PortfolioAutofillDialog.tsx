@@ -202,7 +202,7 @@ export default function PortfolioAutofillDialog({
                         </Badge>
                         <span className="text-sm font-medium">{c.title}</span>
                         {c.alreadyAdded && (
-                          <Badge variant="outline" className="gap-0.5 text-[10px] text-emerald-600">
+                          <Badge variant="outline" className="gap-0.5 text-[10px] text-success">
                             <CheckCircle2 size={9} /> 추가됨
                           </Badge>
                         )}

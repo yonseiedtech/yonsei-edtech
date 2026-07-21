@@ -100,7 +100,7 @@ export default function JournalArticleAuthorsEditor({
       </CardHeader>
       <CardContent className="space-y-4">
         {authors.length === 0 && (
-          <p className="rounded bg-amber-50 px-3 py-2 text-sm text-amber-800">
+          <p className="rounded bg-warning/5 px-3 py-2 text-sm text-warning">
             ⚠️ 출판 전 1명 이상의 저자를 추가해야 합니다.
           </p>
         )}
@@ -108,24 +108,24 @@ export default function JournalArticleAuthorsEditor({
         {authors.map((a, idx) => (
           <div
             key={a.userId}
-            className="space-y-3 rounded border border-zinc-200 p-3"
+            className="space-y-3 rounded border border-muted p-3"
           >
             <div className="flex items-start justify-between gap-2">
               <div className="flex-1">
                 <p className="flex items-center gap-2 font-medium">
-                  <span className="text-xs font-mono text-zinc-500">
+                  <span className="text-xs font-mono text-muted-foreground">
                     #{a.authorOrder}
                   </span>
                   {a.displayName}
                   {a.isCorresponding && (
-                    <Crown size={14} className="text-violet-600" aria-label="교신저자" />
+                    <Crown size={14} className="text-cat-5" aria-label="교신저자" />
                   )}
                   {a.isFirstAuthor && (
-                    <Star size={14} className="text-amber-500" aria-label="제1저자" />
+                    <Star size={14} className="text-warning" aria-label="제1저자" />
                   )}
                 </p>
                 {a.email && (
-                  <p className="text-xs text-zinc-500">{a.email}</p>
+                  <p className="text-xs text-muted-foreground">{a.email}</p>
                 )}
               </div>
               <div className="flex shrink-0 gap-1">
@@ -157,7 +157,7 @@ export default function JournalArticleAuthorsEditor({
                   disabled={disabled}
                   title="제거"
                 >
-                  <X size={14} className="text-red-500" />
+                  <X size={14} className="text-destructive" />
                 </Button>
               </div>
             </div>
@@ -225,7 +225,7 @@ export default function JournalArticleAuthorsEditor({
         ))}
 
         {!disabled && availableMembers.length > 0 && (
-          <div className="space-y-2 rounded border border-dashed border-zinc-300 p-3">
+          <div className="space-y-2 rounded border border-dashed border-muted p-3">
             <Label className="text-xs">팀 멤버에서 저자 추가</Label>
             <Input
               placeholder="이름 검색"
@@ -240,10 +240,10 @@ export default function JournalArticleAuthorsEditor({
                     key={m.userId}
                     type="button"
                     onClick={() => addAuthor(m)}
-                    className="block w-full rounded px-2 py-1.5 text-left text-sm hover:bg-zinc-100"
+                    className="block w-full rounded px-2 py-1.5 text-left text-sm hover:bg-muted/50"
                   >
                     <span className="font-medium">{profile?.name ?? m.userId}</span>
-                    <span className="ml-2 text-xs text-zinc-500">{profile?.email}</span>
+                    <span className="ml-2 text-xs text-muted-foreground">{profile?.email}</span>
                   </button>
                 );
               })}

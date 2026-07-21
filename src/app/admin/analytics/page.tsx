@@ -347,10 +347,10 @@ export default function AnalyticsPage() {
       />
       {/* Summary cards */}
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard icon={Users} label="승인 회원" value={analytics.totalMembers} color="bg-blue-50 text-blue-600" />
-        <StatCard icon={CalendarDays} label="세미나" value={analytics.totalSeminars} sub={`완료 ${analytics.completedSeminars}건`} color="bg-violet-50 text-violet-600" />
-        <StatCard icon={TrendingUp} label="출석률" value={`${analytics.attendanceRate}%`} color="bg-green-50 text-green-600" />
-        <StatCard icon={Star} label="평균 만족도" value={analytics.avgRating} sub={`후기 ${analytics.totalReviews}건`} color="bg-amber-50 text-amber-600" />
+        <StatCard icon={Users} label="승인 회원" value={analytics.totalMembers} color="bg-cat-1/5 text-cat-1" />
+        <StatCard icon={CalendarDays} label="세미나" value={analytics.totalSeminars} sub={`완료 ${analytics.completedSeminars}건`} color="bg-cat-5/5 text-cat-5" />
+        <StatCard icon={TrendingUp} label="출석률" value={`${analytics.attendanceRate}%`} color="bg-success/5 text-success" />
+        <StatCard icon={Star} label="평균 만족도" value={analytics.avgRating} sub={`후기 ${analytics.totalReviews}건`} color="bg-warning/5 text-warning" />
       </div>
 
       {/* Insights 날짜 선택 — 임의 일자 조회. 어제/오늘/내일 quick + date picker */}
@@ -378,51 +378,51 @@ export default function AnalyticsPage() {
           하루 후 →
         </Button>
         {!isToday && (
-          <span className="ml-2 rounded bg-amber-50 px-1.5 py-0.5 text-[10px] text-amber-700">
+          <span className="ml-2 rounded bg-warning/5 px-1.5 py-0.5 text-[10px] text-warning">
             과거/미래 조회 — 실시간 갱신 꺼짐
           </span>
         )}
       </div>
 
       <div className="grid grid-cols-2 gap-3 md:grid-cols-4">
-        <StatCard icon={FileText} label="게시글" value={analytics.totalPosts} color="bg-emerald-50 text-emerald-600" />
-        <StatCard icon={Award} label="수료증/감사장" value={analytics.totalCerts} color="bg-pink-50 text-pink-600" />
+        <StatCard icon={FileText} label="게시글" value={analytics.totalPosts} color="bg-success/5 text-success" />
+        <StatCard icon={Award} label="수료증/감사장" value={analytics.totalCerts} color="bg-cat-4/5 text-cat-4" />
         <StatCard
           icon={Eye}
           label={`${isToday ? "오늘" : selectedDate} 방문수`}
           value={todayVisits?.visits ?? 0}
           sub={`KST ${selectedDate}`}
-          color="bg-cyan-50 text-cyan-600"
+          color="bg-info/5 text-info"
         />
         <StatCard
           icon={UserCheck}
           label={`${isToday ? "오늘" : selectedDate} 방문자수`}
           value={todayVisits?.uniqueVisitors?.length ?? 0}
           sub="중복 제외"
-          color="bg-indigo-50 text-indigo-600"
+          color="bg-cat-1/5 text-cat-1"
         />
         <StatCard
           icon={Activity}
           label={`${isToday ? "오늘" : selectedDate} 페이지뷰`}
           value={todayVisits?.pageViews ?? 0}
           sub="전체 화면 이동 합계"
-          color="bg-rose-50 text-rose-600"
+          color="bg-destructive/5 text-destructive"
         />
       </div>
 
       {/* 선택 일자 방문 회원 명단 */}
       <ChartCard title={`${isToday ? "오늘" : selectedDate} 방문 회원 (KST · ${selectedDate})`}>
         <div className="mb-3 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
-          <span className="rounded-full bg-indigo-50 px-2 py-0.5 text-indigo-700 font-medium">
+          <span className="rounded-full bg-cat-1/5 px-2 py-0.5 text-cat-1 font-medium">
             회원 {visitInsights.memberVisitors.length}명
           </span>
           {visitInsights.anonCount > 0 && (
-            <span className="rounded-full bg-slate-100 px-2 py-0.5 text-slate-600">
+            <span className="rounded-full bg-muted/50 px-2 py-0.5 text-muted-foreground">
               익명/비로그인 {visitInsights.anonCount}명
             </span>
           )}
           {visitInsights.unknownCount > 0 && (
-            <span className="rounded-full bg-amber-50 px-2 py-0.5 text-amber-700">
+            <span className="rounded-full bg-warning/5 px-2 py-0.5 text-warning">
               미식별 {visitInsights.unknownCount}명
             </span>
           )}
@@ -439,17 +439,17 @@ export default function AnalyticsPage() {
                 advisor: "자문위원", alumni: "졸업생", member: "회원",
               };
               const ROLE_COLOR: Record<string, string> = {
-                admin: "bg-rose-50 text-rose-700 border-rose-200",
-                president: "bg-violet-50 text-violet-700 border-violet-200",
-                staff: "bg-blue-50 text-blue-700 border-blue-200",
-                advisor: "bg-amber-50 text-amber-700 border-amber-200",
-                alumni: "bg-emerald-50 text-emerald-700 border-emerald-200",
-                member: "bg-slate-50 text-slate-700 border-slate-200",
+                admin: "bg-destructive/5 text-destructive border-destructive/20",
+                president: "bg-cat-5/5 text-cat-5 border-cat-5/20",
+                staff: "bg-cat-1/5 text-cat-1 border-cat-1/20",
+                advisor: "bg-warning/5 text-warning border-warning/20",
+                alumni: "bg-success/5 text-success border-success/20",
+                member: "bg-muted/5 text-muted-foreground border-muted",
               };
               return (
                 <div
                   key={m.id}
-                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs ${ROLE_COLOR[m.role] ?? "bg-card text-slate-700 border-slate-200"}`}
+                  className={`flex items-center gap-2 rounded-full border px-3 py-1 text-xs ${ROLE_COLOR[m.role] ?? "bg-card text-muted-foreground border-muted"}`}
                   title={`${m.name} · ${ROLE_KR[m.role] ?? m.role}${m.studentId ? ` · ${m.studentId}` : ""}`}
                 >
                   <span className="font-medium">{m.name}</span>

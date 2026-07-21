@@ -41,7 +41,7 @@ export default function ProfileOnboardingBadges({ badges, className }: Props) {
           <span
             key={id}
             title={meta.description}
-            className="inline-flex items-center gap-1 rounded-full bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-800 ring-1 ring-inset ring-amber-200"
+            className="inline-flex items-center gap-1 rounded-full bg-warning/5 px-2 py-0.5 text-xs font-medium text-warning ring-1 ring-inset ring-warning/20"
           >
             <span aria-hidden="true">{meta.icon}</span>
             <span>{meta.label}</span>

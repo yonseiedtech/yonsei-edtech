@@ -206,7 +206,7 @@ export default function StudySessionReflectionCard({
           <MessageSquareQuote size={12} />
           회고
           {myReflection && (
-            <Badge variant="secondary" className="bg-emerald-50 text-[9px] text-emerald-700">
+            <Badge variant="secondary" className="bg-success/10 text-[9px] text-success">
               작성 완료
             </Badge>
           )}
@@ -300,7 +300,7 @@ export default function StudySessionReflectionCard({
                   onClick={() => setRating((r) => (r === n ? 0 : n))}
                   className={cn(
                     "rounded p-0.5 transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
-                    rating >= n ? "text-amber-500" : "text-muted-foreground/40 hover:text-amber-400",
+                    rating >= n ? "text-warning" : "text-muted-foreground/40 hover:text-warning/60",
                   )}
                 >
                   <Star size={14} className={cn(rating >= n && "fill-current")} />
@@ -419,7 +419,7 @@ function ReflectionView({
         </span>
         <div className="flex items-center gap-1">
           {reflection.rating && reflection.rating > 0 && (
-            <span className="flex items-center gap-0.5 text-amber-600">
+            <span className="flex items-center gap-0.5 text-warning">
               {Array.from({ length: reflection.rating }).map((_, i) => (
                 <Star key={i} size={10} className="fill-current" />
               ))}
@@ -466,10 +466,10 @@ function Field({
 }) {
   const cls =
     tone === "emerald"
-      ? "border-emerald-200 bg-emerald-50/50"
+      ? "border-success/20 bg-success/5"
       : tone === "amber"
-        ? "border-amber-200 bg-amber-50/50"
-        : "border-blue-200 bg-blue-50/50";
+        ? "border-warning/20 bg-warning/5"
+        : "border-cat-1/20 bg-cat-1/5";
   return (
     <div className={cn("rounded border px-2 py-1", cls)}>
       <p className="text-[10px] font-semibold text-foreground/80">{label}</p>

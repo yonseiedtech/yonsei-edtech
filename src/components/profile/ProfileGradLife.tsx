@@ -97,7 +97,7 @@ export default function ProfileGradLife({ owner, isStaff = false }: Props) {
     return (
       <section className="rounded-2xl border bg-card p-5 shadow-sm">
         <div className="flex items-center gap-2 text-sm font-semibold text-foreground">
-          <GraduationCap size={16} className="text-violet-600" />
+          <GraduationCap size={16} className="text-cat-5" />
           대학원 생활
         </div>
         <p className="mt-3 text-xs text-muted-foreground">불러오는 중…</p>
@@ -109,12 +109,12 @@ export default function ProfileGradLife({ owner, isStaff = false }: Props) {
     return (
       <section className="rounded-2xl border bg-card p-5 shadow-sm">
         <header className="mb-3 flex items-center gap-2">
-          <GraduationCap size={16} className="text-violet-600" />
+          <GraduationCap size={16} className="text-cat-5" />
           <h2 className="text-sm font-semibold text-foreground">대학원 생활</h2>
           {isStaff && (
             <Link
               href="/console/grad-life/positions"
-              className="ml-auto inline-flex items-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 hover:bg-violet-100"
+              className="ml-auto inline-flex items-center gap-1 rounded-md border border-cat-5/20 bg-cat-5/5 px-2 py-0.5 text-[10px] font-semibold text-cat-5 hover:bg-cat-5/10"
             >
               <Plus size={10} /> 활동 추가
             </Link>
@@ -133,7 +133,7 @@ export default function ProfileGradLife({ owner, isStaff = false }: Props) {
   return (
     <section className="rounded-2xl border bg-card p-5 shadow-sm">
       <header className="mb-4 flex items-center gap-2">
-        <GraduationCap size={16} className="text-violet-600" />
+        <GraduationCap size={16} className="text-cat-5" />
         <h2 className="text-sm font-semibold text-foreground">대학원 생활</h2>
         <span className="text-[11px] text-muted-foreground">
           ({positions.length}건)
@@ -141,7 +141,7 @@ export default function ProfileGradLife({ owner, isStaff = false }: Props) {
         {isStaff && (
           <Link
             href="/console/grad-life/positions"
-            className="ml-auto inline-flex items-center gap-1 rounded-md border border-violet-200 bg-violet-50 px-2 py-0.5 text-[10px] font-semibold text-violet-700 hover:bg-violet-100"
+            className="ml-auto inline-flex items-center gap-1 rounded-md border border-cat-5/20 bg-cat-5/5 px-2 py-0.5 text-[10px] font-semibold text-cat-5 hover:bg-cat-5/10"
           >
             <Plus size={10} /> 추가
           </Link>
@@ -166,7 +166,7 @@ export default function ProfileGradLife({ owner, isStaff = false }: Props) {
                     key={p.id}
                     className={cn(
                       "rounded-2xl border bg-muted/20 px-3 py-2.5 text-sm",
-                      isOngoing(p) && "border-l-4 border-l-violet-400 bg-violet-50/30",
+                      isOngoing(p) && "border-l-4 border-l-cat-5/40 bg-cat-5/5",
                     )}
                   >
                     <div className="flex flex-wrap items-center gap-1.5">
@@ -177,7 +177,7 @@ export default function ProfileGradLife({ owner, isStaff = false }: Props) {
                         {GRAD_LIFE_ROLE_LABELS[role]}
                       </Badge>
                       {isOngoing(p) && (
-                        <Badge variant="secondary" className="bg-violet-100 text-violet-800 text-[10px]">
+                        <Badge variant="secondary" className="bg-cat-5/10 text-cat-5 text-[10px]">
                           진행중
                         </Badge>
                       )}

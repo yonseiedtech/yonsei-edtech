@@ -49,9 +49,9 @@ export default function CheckpointEditor({ value, onChange }: Props) {
       {value.length > 0 && (
         <div className="space-y-2">
           {value.map((m) => (
-            <div key={m.id} className="flex items-center gap-2 rounded border border-zinc-200 bg-zinc-50 px-2 py-1.5">
-              <Calendar size={14} className="shrink-0 text-zinc-500" />
-              <span className="shrink-0 text-xs font-mono text-zinc-700">{m.date}</span>
+            <div key={m.id} className="flex items-center gap-2 rounded border border-border bg-muted/5 px-2 py-1.5">
+              <Calendar size={14} className="shrink-0 text-muted-foreground" />
+              <span className="shrink-0 text-xs font-mono text-foreground">{m.date}</span>
               <Input
                 value={m.label}
                 onChange={(e) => updateLabel(m.id, e.target.value)}
@@ -60,7 +60,7 @@ export default function CheckpointEditor({ value, onChange }: Props) {
               <button
                 type="button"
                 onClick={() => removeAt(m.id)}
-                className="shrink-0 rounded p-1 text-zinc-500 hover:bg-zinc-200"
+                className="shrink-0 rounded p-1 text-muted-foreground hover:bg-muted/20"
                 title="제거"
               >
                 <X size={14} />
@@ -93,7 +93,7 @@ export default function CheckpointEditor({ value, onChange }: Props) {
           추가
         </Button>
       </div>
-      <p className="text-xs text-zinc-500">
+      <p className="text-xs text-muted-foreground">
         킥오프·중간점검·발표 등 주요 일정을 등록하세요. 날짜순 자동 정렬됩니다.
       </p>
     </div>

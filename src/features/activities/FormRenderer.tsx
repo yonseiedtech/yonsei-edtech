@@ -34,7 +34,7 @@ export default function FormRenderer({ fields, value, onChange, scheduleDefaults
     <div className="space-y-3">
       {fields.map((f) => {
         const v = value[f.id];
-        const req = f.required ? <span className="ml-1 text-red-500">*</span> : null;
+        const req = f.required ? <span className="ml-1 text-destructive">*</span> : null;
         const base = (
           <div>
             <label className="mb-1 block text-sm font-medium">{f.label}{req}</label>
@@ -285,11 +285,11 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
             className={cn(
               "flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-2 py-2.5 text-xs font-medium leading-tight transition-all",
               mode === "all"
-                ? "border-emerald-500 bg-emerald-50 text-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-100"
-                : "border-input bg-card text-muted-foreground hover:border-emerald-300 hover:bg-emerald-50/40 dark:bg-card dark:hover:bg-emerald-950/20",
+                ? "border-success bg-success/10 text-success"
+                : "border-input bg-card text-muted-foreground hover:border-success/30 hover:bg-success/5",
             )}
           >
-            <CheckCircle2 size={16} className={mode === "all" ? "text-emerald-600" : "text-muted-foreground"} />
+            <CheckCircle2 size={16} className={mode === "all" ? "text-success" : "text-muted-foreground"} />
             전체 시간 가능
           </button>
           <button
@@ -311,11 +311,11 @@ function ScheduleField({ field, value, onChange, defaults }: ScheduleFieldProps)
             className={cn(
               "flex flex-col items-center justify-center gap-1 rounded-xl border-2 px-2 py-2.5 text-xs font-medium leading-tight transition-all",
               mode === "restricted"
-                ? "border-rose-500 bg-rose-50 text-rose-900 dark:bg-rose-950/40 dark:text-rose-100"
-                : "border-input bg-card text-muted-foreground hover:border-rose-300 hover:bg-rose-50/40 dark:bg-card dark:hover:bg-rose-950/20",
+                ? "border-destructive bg-destructive/10 text-destructive"
+                : "border-input bg-card text-muted-foreground hover:border-destructive/30 hover:bg-destructive/5",
             )}
           >
-            <Ban size={16} className={mode === "restricted" ? "text-rose-600" : "text-muted-foreground"} />
+            <Ban size={16} className={mode === "restricted" ? "text-destructive" : "text-muted-foreground"} />
             참여 제한
           </button>
         </div>
@@ -456,18 +456,18 @@ function DateTimeSlotsField({ field, value, onChange, defaults }: DateTimeSlotsF
               value={e.end}
               min={e.start || undefined}
               onChange={(ev) => updateEntry(i, { end: ev.target.value })}
-              className={cn("h-8 w-auto text-xs", invalid && "border-red-400 focus-visible:border-red-400")}
+              className={cn("h-8 w-auto text-xs", invalid && "border-destructive focus-visible:border-destructive")}
             />
             <button
               type="button"
               onClick={() => removeEntry(i)}
-              className="shrink-0 rounded p-1 text-muted-foreground hover:text-red-500"
+              className="shrink-0 rounded p-1 text-muted-foreground hover:text-destructive"
               title="삭제"
             >
               <Trash2 size={14} />
             </button>
             {invalid && (
-              <p className="w-full text-[11px] font-medium text-red-500">
+              <p className="w-full text-[11px] font-medium text-destructive">
                 종료 시간이 시작 시간보다 빠르거나 같습니다.
               </p>
             )}

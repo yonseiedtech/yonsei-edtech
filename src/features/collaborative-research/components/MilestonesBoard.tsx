@@ -47,11 +47,11 @@ const STATUS_LABELS: Record<MilestoneStatus, string> = {
 };
 
 const STATUS_COLORS: Record<MilestoneStatus, string> = {
-  planned: "bg-zinc-100 text-zinc-700",
-  in_progress: "bg-blue-100 text-blue-700",
-  done: "bg-emerald-100 text-emerald-700",
-  overdue: "bg-red-100 text-red-700",
-  cancelled: "bg-zinc-100 text-zinc-500",
+  planned: "bg-muted/50 text-muted-foreground",
+  in_progress: "bg-cat-1/15 text-cat-1",
+  done: "bg-success/15 text-success",
+  overdue: "bg-destructive/15 text-destructive",
+  cancelled: "bg-muted/50 text-muted-foreground",
 };
 
 export default function MilestonesBoard({
@@ -85,7 +85,7 @@ export default function MilestonesBoard({
   };
 
   if (isLoading) {
-    return <p className="py-8 text-center text-sm text-zinc-500">불러오는 중...</p>;
+    return <p className="py-8 text-center text-sm text-muted-foreground">불러오는 중...</p>;
   }
 
   // 자동으로 overdue 표시 — 클라이언트 계산만, DB 미반영
@@ -131,7 +131,7 @@ export default function MilestonesBoard({
                   id="ms-type"
                   value={type}
                   onChange={(e) => setType(e.target.value as MilestoneType)}
-                  className="block w-full rounded border border-zinc-300 px-2 py-2 text-sm"
+                  className="block w-full rounded border border-border px-2 py-2 text-sm"
                 >
                   {Object.entries(TYPE_LABELS).map(([k, v]) => (
                     <option key={k} value={k}>
@@ -206,10 +206,10 @@ function MilestoneRow({
             {TYPE_LABELS[milestone.type]}
           </Badge>
           <div>
-            <p className={`text-sm font-medium ${milestone.status === "done" ? "line-through text-zinc-500" : ""}`}>
+            <p className={`text-sm font-medium ${milestone.status === "done" ? "line-through text-muted-foreground" : ""}`}>
               {milestone.title}
             </p>
-            <p className="text-xs text-zinc-500">
+            <p className="text-xs text-muted-foreground">
               <Calendar size={11} className="mr-1 inline" />
               목표 {milestone.targetDate}
               {milestone.completedAt &&
@@ -256,7 +256,7 @@ function MilestoneRow({
                 }
               }}
             >
-              <Trash2 size={14} className="text-red-500" />
+              <Trash2 size={14} className="text-destructive" />
             </Button>
           )}
         </div>

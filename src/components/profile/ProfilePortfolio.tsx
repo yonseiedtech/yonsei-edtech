@@ -55,19 +55,19 @@ const STATUS_META: Record<
   approved: {
     label: "승인",
     icon: CheckCircle2,
-    tone: "text-emerald-600",
+    tone: "text-success",
     badgeVariant: "default",
   },
   pending: {
     label: "승인 대기",
     icon: Clock,
-    tone: "text-amber-600",
+    tone: "text-warning",
     badgeVariant: "outline",
   },
   rejected: {
     label: "미승인",
     icon: AlertCircle,
-    tone: "text-rose-600",
+    tone: "text-destructive",
     badgeVariant: "destructive",
   },
 };
@@ -287,7 +287,7 @@ function PortfolioRow({
         <p className="mt-1 text-[11px] text-foreground/80">{item.description}</p>
       )}
       {item.status === "rejected" && item.rejectionReason && (
-        <p className="mt-1.5 inline-flex items-center gap-1 rounded-md border border-rose-200 bg-rose-50 px-2 py-0.5 text-[10px] text-rose-700">
+        <p className="mt-1.5 inline-flex items-center gap-1 rounded-md border border-destructive/20 bg-destructive/5 px-2 py-0.5 text-[10px] text-destructive">
           <AlertCircle size={10} /> 반려 사유: {item.rejectionReason}
         </p>
       )}

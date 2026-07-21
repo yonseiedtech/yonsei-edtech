@@ -271,11 +271,11 @@ export default function SessionNotePage() {
       <div className="flex items-center justify-between">
         <div className="text-xs text-muted-foreground">
           {dirty ? (
-            <span className="text-amber-700 dark:text-amber-300">
+            <span className="text-warning">
               ● 저장되지 않음 (3초 후 자동 저장)
             </span>
           ) : savedAt ? (
-            <span className="text-emerald-700 dark:text-emerald-300">
+            <span className="text-success">
               ✓ 저장됨 · {savedAt.toLocaleTimeString("ko-KR")}
             </span>
           ) : (
@@ -330,38 +330,38 @@ export default function SessionNotePage() {
             </p>
             <ol className="space-y-1.5 text-xs">
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-100 text-[10px] font-bold text-emerald-700 dark:bg-emerald-950/60 dark:text-emerald-300">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-success/10 text-[10px] font-bold text-success">
                   1
                 </span>
                 <span>
-                  <span className="font-semibold text-emerald-800 dark:text-emerald-200">구체적 경험 (Concrete Experience)</span>
+                  <span className="font-semibold text-success">구체적 경험 (Concrete Experience)</span>
                   <span className="ml-1 text-muted-foreground">— 이 발표에서 무엇을 직접 경험·관찰했는가?</span>
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-blue-100 text-[10px] font-bold text-blue-700 dark:bg-blue-950/60 dark:text-blue-300">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-cat-1/10 text-[10px] font-bold text-cat-1">
                   2
                 </span>
                 <span>
-                  <span className="font-semibold text-blue-800 dark:text-blue-200">반성적 관찰 (Reflective Observation)</span>
+                  <span className="font-semibold text-cat-1">반성적 관찰 (Reflective Observation)</span>
                   <span className="ml-1 text-muted-foreground">— 무엇을 느꼈는가? 어떤 점이 인상적이었는가?</span>
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-amber-100 text-[10px] font-bold text-amber-700 dark:bg-amber-950/60 dark:text-amber-300">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-warning/10 text-[10px] font-bold text-warning">
                   3
                 </span>
                 <span>
-                  <span className="font-semibold text-amber-800 dark:text-amber-200">추상적 개념화 (Abstract Conceptualization)</span>
+                  <span className="font-semibold text-warning">추상적 개념화 (Abstract Conceptualization)</span>
                   <span className="ml-1 text-muted-foreground">— 이 경험에서 어떤 패턴·원리·이론을 추출할 수 있는가?</span>
                 </span>
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-rose-100 text-[10px] font-bold text-rose-700 dark:bg-rose-950/60 dark:text-rose-300">
+                <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-destructive/10 text-[10px] font-bold text-destructive">
                   4
                 </span>
                 <span>
-                  <span className="font-semibold text-rose-800 dark:text-rose-200">능동적 실험 (Active Experimentation)</span>
+                  <span className="font-semibold text-destructive">능동적 실험 (Active Experimentation)</span>
                   <span className="ml-1 text-muted-foreground">— 다음에 어떻게 시도하거나 적용해 볼 것인가?</span>
                 </span>
               </li>
@@ -465,7 +465,7 @@ export default function SessionNotePage() {
             {questions.map((q, i) => (
               <li
                 key={i}
-                className="flex items-start gap-2 rounded-md bg-blue-50 px-2 py-1 text-sm dark:bg-blue-950/30"
+                className="flex items-start gap-2 rounded-md bg-cat-1/5 px-2 py-1 text-sm"
               >
                 <span className="flex-1">Q{i + 1}. {q}</span>
                 <button
@@ -512,7 +512,7 @@ export default function SessionNotePage() {
             {references.map((r, i) => (
               <li
                 key={i}
-                className="flex items-start gap-2 rounded-md bg-emerald-50 px-2 py-1 text-sm dark:bg-emerald-950/30"
+                className="flex items-start gap-2 rounded-md bg-success/5 px-2 py-1 text-sm"
               >
                 <span className="flex-1 break-all">{r}</span>
                 <button

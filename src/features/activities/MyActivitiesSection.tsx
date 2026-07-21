@@ -12,8 +12,8 @@ import type { Activity, ActivityType, ActivityProgress } from "@/types";
 
 const STATUS_LABELS: Record<string, string> = { upcoming: "예정", ongoing: "진행 중", completed: "완료" };
 const STATUS_COLORS: Record<string, string> = {
-  upcoming: "bg-blue-50 text-blue-700",
-  ongoing: "bg-amber-50 text-amber-700",
+  upcoming: "bg-cat-1/10 text-cat-1",
+  ongoing: "bg-warning/10 text-warning",
   completed: "bg-muted text-muted-foreground",
 };
 
@@ -100,7 +100,7 @@ function MyActivityCard({
           {STATUS_LABELS[activity.status]}
         </Badge>
         {isLeader && (
-          <Badge variant="secondary" className="bg-amber-50 text-[10px] text-amber-700">
+          <Badge variant="secondary" className="bg-warning/10 text-[10px] text-warning">
             <Crown size={10} className="mr-0.5" />
             모임장
           </Badge>
@@ -141,7 +141,7 @@ function MyActivityCard({
         <div className="mt-1 space-y-1">
           <div className="h-1.5 w-full overflow-hidden rounded-full bg-muted">
             <div
-              className={cn("h-full rounded-full transition-all", pct === 100 ? "bg-green-500" : "bg-primary")}
+              className={cn("h-full rounded-full transition-all", pct === 100 ? "bg-success" : "bg-primary")}
               style={{ width: `${pct}%` }}
             />
           </div>

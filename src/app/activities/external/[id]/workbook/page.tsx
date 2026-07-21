@@ -66,7 +66,7 @@ function StarRating({
             size={22}
             className={cn(
               (hover || value) >= n
-                ? "fill-amber-400 text-amber-400"
+                ? "fill-warning text-warning"
                 : "text-muted-foreground",
             )}
           />
@@ -214,7 +214,7 @@ function TaskWidget({
               {WORKBOOK_TASK_TYPE_LABELS[task.type]}
             </Badge>
             {task.required && (
-              <Badge variant="secondary" className="bg-red-50 text-red-700 text-[10px]">
+              <Badge variant="secondary" className="bg-destructive/5 text-destructive text-[10px]">
                 필수
               </Badge>
             )}
@@ -229,7 +229,7 @@ function TaskWidget({
           )}
         </div>
         {isCompleted && (
-          <div className="shrink-0 flex items-center gap-1 text-emerald-600 text-xs font-medium">
+          <div className="shrink-0 flex items-center gap-1 text-success text-xs font-medium">
             <Check size={14} />
             완료
           </div>
@@ -335,13 +335,13 @@ function TaskWidget({
 
       {/* 피드백 */}
       {submission?.feedback && (
-        <div className="rounded-lg bg-emerald-50 dark:bg-emerald-950/30 border border-emerald-200 dark:border-emerald-800 p-3">
-          <p className="text-xs font-medium text-emerald-800 dark:text-emerald-200 mb-1">
+        <div className="rounded-lg bg-success/5 border border-success/20 p-3">
+          <p className="text-xs font-medium text-success mb-1">
             운영진 피드백
           </p>
-          <p className="text-sm text-emerald-900 dark:text-emerald-100">{submission.feedback}</p>
+          <p className="text-sm text-success">{submission.feedback}</p>
           {submission.feedbackByName && submission.feedbackAt && (
-            <p className="mt-1 text-[10px] text-emerald-700 dark:text-emerald-300">
+            <p className="mt-1 text-[10px] text-success">
               {submission.feedbackByName} ·{" "}
               {new Date(submission.feedbackAt).toLocaleDateString("ko-KR")}
             </p>

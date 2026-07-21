@@ -51,7 +51,7 @@ export default function ProfileContactInfo({
             <Mail size={14} className="shrink-0 text-muted-foreground" />
             <a
               href={`mailto:${contactEmail ?? email}`}
-              className="truncate text-slate-700 hover:text-primary"
+              className="truncate text-muted-foreground hover:text-primary"
             >
               {contactEmail ?? email}
             </a>
@@ -60,7 +60,7 @@ export default function ProfileContactInfo({
         {hasPhone && (
           <li className="flex items-center gap-2 py-2 text-sm">
             <Phone size={14} className="shrink-0 text-muted-foreground" />
-            <a href={`tel:${phone}`} className="text-slate-700 hover:text-primary">
+            <a href={`tel:${phone}`} className="text-muted-foreground hover:text-primary">
               {phone}
             </a>
           </li>
@@ -75,7 +75,7 @@ export default function ProfileContactInfo({
                   href={s.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="truncate text-slate-700 hover:text-primary"
+                  className="truncate text-muted-foreground hover:text-primary"
                 >
                   <span className="text-xs text-muted-foreground">{socialLabel(s)} · </span>
                   {s.url}

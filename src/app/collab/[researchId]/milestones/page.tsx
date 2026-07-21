@@ -35,7 +35,7 @@ function Content({ researchId }: { researchId: string }) {
   if (isLoading || !user) {
     return (
       <PageContainer>
-        <p className="py-12 text-center text-sm text-zinc-500">불러오는 중...</p>
+        <p className="py-12 text-center text-sm text-muted-foreground">불러오는 중...</p>
       </PageContainer>
     );
   }
@@ -44,9 +44,9 @@ function Content({ researchId }: { researchId: string }) {
     return (
       <PageContainer>
         <BackButton href="/collab" label="공동 연구 목록" />
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-destructive/20 bg-destructive/10">
           <CardContent className="flex items-center gap-3 p-6">
-            <AlertCircle className="text-red-500" />
+            <AlertCircle className="text-destructive" />
             <p className="text-sm">연구를 찾을 수 없거나 접근 권한이 없습니다.</p>
           </CardContent>
         </Card>

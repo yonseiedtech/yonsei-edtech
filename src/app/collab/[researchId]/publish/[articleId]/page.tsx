@@ -99,7 +99,7 @@ function ArticleEditContent({
   if (isLoading || !research || !user) {
     return (
       <PageContainer>
-        <p className="py-12 text-center text-sm text-zinc-500">불러오는 중...</p>
+        <p className="py-12 text-center text-sm text-muted-foreground">불러오는 중...</p>
       </PageContainer>
     );
   }
@@ -108,9 +108,9 @@ function ArticleEditContent({
     return (
       <PageContainer>
         <BackButton href={`/collab/${researchId}/publish`} label="출판 허브" />
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-destructive/20 bg-destructive/10">
           <CardContent className="flex items-center gap-3 p-6">
-            <AlertCircle className="text-red-500" />
+            <AlertCircle className="text-destructive" />
             <p className="text-sm">논문을 찾을 수 없습니다.</p>
           </CardContent>
         </Card>
@@ -170,7 +170,7 @@ function ArticleEditContent({
           <VisibilityBadge visibility={article.visibility} size="sm" />
         </div>
         <h1 className="text-2xl font-bold">{article.titleKo || "(제목 미입력)"}</h1>
-        <p className="text-xs text-zinc-500">
+        <p className="text-xs text-muted-foreground">
           최근 수정: {new Date(article.updatedAt).toLocaleString("ko-KR")}
         </p>
       </header>
@@ -264,7 +264,7 @@ function ArticleEditContent({
 
                   {/* accepted: 운영진 콘솔에서 호수 배정 안내 */}
                   {article.reviewStatus === "accepted" && (
-                    <p className="rounded bg-blue-50 px-3 py-2 text-xs text-blue-900">
+                    <p className="rounded bg-cat-1/10 px-3 py-2 text-xs text-cat-1">
                       ✓ 승인 완료. 운영진 콘솔(/console/research/journal)에서 호수를 배정하고
                       발간합니다.
                     </p>
@@ -292,7 +292,7 @@ function ArticleEditContent({
                 isLeader &&
                 article.reviewStatus !== "published" && (
                   <div className="space-y-2">
-                    <p className="text-xs text-zinc-600">
+                    <p className="text-xs text-muted-foreground">
                       검수 절차 없이 책임연구자 자율로 출판합니다. 공개 범위 선택:
                     </p>
                     <Button

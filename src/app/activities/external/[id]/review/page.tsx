@@ -387,7 +387,7 @@ export default function AttendeeReviewPage() {
             value={regrets}
             onChange={(e) => setRegrets(e.target.value)}
             placeholder="예: A 트랙 강의실 너무 좁았음, 점심시간 너무 짧음 등"
-            className="border-amber-300 dark:border-amber-700"
+            className="border-warning/30"
           />
         </Section>
 
@@ -425,7 +425,7 @@ export default function AttendeeReviewPage() {
                 <Star
                   className={`h-7 w-7 ${
                     n <= overallRating
-                      ? "fill-amber-400 text-amber-400"
+                      ? "fill-warning text-warning"
                       : "text-muted-foreground"
                   }`}
                 />
@@ -459,14 +459,14 @@ export default function AttendeeReviewPage() {
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm animate-in fade-in duration-300">
           <div className="relative mx-4 max-w-md rounded-2xl bg-card p-8 text-center shadow-2xl animate-in zoom-in-50 duration-500">
             {/* 떠다니는 sparkle 효과 */}
-            <Sparkles className="absolute left-4 top-4 h-5 w-5 animate-pulse text-amber-400" />
-            <Sparkles className="absolute right-6 top-8 h-4 w-4 animate-pulse text-amber-400 [animation-delay:0.3s]" />
-            <Sparkles className="absolute bottom-12 left-8 h-4 w-4 animate-pulse text-amber-400 [animation-delay:0.6s]" />
-            <Sparkles className="absolute bottom-6 right-4 h-5 w-5 animate-pulse text-amber-400 [animation-delay:0.9s]" />
+            <Sparkles className="absolute left-4 top-4 h-5 w-5 animate-pulse text-warning" />
+            <Sparkles className="absolute right-6 top-8 h-4 w-4 animate-pulse text-warning [animation-delay:0.3s]" />
+            <Sparkles className="absolute bottom-12 left-8 h-4 w-4 animate-pulse text-warning [animation-delay:0.6s]" />
+            <Sparkles className="absolute bottom-6 right-4 h-5 w-5 animate-pulse text-warning [animation-delay:0.9s]" />
 
             <div className="relative">
-              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-950/50 animate-in zoom-in duration-700">
-                <CheckCircle2 className="h-12 w-12 text-emerald-600 dark:text-emerald-400" />
+              <div className="mx-auto mb-4 flex h-20 w-20 items-center justify-center rounded-full bg-success/10 animate-in zoom-in duration-700">
+                <CheckCircle2 className="h-12 w-12 text-success" />
               </div>
               <h2 className="text-xl font-bold">후기 저장 완료!</h2>
               <p className="mt-2 text-sm text-muted-foreground">

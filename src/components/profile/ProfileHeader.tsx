@@ -41,7 +41,7 @@ export default function ProfileHeader({ owner, isOwner, viewer }: Props) {
             )}
           </div>
           {owner.position && (
-            <p className="mt-1 text-sm text-slate-700">{owner.position}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{owner.position}</p>
           )}
           {(() => {
             // Sprint 67 P1: 학교 교사는 교육청 + 학교급 + 학교명 + 담당과목 분리 노출

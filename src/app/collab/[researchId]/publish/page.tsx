@@ -57,7 +57,7 @@ function PublishHubContent({ researchId }: { researchId: string }) {
   if (researchLoading || !user) {
     return (
       <PageContainer>
-        <p className="py-12 text-center text-sm text-zinc-500">불러오는 중...</p>
+        <p className="py-12 text-center text-sm text-muted-foreground">불러오는 중...</p>
       </PageContainer>
     );
   }
@@ -66,9 +66,9 @@ function PublishHubContent({ researchId }: { researchId: string }) {
     return (
       <PageContainer>
         <BackButton href="/collab" label="공동 연구 목록" />
-        <Card className="border-red-200 bg-red-50">
+        <Card className="border-destructive/20 bg-destructive/10">
           <CardContent className="flex items-center gap-3 p-6">
-            <AlertCircle className="text-red-500" />
+            <AlertCircle className="text-destructive" />
             <p className="text-sm">연구를 찾을 수 없거나 접근 권한이 없습니다.</p>
           </CardContent>
         </Card>
@@ -107,7 +107,7 @@ function PublishHubContent({ researchId }: { researchId: string }) {
       <div className="mt-6 space-y-6">
         <header>
           <h2 className="text-xl font-semibold">연구지 출판</h2>
-          <p className="mt-1 text-sm text-zinc-600">
+          <p className="mt-1 text-sm text-muted-foreground">
             팀의 연구 결과를 연구지에 발간합니다. 형식은 정식 연구지(검수 워크플로우)와
             워킹 페이퍼(자율 publish) 두 트랙입니다.
           </p>
@@ -115,11 +115,11 @@ function PublishHubContent({ researchId }: { researchId: string }) {
 
         {/* 기존 article 목록 */}
         <section>
-          <h3 className="mb-2 text-sm font-semibold text-zinc-700">
+          <h3 className="mb-2 text-sm font-semibold text-foreground">
             진행 중·발간 논문 ({articles.length})
           </h3>
           {isLoading ? (
-            <p className="py-6 text-center text-sm text-zinc-500">불러오는 중...</p>
+            <p className="py-6 text-center text-sm text-muted-foreground">불러오는 중...</p>
           ) : articles.length === 0 ? (
             <EmptyState
               icon={FileText}
@@ -139,7 +139,7 @@ function PublishHubContent({ researchId }: { researchId: string }) {
                           <ReviewStatusBadge status={a.reviewStatus} size="sm" />
                         </div>
                         <p className="text-sm font-medium">{a.titleKo}</p>
-                        <p className="text-xs text-zinc-500">
+                        <p className="text-xs text-muted-foreground">
                           {a.authors.length}명 저자 · 최근 수정{" "}
                           {new Date(a.updatedAt).toLocaleDateString("ko-KR")}
                         </p>
@@ -155,17 +155,17 @@ function PublishHubContent({ researchId }: { researchId: string }) {
         {/* 신규 생성 */}
         {canCreate && (
           <section>
-            <h3 className="mb-2 text-sm font-semibold text-zinc-700">새 논문 초안 생성</h3>
+            <h3 className="mb-2 text-sm font-semibold text-foreground">새 논문 초안 생성</h3>
             <div className="grid gap-3 sm:grid-cols-3">
               {TYPE_OPTIONS.map((type) => (
-                <Card key={type} className="border-zinc-200">
+                <Card key={type} className="border-border">
                   <CardHeader>
                     <CardTitle className="text-sm">
                       <PublicationTypeBadge type={type} size="sm" />
                     </CardTitle>
                   </CardHeader>
                   <CardContent className="space-y-3">
-                    <p className="text-xs text-zinc-600">
+                    <p className="text-xs text-muted-foreground">
                       {PUBLICATION_TYPE_DESCRIPTIONS[type]}
                     </p>
                     <Button

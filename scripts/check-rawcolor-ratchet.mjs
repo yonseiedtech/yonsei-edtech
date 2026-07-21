@@ -32,8 +32,9 @@ import { join, dirname } from "node:path";
 // 2026-07-21 라운드7 계속: 293 → 283 (LearningStreak·NetworkingPoll·HabitTracker·EventEditorForm 등)
 // 2026-07-21 라운드8: 283 → 244 (research·seminar 디렉토리 정화)
 // 2026-07-21 라운드8 계속: 244 → 238 (archive·steppingstone 14파일 정화)
+// 2026-07-21 라운드8 계속: 238 → 190 (collab·collaborative-research·activities·profile·admin·journal 정화)
 // ─────────────────────────────────────────────────────────────
-const CEILING = 238;
+const CEILING = 190;
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 const baselinePath = join(__dirname, "..", "eslint-rawcolor-baseline.mjs");

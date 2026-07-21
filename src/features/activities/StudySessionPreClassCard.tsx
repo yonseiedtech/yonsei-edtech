@@ -217,7 +217,7 @@ export default function StudySessionPreClassCard({
             {(presenters as User[]).map((p) => (
               <span
                 key={p.id}
-                className="inline-flex items-center gap-1 rounded-full border border-amber-200 bg-amber-50 px-2 py-0.5 text-[11px] text-amber-800"
+                className="inline-flex items-center gap-1 rounded-full border border-warning/20 bg-warning/10 px-2 py-0.5 text-[11px] text-warning"
               >
                 <Mic size={10} />
                 {p.name}
@@ -225,7 +225,7 @@ export default function StudySessionPreClassCard({
                   <button
                     type="button"
                     onClick={() => removePresenter(p.id)}
-                    className="ml-0.5 rounded-full p-0.5 hover:bg-amber-100"
+                    className="ml-0.5 rounded-full p-0.5 hover:bg-warning/20"
                     aria-label="발제자 제외"
                   >
                     <X size={10} />
@@ -396,9 +396,9 @@ export default function StudySessionPreClassCard({
             {questions.map((q, i) => (
               <li
                 key={i}
-                className="flex gap-1.5 rounded border border-blue-200 bg-blue-50/50 px-2 py-1 text-[11px] text-foreground"
+                className="flex gap-1.5 rounded border border-cat-1/20 bg-cat-1/5 px-2 py-1 text-[11px] text-foreground"
               >
-                <HelpCircle size={11} className="mt-0.5 shrink-0 text-blue-700" />
+                <HelpCircle size={11} className="mt-0.5 shrink-0 text-cat-1" />
                 <span className="whitespace-pre-wrap">{q}</span>
               </li>
             ))}

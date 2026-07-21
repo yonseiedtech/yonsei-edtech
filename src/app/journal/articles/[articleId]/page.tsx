@@ -22,7 +22,7 @@ export default function JournalArticlePage({ params }: PageProps) {
   if (isLoading) {
     return (
       <PageContainer>
-        <p className="py-12 text-center text-sm text-zinc-500">불러오는 중...</p>
+        <p className="py-12 text-center text-sm text-muted-foreground">불러오는 중...</p>
       </PageContainer>
     );
   }
@@ -31,9 +31,9 @@ export default function JournalArticlePage({ params }: PageProps) {
     return (
       <PageContainer>
         <BackButton href="/journal" label="연구지 목록" />
-        <Card className="border-red-200 bg-red-50 dark:border-red-900 dark:bg-red-950/40">
+        <Card className="border-destructive/20 bg-destructive/5">
           <CardContent className="flex items-center gap-3 p-6">
-            <AlertCircle className="text-red-500" />
+            <AlertCircle className="text-destructive" />
             <p className="text-sm">논문을 찾을 수 없습니다 (열람 권한 없음 또는 미발간).</p>
           </CardContent>
         </Card>
