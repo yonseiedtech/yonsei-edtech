@@ -2,12 +2,11 @@
  * AUTO-GENERATED — node scripts/gen-rawcolor-baseline.mjs 로 재생성.
  * raw Tailwind 팔레트를 이미 쓰는 기존 파일 목록(부채 baseline).
  * 이 목록에 있는 파일은 차단 규칙에서 제외되고, 새 파일은 error 로 차단된다.
- * 색상 정리 라운드 후 재생성해 목록을 줄일 것. (생성 시점 244개)
+ * 색상 정리 라운드 후 재생성해 목록을 줄일 것. (생성 시점 238개)
  */
 export default [
   "src/app/about/greeting/page.tsx",
   "src/app/about/page.tsx",
-  "src/app/activities/external/\\[id\\]/my-volunteer/page.tsx",
   "src/app/activities/external/\\[id\\]/program/notes/\\[planId\\]/page.tsx",
   "src/app/activities/external/\\[id\\]/review/page.tsx",
   "src/app/activities/external/\\[id\\]/workbook/page.tsx",
@@ -61,8 +60,6 @@ export default [
   "src/app/seminars/\\[id\\]/speaker-review/page.tsx",
   "src/app/signup/page.tsx",
   "src/app/steppingstone/page.tsx",
-  "src/app/steppingstone/program-development/_components/AddieStagesView.tsx",
-  "src/app/steppingstone/program-development/_components/GagneEventsView.tsx",
   "src/app/whats-new/page.tsx",
   "src/components/ShareButton.tsx",
   "src/components/archive/ArchiveFavoriteStar.tsx",
@@ -144,13 +141,10 @@ export default [
   "src/features/collaborative-research/components/CollabResearchHeader.tsx",
   "src/features/collaborative-research/components/CollabResearchInviteDialog.tsx",
   "src/features/collaborative-research/components/CollabResearchInviteInbox.tsx",
-  "src/features/collaborative-research/components/CollabResearchMembersPanel.tsx",
-  "src/features/collaborative-research/components/CollabResearchMetaForm.tsx",
   "src/features/collaborative-research/components/ContributionsMatrix.tsx",
   "src/features/collaborative-research/components/CreditRoleSelector.tsx",
   "src/features/collaborative-research/components/InviteDraftPicker.tsx",
   "src/features/collaborative-research/components/MeetingsBoard.tsx",
-  "src/features/collaborative-research/components/MilestonesBoard.tsx",
   "src/features/collaborative-research/components/StringListEditor.tsx",
   "src/features/comm-board/AnswerThread.tsx",
   "src/features/comm-board/QuestionItem.tsx",
