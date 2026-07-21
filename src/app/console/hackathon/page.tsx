@@ -173,15 +173,15 @@ export default function HackathonJudgingConsolePage() {
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">2</span>
-                <span><strong className="text-foreground">수상 등급 지정</strong> — 각 산출물 카드의 "수상 등급" 드롭다운에서 대상/최우수상/우수상/장려상 지정.</span>
+                <span><strong className="text-foreground">수상 등급 지정</strong> — 각 산출물 카드의 &quot;수상 등급&quot; 드롭다운에서 대상/최우수상/우수상/장려상 지정.</span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">3</span>
-                <span><strong className="text-foreground">수상작 일괄 공개</strong> — 아래 "미공개 일괄 공개" 버튼 클릭 → /hackathon 수상작 섹션 즉시 노출.</span>
+                <span><strong className="text-foreground">수상작 일괄 공개</strong> — 아래 &quot;미공개 일괄 공개&quot; 버튼 클릭 → /hackathon 수상작 섹션 즉시 노출.</span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">4</span>
-                <span><strong className="text-foreground">포트폴리오 자동적재 공지</strong> — 수상팀에게 "마이페이지 → 포트폴리오에서 수상 실적이 자동 적재됐습니다" 공지 게시.</span>
+                <span><strong className="text-foreground">포트폴리오 자동적재 공지</strong> — 수상팀에게 &quot;마이페이지 → 포트폴리오에서 수상 실적이 자동 적재됐습니다&quot; 공지 게시.</span>
               </li>
               <li className="flex gap-2">
                 <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">5</span>

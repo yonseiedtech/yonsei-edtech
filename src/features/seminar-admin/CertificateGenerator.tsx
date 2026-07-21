@@ -146,7 +146,7 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
         <p className="text-xs font-semibold text-primary">발급 대상자 <span className="font-normal">({recipients.length}명)</span></p>
 
         {recipients.length === 0 ? (
-          <p className="mt-2 text-center text-[11px] text-muted-foreground">참석자 현황에서 "추가" 버튼을 눌러 대상자를 추가하세요.</p>
+          <p className="mt-2 text-center text-[11px] text-muted-foreground">참석자 현황에서 &quot;추가&quot; 버튼을 눌러 대상자를 추가하세요.</p>
         ) : (
           <div className="mt-2 max-h-32 space-y-0.5 overflow-y-auto">
             {recipients.map((name) => (

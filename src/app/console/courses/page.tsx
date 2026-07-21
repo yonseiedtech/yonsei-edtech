@@ -708,7 +708,7 @@ function ConsoleCoursesContent() {
                     교시 → 표준 시간 일괄 적용
                   </p>
                   <p className="mt-1 text-xs text-muted-foreground">
-                    schedule에 "1·2교시" "3,4교시"처럼 교시 표기만 있는 과목을 표준 시각으로 변환합니다.
+                    schedule에 &quot;1·2교시&quot; &quot;3,4교시&quot;처럼 교시 표기만 있는 과목을 표준 시각으로 변환합니다.
                     <br />
                     <span className="text-foreground/80">
                       1·2교시 = 18:20~20:00 / 3·4교시 = 20:10~21:50 (요일은 그대로 유지)

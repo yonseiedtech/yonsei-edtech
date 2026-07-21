@@ -326,7 +326,7 @@ export default function ResearchTypeChart({ theses }: { theses: AlumniThesis[] }
       )}
 
       <p className="text-[10.5px] text-muted-foreground">
-        ※ 제목 기반 분류는 키워드 사전 매칭으로 자동 추정. 초록 기반 분류는 통계·면담 등 방법론 단서를 카운트하여 양적 ≥2 + 질적 ≥2 → 혼합으로 판정합니다. 초록이 짧거나 미수록인 논문은 "미상"으로 분류됩니다.
+        ※ 제목 기반 분류는 키워드 사전 매칭으로 자동 추정. 초록 기반 분류는 통계·면담 등 방법론 단서를 카운트하여 양적 ≥2 + 질적 ≥2 → 혼합으로 판정합니다. 초록이 짧거나 미수록인 논문은 &quot;미상&quot;으로 분류됩니다.
       </p>
     </div>
   );

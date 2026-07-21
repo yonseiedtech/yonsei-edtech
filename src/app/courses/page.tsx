@@ -998,7 +998,7 @@ function ComprehensiveExamPanel() {
               </p>
               {courseOptions.length === 0 ? (
                 <p className="rounded-md border border-dashed bg-muted/20 px-3 py-4 text-center text-[11px] text-muted-foreground">
-                  본인 수강 이력에 수강(student)/조교(ta) 과목이 없습니다. 먼저 "수강과목" 에서 내 수강 표시를 해주세요.
+                  본인 수강 이력에 수강(student)/조교(ta) 과목이 없습니다. 먼저 &quot;수강과목&quot; 에서 내 수강 표시를 해주세요.
                 </p>
               ) : (
                 <ul className="max-h-56 overflow-auto rounded-md border divide-y">

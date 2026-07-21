@@ -1302,7 +1302,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                   {bulkOpen && (type === "study" || type === "project") && (
                     <div className="space-y-2 rounded-lg border border-dashed border-primary/30 bg-primary/5 p-3">
                       <p className="text-[11px] text-muted-foreground">
-                        시작 날짜부터 7일 간격으로 N개 주차를 한 번에 생성합니다. 제목은 "Week 1, Week 2..." 형식으로 자동 입력되며 나중에 개별 편집 가능합니다.
+                        시작 날짜부터 7일 간격으로 N개 주차를 한 번에 생성합니다. 제목은 &quot;Week 1, Week 2...&quot; 형식으로 자동 입력되며 나중에 개별 편집 가능합니다.
                       </p>
                       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
                         <div>
@@ -1937,7 +1937,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                         {type === "external"
                           ? "학술대회 운영진(담당자·발표자·진행자·자원봉사 등)을 회원에서 검색하여 직접 추가합니다."
                           : "운영진(담당자·발표자·기록자 등)을 회원에서 검색하여 직접 추가합니다."}
-                        {" "}추가 즉시 기본 역할 <strong>"운영진"</strong>이 자동 부여되며, 필요 시 세부 역할을 변경할 수 있습니다.
+                        {" "}추가 즉시 기본 역할 <strong>&quot;운영진&quot;</strong>이 자동 부여되며, 필요 시 세부 역할을 변경할 수 있습니다.
                       </p>
                       <MemberAutocomplete
                         value=""

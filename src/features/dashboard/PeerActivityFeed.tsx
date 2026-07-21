@@ -269,7 +269,7 @@ export default function PeerActivityFeed() {
         })}
       </ul>
       <p className="mt-3 text-[11px] text-muted-foreground">
-        내 활동을 노출하지 않으려면 마이페이지 → 알림 설정에서 "활동 피드 노출"을 끄세요.
+        내 활동을 노출하지 않으려면 마이페이지 → 알림 설정에서 &quot;활동 피드 노출&quot;을 끄세요.
       </p>
     </WidgetCard>
   );

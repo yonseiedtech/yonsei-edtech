@@ -267,7 +267,7 @@ export default function ModelWizard({
             </label>
             <label className="block">
               <span className="font-semibold">③ 둘 사이를 설명하는 변인 (매개변인)</span>
-              <span className="ml-1 text-xs text-muted-foreground">선택 — X가 Y에 영향을 주는 '경로'</span>
+              <span className="ml-1 text-xs text-muted-foreground">선택 — X가 Y에 영향을 주는 &apos;경로&apos;</span>
               <Input
                 className="mt-1"
                 value={mediator}
@@ -277,7 +277,7 @@ export default function ModelWizard({
             </label>
             <label className="block">
               <span className="font-semibold">④ 관계의 강도를 바꾸는 변인 (조절변인)</span>
-              <span className="ml-1 text-xs text-muted-foreground">선택 — '누구에게 더 효과적인가'</span>
+              <span className="ml-1 text-xs text-muted-foreground">선택 — &apos;누구에게 더 효과적인가&apos;</span>
               <Input
                 className="mt-1"
                 value={moderator}

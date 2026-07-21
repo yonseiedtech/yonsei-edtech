@@ -43,6 +43,8 @@ export interface CommQuestion {
   resolvedAnswerId?: string;
   likeCount: number;
   answerCount: number;
+  /** 운영진이 고정한 공지 여부 — true 이면 보드 상단에 핀 공지로 표시 */
+  pinned?: boolean;
   createdAt?: string;
   updatedAt?: string;
 }

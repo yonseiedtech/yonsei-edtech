@@ -261,7 +261,7 @@ export default function TitleNgramTrend({ theses }: { theses: AlumniThesis[] }) 
           <div className="animate-in fade-in slide-in-from-bottom-1 duration-200">
             <div className="mb-2 flex items-baseline justify-between border-b pb-1.5">
               <p className="text-[10.5px] font-semibold uppercase tracking-wider text-primary">
-                "{items[hoverIdx]?.ngram}" 포함 최근 논문
+                &quot;{items[hoverIdx]?.ngram}&quot; 포함 최근 논문
               </p>
               <span className="text-[10.5px] tabular-nums text-muted-foreground">
                 {items[hoverIdx]?.count}건 중 최근 5건

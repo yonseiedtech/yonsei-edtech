@@ -882,7 +882,7 @@ function OnboardingEmptyState({
             관리자가 등록한 템플릿이 아직 없습니다.
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
-            아래 "처음부터 만들기" 버튼으로 직접 질문을 작성해보세요.
+            아래 &quot;처음부터 만들기&quot; 버튼으로 직접 질문을 작성해보세요.
           </p>
         </div>
       )}

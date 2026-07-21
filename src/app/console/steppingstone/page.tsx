@@ -344,7 +344,7 @@ function ConsoleSteppingStoneContent() {
             {!t.published && (
               <div>
                 <span className="font-semibold">⚠️ 비공개 트랙</span> — 이 트랙은 공개 페이지(/steppingstone/{t.key})에 표시되지 않습니다.
-                위 "공개로" 버튼을 눌러 공개 전환하세요.
+                위 &quot;공개로&quot; 버튼을 눌러 공개 전환하세요.
               </div>
             )}
             {unpublishedItems > 0 && (

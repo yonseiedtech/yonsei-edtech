@@ -255,7 +255,7 @@ function AdminContent() {
         <section className="mb-8 rounded-2xl border-2 border-primary/30 bg-primary/5 p-6">
           <h2 className="text-lg font-bold">새 토론 개최</h2>
           <p className="mt-1 text-xs text-muted-foreground">
-            등록 후 "개최" 버튼을 눌러야 AI들의 라운드 토론이 시작됩니다. (Phase 2 cron 도입 전에는 라운드 수동 진행)
+            등록 후 &quot;개최&quot; 버튼을 눌러야 AI들의 라운드 토론이 시작됩니다. (Phase 2 cron 도입 전에는 라운드 수동 진행)
           </p>
 
           <div className="mt-5 space-y-4">
@@ -474,7 +474,7 @@ function AdminContent() {
           description={
             <>
               매일 06:00 UTC (15:00 KST) Vercel Cron 이 1 tick 당 최대 6 step (≒1 라운드) 자동 진행합니다.
-              운영진이 즉시 진행을 원하면 각 토론 카드의 <strong>"다음 진행"</strong> 버튼 사용. 비용 캡 $0.5/토론.
+              운영진이 즉시 진행을 원하면 각 토론 카드의 <strong>&quot;다음 진행&quot;</strong> 버튼 사용. 비용 캡 $0.5/토론.
             </>
           }
         />

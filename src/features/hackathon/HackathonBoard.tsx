@@ -31,6 +31,7 @@ import {
   Pencil,
   Trash2,
   Save,
+  Pin,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -347,6 +348,25 @@ export default function HackathonBoard() {
 
   return (
     <div className="space-y-6">
+      {/* ── 핀 공지 — 운영진이 pinned:true 로 설정한 comm_boards hackathon 항목 ── */}
+      {entries.filter((e) => e.pinned).length > 0 && (
+        <section className="space-y-2">
+          {entries
+            .filter((e) => e.pinned)
+            .map((notice) => (
+              <div
+                key={notice.id}
+                className="flex items-start gap-2 rounded-2xl border border-primary/30 bg-primary/5 p-4"
+              >
+                <Pin size={14} className="mt-0.5 shrink-0 text-primary" />
+                <p className="text-sm leading-relaxed text-foreground">
+                  {notice.body}
+                </p>
+              </div>
+            ))}
+        </section>
+      )}
+
       {/* ── 팀 형성 흐름 안내 (첫 방문 1회 · localStorage dismiss) ── */}
       {!onboardingDismissed && (
         <div className="relative rounded-2xl border bg-card p-4">
