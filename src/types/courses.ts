@@ -1,3 +1,5 @@
+import { CAT_BADGE } from "@/lib/design-tokens";
+
 // ── Track 5: 수강과목 관리 — types-domain-split Phase 6 ──
 
 export type SemesterTerm = "spring" | "summer" | "fall" | "winter";
@@ -280,12 +282,12 @@ export const COURSE_TODO_TYPE_LABELS: Record<CourseTodoType, string> = {
 };
 
 export const COURSE_TODO_TYPE_COLORS: Record<CourseTodoType, string> = {
-  assignment: "bg-amber-100 text-amber-700",
-  paper_reading: "bg-blue-100 text-blue-700",
-  paper_writing: "bg-purple-100 text-purple-700",
-  presentation_prep: "bg-emerald-100 text-emerald-700",
-  lecture_review: "bg-rose-100 text-rose-700",
-  other: "bg-slate-100 text-slate-700",
+  assignment: CAT_BADGE.amber,
+  paper_reading: CAT_BADGE.blue,
+  paper_writing: CAT_BADGE.purple,
+  presentation_prep: CAT_BADGE.emerald,
+  lecture_review: CAT_BADGE.rose,
+  other: CAT_BADGE.slate,
 };
 
 /** 수강생이 특정 수업에서 생성한 해야 할 일 */

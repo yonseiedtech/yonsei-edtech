@@ -1,3 +1,5 @@
+import { CAT_CHIP_BARE } from "@/lib/design-tokens";
+
 // ──────────── 대학원 생활 활동 이력 (Sprint 33) ────────────
 // 전공대표 / 조교 / 학회장 / 학회 운영진 등 학기 단위(전기/후기) 활동 이력
 
@@ -19,12 +21,12 @@ export const GRAD_LIFE_ROLE_LABELS: Record<GradLifeRole, string> = {
 };
 
 export const GRAD_LIFE_ROLE_COLORS: Record<GradLifeRole, string> = {
-  major_rep: "bg-violet-50 text-violet-700 border-violet-200",
-  ta: "bg-sky-50 text-sky-700 border-sky-200",
-  society_president: "bg-amber-50 text-amber-700 border-amber-200",
-  society_vice_president: "bg-amber-50 text-amber-700 border-amber-200",
-  society_staff: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  student_advisor: "bg-rose-50 text-rose-700 border-rose-200",
+  major_rep: CAT_CHIP_BARE.violet,
+  ta: CAT_CHIP_BARE.sky,
+  society_president: CAT_CHIP_BARE.amber,
+  society_vice_president: CAT_CHIP_BARE.amber,
+  society_staff: CAT_CHIP_BARE.emerald,
+  student_advisor: CAT_CHIP_BARE.rose,
 };
 
 /** "first" = 전기(3~8월), "second" = 후기(9월~익년 2월) — lib/semester.ts Semester와 동일 */

@@ -1,3 +1,5 @@
+import { CAT_BADGE } from "@/lib/design-tokens";
+
 // ────────────────────────────────────────────────────────────
 // features/collaborative-research/lib/research-status.ts
 //
@@ -33,13 +35,13 @@ export const COLLAB_STATUS_LABELS: Record<CollaborativeResearchStatus, string> =
 
 /** Tailwind 색상 토큰 (이미 사이트에서 사용 중인 chip 컬러) */
 export const COLLAB_STATUS_COLORS: Record<CollaborativeResearchStatus, string> = {
-  planning: "bg-slate-100 text-slate-700",
-  active: "bg-emerald-100 text-emerald-700",
-  writing: "bg-blue-100 text-blue-700",
-  review: "bg-amber-100 text-amber-700",
-  published: "bg-violet-100 text-violet-700",
-  paused: "bg-zinc-100 text-zinc-600",
-  archived: "bg-zinc-100 text-zinc-500",
+  planning:  CAT_BADGE.slate,
+  active:    CAT_BADGE.emerald,
+  writing:   CAT_BADGE.blue,
+  review:    CAT_BADGE.amber,
+  published: CAT_BADGE.violet,
+  paused:    CAT_BADGE.zinc,
+  archived:  CAT_BADGE.zincDim,
 };
 
 export const COLLAB_MEMBER_ROLE_LABELS: Record<CollabMemberRole, string> = {
@@ -51,11 +53,11 @@ export const COLLAB_MEMBER_ROLE_LABELS: Record<CollabMemberRole, string> = {
 };
 
 export const COLLAB_MEMBER_ROLE_COLORS: Record<CollabMemberRole, string> = {
-  principal: "bg-violet-100 text-violet-700",
+  principal:     CAT_BADGE.violet,
   co_researcher: "bg-primary/10 text-primary",
-  advisor: "bg-amber-100 text-amber-700",
-  reviewer: "bg-cyan-100 text-cyan-700",
-  assistant: "bg-zinc-100 text-zinc-600",
+  advisor:       CAT_BADGE.amber,
+  reviewer:      CAT_BADGE.cyan,
+  assistant:     CAT_BADGE.zinc,
 };
 
 /** 멤버 역할이 본문 편집권을 가지는지 (Phase 2 채택, Phase 1 에서도 정의해두면 UI 분기에 사용) */

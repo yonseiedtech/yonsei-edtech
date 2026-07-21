@@ -1,4 +1,5 @@
 import type { ArchiveOperationalMeta } from "./edutech-archive";
+import { CAT_CHIP } from "@/lib/design-tokens";
 
 // ── 교육공학 아카이브 — 연구방법 가이드 (Phase 1) ──
 // 양적/질적/혼합 연구방법론을 정리한 가이드. 운영진 검수(published) 게이트 적용.
@@ -13,9 +14,9 @@ export const RESEARCH_METHOD_KIND_LABELS: Record<ResearchMethodKind, string> = {
 };
 
 export const RESEARCH_METHOD_KIND_COLORS: Record<ResearchMethodKind, string> = {
-  quantitative: "bg-blue-50 text-blue-800 border border-blue-200",
-  qualitative: "bg-amber-50 text-amber-800 border border-amber-200",
-  mixed: "bg-emerald-50 text-emerald-800 border border-emerald-200",
+  quantitative: CAT_CHIP.blue,
+  qualitative: CAT_CHIP.amber,
+  mixed: CAT_CHIP.emerald,
 };
 
 export type ResearchMethodToolGuide = "spss" | "amos" | "r";

@@ -2,6 +2,8 @@
 // 컬렉션명 표준: archive_measurements (측정도구). URL은 /archive/measurement, 라벨은 "측정도구".
 // 상시 공개 정책 (published 없음): archive_concepts, archive_variables, archive_measurements.
 // 자세한 매트릭스·정책은 docs/archive-collection-naming.md 참고.
+import { CAT_CHIP } from "@/lib/design-tokens";
+
 export type ArchiveItemType = "concept" | "variable" | "measurement";
 
 export const ARCHIVE_ITEM_TYPE_LABELS: Record<ArchiveItemType, string> = {
@@ -11,9 +13,9 @@ export const ARCHIVE_ITEM_TYPE_LABELS: Record<ArchiveItemType, string> = {
 };
 
 export const ARCHIVE_ITEM_TYPE_COLORS: Record<ArchiveItemType, string> = {
-  concept: "bg-violet-50 text-violet-800 border border-violet-200",
-  variable: "bg-blue-50 text-blue-800 border border-blue-200",
-  measurement: "bg-emerald-50 text-emerald-800 border border-emerald-200",
+  concept: CAT_CHIP.violet,
+  variable: CAT_CHIP.blue,
+  measurement: CAT_CHIP.emerald,
 };
 
 export type VariableType = "cognitive" | "affective" | "behavioral" | "demographic" | "environmental" | "other";

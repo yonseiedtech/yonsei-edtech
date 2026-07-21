@@ -1,4 +1,5 @@
 import type { ArchiveOperationalMeta } from "./edutech-archive";
+import { CAT_CHIP } from "@/lib/design-tokens";
 
 // ── 교육공학 아카이브 — 통계방법 가이드 (Phase 1.5) ──
 // 연구방법(research-methods)과 양방향 연계되는 1급 엔티티.
@@ -31,16 +32,16 @@ export const STATISTICAL_METHOD_CATEGORY_LABELS: Record<StatisticalMethodCategor
 };
 
 export const STATISTICAL_METHOD_CATEGORY_COLORS: Record<StatisticalMethodCategory, string> = {
-  basic: "bg-teal-50 text-teal-800 border border-teal-200",
-  anova_family: "bg-blue-50 text-blue-800 border border-blue-200",
-  regression: "bg-violet-50 text-violet-800 border border-violet-200",
-  factor: "bg-emerald-50 text-emerald-800 border border-emerald-200",
-  sem: "bg-indigo-50 text-indigo-800 border border-indigo-200",
-  nonparametric: "bg-amber-50 text-amber-800 border border-amber-200",
-  mediation_moderation: "bg-rose-50 text-rose-800 border border-rose-200",
-  multilevel: "bg-cyan-50 text-cyan-800 border border-cyan-200",
-  measurement: "bg-purple-50 text-purple-800 border border-purple-200",
-  other: "bg-slate-50 text-slate-800 border border-slate-200",
+  basic: CAT_CHIP.teal,
+  anova_family: CAT_CHIP.blue,
+  regression: CAT_CHIP.violet,
+  factor: CAT_CHIP.emerald,
+  sem: CAT_CHIP.indigo,
+  nonparametric: CAT_CHIP.amber,
+  mediation_moderation: CAT_CHIP.rose,
+  multilevel: CAT_CHIP.cyan,
+  measurement: CAT_CHIP.purple,
+  other: CAT_CHIP.slate,
 };
 
 /** 비교 프로파일 — 동일 데이터 대안 통계방법 비교표에서 행으로 사용 */

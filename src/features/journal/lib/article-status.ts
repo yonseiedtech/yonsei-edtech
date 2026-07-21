@@ -1,3 +1,5 @@
+import { CAT_BADGE, CAT_BADGE_BORDER } from "@/lib/design-tokens";
+
 // ────────────────────────────────────────────────────────────
 // features/journal/lib/article-status.ts
 //
@@ -38,13 +40,13 @@ export const REVIEW_STATUS_LABELS: Record<ArticleReviewStatus, string> = {
 };
 
 export const REVIEW_STATUS_COLORS: Record<ArticleReviewStatus, string> = {
-  draft: "bg-zinc-100 text-zinc-700",
-  submitted: "bg-blue-100 text-blue-700",
-  under_review: "bg-amber-100 text-amber-700",
-  revision_requested: "bg-orange-100 text-orange-700",
-  accepted: "bg-emerald-100 text-emerald-700",
-  published: "bg-violet-100 text-violet-700",
-  withdrawn: "bg-zinc-100 text-zinc-500",
+  draft:              CAT_BADGE.zinc,
+  submitted:          CAT_BADGE.blue,
+  under_review:       CAT_BADGE.amber,
+  revision_requested: CAT_BADGE.orange,
+  accepted:           CAT_BADGE.emerald,
+  published:          CAT_BADGE.violet,
+  withdrawn:          CAT_BADGE.zincDim,
 };
 
 export const VISIBILITY_LABELS: Record<ArticleVisibility, string> = {
@@ -73,10 +75,10 @@ export const SEVERITY_LABELS: Record<ReviewCommentSeverity, string> = {
 };
 
 export const SEVERITY_COLORS: Record<ReviewCommentSeverity, string> = {
-  blocking: "bg-red-100 text-red-700 border-red-300",
-  major: "bg-amber-100 text-amber-700 border-amber-300",
-  minor: "bg-blue-100 text-blue-700 border-blue-300",
-  praise: "bg-emerald-100 text-emerald-700 border-emerald-300",
+  blocking: CAT_BADGE_BORDER.red,
+  major:    CAT_BADGE_BORDER.amber,
+  minor:    CAT_BADGE_BORDER.blue,
+  praise:   CAT_BADGE_BORDER.emerald,
 };
 
 /** 검수 워크플로우 상태 전이 화이트리스트. */

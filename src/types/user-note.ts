@@ -1,3 +1,5 @@
+import { CAT_BADGE_BG, CAT_BADGE_TEXT } from "@/lib/design-tokens";
+
 // ─────────────────────────────────────────────────────────────
 // user-note.ts — 사용자 개인 메모 도메인 타입
 // ─────────────────────────────────────────────────────────────
@@ -23,12 +25,12 @@ export const USER_NOTE_CATEGORY_COLORS: Record<
   UserNoteCategory,
   { bg: string; text: string }
 > = {
-  general: { bg: "bg-slate-100", text: "text-slate-700" },
-  study: { bg: "bg-emerald-100", text: "text-emerald-700" },
-  research: { bg: "bg-amber-100", text: "text-amber-700" },
-  reflection: { bg: "bg-blue-100", text: "text-blue-700" },
-  todo: { bg: "bg-rose-100", text: "text-rose-700" },
-  idea: { bg: "bg-violet-100", text: "text-violet-700" },
+  general:    { bg: CAT_BADGE_BG.slate,   text: CAT_BADGE_TEXT.slate },
+  study:      { bg: CAT_BADGE_BG.emerald, text: CAT_BADGE_TEXT.emerald },
+  research:   { bg: CAT_BADGE_BG.amber,   text: CAT_BADGE_TEXT.amber },
+  reflection: { bg: CAT_BADGE_BG.blue,    text: CAT_BADGE_TEXT.blue },
+  todo:       { bg: CAT_BADGE_BG.rose,    text: CAT_BADGE_TEXT.rose },
+  idea:       { bg: CAT_BADGE_BG.violet,  text: CAT_BADGE_TEXT.violet },
 };
 
 export interface UserNote {

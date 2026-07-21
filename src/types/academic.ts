@@ -1,3 +1,5 @@
+import { CAT_CHIP_100, CAT_PLAIN_50, CAT_CHIP_100_BARE } from "@/lib/design-tokens";
+
 // ── 학술활동 / 컨퍼런스 / 투표·설문 / 포토갤러리 (types-domain-split Phase 5) ──
 
 // ── 학술활동 ──
@@ -11,9 +13,9 @@ export const EXTERNAL_PARTICIPANT_TYPE_LABELS: Record<ExternalParticipantType, s
   attendee: "참석",
 };
 export const EXTERNAL_PARTICIPANT_TYPE_COLORS: Record<ExternalParticipantType, string> = {
-  speaker: "bg-purple-100 text-purple-800 border border-purple-200 dark:bg-purple-950/40 dark:text-purple-200 dark:border-purple-800",
-  volunteer: "bg-emerald-100 text-emerald-800 border border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-800",
-  attendee: "bg-slate-100 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700",
+  speaker:   CAT_CHIP_100.purple,
+  volunteer: CAT_CHIP_100.emerald,
+  attendee:  CAT_CHIP_100.slate,
 };
 
 /** 발표자 신청 시 발표 유형 (학술대회 발표 트랙 분류) */
@@ -24,9 +26,9 @@ export const SPEAKER_SUBMISSION_TYPE_LABELS: Record<SpeakerSubmissionType, strin
   media: "미디어전",
 };
 export const SPEAKER_SUBMISSION_TYPE_COLORS: Record<SpeakerSubmissionType, string> = {
-  paper: "bg-violet-50 text-violet-700",
-  poster: "bg-amber-50 text-amber-700",
-  media: "bg-rose-50 text-rose-700",
+  paper:  CAT_PLAIN_50.violet,
+  poster: CAT_PLAIN_50.amber,
+  media:  CAT_PLAIN_50.rose,
 };
 
 export type FormFieldType =
@@ -221,17 +223,17 @@ export const CONFERENCE_SESSION_CATEGORY_LABELS: Record<ConferenceSessionCategor
 };
 
 export const CONFERENCE_SESSION_CATEGORY_COLORS: Record<ConferenceSessionCategory, string> = {
-  keynote: "bg-purple-100 text-purple-800 border-purple-200 dark:bg-purple-950/40 dark:text-purple-200 dark:border-purple-800",
-  symposium: "bg-blue-100 text-blue-800 border-blue-200 dark:bg-blue-950/40 dark:text-blue-200 dark:border-blue-800",
-  panel: "bg-indigo-100 text-indigo-800 border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-200 dark:border-indigo-800",
-  paper: "bg-emerald-100 text-emerald-800 border-emerald-200 dark:bg-emerald-950/40 dark:text-emerald-200 dark:border-emerald-800",
-  poster: "bg-amber-100 text-amber-800 border-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-800",
-  media: "bg-fuchsia-100 text-fuchsia-800 border-fuchsia-200 dark:bg-fuchsia-950/40 dark:text-fuchsia-200 dark:border-fuchsia-800",
-  workshop: "bg-rose-100 text-rose-800 border-rose-200 dark:bg-rose-950/40 dark:text-rose-200 dark:border-rose-800",
-  networking: "bg-pink-100 text-pink-800 border-pink-200 dark:bg-pink-950/40 dark:text-pink-200 dark:border-pink-800",
-  ceremony: "bg-slate-200 text-slate-800 border-slate-300 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-600",
-  break: "bg-gray-100 text-gray-600 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
-  other: "bg-gray-100 text-gray-700 border-gray-200 dark:bg-gray-800 dark:text-gray-300 dark:border-gray-700",
+  keynote:    CAT_CHIP_100_BARE.purple,
+  symposium:  CAT_CHIP_100_BARE.blue,
+  panel:      CAT_CHIP_100_BARE.indigo,
+  paper:      CAT_CHIP_100_BARE.emerald,
+  poster:     CAT_CHIP_100_BARE.amber,
+  media:      CAT_CHIP_100_BARE.fuchsia,
+  workshop:   CAT_CHIP_100_BARE.rose,
+  networking: CAT_CHIP_100_BARE.pink,
+  ceremony:   CAT_CHIP_100_BARE.slate200,
+  break:      CAT_CHIP_100_BARE.grayMuted,
+  other:      CAT_CHIP_100_BARE.gray,
 };
 
 export interface ConferenceSession {

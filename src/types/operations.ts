@@ -1,3 +1,5 @@
+import { CAT_STATUS_100, CAT_NOTE_KIND } from "@/lib/design-tokens";
+
 // ── 운영(Operations) 도메인 (types-domain-split Phase 5) ──
 // HandoverDocument, BusinessCardExchange, WaitlistEntry, AppNotification,
 // AuditLog, AdminTodo, ActivityProgress, ProgressMeeting, ActivityMaterial,
@@ -340,8 +342,8 @@ export const STUDY_ASSIGNMENT_STATUS_LABELS: Record<StudyAssignmentSubmissionSta
 
 export const STUDY_ASSIGNMENT_STATUS_COLORS: Record<StudyAssignmentSubmissionStatus, string> = {
   pending: "bg-muted text-muted-foreground",
-  in_progress: "bg-amber-100 text-amber-800",
-  completed: "bg-emerald-100 text-emerald-800",
+  in_progress: CAT_STATUS_100.amber,
+  completed: CAT_STATUS_100.emerald,
 };
 
 export interface StudyAssignmentSubmission {
@@ -386,10 +388,10 @@ export const STUDY_SESSION_NOTE_KIND_LABELS: Record<StudySessionNoteKind, string
 };
 
 export const STUDY_SESSION_NOTE_KIND_COLORS: Record<StudySessionNoteKind, string> = {
-  question: "border-blue-200 bg-blue-50 text-blue-800",
-  insight: "border-emerald-200 bg-emerald-50 text-emerald-800",
-  highlight: "border-amber-200 bg-amber-50 text-amber-800",
-  quote: "border-purple-200 bg-purple-50 text-purple-800",
+  question:  CAT_NOTE_KIND.question,
+  insight:   CAT_NOTE_KIND.insight,
+  highlight: CAT_NOTE_KIND.highlight,
+  quote:     CAT_NOTE_KIND.quote,
 };
 
 export interface StudySessionNote {

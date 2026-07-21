@@ -1,3 +1,5 @@
+import { CAT_CHIP } from "@/lib/design-tokens";
+
 // ── 진단평가 (Diagnostic Assessment) — MVP ──
 // 대학원생이 아카이브 개념(통계방법·연구방법·교육공학 핵심개념)을 얼마나 아는지
 // 객관식으로 진단 → "논문 작성 준비도 / 연구 분석 준비도" 리포트 + 약점 개념을
@@ -27,9 +29,9 @@ export const DIAGNOSTIC_AREA_DESCRIPTIONS: Record<DiagnosticArea, string> = {
 };
 
 export const DIAGNOSTIC_AREA_COLORS: Record<DiagnosticArea, string> = {
-  statistics: "bg-indigo-50 text-indigo-800 border border-indigo-200 dark:bg-indigo-950/40 dark:text-indigo-200 dark:border-indigo-800",
-  method: "bg-sky-50 text-sky-800 border border-sky-200 dark:bg-sky-950/40 dark:text-sky-200 dark:border-sky-800",
-  concept: "bg-violet-50 text-violet-800 border border-violet-200 dark:bg-violet-950/40 dark:text-violet-200 dark:border-violet-800",
+  statistics: CAT_CHIP.indigo,
+  method: CAT_CHIP.sky,
+  concept: CAT_CHIP.violet,
 };
 
 /** 영역 순서 (러너·리포트 렌더 순서) */
@@ -81,10 +83,10 @@ export const COGNITIVE_LEVEL_DESCRIPTIONS: Record<CognitiveLevel, string> = {
 };
 
 export const COGNITIVE_LEVEL_COLORS: Record<CognitiveLevel, string> = {
-  remember: "bg-slate-50 text-slate-700 border border-slate-200 dark:bg-slate-800 dark:text-slate-200 dark:border-slate-700",
-  understand: "bg-teal-50 text-teal-800 border border-teal-200 dark:bg-teal-950/40 dark:text-teal-200 dark:border-teal-800",
-  apply: "bg-amber-50 text-amber-800 border border-amber-200 dark:bg-amber-950/40 dark:text-amber-200 dark:border-amber-800",
-  analyze: "bg-rose-50 text-rose-800 border border-rose-200 dark:bg-rose-950/40 dark:text-rose-200 dark:border-rose-800",
+  remember: CAT_CHIP.slate,
+  understand: CAT_CHIP.teal,
+  apply: CAT_CHIP.amber,
+  analyze: CAT_CHIP.rose,
 };
 
 /** 인지수준 순서 (리포트 렌더 순서 — 낮은 수준부터). */

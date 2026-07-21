@@ -1,3 +1,5 @@
+import { CAT_VAR_PALETTE } from "@/lib/design-tokens";
+
 // ────────────────────────────────────────────────────────────
 // types/research-model.ts — 연구 모형(research model) 다이어그램
 //
@@ -67,41 +69,11 @@ export interface VariablePalette {
 }
 
 export const VARIABLE_PALETTE: Record<VariableKind, VariablePalette> = {
-  independent: {
-    bg: "bg-sky-50 dark:bg-sky-950/40",
-    border: "border-sky-300 dark:border-sky-700",
-    text: "text-sky-900 dark:text-sky-100",
-    badge: "bg-sky-100 text-sky-700 dark:bg-sky-900/60 dark:text-sky-200",
-    hex: "#0ea5e9",
-  },
-  dependent: {
-    bg: "bg-violet-50 dark:bg-violet-950/40",
-    border: "border-violet-300 dark:border-violet-700",
-    text: "text-violet-900 dark:text-violet-100",
-    badge: "bg-violet-100 text-violet-700 dark:bg-violet-900/60 dark:text-violet-200",
-    hex: "#8b5cf6",
-  },
-  mediator: {
-    bg: "bg-amber-50 dark:bg-amber-950/40",
-    border: "border-amber-300 dark:border-amber-700",
-    text: "text-amber-900 dark:text-amber-100",
-    badge: "bg-amber-100 text-amber-700 dark:bg-amber-900/60 dark:text-amber-200",
-    hex: "#f59e0b",
-  },
-  moderator: {
-    bg: "bg-emerald-50 dark:bg-emerald-950/40",
-    border: "border-emerald-300 dark:border-emerald-700",
-    text: "text-emerald-900 dark:text-emerald-100",
-    badge: "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/60 dark:text-emerald-200",
-    hex: "#10b981",
-  },
-  control: {
-    bg: "bg-slate-50 dark:bg-slate-900/60",
-    border: "border-slate-300 dark:border-slate-600",
-    text: "text-slate-800 dark:text-slate-100",
-    badge: "bg-slate-200 text-slate-700 dark:bg-slate-700 dark:text-slate-200",
-    hex: "#64748b",
-  },
+  independent: CAT_VAR_PALETTE.sky,
+  dependent:   CAT_VAR_PALETTE.violet,
+  mediator:    CAT_VAR_PALETTE.amber,
+  moderator:   CAT_VAR_PALETTE.emerald,
+  control:     CAT_VAR_PALETTE.slate,
 };
 
 /** 변인 종류 목록 (툴바 드롭다운·순회용) */

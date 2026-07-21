@@ -6,6 +6,7 @@
  */
 
 import type { Timestamp } from "firebase/firestore";
+import { CAT_ACCENT } from "@/lib/design-tokens";
 
 /** AI 페르소나 — 발언자의 역할 */
 export type AIPersonaKey =
@@ -38,10 +39,7 @@ export const AI_PERSONAS: Record<AIPersonaKey, AIPersona> = {
     name: "교육공학 이론가",
     shortName: "이론가",
     description: "교수설계론·학습이론 관점에서 발언",
-    color: "text-blue-700 dark:text-blue-300",
-    accentBorder: "border-l-blue-500 dark:border-l-blue-400",
-    accentBg: "bg-blue-100 dark:bg-blue-950/50",
-    accentRing: "ring-blue-200 dark:ring-blue-800",
+    ...CAT_ACCENT.blue,
     avatarEmoji: "📚",
   },
   learning_scientist: {
@@ -49,10 +47,7 @@ export const AI_PERSONAS: Record<AIPersonaKey, AIPersona> = {
     name: "학습과학 연구자",
     shortName: "연구자",
     description: "실증 데이터·인지과학 근거로 검토",
-    color: "text-emerald-700 dark:text-emerald-300",
-    accentBorder: "border-l-emerald-500 dark:border-l-emerald-400",
-    accentBg: "bg-emerald-100 dark:bg-emerald-950/50",
-    accentRing: "ring-emerald-200 dark:ring-emerald-800",
+    ...CAT_ACCENT.emerald,
     avatarEmoji: "🧪",
   },
   teacher_practitioner: {
@@ -60,10 +55,7 @@ export const AI_PERSONAS: Record<AIPersonaKey, AIPersona> = {
     name: "현장 교사",
     shortName: "교사",
     description: "실제 교실·교수 현장에서의 적용 가능성",
-    color: "text-amber-700 dark:text-amber-300",
-    accentBorder: "border-l-amber-500 dark:border-l-amber-400",
-    accentBg: "bg-amber-100 dark:bg-amber-950/50",
-    accentRing: "ring-amber-200 dark:ring-amber-800",
+    ...CAT_ACCENT.amber,
     avatarEmoji: "🎓",
   },
   student_voice: {
@@ -71,10 +63,7 @@ export const AI_PERSONAS: Record<AIPersonaKey, AIPersona> = {
     name: "학습자 대변자",
     shortName: "학생",
     description: "학습자의 경험·동기·정서적 측면",
-    color: "text-rose-700 dark:text-rose-300",
-    accentBorder: "border-l-rose-500 dark:border-l-rose-400",
-    accentBg: "bg-rose-100 dark:bg-rose-950/50",
-    accentRing: "ring-rose-200 dark:ring-rose-800",
+    ...CAT_ACCENT.rose,
     avatarEmoji: "✏️",
   },
   policy_analyst: {
@@ -82,10 +71,7 @@ export const AI_PERSONAS: Record<AIPersonaKey, AIPersona> = {
     name: "교육 정책 분석가",
     shortName: "정책",
     description: "거시적 정책·제도·자원 배분 관점",
-    color: "text-purple-700 dark:text-purple-300",
-    accentBorder: "border-l-purple-500 dark:border-l-purple-400",
-    accentBg: "bg-purple-100 dark:bg-purple-950/50",
-    accentRing: "ring-purple-200 dark:ring-purple-800",
+    ...CAT_ACCENT.purple,
     avatarEmoji: "📊",
   },
   critical_reviewer: {
@@ -93,10 +79,7 @@ export const AI_PERSONAS: Record<AIPersonaKey, AIPersona> = {
     name: "비판적 평론가",
     shortName: "평론가",
     description: "통념·가정·방법론적 한계를 점검",
-    color: "text-slate-700 dark:text-slate-300",
-    accentBorder: "border-l-slate-500 dark:border-l-slate-400",
-    accentBg: "bg-slate-200 dark:bg-slate-800/50",
-    accentRing: "ring-slate-200 dark:ring-slate-700",
+    ...CAT_ACCENT.slate,
     avatarEmoji: "🔍",
   },
 };
@@ -110,10 +93,7 @@ export const FALLBACK_AI_PERSONA: AIPersona = {
   name: "미등록 페르소나",
   shortName: "미등록",
   description: "등록되지 않은 AI 페르소나",
-  color: "text-zinc-600 dark:text-zinc-300",
-  accentBorder: "border-l-zinc-400 dark:border-l-zinc-500",
-  accentBg: "bg-zinc-100 dark:bg-zinc-800/60",
-  accentRing: "ring-zinc-200 dark:ring-zinc-700",
+  ...CAT_ACCENT.zinc,
   avatarEmoji: "🤖",
 };
 

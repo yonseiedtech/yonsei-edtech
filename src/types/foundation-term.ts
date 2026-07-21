@@ -1,4 +1,5 @@
 import type { ArchiveOperationalMeta } from "./edutech-archive";
+import { CAT_CHIP } from "@/lib/design-tokens";
 
 // ── 교육공학 아카이브 — 기초 용어 가이드 (Phase 1) ──
 // 변인·연구설계·교수설계·체제이론·측정·학습이론 기초 용어를 정리한 가이드.
@@ -23,12 +24,12 @@ export const FOUNDATION_TERM_CATEGORY_LABELS: Record<FoundationTermCategory, str
 };
 
 export const FOUNDATION_TERM_CATEGORY_COLORS: Record<FoundationTermCategory, string> = {
-  variables: "bg-blue-50 text-blue-800 border border-blue-200",
-  "research-design": "bg-violet-50 text-violet-800 border border-violet-200",
-  "instructional-design": "bg-emerald-50 text-emerald-800 border border-emerald-200",
-  "systems-theory": "bg-indigo-50 text-indigo-800 border border-indigo-200",
-  measurement: "bg-amber-50 text-amber-800 border border-amber-200",
-  "learning-theory": "bg-rose-50 text-rose-800 border border-rose-200",
+  variables: CAT_CHIP.blue,
+  "research-design": CAT_CHIP.violet,
+  "instructional-design": CAT_CHIP.emerald,
+  "systems-theory": CAT_CHIP.indigo,
+  measurement: CAT_CHIP.amber,
+  "learning-theory": CAT_CHIP.rose,
 };
 
 // ── 하위 카테고리 (사이클 69) ──

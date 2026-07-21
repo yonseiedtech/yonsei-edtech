@@ -1,4 +1,5 @@
 import type { ArchiveOperationalMeta } from "./edutech-archive";
+import { CAT_CHIP } from "@/lib/design-tokens";
 
 // ── 교육공학 아카이브 — 학술 글쓰기 가이드 (Phase 1) ──
 // 번역투·주술호응·시제/태·맞춤법·학술관례 등 학술 한국어 글쓰기에서
@@ -21,11 +22,11 @@ export const WRITING_TIP_CATEGORY_LABELS: Record<WritingTipCategory, string> = {
 };
 
 export const WRITING_TIP_CATEGORY_COLORS: Record<WritingTipCategory, string> = {
-  translationese: "bg-rose-50 text-rose-800 border border-rose-200",
-  "subject-predicate": "bg-violet-50 text-violet-800 border border-violet-200",
-  "tense-voice": "bg-blue-50 text-blue-800 border border-blue-200",
-  "spelling-spacing": "bg-amber-50 text-amber-800 border border-amber-200",
-  "academic-convention": "bg-emerald-50 text-emerald-800 border border-emerald-200",
+  translationese: CAT_CHIP.rose,
+  "subject-predicate": CAT_CHIP.violet,
+  "tense-voice": CAT_CHIP.blue,
+  "spelling-spacing": CAT_CHIP.amber,
+  "academic-convention": CAT_CHIP.emerald,
 };
 
 export interface WritingTipExample {

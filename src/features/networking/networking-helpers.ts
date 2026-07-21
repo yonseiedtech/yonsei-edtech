@@ -1,4 +1,5 @@
 // 모임·네트워킹 공통 헬퍼 (사이클 73)
+import { CAT_CHIP_BARE } from "@/lib/design-tokens";
 import type {
   NetworkingEvent,
   NetworkingRsvp,
@@ -9,12 +10,12 @@ import type {
 
 /** 행사 유형별 배지 색상 (Tailwind) */
 export const EVENT_TYPE_COLORS: Record<NetworkingEventType, string> = {
-  opening: "bg-blue-50 text-blue-700 border-blue-200",
-  closing: "bg-violet-50 text-violet-700 border-violet-200",
-  regular: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  casual: "bg-amber-50 text-amber-700 border-amber-200",
-  mt: "bg-rose-50 text-rose-700 border-rose-200",
-  other: "bg-slate-50 text-slate-700 border-slate-200",
+  opening: CAT_CHIP_BARE.blue,
+  closing: CAT_CHIP_BARE.violet,
+  regular: CAT_CHIP_BARE.emerald,
+  casual:  CAT_CHIP_BARE.amber,
+  mt:      CAT_CHIP_BARE.rose,
+  other:   CAT_CHIP_BARE.slate,
 };
 
 /** 행사가 지났는지 (종료일 또는 시작일 기준) */

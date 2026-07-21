@@ -2,7 +2,7 @@
  * AUTO-GENERATED — node scripts/gen-rawcolor-baseline.mjs 로 재생성.
  * raw Tailwind 팔레트를 이미 쓰는 기존 파일 목록(부채 baseline).
  * 이 목록에 있는 파일은 차단 규칙에서 제외되고, 새 파일은 error 로 차단된다.
- * 색상 정리 라운드 후 재생성해 목록을 줄일 것. (생성 시점 347개)
+ * 색상 정리 라운드 후 재생성해 목록을 줄일 것. (생성 시점 322개)
  */
 export default [
   "src/app/about/greeting/page.tsx",
@@ -96,7 +96,6 @@ export default [
   "src/app/steppingstone/thesis-defense/page.tsx",
   "src/app/whats-new/page.tsx",
   "src/components/ShareButton.tsx",
-  "src/components/admin/StatusBadge.tsx",
   "src/components/archive/ArchiveFavoriteStar.tsx",
   "src/components/archive/ConceptLinkedText.tsx",
   "src/components/archive/EduTechOverview.tsx",
@@ -130,12 +129,9 @@ export default [
   "src/components/profile/PortfolioVerifyButtons.tsx",
   "src/components/profile/ProfileAcademicActivities.tsx",
   "src/components/profile/ProfileBio.tsx",
-  "src/components/profile/ProfileCertificates.tsx",
   "src/components/profile/ProfileContactInfo.tsx",
   "src/components/profile/ProfileDetailView.tsx",
-  "src/components/profile/ProfileExternalActivities.tsx",
   "src/components/profile/ProfileGradLife.tsx",
-  "src/components/profile/ProfileGraduateInfo.tsx",
   "src/components/profile/ProfileHeader.tsx",
   "src/components/profile/ProfileLikeButton.tsx",
   "src/components/profile/ProfileOnboardingBadges.tsx",
@@ -149,7 +145,6 @@ export default [
   "src/features/activities/ActivityDetail.tsx",
   "src/features/activities/ActivityPage.tsx",
   "src/features/activities/ActivityWeekDetailPage.tsx",
-  "src/features/activities/ActivityWeeksPage.tsx",
   "src/features/activities/FormBuilder.tsx",
   "src/features/activities/FormRenderer.tsx",
   "src/features/activities/InlineMeetingTimer.tsx",
@@ -172,7 +167,6 @@ export default [
   "src/features/archive/ArchiveGlobalSearch.tsx",
   "src/features/auth/LoginForm.tsx",
   "src/features/auth/SessionIndicator.tsx",
-  "src/features/auth/SignupForm.tsx",
   "src/features/auth/signup-steps/Step2Academic.tsx",
   "src/features/board/InterviewBuilder.tsx",
   "src/features/board/InterviewPlayer.tsx",
@@ -201,7 +195,6 @@ export default [
   "src/features/collaborative-research/components/MeetingsBoard.tsx",
   "src/features/collaborative-research/components/MilestonesBoard.tsx",
   "src/features/collaborative-research/components/StringListEditor.tsx",
-  "src/features/collaborative-research/lib/research-status.ts",
   "src/features/comm-board/AnswerThread.tsx",
   "src/features/comm-board/QuestionItem.tsx",
   "src/features/comm-board/WallBoard.tsx",
@@ -234,7 +227,6 @@ export default [
   "src/features/journal/components/JournalArticleView.tsx",
   "src/features/journal/components/JournalConsentPanel.tsx",
   "src/features/journal/components/JournalReviewCommentSection.tsx",
-  "src/features/journal/lib/article-status.ts",
   "src/features/member/OrgChart.tsx",
   "src/features/mypage/ARCSPanel.tsx",
   "src/features/mypage/ConnectivismPanel.tsx",
@@ -258,7 +250,6 @@ export default [
   "src/features/networking/NetworkingPoll.tsx",
   "src/features/networking/NetworkingProgramManager.tsx",
   "src/features/networking/NetworkingStats.tsx",
-  "src/features/networking/networking-helpers.ts",
   "src/features/newsletter/newsletter-store.ts",
   "src/features/notifications/NotificationBell.tsx",
   "src/features/popup/PopupEditor.tsx",
@@ -321,7 +312,6 @@ export default [
   "src/features/seminar/CheckinResult.tsx",
   "src/features/seminar/QrCodeDisplay.tsx",
   "src/features/seminar/QrScanner.tsx",
-  "src/features/seminar/ReviewsSection.tsx",
   "src/features/seminar/SeminarConnectedTodos.tsx",
   "src/features/seminar/SeminarForm.tsx",
   "src/features/seminar/SeminarLMS.tsx",
@@ -336,20 +326,5 @@ export default [
   "src/features/seminar/detail/SpeakerCard.tsx",
   "src/features/seminar/detail/StaffTools.tsx",
   "src/features/steppingstone/SemesterRoadmap.tsx",
-  "src/lib/design-tokens.ts",
-  "src/types/academic.ts",
-  "src/types/ai-forum.ts",
-  "src/types/courses.ts",
-  "src/types/diagnostic.ts",
-  "src/types/edutech-archive.ts",
-  "src/types/foundation-term.ts",
-  "src/types/grad-life.ts",
-  "src/types/operations.ts",
-  "src/types/research-method.ts",
-  "src/types/research-model.ts",
-  "src/types/statistical-method.ts",
-  "src/types/steppingstone.ts",
-  "src/types/user-note.ts",
-  "src/types/workbook.ts",
-  "src/types/writing-tip.ts"
+  "src/lib/design-tokens.ts"
 ];

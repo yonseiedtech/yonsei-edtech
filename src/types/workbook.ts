@@ -1,3 +1,5 @@
+import { CAT_STATUS_100 } from "@/lib/design-tokens";
+
 /**
  * 학술대회 워크북 도메인 (Sprint 67-F)
  *
@@ -95,6 +97,6 @@ export const WORKBOOK_STATUS_LABELS: Record<WorkbookSubmissionStatus, string> = 
 
 export const WORKBOOK_STATUS_COLORS: Record<WorkbookSubmissionStatus, string> = {
   pending: "bg-muted text-muted-foreground",
-  in_progress: "bg-amber-100 text-amber-800 dark:bg-amber-950/40 dark:text-amber-200",
-  completed: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200",
+  in_progress: CAT_STATUS_100.amber,
+  completed: CAT_STATUS_100.emerald,
 };

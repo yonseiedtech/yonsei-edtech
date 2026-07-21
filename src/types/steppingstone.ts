@@ -1,3 +1,5 @@
+import { ROADMAP_PRESET_COLORS } from "@/lib/design-tokens";
+
 // ── Track 6: 인지디딤판 (가이드 트랙) ──
 
 export type GuideTrackKey =
@@ -84,40 +86,12 @@ export const ROADMAP_COLOR_PRESETS: Record<
   RoadmapColorPreset,
   { textColor: string; bgColor: string; label: string }
 > = {
-  blue: {
-    textColor: "text-blue-700 dark:text-blue-300",
-    bgColor: "border-blue-200 bg-blue-50/50 dark:border-blue-900 dark:bg-blue-950/20",
-    label: "파랑",
-  },
-  emerald: {
-    textColor: "text-emerald-700 dark:text-emerald-300",
-    bgColor:
-      "border-emerald-200 bg-emerald-50/50 dark:border-emerald-900 dark:bg-emerald-950/20",
-    label: "초록",
-  },
-  amber: {
-    textColor: "text-amber-700 dark:text-amber-300",
-    bgColor:
-      "border-amber-200 bg-amber-50/50 dark:border-amber-900 dark:bg-amber-950/20",
-    label: "노랑",
-  },
-  rose: {
-    textColor: "text-rose-700 dark:text-rose-300",
-    bgColor: "border-rose-200 bg-rose-50/50 dark:border-rose-900 dark:bg-rose-950/20",
-    label: "빨강",
-  },
-  purple: {
-    textColor: "text-purple-700 dark:text-purple-300",
-    bgColor:
-      "border-purple-200 bg-purple-50/50 dark:border-purple-900 dark:bg-purple-950/20",
-    label: "보라",
-  },
-  slate: {
-    textColor: "text-slate-700 dark:text-slate-300",
-    bgColor:
-      "border-slate-200 bg-slate-50/50 dark:border-slate-900 dark:bg-slate-950/20",
-    label: "회색",
-  },
+  blue:    { ...ROADMAP_PRESET_COLORS.blue,    label: "파랑" },
+  emerald: { ...ROADMAP_PRESET_COLORS.emerald, label: "초록" },
+  amber:   { ...ROADMAP_PRESET_COLORS.amber,   label: "노랑" },
+  rose:    { ...ROADMAP_PRESET_COLORS.rose,     label: "빨강" },
+  purple:  { ...ROADMAP_PRESET_COLORS.purple,  label: "보라" },
+  slate:   { ...ROADMAP_PRESET_COLORS.slate,   label: "회색" },
 };
 
 /**
