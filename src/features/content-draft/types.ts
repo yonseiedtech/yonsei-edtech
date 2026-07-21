@@ -44,23 +44,6 @@ export interface ContentDraft {
   consumedBy?: string;
 }
 
-/** Firestore 저장용 원시 문서 형태 (payload는 JSON 문자열) */
-export interface ContentDraftDoc {
-  seminarId: string;
-  seminarTitle: string;
-  seminarDate?: string;
-  kind: ContentDraftKind;
-  status: ContentDraftStatus;
-  source: ContentDraftSource;
-  stats?: ContentDraftStats;
-  payload: string;
-  reviewQuotes?: string[];
-  createdAt: string;
-  updatedAt?: string;
-  consumedAt?: string;
-  consumedBy?: string;
-}
-
 /** 결정적 문서 ID — 대상 세미나 × kind 당 1회 (멱등 키) */
 export function contentDraftId(seminarId: string, kind: ContentDraftKind): string {
   return `${seminarId}__${kind}`;

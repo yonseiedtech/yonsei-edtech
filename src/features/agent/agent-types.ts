@@ -27,12 +27,3 @@ export interface AgentTask {
   created_at: string;
 }
 
-export interface ServerConnection {
-  url: string;
-  token: string;
-}
-
-export interface SSEEvent {
-  type: "status" | "tool_call" | "tool_result" | "delta" | "complete" | "error";
-  data: Record<string, unknown>;
-}

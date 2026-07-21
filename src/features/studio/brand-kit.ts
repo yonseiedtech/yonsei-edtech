@@ -19,8 +19,6 @@ export const BRAND_PALETTE = {
   green: "#2f7d5c", // 딥 그린 (보조 강조)
 } as const;
 
-export type BrandColorName = keyof typeof BRAND_PALETTE;
-
 /** 스튜디오 스와치 순서 — 색 스프롤 방지를 위해 이 세트만 노출 */
 export const BRAND_SWATCHES: readonly string[] = [
   BRAND_PALETTE.navy,

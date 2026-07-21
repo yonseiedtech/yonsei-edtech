@@ -106,7 +106,7 @@ export function formatIssueCode(volume: number, number: number): string {
 }
 
 /** publishedAt 기준 인용 연도 추출 */
-export function citationYear(publishedAt?: string): number {
+function citationYear(publishedAt?: string): number {
   if (!publishedAt) return new Date().getFullYear();
   return new Date(publishedAt).getFullYear();
 }

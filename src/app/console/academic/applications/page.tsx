@@ -20,12 +20,16 @@ import {
   Users,
   AlertCircle,
   UserPlus,
+  Clock,
+  Send,
+  TrendingUp,
 } from "lucide-react";
 import { activitiesApi, activityApplicantsApi } from "@/lib/bkend";
 import type { Activity, ActivityType } from "@/types";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import EmptyState from "@/components/ui/empty-state";
 import { usePendingMembers } from "@/features/member/useMembers";
+import { auth as firebaseAuth } from "@/lib/firebase";
 
 const TYPE_META: Record<
   ActivityType,
@@ -42,6 +46,14 @@ interface PendingActivity {
   totalApplicants: number;
 }
 
+/** cron-runs API 응답에서 kind별 최신 실행 상태 */
+interface CronKindStatus {
+  kind: string;
+  lastRunAt: string;
+  lastSuccess: boolean;
+  consecutiveFailures: number;
+}
+
 export default function ApplicationsConsole() {
   // v9-H5: 미처리 가입 신청 배지
   const { pendingMembers } = usePendingMembers();
@@ -49,6 +61,46 @@ export default function ApplicationsConsole() {
     () => pendingMembers.filter((m) => !m.rejected),
     [pendingMembers],
   );
+
+  // 신입 온보딩 미니 대시보드 — 넛지 발송 현황 (newcomer-activation-sequence)
+  const { data: cronStatuses } = useQuery({
+    queryKey: ["console", "cron-runs-newcomer-dash"],
+    queryFn: async () => {
+      const token = await firebaseAuth.currentUser?.getIdToken();
+      const res = await fetch("/api/console/cron-runs", {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+      if (!res.ok) return null;
+      const json = (await res.json()) as { statuses: CronKindStatus[] };
+      return json.statuses;
+    },
+    staleTime: 5 * 60 * 1000,
+    retry: false,
+  });
+
+  // 신입 온보딩 집계 파생값
+  const avgWaitDays = useMemo(() => {
+    if (truePendingMembers.length === 0) return null;
+    const now = Date.now();
+    const days = truePendingMembers
+      .map((m) => m.createdAt as string | undefined)
+      .filter((d): d is string => !!d && !Number.isNaN(new Date(d).getTime()))
+      .map((d) => Math.floor((now - new Date(d).getTime()) / 86400000));
+    if (days.length === 0) return null;
+    return days.reduce((a, b) => a + b, 0) / days.length;
+  }, [truePendingMembers]);
+
+  const newcomerCronStatus = useMemo(
+    () => cronStatuses?.find((s) => s.kind === "newcomer-activation-sequence") ?? null,
+    [cronStatuses],
+  );
+
+  const cronDaysAgo = useMemo(() => {
+    if (!newcomerCronStatus?.lastRunAt) return null;
+    return Math.floor(
+      (Date.now() - new Date(newcomerCronStatus.lastRunAt).getTime()) / 86400000,
+    );
+  }, [newcomerCronStatus]);
 
   const { data: activities, isLoading } = useQuery({
     queryKey: ["console", "all-activities"],
@@ -107,6 +159,62 @@ export default function ApplicationsConsole() {
         title="신청 승인 통합 대시보드"
         description="모든 학술활동의 처리 대기(pending) 신청자를 한 화면에서 확인. 활동별 진입 → 개별 승인·거절 처리."
       />
+
+      {/* 신입 온보딩 현황 미니 대시보드 */}
+      <div className="rounded-2xl border bg-card p-4">
+        <div className="mb-3 flex items-center gap-2">
+          <Users size={15} className="text-muted-foreground" />
+          <h2 className="text-sm font-semibold">신입 온보딩 현황</h2>
+          <span className="ml-auto text-[11px] text-muted-foreground">개강 시즌 신입 처리</span>
+        </div>
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          <NewcomerStatCard
+            icon={UserPlus}
+            label="미처리 신청"
+            value={truePendingMembers.length === 0 ? "—" : `${truePendingMembers.length}건`}
+            sub={truePendingMembers.length === 0 ? "처리 완료" : "승인 대기 중"}
+            color={truePendingMembers.length > 0 ? "text-warning bg-warning/5" : "text-success bg-success/5"}
+            href="/console/members"
+          />
+          <NewcomerStatCard
+            icon={Clock}
+            label="평균 대기 시간"
+            value={avgWaitDays !== null ? `${avgWaitDays.toFixed(1)}일` : "—"}
+            sub={avgWaitDays !== null ? "pending 신청 기준" : "신청 없음"}
+            color="text-info bg-info/5"
+          />
+          <NewcomerStatCard
+            icon={Send}
+            label="넛지 발송"
+            value={
+              newcomerCronStatus === null
+                ? "—"
+                : newcomerCronStatus.lastSuccess
+                  ? "정상"
+                  : "실패"
+            }
+            sub={
+              cronDaysAgo !== null
+                ? cronDaysAgo === 0
+                  ? "마지막: 오늘"
+                  : `마지막: ${cronDaysAgo}일 전`
+                : "기록 없음"
+            }
+            color={
+              newcomerCronStatus?.lastSuccess === false
+                ? "text-destructive bg-destructive/5"
+                : "text-success bg-success/5"
+            }
+          />
+          <NewcomerStatCard
+            icon={TrendingUp}
+            label="첫 활동률"
+            value="집계 전"
+            sub="향후 자동 집계"
+            color="text-muted-foreground bg-muted/20"
+          />
+        </div>
+      </div>
 
       {/* v9-H5: 미처리 가입 신청 배지 */}
       {truePendingMembers.length > 0 && (
@@ -241,6 +349,47 @@ function StatCard({
           <p className="text-[10px] text-muted-foreground">{label}</p>
         </div>
       </div>
+    </div>
+  );
+}
+
+function NewcomerStatCard({
+  icon: Icon,
+  label,
+  value,
+  sub,
+  color,
+  href,
+}: {
+  icon: React.ElementType;
+  label: string;
+  value: string;
+  sub: string;
+  color: string;
+  href?: string;
+}) {
+  const inner = (
+    <div className="flex items-start gap-3">
+      <div className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg ${color}`}>
+        <Icon size={16} />
+      </div>
+      <div className="min-w-0 flex-1">
+        <p className="truncate text-base font-bold">{value}</p>
+        <p className="text-[10px] text-muted-foreground">{label}</p>
+        <p className="mt-0.5 truncate text-[10px] text-muted-foreground/70">{sub}</p>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="rounded-xl border bg-background p-3">
+      {href ? (
+        <Link href={href} className="block transition-opacity hover:opacity-80">
+          {inner}
+        </Link>
+      ) : (
+        inner
+      )}
     </div>
   );
 }

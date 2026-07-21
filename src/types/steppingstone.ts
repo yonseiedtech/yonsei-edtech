@@ -115,7 +115,7 @@ export const BLOOM_STAGE_LABELS: Record<BloomStage, string> = {
   create: "창조",
 };
 
-export const BLOOM_STAGE_ORDER: BloomStage[] = [
+const BLOOM_STAGE_ORDER: BloomStage[] = [
   "remember",
   "understand",
   "apply",

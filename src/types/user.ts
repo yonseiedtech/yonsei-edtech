@@ -218,7 +218,7 @@ export interface NotificationPrefs {
 }
 
 /** kind → notificationPrefs 필드 매핑 — 서버 cron / 클라이언트 UI 공용 */
-export const PUSH_PREF_FIELD: Record<string, keyof NotificationPrefs> = {
+const PUSH_PREF_FIELD: Record<string, keyof NotificationPrefs> = {
   study_session_reminder: "pushStudySession",
   study_assignment_reminder: "pushStudyAssignment",
   seminar_push_reminder: "pushSeminarReminder",
@@ -236,7 +236,7 @@ export const PUSH_PREF_FIELD: Record<string, keyof NotificationPrefs> = {
 };
 
 /** UI 라벨 — MyPage 알림 설정 섹션에서 사용 */
-export const PUSH_PREF_LABELS: Record<
+const PUSH_PREF_LABELS: Record<
   | "pushStudySession"
   | "pushStudyAssignment"
   | "pushSeminarReminder"
@@ -312,7 +312,7 @@ export const OFFICE_OF_EDUCATION_OPTIONS: readonly string[] = [
   "제주특별자치도교육청",
 ] as const;
 
-export const OFFICE_OF_EDUCATION_OTHER_LABEL = "기타 (직접 입력)" as const;
+const OFFICE_OF_EDUCATION_OTHER_LABEL = "기타 (직접 입력)" as const;
 
 export interface User { [key: string]: unknown;
   /** 마지막 대시보드 방문 시각(ISO) — "지난 방문 이후 새 글" 뱃지 기준 (RT-1, 2026-07-04) */

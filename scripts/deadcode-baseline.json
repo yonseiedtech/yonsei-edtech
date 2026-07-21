@@ -1,35 +1,17 @@
 {
-  "ceiling": 59,
+  "ceiling": 39,
   "generatedAt": "2026-07-21",
   "tool": "knip@6.27.0",
   "note": "node scripts/gen-deadcode-baseline.mjs 로 재생성. ceiling보다 이슈 수가 늘면 check-deadcode-ratchet.mjs 가 exit 1.",
-  "unusedExports": 50,
+  "unusedExports": 39,
   "unusedFiles": 0,
-  "unusedTypes": 9,
+  "unusedTypes": 0,
   "items": [
     {
       "file": "src/app/console/academic/external/[id]/volunteers/volunteer-utils.ts",
       "name": "normalizeName",
       "kind": "export",
       "line": 22
-    },
-    {
-      "file": "src/features/agent/agent-types.ts",
-      "name": "ServerConnection",
-      "kind": "type",
-      "line": 30
-    },
-    {
-      "file": "src/features/agent/agent-types.ts",
-      "name": "SSEEvent",
-      "kind": "type",
-      "line": 35
-    },
-    {
-      "file": "src/features/auth/signup-steps/useSignupForm.ts",
-      "name": "SignupStep",
-      "kind": "type",
-      "line": 63
     },
     {
       "file": "src/features/collaborative-research/api/useCollabPhase2.ts",
@@ -80,18 +62,6 @@
       "line": 64
     },
     {
-      "file": "src/features/content-draft/types.ts",
-      "name": "ContentDraftDoc",
-      "kind": "type",
-      "line": 48
-    },
-    {
-      "file": "src/features/journal/lib/article-status.ts",
-      "name": "citationYear",
-      "kind": "export",
-      "line": 109
-    },
-    {
       "file": "src/features/journal/lib/consent-gate.ts",
       "name": "areAllAuthorsComplete",
       "kind": "export",
@@ -102,24 +72,6 @@
       "name": "useRejectMember",
       "kind": "export",
       "line": 129
-    },
-    {
-      "file": "src/features/mypage/grad-activity.ts",
-      "name": "areaOfHabitKey",
-      "kind": "export",
-      "line": 113
-    },
-    {
-      "file": "src/features/mypage/grad-activity.ts",
-      "name": "buildHabitsFromKeys",
-      "kind": "export",
-      "line": 103
-    },
-    {
-      "file": "src/features/mypage/grad-activity.ts",
-      "name": "getDefaultHabitKeys",
-      "kind": "export",
-      "line": 92
     },
     {
       "file": "src/features/newsletter/newsletter-store.ts",
@@ -168,12 +120,6 @@
       "name": "useUpdateReadingLog",
       "kind": "export",
       "line": 52
-    },
-    {
-      "file": "src/features/studio/brand-kit.ts",
-      "name": "BrandColorName",
-      "kind": "type",
-      "line": 22
     },
     {
       "file": "src/lib/aect-terminology.ts",
@@ -294,72 +240,6 @@
       "name": "findTheoryNode",
       "kind": "export",
       "line": 391
-    },
-    {
-      "file": "src/types/academic.ts",
-      "name": "SessionSelectionReason",
-      "kind": "type",
-      "line": 328
-    },
-    {
-      "file": "src/types/ai-forum.ts",
-      "name": "AIForumCategory",
-      "kind": "type",
-      "line": 204
-    },
-    {
-      "file": "src/types/research-journal.ts",
-      "name": "CreateArticleInput",
-      "kind": "type",
-      "line": 201
-    },
-    {
-      "file": "src/types/research-journal.ts",
-      "name": "UpdateArticleAuthorsInput",
-      "kind": "type",
-      "line": 225
-    },
-    {
-      "file": "src/types/research-report.ts",
-      "name": "CAUSE_TYPE_LABELS",
-      "kind": "export",
-      "line": 63
-    },
-    {
-      "file": "src/types/research-report.ts",
-      "name": "EVIDENCE_TYPE_LABELS",
-      "kind": "export",
-      "line": 55
-    },
-    {
-      "file": "src/types/seminar.ts",
-      "name": "REG_STATUS_LABELS",
-      "kind": "export",
-      "line": 172
-    },
-    {
-      "file": "src/types/steppingstone.ts",
-      "name": "BLOOM_STAGE_ORDER",
-      "kind": "export",
-      "line": 118
-    },
-    {
-      "file": "src/types/user.ts",
-      "name": "OFFICE_OF_EDUCATION_OTHER_LABEL",
-      "kind": "export",
-      "line": 315
-    },
-    {
-      "file": "src/types/user.ts",
-      "name": "PUSH_PREF_FIELD",
-      "kind": "export",
-      "line": 221
-    },
-    {
-      "file": "src/types/user.ts",
-      "name": "PUSH_PREF_LABELS",
-      "kind": "export",
-      "line": 239
     }
   ]
 }

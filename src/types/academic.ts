@@ -325,8 +325,6 @@ export const SESSION_SELECTION_REASONS = [
   "동향 모니터링",
   "기타",
 ] as const;
-export type SessionSelectionReason = (typeof SESSION_SELECTION_REASONS)[number];
-
 // ── 투표/설문 ──
 export type PollType = "vote" | "survey";
 export type PollStatus = "draft" | "active" | "closed";

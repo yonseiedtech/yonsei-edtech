@@ -89,7 +89,7 @@ export const ACTIVITY_CATALOG: readonly ActivityCatalogItem[] = ACTIVITIES.map(
 );
 
 /** 기본 활동 key 목록(현재 10종+1 전체) — 미설정 사용자의 기본값 */
-export function getDefaultHabitKeys(): string[] {
+function getDefaultHabitKeys(): string[] {
   return ACTIVITIES.map((a) => a.key);
 }
 
@@ -100,7 +100,7 @@ export function getDefaultHabitKeysByArea(...areas: AreaKey[]): string[] {
 }
 
 /** key 목록 → HabitDef[] (카탈로그 순서 유지, 미존재 key 는 무시) */
-export function buildHabitsFromKeys(keys: string[]): HabitDef[] {
+function buildHabitsFromKeys(keys: string[]): HabitDef[] {
   const wanted = new Set(keys);
   return ACTIVITIES.filter((a) => wanted.has(a.key)).map((a) => ({
     key: a.key,
@@ -110,7 +110,7 @@ export function buildHabitsFromKeys(keys: string[]): HabitDef[] {
 }
 
 /** key → 소속 영역 (없으면 undefined) */
-export function areaOfHabitKey(key: string): AreaKey | undefined {
+function areaOfHabitKey(key: string): AreaKey | undefined {
   return KEY_TO_ACTIVITY.get(key)?.area;
 }
 

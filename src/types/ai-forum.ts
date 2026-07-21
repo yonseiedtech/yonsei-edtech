@@ -201,4 +201,3 @@ export const AI_FORUM_CATEGORIES = [
   "에듀테크 윤리",
 ] as const;
 
-export type AIForumCategory = (typeof AI_FORUM_CATEGORIES)[number];

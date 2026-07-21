@@ -21,6 +21,7 @@ import {
   Star,
   Inbox,
   Send,
+  BarChart2,
 } from "lucide-react";
 import { toast } from "sonner";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
@@ -29,7 +30,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import HackathonDdayConsole from "@/features/hackathon/HackathonDdayConsole";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { hackathonSubmissionsApi, hackathonJudgingsApi } from "@/lib/bkend";
+import { hackathonSubmissionsApi, hackathonJudgingsApi, hackathonTeamJoinsApi } from "@/lib/bkend";
 import {
   HACKATHON_RUBRIC,
   HACKATHON_RUBRIC_MAX,
@@ -40,6 +41,7 @@ import {
   type HackathonJudging,
   type HackathonRubricKey,
   type HackathonAwardGrade,
+  type HackathonTeamJoin,
 } from "@/types";
 import { HACKATHON_CONTEXT_ID } from "@/features/hackathon/config";
 import {
@@ -83,6 +85,37 @@ export default function HackathonJudgingConsolePage() {
       return res.data as HackathonJudging[];
     },
   });
+
+  const { data: teamJoins = [] } = useQuery({
+    queryKey: ["console-hackathon-teamjoins", contextId],
+    queryFn: async () => {
+      const res = await hackathonTeamJoinsApi.listByContext(contextId);
+      return res.data as HackathonTeamJoin[];
+    },
+  });
+
+  const resultSummary = useMemo(() => {
+    const totalSubmissions = submissions.length;
+    const judgedIds = new Set(judgings.map((j) => j.submissionId));
+    const judgedCount = submissions.filter((s) => judgedIds.has(s.id)).length;
+    const judgeRate =
+      totalSubmissions > 0
+        ? Math.round((judgedCount / totalSubmissions) * 100)
+        : 0;
+    const awardedCount = submissions.filter((s) => s.award).length;
+    const portfolioCount = submissions.filter(
+      (s) => s.award && s.memberIds && s.memberIds.length > 0,
+    ).length;
+    const confirmedTeams = new Set(submissions.map((s) => s.teamName)).size;
+    return {
+      registrations: teamJoins.length,
+      confirmedTeams,
+      submissions: totalSubmissions,
+      judgeRate,
+      awards: awardedCount,
+      portfolios: portfolioCount,
+    };
+  }, [submissions, judgings, teamJoins]);
 
   const sorted = useMemo(
     () =>
@@ -159,6 +192,42 @@ export default function HackathonJudgingConsolePage() {
         </TabsContent>
 
         <TabsContent value="judging" className="mt-5">
+          {/* 행사 결과 요약 */}
+          <div className="mb-4 rounded-2xl border bg-card p-4">
+            <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
+              <BarChart2 size={14} className="text-primary" />
+              행사 결과 요약
+              <span className="ml-auto text-xs font-normal text-muted-foreground">
+                8/22 이후 자동 집계
+              </span>
+            </p>
+            <div className="grid grid-cols-2 gap-2 sm:grid-cols-3 lg:grid-cols-6">
+              {(
+                [
+                  { label: "참가 신청", value: resultSummary.registrations, unit: "건" },
+                  { label: "팀 확정", value: resultSummary.confirmedTeams, unit: "팀" },
+                  { label: "제출", value: resultSummary.submissions, unit: "건" },
+                  { label: "심사율", value: resultSummary.judgeRate, unit: "%" },
+                  { label: "수상", value: resultSummary.awards, unit: "건" },
+                  { label: "포트폴리오 자동적재", value: resultSummary.portfolios, unit: "건" },
+                ] as { label: string; value: number; unit: string }[]
+              ).map(({ label, value, unit }) => (
+                <div
+                  key={label}
+                  className="flex flex-col items-center rounded-xl border bg-muted/20 px-2 py-3"
+                >
+                  <p className="text-[11px] text-muted-foreground">{label}</p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+                    {value === 0 ? "—" : value}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">
+                    {value === 0 ? "집계 전" : unit}
+                  </p>
+                </div>
+              ))}
+            </div>
+          </div>
+
           {/* M3: 수상 발표 절차 가이드 (접기 패널) */}
           <details className="mb-4 rounded-2xl border bg-card">
             <summary className="flex cursor-pointer select-none items-center gap-2 px-4 py-3 text-sm font-semibold marker:content-none">

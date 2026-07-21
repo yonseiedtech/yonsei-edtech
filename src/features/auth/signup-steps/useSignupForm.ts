@@ -60,8 +60,6 @@ export interface SignupFormValues {
   undergraduateMajor2IsEducation: boolean;
 }
 
-export type SignupStep = 1 | 2 | 3 | 4;
-
 const SECURITY_QUESTIONS_DEFAULT = "첫 반려동물 이름";
 
 /**

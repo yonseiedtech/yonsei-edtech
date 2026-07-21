@@ -197,12 +197,6 @@ export interface AuthorConsent {
 
 // ── 입력용 DTO ────────────────────────────────────────────
 
-/** PublishWizard 1단계: 형식 선택 + researchId */
-export interface CreateArticleInput {
-  researchId: string;
-  publicationType: PublicationType;
-}
-
 export type UpdateArticleMetaInput = Partial<
   Pick<
     ResearchJournalArticle,
@@ -221,10 +215,6 @@ export type UpdateArticleMetaInput = Partial<
     | "pdfUrl"
   >
 >;
-
-export type UpdateArticleAuthorsInput = {
-  authors: ArticleAuthorSnapshot[];
-};
 
 export type CreateJournalIssueInput = Omit<
   ResearchJournalIssue,

@@ -52,7 +52,7 @@ const RESEARCH_APPROACH_HINTS: Record<Exclude<ResearchApproach, "">, string> = {
 };
 
 /** Sprint 57: 인터뷰 모드 라벨 (진단 단계 5슬라이드 신설용) */
-export const EVIDENCE_TYPE_LABELS: Record<Exclude<EvidenceType, "">, string> = {
+const EVIDENCE_TYPE_LABELS: Record<Exclude<EvidenceType, "">, string> = {
   observation: "수업 관찰",
   assessment: "평가/시험 결과",
   survey: "설문/인터뷰",
@@ -60,7 +60,7 @@ export const EVIDENCE_TYPE_LABELS: Record<Exclude<EvidenceType, "">, string> = {
   other: "기타",
 };
 
-export const CAUSE_TYPE_LABELS: Record<Exclude<CauseType, "">, string> = {
+const CAUSE_TYPE_LABELS: Record<Exclude<CauseType, "">, string> = {
   learner: "학습자 요인",
   instructional_design: "수업·매체 설계",
   environment: "환경·자원",
