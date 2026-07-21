@@ -299,6 +299,11 @@ function stripUndefinedDeep<T>(value: T): T {
   return value;
 }
 
+/** API body 타입 강제 변환 — bkend dataApi가 Record<string, unknown>을 요구할 때 사용. */
+function toRecord<T>(data: T): Record<string, unknown> {
+  return toRecord(data);
+}
+
 export const dataApi = {
   list: async <T>(table: string, params?: QueryParams): Promise<ListResponse<T>> => {
     const constraints: QueryConstraint[] = [];
@@ -569,9 +574,9 @@ export const networkingEventsApi = {
   getByToken: (token: string) =>
     dataApi.list<NetworkingEvent>("networking_events", { "filter[shareToken]": token, limit: 1 }),
   create: (data: Omit<NetworkingEvent, "id">) =>
-    dataApi.create<NetworkingEvent>("networking_events", data as unknown as Record<string, unknown>),
+    dataApi.create<NetworkingEvent>("networking_events", toRecord(data)),
   update: (id: string, data: Partial<NetworkingEvent>) =>
-    dataApi.update<NetworkingEvent>("networking_events", id, data as unknown as Record<string, unknown>),
+    dataApi.update<NetworkingEvent>("networking_events", id, toRecord(data)),
   remove: (id: string) => dataApi.delete("networking_events", id),
 };
 
@@ -593,7 +598,7 @@ export const eventTokensApi = {
     dataApi.list<NetworkingEventToken>("networking_event_tokens", { "filter[eventId]": eventId, limit: 10 }),
   /** 토큰 매핑 생성(upsert — 문서 id = 토큰, idempotent) */
   create: (token: string, data: Omit<NetworkingEventToken, "id" | "createdAt" | "updatedAt">) =>
-    dataApi.upsert<NetworkingEventToken>("networking_event_tokens", token, data as unknown as Record<string, unknown>),
+    dataApi.upsert<NetworkingEventToken>("networking_event_tokens", token, toRecord(data)),
 };
 
 // ── 비공개 모임 초대 명단 (Phase 4-A 프라이버시 핫픽스 2026-07-09) ──
@@ -611,7 +616,7 @@ export const eventInvitesApi = {
   },
   /** 초대 명단 기록(upsert — 문서 id = eventId, idempotent). 누적 병합은 호출부에서 계산. */
   upsert: (eventId: string, data: Omit<NetworkingEventInvites, "id" | "createdAt" | "updatedAt">) =>
-    dataApi.upsert<NetworkingEventInvites>("networking_event_invites", eventId, data as unknown as Record<string, unknown>),
+    dataApi.upsert<NetworkingEventInvites>("networking_event_invites", eventId, toRecord(data)),
 };
 
 export const networkingRsvpsApi = {
@@ -628,9 +633,9 @@ export const networkingRsvpsApi = {
       "filter[userId]": userId,
     }),
   create: (data: Omit<NetworkingRsvp, "id">) =>
-    dataApi.create<NetworkingRsvp>("networking_rsvps", data as unknown as Record<string, unknown>),
+    dataApi.create<NetworkingRsvp>("networking_rsvps", toRecord(data)),
   update: (id: string, data: Partial<NetworkingRsvp>) =>
-    dataApi.update<NetworkingRsvp>("networking_rsvps", id, data as unknown as Record<string, unknown>),
+    dataApi.update<NetworkingRsvp>("networking_rsvps", id, toRecord(data)),
   remove: (id: string) => dataApi.delete("networking_rsvps", id),
 };
 
@@ -643,9 +648,9 @@ export const networkingDuesApi = {
   listByUser: (userId: string) =>
     dataApi.list<NetworkingDue>("networking_dues", { "filter[userId]": userId, limit: 200 }),
   create: (data: Omit<NetworkingDue, "id">) =>
-    dataApi.create<NetworkingDue>("networking_dues", data as unknown as Record<string, unknown>),
+    dataApi.create<NetworkingDue>("networking_dues", toRecord(data)),
   update: (id: string, data: Partial<NetworkingDue>) =>
-    dataApi.update<NetworkingDue>("networking_dues", id, data as unknown as Record<string, unknown>),
+    dataApi.update<NetworkingDue>("networking_dues", id, toRecord(data)),
   remove: (id: string) => dataApi.delete("networking_dues", id),
 };
 
@@ -659,12 +664,12 @@ export const networkingReviewsApi = {
     dataApi.upsert<NetworkingReview>(
       "networking_reviews",
       `${data.eventId}_${data.userId}`,
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
   create: (data: Omit<NetworkingReview, "id">) =>
-    dataApi.create<NetworkingReview>("networking_reviews", data as unknown as Record<string, unknown>),
+    dataApi.create<NetworkingReview>("networking_reviews", toRecord(data)),
   update: (id: string, data: Partial<NetworkingReview>) =>
-    dataApi.update<NetworkingReview>("networking_reviews", id, data as unknown as Record<string, unknown>),
+    dataApi.update<NetworkingReview>("networking_reviews", id, toRecord(data)),
   remove: (id: string) => dataApi.delete("networking_reviews", id),
 };
 
@@ -673,9 +678,9 @@ export const networkingAvailabilityApi = {
   listByEvent: (eventId: string) =>
     dataApi.list<NetworkingAvailability>("networking_availability", { "filter[eventId]": eventId, limit: 500 }),
   create: (data: Omit<NetworkingAvailability, "id">) =>
-    dataApi.create<NetworkingAvailability>("networking_availability", data as unknown as Record<string, unknown>),
+    dataApi.create<NetworkingAvailability>("networking_availability", toRecord(data)),
   update: (id: string, data: Partial<NetworkingAvailability>) =>
-    dataApi.update<NetworkingAvailability>("networking_availability", id, data as unknown as Record<string, unknown>),
+    dataApi.update<NetworkingAvailability>("networking_availability", id, toRecord(data)),
   remove: (id: string) => dataApi.delete("networking_availability", id),
 };
 
@@ -683,9 +688,9 @@ export const networkingProgramsApi = {
   listByEvent: (eventId: string) =>
     dataApi.list<NetworkingEventProgram>("networking_event_programs", { "filter[eventId]": eventId, limit: 200 }),
   create: (data: Omit<NetworkingEventProgram, "id">) =>
-    dataApi.create<NetworkingEventProgram>("networking_event_programs", data as unknown as Record<string, unknown>),
+    dataApi.create<NetworkingEventProgram>("networking_event_programs", toRecord(data)),
   update: (id: string, data: Partial<NetworkingEventProgram>) =>
-    dataApi.update<NetworkingEventProgram>("networking_event_programs", id, data as unknown as Record<string, unknown>),
+    dataApi.update<NetworkingEventProgram>("networking_event_programs", id, toRecord(data)),
   remove: (id: string) => dataApi.delete("networking_event_programs", id),
 };
 
@@ -971,9 +976,9 @@ export const receivedCardsApi = {
     }),
   get: (id: string) => dataApi.get<ReceivedBusinessCard>("received_business_cards", id),
   create: (data: Omit<ReceivedBusinessCard, "id" | "createdAt">) =>
-    dataApi.create<ReceivedBusinessCard>("received_business_cards", data as unknown as Record<string, unknown>),
+    dataApi.create<ReceivedBusinessCard>("received_business_cards", toRecord(data)),
   update: (id: string, data: Partial<ReceivedBusinessCard>) =>
-    dataApi.update<ReceivedBusinessCard>("received_business_cards", id, data as unknown as Record<string, unknown>),
+    dataApi.update<ReceivedBusinessCard>("received_business_cards", id, toRecord(data)),
   delete: (id: string) => dataApi.delete("received_business_cards", id),
 };
 
@@ -990,13 +995,13 @@ export const workbookTasksApi = {
   create: (data: Omit<ConferenceWorkbookTask, "id" | "createdAt">) =>
     dataApi.create<ConferenceWorkbookTask>(
       "conference_workbook_tasks",
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
   update: (id: string, data: Partial<ConferenceWorkbookTask>) =>
     dataApi.update<ConferenceWorkbookTask>(
       "conference_workbook_tasks",
       id,
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
   delete: (id: string) =>
     dataApi.delete("conference_workbook_tasks", id),
@@ -1386,7 +1391,7 @@ export const seminarLiveApi = {
     dataApi.update<SeminarLiveSession>(
       "seminar_live_sessions",
       seminarId,
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
 };
 
@@ -1404,7 +1409,7 @@ export const slideDecksApi = {
     dataApi.update<SeminarSlideDeck>(
       "seminar_slide_decks",
       id,
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
   delete: (id: string) => dataApi.delete("seminar_slide_decks", id),
 };
@@ -1423,7 +1428,7 @@ export const seminarNotesApi = {
     dataApi.update<SeminarNoteEntry>(
       "seminar_note_entries",
       id,
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
   delete: (id: string) => dataApi.delete("seminar_note_entries", id),
 };
@@ -2761,7 +2766,7 @@ export const topicExplorationsApi = {
     return [...res.data].sort((a, b) => (b.exploredAt ?? "").localeCompare(a.exploredAt ?? ""));
   },
   create: (data: Omit<TopicExploration, "id" | "createdAt" | "updatedAt">) =>
-    dataApi.create<TopicExploration>("topic_explorations", data as unknown as Record<string, unknown>),
+    dataApi.create<TopicExploration>("topic_explorations", toRecord(data)),
   remove: (id: string) => dataApi.delete("topic_explorations", id),
 };
 
@@ -2990,13 +2995,13 @@ export const studySessionReflectionsApi = {
   create: (data: Omit<StudySessionReflection, "id" | "createdAt">) =>
     dataApi.create<StudySessionReflection>(
       "study_session_reflections",
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
   update: (id: string, data: Partial<StudySessionReflection>) =>
     dataApi.update<StudySessionReflection>(
       "study_session_reflections",
       id,
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
   delete: (id: string) => dataApi.delete("study_session_reflections", id),
 };
@@ -3019,13 +3024,13 @@ export const studyAssignmentsApi = {
   create: (data: Omit<StudyAssignment, "id" | "createdAt">) =>
     dataApi.create<StudyAssignment>(
       "study_assignments",
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
   update: (id: string, data: Partial<StudyAssignment>) =>
     dataApi.update<StudyAssignment>(
       "study_assignments",
       id,
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
   delete: (id: string) => dataApi.delete("study_assignments", id),
 };
@@ -3088,7 +3093,7 @@ export const studySessionNotesApi = {
     dataApi.update<StudySessionNote>(
       "study_session_notes",
       id,
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
   delete: (id: string) => dataApi.delete("study_session_notes", id),
 };
@@ -3456,9 +3461,9 @@ export const designDocsApi = {
     dataApi.list<DesignDocument>("design_documents", { "filter[published]": true, limit: 200 }),
   get: (id: string) => dataApi.get<DesignDocument>("design_documents", id),
   create: (data: Omit<DesignDocument, "id">) =>
-    dataApi.create<DesignDocument>("design_documents", data as unknown as Record<string, unknown>),
+    dataApi.create<DesignDocument>("design_documents", toRecord(data)),
   update: (id: string, data: Partial<DesignDocument>) =>
-    dataApi.update<DesignDocument>("design_documents", id, data as unknown as Record<string, unknown>),
+    dataApi.update<DesignDocument>("design_documents", id, toRecord(data)),
   remove: (id: string) => dataApi.delete("design_documents", id),
 };
 
@@ -3469,7 +3474,7 @@ export const designDocsApi = {
 // ─────────────────────────────────────────────────────────────
 export const userFeedbackApi = {
   create: (data: Omit<UserFeedback, "id">) =>
-    dataApi.create<UserFeedback>("user_feedback", data as unknown as Record<string, unknown>),
+    dataApi.create<UserFeedback>("user_feedback", toRecord(data)),
   list: () =>
     dataApi.list<UserFeedback>("user_feedback", {
       sort: "createdAt:desc",
@@ -3479,7 +3484,7 @@ export const userFeedbackApi = {
     dataApi.update<UserFeedback>(
       "user_feedback",
       id,
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
 };
 
@@ -3495,12 +3500,12 @@ export const userNotesApi = {
     }),
   get: (id: string) => dataApi.get<UserNote>("user_notes", id),
   create: (data: Omit<UserNote, "id" | "createdAt" | "updatedAt">) =>
-    dataApi.create<UserNote>("user_notes", data as unknown as Record<string, unknown>),
+    dataApi.create<UserNote>("user_notes", toRecord(data)),
   update: (id: string, data: Partial<Omit<UserNote, "id" | "userId" | "createdAt">>) =>
     dataApi.update<UserNote>(
       "user_notes",
       id,
-      data as unknown as Record<string, unknown>,
+      toRecord(data),
     ),
   delete: (id: string) => dataApi.delete("user_notes", id),
 };
@@ -3630,7 +3635,7 @@ export const collabResearchApi = {
     dataApi.update<CollaborativeResearch>(
       COLLAB_RESEARCH_COL,
       id,
-      patch as unknown as Record<string, unknown>,
+      toRecord(patch),
     ),
 
   /** denorm 동기화: members 컬렉션의 active userId 들과 collaboratorIds/Count 정합 보정.
@@ -3730,7 +3735,7 @@ export const collabMembersApi = {
     dataApi.update<CollabResearchMember>(
       COLLAB_MEMBERS_COL,
       memberId,
-      patch as unknown as Record<string, unknown>,
+      toRecord(patch),
     ),
 
   /** 자진 탈퇴 */
@@ -3959,16 +3964,16 @@ export const collabCommentsApi = {
   get: (id: string) => dataApi.get<CollabResearchComment>(COLLAB_COMMENTS_COL, id),
 
   create: (input: CreateCommentInput) =>
-    dataApi.create<CollabResearchComment>(COLLAB_COMMENTS_COL, input as unknown as Record<string, unknown>),
+    dataApi.create<CollabResearchComment>(COLLAB_COMMENTS_COL, toRecord(input)),
 
   updateBody: (id: string, body: string) =>
     dataApi.update<CollabResearchComment>(COLLAB_COMMENTS_COL, id, { body }),
 
   toggleResolve: (id: string, resolverId: string | null) =>
-    dataApi.update<CollabResearchComment>(COLLAB_COMMENTS_COL, id, {
+    dataApi.update<CollabResearchComment>(COLLAB_COMMENTS_COL, id, toRecord({
       resolvedAt: resolverId ? new Date().toISOString() : null,
       resolvedBy: resolverId ?? null,
-    } as unknown as Record<string, unknown>),
+    })),
 
   remove: (id: string) => dataApi.delete(COLLAB_COMMENTS_COL, id),
 };
@@ -3988,10 +3993,10 @@ export const collabMeetingsApi = {
   get: (id: string) => dataApi.get<CollabResearchMeeting>(COLLAB_MEETINGS_COL, id),
 
   create: (input: CreateMeetingInput) =>
-    dataApi.create<CollabResearchMeeting>(COLLAB_MEETINGS_COL, input as unknown as Record<string, unknown>),
+    dataApi.create<CollabResearchMeeting>(COLLAB_MEETINGS_COL, toRecord(input)),
 
   update: (id: string, patch: UpdateMeetingInput) =>
-    dataApi.update<CollabResearchMeeting>(COLLAB_MEETINGS_COL, id, patch as unknown as Record<string, unknown>),
+    dataApi.update<CollabResearchMeeting>(COLLAB_MEETINGS_COL, id, toRecord(patch)),
 
   remove: (id: string) => dataApi.delete(COLLAB_MEETINGS_COL, id),
 };
@@ -4023,17 +4028,17 @@ export const collabMilestonesApi = {
   get: (id: string) => dataApi.get<CollabResearchMilestone>(COLLAB_MILESTONES_COL, id),
 
   create: (input: CreateMilestoneInput) =>
-    dataApi.create<CollabResearchMilestone>(COLLAB_MILESTONES_COL, input as unknown as Record<string, unknown>),
+    dataApi.create<CollabResearchMilestone>(COLLAB_MILESTONES_COL, toRecord(input)),
 
   update: (id: string, patch: UpdateMilestoneInput) =>
-    dataApi.update<CollabResearchMilestone>(COLLAB_MILESTONES_COL, id, patch as unknown as Record<string, unknown>),
+    dataApi.update<CollabResearchMilestone>(COLLAB_MILESTONES_COL, id, toRecord(patch)),
 
   /** done 상태로 전이 — completedAt 자동 채움 */
   complete: (id: string) =>
-    dataApi.update<CollabResearchMilestone>(COLLAB_MILESTONES_COL, id, {
+    dataApi.update<CollabResearchMilestone>(COLLAB_MILESTONES_COL, id, toRecord({
       status: "done",
       completedAt: new Date().toISOString(),
-    } as unknown as Record<string, unknown>),
+    })),
 
   remove: (id: string) => dataApi.delete(COLLAB_MILESTONES_COL, id),
 };
@@ -4078,13 +4083,13 @@ export const journalIssuesApi = {
   get: (id: string) => dataApi.get<ResearchJournalIssue>(JOURNAL_ISSUES_COL, id),
 
   create: (input: CreateJournalIssueInput) =>
-    dataApi.create<ResearchJournalIssue>(JOURNAL_ISSUES_COL, input as unknown as Record<string, unknown>),
+    dataApi.create<ResearchJournalIssue>(JOURNAL_ISSUES_COL, toRecord(input)),
 
   update: (id: string, patch: UpdateJournalIssueInput) =>
     dataApi.update<ResearchJournalIssue>(
       JOURNAL_ISSUES_COL,
       id,
-      patch as unknown as Record<string, unknown>,
+      toRecord(patch),
     ),
 
   /** 호수 발간 — status='published' + publishedAt 갱신 */
@@ -4234,13 +4239,13 @@ export const journalArticlesApi = {
     dataApi.update<ResearchJournalArticle>(
       JOURNAL_ARTICLES_COL,
       id,
-      patch as unknown as Record<string, unknown>,
+      toRecord(patch),
     ),
 
   updateAuthors: (id: string, authors: ArticleAuthorSnapshot[]) =>
-    dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+    dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, toRecord({
       authors,
-    } as unknown as Record<string, unknown>),
+    })),
 
   // ── 저자 동의 게이트 ──
 
@@ -4271,9 +4276,9 @@ export const journalArticlesApi = {
       agreedAt: agreed ? new Date().toISOString() : undefined,
       rejectionNote: rejectionNote || undefined,
     };
-    await dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+    await dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, toRecord({
       authorConsents: consents,
-    } as unknown as Record<string, unknown>);
+    }));
   },
 
   // ── 검수 워크플로우 상태 전이 ──
@@ -4288,10 +4293,10 @@ export const journalArticlesApi = {
   startReview: async (id: string, reviewerId: string): Promise<void> => {
     const article = await journalArticlesApi.get(id);
     const reviewerIds = Array.from(new Set([...(article.reviewerIds ?? []), reviewerId]));
-    await dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+    await dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, toRecord({
       reviewStatus: "under_review",
       reviewerIds,
-    } as unknown as Record<string, unknown>);
+    }));
   },
 
   /** 검수 코멘트 추가 (운영진 또는 collaborator 가 추가) */
@@ -4309,9 +4314,9 @@ export const journalArticlesApi = {
       createdAt: new Date().toISOString(),
     };
     const next = [...(article.reviewComments ?? []), newComment];
-    await dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+    await dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, toRecord({
       reviewComments: next,
-    } as unknown as Record<string, unknown>);
+    }));
   },
 
   /** under_review → revision_requested (수정 요청) */
@@ -4338,14 +4343,14 @@ export const journalArticlesApi = {
       pageEnd?: number;
     },
   ): Promise<ResearchJournalArticle> => {
-    const updated = await dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+    const updated = await dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, toRecord({
       reviewStatus: "published",
       publishedAt: new Date().toISOString(),
       visibility: options.visibility,
       issueId: options.issueId,
       pageStart: options.pageStart,
       pageEnd: options.pageEnd,
-    } as unknown as Record<string, unknown>);
+    }));
 
     // 저자별 +10 streak (멱등 doc id)
     try {
@@ -4371,11 +4376,11 @@ export const journalArticlesApi = {
 
   /** 발간 후 철회 */
   withdraw: (id: string, reason: string) =>
-    dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, {
+    dataApi.update<ResearchJournalArticle>(JOURNAL_ARTICLES_COL, id, toRecord({
       reviewStatus: "withdrawn",
       withdrawnAt: new Date().toISOString(),
       withdrawnReason: reason,
-    } as unknown as Record<string, unknown>),
+    })),
 
   /** 열람 카운트 +1 — Firestore increment sentinel */
   incrementView: (id: string) =>
@@ -4408,7 +4413,7 @@ export const commBoardsApi = {
   get: (id: string) => dataApi.get<CommBoard>("comm_boards", id),
   create: (data: Record<string, unknown>) => dataApi.create<CommBoard>("comm_boards", data),
   update: (id: string, data: Partial<CommBoard>) =>
-    dataApi.update<CommBoard>("comm_boards", id, data as unknown as Record<string, unknown>),
+    dataApi.update<CommBoard>("comm_boards", id, toRecord(data)),
   delete: (id: string) => dataApi.delete("comm_boards", id),
 };
 
@@ -4431,7 +4436,7 @@ export const commQuestionsApi = {
       answerCount: 0,
     }),
   update: (id: string, data: Partial<CommQuestion>) =>
-    dataApi.update<CommQuestion>("comm_questions", id, data as unknown as Record<string, unknown>),
+    dataApi.update<CommQuestion>("comm_questions", id, toRecord(data)),
   delete: async (id: string): Promise<void> => {
     // cascade: 자식 답변 함께 삭제 (UI confirm "답변도 함께 사라집니다" 와 일치)
     const res = await dataApi.list<CommAnswer>("comm_answers", {
@@ -4445,10 +4450,10 @@ export const commQuestionsApi = {
   },
   /** 채택/해제 — 질문 문서만 갱신(답변엔 쓰지 않음, UI 가 resolvedAnswerId 로 판단) */
   setResolved: (id: string, resolved: boolean, resolvedAnswerId: string | null) =>
-    dataApi.update<CommQuestion>("comm_questions", id, {
+    dataApi.update<CommQuestion>("comm_questions", id, toRecord({
       resolved,
       resolvedAnswerId: resolvedAnswerId ?? null,
-    } as unknown as Record<string, unknown>),
+    })),
 };
 
 export const commAnswersApi = {
@@ -4466,7 +4471,7 @@ export const commAnswersApi = {
     dataApi.list<CommAnswer>("comm_answers", { "filter[questionId]": questionId, limit: 500 }),
   /** 답변 본문 수정 — rules 상 회원 작성자/보드 소유자/운영진만 가능 */
   update: (id: string, data: Partial<CommAnswer>) =>
-    dataApi.update<CommAnswer>("comm_answers", id, data as unknown as Record<string, unknown>),
+    dataApi.update<CommAnswer>("comm_answers", id, toRecord(data)),
   create: async (data: Record<string, unknown>): Promise<CommAnswer> => {
     const created = await dataApi.create<CommAnswer>("comm_answers", { ...data, likeCount: 0 });
     // denorm: 질문 answerCount +1 — best-effort 비차단 (QA P1):

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import { Badge } from "@/components/ui/badge";
 import type { User } from "@/types";
 import { ROLE_LABELS, SCHOOL_LEVEL_LABELS } from "@/types";
@@ -20,10 +21,9 @@ export default function ProfileHeader({ owner, isOwner, viewer }: Props) {
     <section className="rounded-2xl border bg-card p-6 shadow-sm">
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
         {/* 프로필 이미지 */}
-        <div className="h-24 w-24 shrink-0 overflow-hidden rounded-full bg-primary/10 ring-4 ring-white">
+        <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-primary/10 ring-4 ring-white">
           {owner.profileImage ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={owner.profileImage} alt={owner.name} className="h-full w-full object-cover" />
+            <Image src={owner.profileImage} alt={owner.name} fill className="object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-primary">
               {owner.name?.[0] ?? "?"}

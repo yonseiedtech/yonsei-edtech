@@ -1,6 +1,7 @@
 "use client";
 
 import { X } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import type { SitePopup } from "@/types";
 
@@ -109,12 +110,14 @@ function PopupCard({
       </button>
 
       {popup.imageUrl && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img
-          src={popup.imageUrl}
-          alt=""
-          className={cn("w-full object-cover", compact ? "h-32" : "h-44")}
-        />
+        <div className={cn("relative w-full overflow-hidden", compact ? "h-32" : "h-44")}>
+          <Image
+            src={popup.imageUrl}
+            alt=""
+            fill
+            className="object-cover"
+          />
+        </div>
       )}
 
       <div className={cn("p-4", compact && "p-3")}>

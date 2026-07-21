@@ -1,4 +1,5 @@
 import Link from "next/link";
+import Image from "next/image";
 import { User as UserIcon, HeartHandshake } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { ROLE_LABELS } from "@/types";
@@ -39,13 +40,13 @@ export default function MemberCard({ member }: Props) {
       />
 
       {/* ── 아바타 ── */}
-      <div className="mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary ring-2 ring-transparent transition-all duration-150 group-hover:ring-primary/30 group-focus-visible:ring-primary/40">
+      <div className="relative mx-auto flex h-16 w-16 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-primary ring-2 ring-transparent transition-all duration-150 group-hover:ring-primary/30 group-focus-visible:ring-primary/40">
         {member.profileImage ? (
-          // eslint-disable-next-line @next/next/no-img-element
-          <img
+          <Image
             src={member.profileImage}
             alt={`${member.name} 프로필 사진`}
-            className="h-full w-full object-cover"
+            fill
+            className="object-cover"
           />
         ) : (
           <UserIcon size={28} aria-hidden />

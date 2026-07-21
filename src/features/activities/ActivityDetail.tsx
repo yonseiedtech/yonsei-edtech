@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { activitiesApi, activityApplicantsApi, activityParticipationsApi } from "@/lib/bkend";
@@ -1120,8 +1121,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
               {!user ? (
                 activity.imageUrl ? (
                   <div className="overflow-hidden rounded-2xl border bg-card">
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={activity.imageUrl} alt={`${activity.title} 포스터`} className="block w-full" />
+                    <Image src={activity.imageUrl} alt={`${activity.title} 포스터`} width={800} height={1200} className="block w-full h-auto" />
                   </div>
                 ) : (
                   <div className="rounded-2xl border bg-card p-6 text-center text-sm text-muted-foreground">
@@ -1132,8 +1132,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                 <>
                   {activity.imageUrl && (
                     <div className="overflow-hidden rounded-2xl border bg-card">
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={activity.imageUrl} alt={`${activity.title} 포스터`} className="block w-full" />
+                      <Image src={activity.imageUrl} alt={`${activity.title} 포스터`} width={800} height={1200} className="block w-full h-auto" />
                     </div>
                   )}
                   <div className="rounded-2xl border bg-card p-6">

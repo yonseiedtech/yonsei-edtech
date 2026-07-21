@@ -16,12 +16,16 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { cn } from "@/lib/utils";
 import type { UserResearchSummary } from "./types";
 import { formatDate, formatHours } from "./utils";
+import dynamic from "next/dynamic";
+import { Skeleton } from "@/components/ui/skeleton";
 import { MiniProgress } from "./components/MiniProgress";
-import { WritingTab } from "./tabs/WritingTab";
-import { ReadingTab } from "./tabs/ReadingTab";
-import { ProposalTab } from "./tabs/ProposalTab";
-import { DesignTab } from "./tabs/DesignTab";
-import { ReportTab } from "./tabs/ReportTab";
+
+const tabFallback = <Skeleton className="h-40 w-full rounded-lg" />;
+const WritingTab = dynamic(() => import("./tabs/WritingTab").then((m) => ({ default: m.WritingTab })), { loading: () => tabFallback });
+const ReadingTab = dynamic(() => import("./tabs/ReadingTab").then((m) => ({ default: m.ReadingTab })), { loading: () => tabFallback });
+const ProposalTab = dynamic(() => import("./tabs/ProposalTab").then((m) => ({ default: m.ProposalTab })), { loading: () => tabFallback });
+const DesignTab = dynamic(() => import("./tabs/DesignTab").then((m) => ({ default: m.DesignTab })), { loading: () => tabFallback });
+const ReportTab = dynamic(() => import("./tabs/ReportTab").then((m) => ({ default: m.ReportTab })), { loading: () => tabFallback });
 
 export function ResearchRow({ summary }: { summary: UserResearchSummary }) {
   const [open, setOpen] = useState(false);

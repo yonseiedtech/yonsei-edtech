@@ -81,8 +81,7 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
           <div className="mt-6 flex justify-center">
             <div className="relative h-24 w-24 overflow-hidden rounded-full bg-card ring-4 ring-white shadow-md">
               {user.profileImage ? (
-                // eslint-disable-next-line @next/next/no-img-element
-                <img src={user.profileImage} alt={user.name} className="h-full w-full object-cover" />
+                <Image src={user.profileImage} alt={user.name} fill className="object-cover" />
               ) : (
                 <div className="flex h-full w-full items-center justify-center bg-primary/10 text-3xl font-bold text-primary">
                   {user.name?.[0] ?? "?"}

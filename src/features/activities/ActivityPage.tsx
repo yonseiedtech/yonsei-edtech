@@ -16,6 +16,7 @@ import {
   DialogFooter,
 } from "@/components/ui/dialog";
 import Link from "next/link";
+import Image from "next/image";
 import PageHeader from "@/components/ui/page-header";
 import { Calendar, MapPin, Users, User, Plus, Pencil, Trash2, Loader2, UserPlus, Check, Megaphone, CalendarClock, ImageIcon, LayoutGrid, List } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
@@ -331,9 +332,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
           className="relative block aspect-[3/4] w-full overflow-hidden bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         >
           {poster ? (
-            // 외부 도메인 호환을 위해 일반 img 사용
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={poster} alt={a.title} className="absolute inset-0 h-full w-full object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
+            <Image src={poster} alt={a.title} fill className="object-cover transition-transform duration-300 group-hover:scale-[1.03]" />
           ) : (
             <div className="flex h-full w-full flex-col items-center justify-center gap-2 text-muted-foreground/30">
               <ImageIcon size={48} strokeWidth={1} />
@@ -836,8 +835,9 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
                     <label className="mb-1 block text-sm font-medium">포스터 이미지</label>
                     <div className="flex items-start gap-3">
                       {form.imageUrl ? (
-                        // eslint-disable-next-line @next/next/no-img-element
-                        <img src={form.imageUrl} alt="포스터 미리보기" className="h-24 w-18 shrink-0 rounded-lg border object-cover" />
+                        <div className="relative h-24 w-18 shrink-0 overflow-hidden rounded-lg border">
+                          <Image src={form.imageUrl} alt="포스터 미리보기" fill className="object-cover" />
+                        </div>
                       ) : (
                         <div className="flex h-24 w-18 shrink-0 items-center justify-center rounded-lg border bg-muted/30 text-muted-foreground/40"><ImageIcon size={22} /></div>
                       )}
