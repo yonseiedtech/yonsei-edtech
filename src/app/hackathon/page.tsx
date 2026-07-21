@@ -16,6 +16,7 @@ import HackathonSubmissions from "@/features/hackathon/HackathonSubmissions";
 import HackathonAwards from "@/features/hackathon/HackathonAwards";
 import HackathonPhaseTimeline from "@/features/hackathon/HackathonPhaseTimeline";
 import HackathonTeamView from "@/features/hackathon/HackathonTeamView";
+import HackathonLiveBanner from "@/features/hackathon/HackathonLiveBanner";
 import {
   HACKATHON_EVENT,
   HACKATHON_TIMELINE,
@@ -53,7 +54,15 @@ export default function HackathonHubPage() {
               <CalendarDays size={15} className="text-primary" />
               2026. 8. 22. ({HACKATHON_EVENT.dayLabel})
               {dday && (
-                <span className="ml-1 rounded-md bg-primary px-1.5 py-0.5 text-xs font-bold text-primary-foreground">
+                <span
+                  className={`ml-1 rounded-md px-1.5 py-0.5 text-xs font-bold ${
+                    dday.diffDays <= 3
+                      ? "bg-destructive text-destructive-foreground"
+                      : dday.diffDays <= 7
+                        ? "bg-warning text-white"
+                        : "bg-primary text-primary-foreground"
+                  }`}
+                >
                   {dday.label}
                 </span>
               )}
@@ -83,6 +92,9 @@ export default function HackathonHubPage() {
               </li>
             ))}
           </ul>
+
+          {/* v14-H2: 참가 현황 카운터 + 제출 마감 D-day 강조 (client) */}
+          <HackathonLiveBanner />
         </section>
 
         {/* ── 단계별 진행 상태 + D-day 카운트다운 (v8-H6) ── */}
