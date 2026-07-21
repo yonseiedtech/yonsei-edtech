@@ -34,7 +34,7 @@ export default function ArchiveFavoriteStar({
         "rounded-md p-1 transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/60",
         isFav
           ? "text-warning hover:bg-warning/5"
-          : "text-muted-foreground hover:bg-muted hover:text-amber-500",
+          : "text-muted-foreground hover:bg-muted hover:text-warning",
         className,
       )}
     >

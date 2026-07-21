@@ -1428,7 +1428,7 @@ export default function RegistrationsTab() {
                                   <Badge variant="secondary" className="text-[10px]">{m.generation}기</Badge>
                                 )}
                                 {isRegistered && (
-                                  <Badge variant="secondary" className="bg-amber-50 text-[10px] text-amber-700">이미 신청됨</Badge>
+                                  <Badge variant="secondary" className="bg-warning/5 text-[10px] text-warning">이미 신청됨</Badge>
                                 )}
                               </div>
                               <p className="truncate text-[11px] text-muted-foreground">

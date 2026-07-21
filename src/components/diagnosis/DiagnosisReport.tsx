@@ -359,12 +359,12 @@ export default function DiagnosisReport({
                       className={cn(
                         "h-full rounded-full transition-all duration-700",
                         pct >= 80
-                          ? "bg-emerald-500"
+                          ? "bg-success"
                           : pct >= 60
-                            ? "bg-sky-500"
+                            ? "bg-cat-1"
                             : pct >= 40
-                              ? "bg-amber-500"
-                              : "bg-rose-500",
+                              ? "bg-warning"
+                              : "bg-destructive",
                       )}
                       style={{ width: `${pct}%` }}
                     />
