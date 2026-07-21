@@ -144,7 +144,7 @@ function AnalysisDashboard({ attendees, seminarTitle, seminarDate }: { attendees
           <p className="text-xs text-muted-foreground">가입 회원</p>
         </div>
         <div className="rounded-2xl border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-amber-600">{guests}</p>
+          <p className="text-2xl font-bold text-warning">{guests}</p>
           <p className="text-xs text-muted-foreground">미가입 참석자</p>
         </div>
       </div>
@@ -155,7 +155,7 @@ function AnalysisDashboard({ attendees, seminarTitle, seminarDate }: { attendees
           <h5 className="mb-3 text-sm font-medium">관심분야 분포</h5>
           <div className="space-y-2">
             {interestEntries.map(([interest, count]) => (
-              <HorizontalBar key={interest} label={interest} count={count} max={interestMax} color="bg-blue-500/70" />
+              <HorizontalBar key={interest} label={interest} count={count} max={interestMax} color="bg-cat-1/70" />
             ))}
           </div>
         </div>
@@ -167,7 +167,7 @@ function AnalysisDashboard({ attendees, seminarTitle, seminarDate }: { attendees
           <h5 className="mb-3 text-sm font-medium">누적학기 분포</h5>
           <div className="space-y-2">
             {semesterEntries.map(([sem, count]) => (
-              <HorizontalBar key={sem} label={sem} count={count} max={semesterMax} color="bg-emerald-500/70" />
+              <HorizontalBar key={sem} label={sem} count={count} max={semesterMax} color="bg-success/70" />
             ))}
           </div>
         </div>
@@ -245,7 +245,7 @@ function AttendeeRow({ a, onToggleCheckin }: { a: SeminarAttendee; onToggleCheck
         <td className="px-3 py-2">
           <div className="flex items-center gap-1.5">
             {a.userName}
-            {a.isGuest && <Badge variant="outline" className="text-[9px] text-amber-600 border-amber-200">미가입</Badge>}
+            {a.isGuest && <Badge variant="outline" className="text-[9px] text-warning border-warning/20">미가입</Badge>}
           </div>
         </td>
         <td className="px-3 py-2 text-xs text-muted-foreground">{a.studentId || "-"}</td>
@@ -256,7 +256,7 @@ function AttendeeRow({ a, onToggleCheckin }: { a: SeminarAttendee; onToggleCheck
             title={a.checkedIn ? "클릭하여 미출석으로 변경" : "클릭하여 출석으로 변경"}
           >
             {a.checkedIn ? (
-              <Badge className="bg-green-50 text-green-700 text-xs cursor-pointer hover:bg-green-100">출석</Badge>
+              <Badge className="bg-success/5 text-success text-xs cursor-pointer hover:bg-success/10">출석</Badge>
             ) : (
               <Badge variant="secondary" className="text-xs cursor-pointer hover:bg-muted">미출석</Badge>
             )}
@@ -597,17 +597,17 @@ export function SeminarReport({ seminarId, seminarTitle, seminarDate }: { semina
       {/* 통계 카드 */}
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-3 sm:gap-4">
         <div className="rounded-2xl border bg-card p-4 text-center">
-          <Users size={20} className="mx-auto mb-1 text-blue-500" />
+          <Users size={20} className="mx-auto mb-1 text-cat-1" />
           <p className="text-2xl font-bold">{total}</p>
           <p className="text-xs text-muted-foreground">신청</p>
         </div>
         <div className="rounded-2xl border bg-card p-4 text-center">
-          <UserCheck size={20} className="mx-auto mb-1 text-green-500" />
+          <UserCheck size={20} className="mx-auto mb-1 text-success" />
           <p className="text-2xl font-bold">{checkedIn}</p>
           <p className="text-xs text-muted-foreground">출석</p>
         </div>
         <div className="rounded-2xl border bg-card p-4 text-center">
-          <UserX size={20} className="mx-auto mb-1 text-amber-500" />
+          <UserX size={20} className="mx-auto mb-1 text-warning" />
           <p className="text-2xl font-bold">{total - checkedIn}</p>
           <p className="text-xs text-muted-foreground">미출석</p>
         </div>

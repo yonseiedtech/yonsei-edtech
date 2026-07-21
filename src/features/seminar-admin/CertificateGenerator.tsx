@@ -122,9 +122,9 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
               <div key={att.id} className={cn("flex items-center justify-between rounded px-2 py-1 text-xs", (issued || inRecipients) && "opacity-40")}>
                 <span className="flex items-center gap-1.5">
                   {att.userName}
-                  {att.checkedIn && <Badge variant="secondary" className="h-4 text-[9px] bg-green-50 text-green-700">출석</Badge>}
+                  {att.checkedIn && <Badge variant="secondary" className="h-4 text-[9px] bg-success/5 text-success">출석</Badge>}
                   {issued && <Badge variant="secondary" className="h-4 text-[9px]">발급완료</Badge>}
-                  {inRecipients && <Badge variant="secondary" className="h-4 text-[9px] bg-blue-50 text-blue-700">대상자</Badge>}
+                  {inRecipients && <Badge variant="secondary" className="h-4 text-[9px] bg-cat-1/5 text-cat-1">대상자</Badge>}
                 </span>
                 {!issued && !inRecipients && (
                   certType === "completion" && !att.checkedIn ? (
@@ -152,7 +152,7 @@ function AttendeeSelector({ attendees, seminarId, certType, onSelectName, onBatc
             {recipients.map((name) => (
               <div key={name} className="flex items-center justify-between rounded bg-white px-2 py-1 text-xs">
                 <span>{name}</span>
-                <button onClick={() => removeRecipient(name)} className="rounded p-0.5 text-muted-foreground hover:bg-red-50 hover:text-red-500">
+                <button onClick={() => removeRecipient(name)} className="rounded p-0.5 text-muted-foreground hover:bg-destructive/5 hover:text-destructive">
                   <X size={12} />
                 </button>
               </div>
@@ -219,9 +219,9 @@ function AppointmentSelector({ positions, onSelect, onBatchCreate }: {
   }
 
   return (
-    <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3">
+    <div className="rounded-lg border border-cat-1/20 bg-cat-1/5 p-3">
       <div className="flex items-center justify-between">
-        <p className="text-xs font-semibold text-blue-700">
+        <p className="text-xs font-semibold text-cat-1">
           운영진 직책 <span className="font-normal text-muted-foreground">({assignedPositions.length}명)</span>
         </p>
         <Button variant="ghost" size="sm" className="h-5 px-1.5 text-[10px]" onClick={selectAll}>전체 선택</Button>
@@ -231,16 +231,16 @@ function AppointmentSelector({ positions, onSelect, onBatchCreate }: {
       ) : (
         <div className="mt-2 space-y-0.5">
           {assignedPositions.map((pos) => (
-            <div key={pos.id} className="flex items-center justify-between rounded px-2 py-1.5 text-xs hover:bg-blue-100/50">
+            <div key={pos.id} className="flex items-center justify-between rounded px-2 py-1.5 text-xs hover:bg-cat-1/10">
               <label className="flex flex-1 cursor-pointer items-center gap-2">
                 <input
                   type="checkbox"
                   checked={selected.has(pos.id)}
                   onChange={() => togglePosition(pos.id)}
-                  className="h-3.5 w-3.5 rounded border-gray-300"
+                  className="h-3.5 w-3.5 rounded border-muted"
                 />
                 <span className="font-medium">{pos.userName}</span>
-                <Badge variant="secondary" className="h-4 text-[9px] bg-blue-100 text-blue-700">{pos.title}</Badge>
+                <Badge variant="secondary" className="h-4 text-[9px] bg-cat-1/10 text-cat-1">{pos.title}</Badge>
               </label>
               <Button
                 variant="ghost"
@@ -632,7 +632,7 @@ function DraggableArea({
       {isSelected && (
         <>
           <span
-            className="absolute rounded bg-blue-500 px-1.5 py-0.5 text-[9px] font-medium text-white"
+            className="absolute rounded bg-cat-1 px-1.5 py-0.5 text-[9px] font-medium text-white"
             style={{
               zIndex: 10,
               top: `${-16 / bs}px`,
@@ -1732,7 +1732,7 @@ export default function CertificateGenerator() {
 
           <div>
             <label className="mb-1.5 block text-sm font-medium">증서 번호</label>
-            <Input value={certificateNo} readOnly disabled placeholder="자동 생성" className="bg-gray-50" />
+            <Input value={certificateNo} readOnly disabled placeholder="자동 생성" className="bg-muted/5" />
           </div>
 
           {/* 편집 모드 토글 */}
@@ -1789,8 +1789,8 @@ export default function CertificateGenerator() {
 
               {/* 캔버스 기준 정렬 (선택 영역) */}
               {selectedAreas.length > 0 && (
-                <div className="rounded-md border border-blue-200 bg-blue-50/60 p-2">
-                  <p className="mb-1 text-[11px] font-semibold text-blue-700">
+                <div className="rounded-md border border-cat-1/20 bg-cat-1/5 p-2">
+                  <p className="mb-1 text-[11px] font-semibold text-cat-1">
                     페이지 기준 정렬 · {selectedAreas.length}개 선택
                   </p>
                   <div className="grid grid-cols-3 gap-1">
@@ -1926,8 +1926,8 @@ export default function CertificateGenerator() {
 
               {/* 다중 개체 정렬 (2개 이상 선택 시) */}
               {selectedAreas.length > 1 && (
-                <div className="rounded-lg border border-blue-200 bg-blue-50/50 p-3">
-                  <label className="mb-1.5 block text-xs font-semibold text-blue-700">
+                <div className="rounded-lg border border-cat-1/20 bg-cat-1/5 p-3">
+                  <label className="mb-1.5 block text-xs font-semibold text-cat-1">
                     다중 정렬 · {selectedAreas.length}개 선택
                     <button className="ml-2 text-[10px] font-normal text-muted-foreground hover:text-foreground" onClick={() => setSelectedAreas([])}>
                       선택 해제
@@ -2103,7 +2103,7 @@ export default function CertificateGenerator() {
                     </button>
                     <button
                       onClick={() => deleteTemplate(tpl.name)}
-                      className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+                      className="ml-1 rounded p-0.5 text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
                       title="삭제"
                     >
                       <X size={12} />
@@ -2137,15 +2137,15 @@ export default function CertificateGenerator() {
 
           {/* 감사장: 연사/발표자 바로 선택 + 수기 추가 */}
           {certType === "appreciation" && seminar && (
-            <div className="rounded-lg border border-orange-200 bg-orange-50/50 p-3">
-              <p className="text-xs font-semibold text-orange-700">연사/발표자 <span className="font-normal text-muted-foreground">({speakers.length}명)</span></p>
+            <div className="rounded-lg border border-warning/20 bg-warning/5 p-3">
+              <p className="text-xs font-semibold text-warning">연사/발표자 <span className="font-normal text-muted-foreground">({speakers.length}명)</span></p>
               {speakers.length > 0 && (
                 <div className="mt-2 space-y-0.5">
                   {speakers.map((name) => (
                     <div key={name} className="flex items-center justify-between rounded px-2 py-1 text-xs">
                       <span className="flex items-center gap-1.5">
                         {name}
-                        <Badge variant="secondary" className="h-4 text-[9px] bg-orange-100 text-orange-700">연사</Badge>
+                        <Badge variant="secondary" className="h-4 text-[9px] bg-warning/10 text-warning">연사</Badge>
                       </span>
                       <Button
                         variant="ghost"

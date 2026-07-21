@@ -82,7 +82,7 @@ export default function SpeakerRow({
           <button
             type="button"
             onClick={onRemove}
-            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-red-500"
+            className="rounded p-1 text-muted-foreground hover:bg-muted hover:text-destructive"
             aria-label="연사 삭제"
             title="연사 삭제"
           >
@@ -102,7 +102,7 @@ export default function SpeakerRow({
               className={`rounded-md border px-3 py-1 text-xs ${
                 speaker.type === t
                   ? t === "guest"
-                    ? "border-amber-300 bg-amber-50 text-amber-800"
+                    ? "border-warning/30 bg-warning/5 text-warning"
                     : "border-primary bg-primary/10 text-primary"
                   : "border-input bg-card text-muted-foreground hover:bg-muted"
               }`}
@@ -116,10 +116,10 @@ export default function SpeakerRow({
       {speaker.type === "member" && (
         <div className="relative">
           <label className="mb-1 block text-xs font-medium text-muted-foreground">
-            회원 검색 {speaker.userId && <span className="ml-1 text-[10px] text-emerald-700">✓ 매칭됨</span>}
+            회원 검색 {speaker.userId && <span className="ml-1 text-[10px] text-success">✓ 매칭됨</span>}
           </label>
           {speaker.userId ? (
-            <div className="flex items-center gap-2 rounded-md border border-emerald-200 bg-emerald-50/40 px-3 py-2 text-sm">
+            <div className="flex items-center gap-2 rounded-md border border-success/20 bg-success/5 px-3 py-2 text-sm">
               <span className="font-medium">{speaker.name}</span>
               {speaker.studentId && (
                 <span className="font-mono text-[11px] text-muted-foreground">{speaker.studentId}</span>
@@ -127,7 +127,7 @@ export default function SpeakerRow({
               <button
                 type="button"
                 onClick={clearMemberLink}
-                className="ml-auto rounded p-1 text-xs text-muted-foreground hover:text-red-500"
+                className="ml-auto rounded p-1 text-xs text-muted-foreground hover:text-destructive"
               >
                 매칭 해제
               </button>

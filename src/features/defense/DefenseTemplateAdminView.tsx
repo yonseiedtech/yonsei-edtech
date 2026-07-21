@@ -164,7 +164,7 @@ export default function DefenseTemplateAdminView() {
                         </div>
                         <p className="mt-0.5 whitespace-pre-wrap">{q.question}</p>
                         {q.expectedAnswer && (
-                          <div className="mt-2 rounded bg-emerald-50 p-2 text-xs text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
+                          <div className="mt-2 rounded bg-success/5 p-2 text-xs text-success">
                             <p className="mb-0.5 font-semibold">모범 답변</p>
                             <p className="whitespace-pre-wrap">{q.expectedAnswer}</p>
                           </div>

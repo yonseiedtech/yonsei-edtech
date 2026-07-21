@@ -83,7 +83,7 @@ export default function SeminarRegistrationForm({ seminarId, seminarTitle, field
   if (submitted) {
     return (
       <div className="rounded-2xl border bg-card p-8 text-center">
-        <CheckCircle size={48} className="mx-auto mb-4 text-green-500" />
+        <CheckCircle size={48} className="mx-auto mb-4 text-success" />
         <h3 className="text-lg font-bold">신청 완료</h3>
         <p className="mt-2 text-sm text-muted-foreground">
           &ldquo;{seminarTitle}&rdquo; 세미나 참석 신청이 완료되었습니다.

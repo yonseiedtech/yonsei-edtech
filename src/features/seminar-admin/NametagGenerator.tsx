@@ -654,7 +654,7 @@ export default function NametagGenerator() {
                   placeholder="학번"
                   className="w-28"
                 />
-                <button onClick={() => setNames(names.filter((_, j) => j !== i))} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500">
+                <button onClick={() => setNames(names.filter((_, j) => j !== i))} className="shrink-0 rounded p-1 text-muted-foreground hover:bg-destructive/5 hover:text-destructive">
                   <Trash2 size={14} />
                 </button>
               </div>

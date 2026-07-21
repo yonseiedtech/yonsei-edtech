@@ -59,22 +59,22 @@ export { SECTION_TYPE_LABELS };
 
 /** 섹션 유형별 배지 색상 (특집/인터뷰/리뷰/칼럼/소식) */
 export const SECTION_TYPE_STYLES: Record<NewsletterSection["type"], string> = {
-  feature: "bg-violet-100 text-violet-700 border-violet-200",
-  interview: "bg-sky-100 text-sky-700 border-sky-200",
-  review: "bg-emerald-100 text-emerald-700 border-emerald-200",
-  column: "bg-amber-100 text-amber-800 border-amber-200",
-  news: "bg-rose-100 text-rose-700 border-rose-200",
+  feature: "bg-cat-5/10 text-cat-5 border-cat-5/20",
+  interview: "bg-info/10 text-info border-info/20",
+  review: "bg-success/10 text-success border-success/20",
+  column: "bg-warning/10 text-warning border-warning/20",
+  news: "bg-destructive/10 text-destructive border-destructive/20",
 };
 
 /** 작성자 유형별 배지 색상 */
 export const AUTHOR_TYPE_STYLES: Record<string, string> = {
-  professor: "bg-indigo-100 text-indigo-700 border-indigo-200",
-  representative: "bg-teal-100 text-teal-700 border-teal-200",
-  assistant: "bg-cyan-100 text-cyan-700 border-cyan-200",
-  president: "bg-purple-100 text-purple-700 border-purple-200",
-  staff: "bg-blue-100 text-blue-700 border-blue-200",
-  student: "bg-green-100 text-green-700 border-green-200",
-  alumni: "bg-orange-100 text-orange-700 border-orange-200",
+  professor: "bg-cat-1/10 text-cat-1 border-cat-1/20",
+  representative: "bg-info/10 text-info border-info/20",
+  assistant: "bg-info/10 text-info border-info/20",
+  president: "bg-cat-5/10 text-cat-5 border-cat-5/20",
+  staff: "bg-cat-1/10 text-cat-1 border-cat-1/20",
+  student: "bg-success/10 text-success border-success/20",
+  alumni: "bg-warning/10 text-warning border-warning/20",
 };
 
 // ── Firestore CRUD helpers ──

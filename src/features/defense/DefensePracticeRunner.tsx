@@ -295,10 +295,10 @@ function bestMatch(target: string, pool: string[]): { score: number; index: numb
 
 /** 점수에 따른 형광펜 클래스 (light/dark 모두 대응) */
 function highlightClass(score: number): string {
-  if (score >= 70) return "bg-emerald-200/80 dark:bg-emerald-700/40 text-emerald-950 dark:text-emerald-50";
-  if (score >= 40) return "bg-amber-200/80 dark:bg-amber-700/40 text-amber-950 dark:text-amber-50";
-  if (score >= 15) return "bg-rose-200/70 dark:bg-rose-700/40 text-rose-950 dark:text-rose-50";
-  return "bg-zinc-200/70 dark:bg-zinc-700/40 text-zinc-700 dark:text-zinc-200";
+  if (score >= 70) return "bg-success/20 text-success";
+  if (score >= 40) return "bg-warning/20 text-warning";
+  if (score >= 15) return "bg-destructive/20 text-destructive";
+  return "bg-muted/70 text-muted-foreground";
 }
 
 /**
@@ -330,7 +330,7 @@ function renderWithScholarHighlight(text: string): React.ReactNode {
       return (
         <mark
           key={i}
-          className="rounded bg-yellow-200 px-0.5 font-semibold text-yellow-950 dark:bg-yellow-500/40 dark:text-yellow-50"
+          className="rounded bg-warning/20 px-0.5 font-semibold text-foreground"
         >
           {part}
         </mark>
@@ -375,19 +375,19 @@ function SentenceDiffView({ transcript, expected }: { transcript: string; expect
     <div className="space-y-3">
       <div className="flex flex-wrap items-center gap-2 text-[11px]">
         <span className="text-muted-foreground">형광펜:</span>
-        <span className="rounded px-1.5 py-0.5 bg-emerald-200/80 text-emerald-950 dark:bg-emerald-700/40 dark:text-emerald-50">일치 70+</span>
-        <span className="rounded px-1.5 py-0.5 bg-amber-200/80 text-amber-950 dark:bg-amber-700/40 dark:text-amber-50">부분 40~69</span>
-        <span className="rounded px-1.5 py-0.5 bg-rose-200/70 text-rose-950 dark:bg-rose-700/40 dark:text-rose-50">희미 15~39</span>
-        <span className="rounded px-1.5 py-0.5 bg-zinc-200/70 text-zinc-700 dark:bg-zinc-700/40 dark:text-zinc-200">미일치</span>
+        <span className="rounded px-1.5 py-0.5 bg-success/20 text-success">일치 70+</span>
+        <span className="rounded px-1.5 py-0.5 bg-warning/20 text-warning">부분 40~69</span>
+        <span className="rounded px-1.5 py-0.5 bg-destructive/20 text-destructive">희미 15~39</span>
+        <span className="rounded px-1.5 py-0.5 bg-muted/70 text-muted-foreground">미일치</span>
       </div>
 
       {/* 학자명 커버리지 카드 */}
       {expectedScholars.size > 0 && (
-        <div className="rounded-lg border bg-gradient-to-br from-indigo-50 to-purple-50 p-3 dark:from-indigo-950/40 dark:to-purple-950/40">
+        <div className="rounded-lg border bg-gradient-to-br from-cat-1/5 to-cat-5/5 p-3">
           <div className="flex flex-wrap items-center justify-between gap-2">
-            <p className="text-xs font-semibold text-indigo-900 dark:text-indigo-100">
+            <p className="text-xs font-semibold text-cat-1">
               📚 학자명 언급 {mentionedScholars.length} / {expectedScholars.size}명
-              <span className="ml-2 text-[10px] font-normal text-indigo-700/80 dark:text-indigo-200/80">
+              <span className="ml-2 text-[10px] font-normal text-cat-1/80">
                 (각 +5점, 최대 +20)
               </span>
             </p>
@@ -396,7 +396,7 @@ function SentenceDiffView({ transcript, expected }: { transcript: string; expect
             {mentionedScholars.map((s) => (
               <span
                 key={`m-${s}`}
-                className="rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-semibold text-white"
+                className="rounded-full bg-success px-2 py-0.5 text-[10px] font-semibold text-white"
               >
                 ✓ {s}
               </span>
@@ -404,7 +404,7 @@ function SentenceDiffView({ transcript, expected }: { transcript: string; expect
             {missingScholars.map((s) => (
               <span
                 key={`x-${s}`}
-                className="rounded-full border border-rose-300 bg-rose-50 px-2 py-0.5 text-[10px] font-semibold text-rose-700 dark:border-rose-700 dark:bg-rose-950/40 dark:text-rose-200"
+                className="rounded-full border border-destructive/30 bg-destructive/5 px-2 py-0.5 text-[10px] font-semibold text-destructive"
               >
                 ✗ {s}
               </span>
@@ -1333,7 +1333,7 @@ export default function DefensePracticeRunner({
   if (questions.length === 0) {
     return (
       <div className="flex min-h-[100dvh] flex-col items-center justify-center gap-4 px-4 text-center">
-        <AlertCircle size={32} className="text-amber-500" />
+        <AlertCircle size={32} className="text-warning" />
         <p className="text-sm text-muted-foreground">등록된 질문이 없습니다.</p>
         <Button onClick={handleClose}>목록으로</Button>
       </div>
@@ -1367,7 +1367,7 @@ export default function DefensePracticeRunner({
               <Badge variant="secondary">{DEFENSE_CATEGORY_LABELS[practiceSet.category]}</Badge>
               <Badge variant="outline">{questions.length}문항</Badge>
               {sttSupported === false && (
-                <Badge className="bg-amber-500 text-white">음성 인식 미지원</Badge>
+                <Badge className="bg-warning text-white">음성 인식 미지원</Badge>
               )}
             </div>
             <div className="rounded-lg border bg-muted/30 p-4 text-left text-sm text-muted-foreground">
@@ -1411,14 +1411,14 @@ export default function DefensePracticeRunner({
                         })();
                         const modeLabel = a.mode === "readalong" ? "따라 읽기" : "심사 답변";
                         const modeColor = a.mode === "readalong"
-                          ? "bg-indigo-500 text-white"
-                          : "bg-blue-600 text-white";
+                          ? "bg-cat-1 text-white"
+                          : "bg-cat-1 text-white";
                         const score = a.averageScore ?? 0;
                         const scoreColor = score >= 80
-                          ? "bg-emerald-600"
+                          ? "bg-success"
                           : score >= 60
-                          ? "bg-amber-500"
-                          : "bg-rose-500";
+                          ? "bg-warning"
+                          : "bg-destructive";
                         const totalSec = (() => {
                           if (a.mode === "readalong" && a.readalongResults?.length) {
                             return a.readalongResults.reduce((s, r) => s + (r.durationSec ?? 0), 0);
@@ -1494,10 +1494,10 @@ export default function DefensePracticeRunner({
                                       const q = practiceSet.questions.find((x) => x.id === r.questionId);
                                       const sc = r.score ?? 0;
                                       const scClr = sc >= 80
-                                        ? "bg-emerald-600"
+                                        ? "bg-success"
                                         : sc >= 60
-                                        ? "bg-amber-500"
-                                        : "bg-rose-500";
+                                        ? "bg-warning"
+                                        : "bg-destructive";
                                       return (
                                         <li key={`${r.questionId}-${ri}`} className="rounded bg-background p-2">
                                           <div className="flex flex-wrap items-center gap-1">
@@ -1574,18 +1574,18 @@ export default function DefensePracticeRunner({
                   const flow = extractFlowHeadings(current.expectedAnswer ?? "");
                   if (flow.length === 0) return null;
                   return (
-                    <div className="mt-3 rounded-md border border-indigo-200 bg-indigo-50 p-2.5 dark:border-indigo-900/50 dark:bg-indigo-950/30">
-                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-indigo-700 dark:text-indigo-300">
+                    <div className="mt-3 rounded-md border border-cat-1/20 bg-cat-1/5 p-2.5">
+                      <p className="mb-1.5 text-[10px] font-semibold uppercase tracking-wide text-cat-1">
                         답변 흐름
                       </p>
                       <div className="flex flex-wrap items-center gap-1">
                         {flow.map((h, i) => (
                           <span key={`${i}-${h}`} className="flex items-center gap-1">
-                            <span className="rounded-md border border-indigo-300 bg-card px-2 py-0.5 text-[11px] font-semibold text-indigo-900 dark:border-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-100">
+                            <span className="rounded-md border border-cat-1/30 bg-card px-2 py-0.5 text-[11px] font-semibold text-cat-1">
                               {h}
                             </span>
                             {i < flow.length - 1 && (
-                              <span className="text-indigo-400">→</span>
+                              <span className="text-cat-1/40">→</span>
                             )}
                           </span>
                         ))}

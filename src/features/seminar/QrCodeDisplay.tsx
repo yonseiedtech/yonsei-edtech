@@ -33,8 +33,8 @@ export default function QrCodeDisplay({ token, size = 200, checkedIn = false }: 
       {checkedIn && (
         <div className="absolute inset-0 flex items-center justify-center rounded-xl bg-card/80">
           <div className="flex flex-col items-center gap-1">
-            <CheckCircle size={40} className="text-green-600" />
-            <span className="text-sm font-bold text-green-600">출석 완료</span>
+            <CheckCircle size={40} className="text-success" />
+            <span className="text-sm font-bold text-success">출석 완료</span>
           </div>
         </div>
       )}

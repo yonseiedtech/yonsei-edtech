@@ -43,7 +43,7 @@ function StarRating({
             size={16}
             className={
               n <= value
-                ? "fill-amber-400 text-amber-400"
+                ? "fill-warning text-warning"
                 : "text-muted-foreground/30"
             }
           />

@@ -340,7 +340,7 @@ export default function GradLifePositionsList() {
                 {filtered.map((p) => {
                   const ongoing = !p.endYear || !p.endSemester;
                   return (
-                    <tr key={p.id} className={cn(ongoing && "bg-violet-50/30")}>
+                    <tr key={p.id} className={cn(ongoing && "bg-cat-5/5")}>
                       <td className="px-3 py-2">
                         <div className="font-medium">{p.userName ?? memberMap.get(p.userId) ?? "(이름 미확인)"}</div>
                         <div className="text-[11px] text-muted-foreground">{p.userId.slice(0, 8)}…</div>
@@ -353,7 +353,7 @@ export default function GradLifePositionsList() {
                       <td className="px-3 py-2 text-sm">{p.detail || <span className="text-muted-foreground">—</span>}</td>
                       <td className="px-3 py-2 text-xs">
                         {formatRange(p)}
-                        {ongoing && <Badge variant="secondary" className="ml-1.5 bg-violet-100 text-violet-800 text-[10px]">진행중</Badge>}
+                        {ongoing && <Badge variant="secondary" className="ml-1.5 bg-cat-5/10 text-cat-5 text-[10px]">진행중</Badge>}
                       </td>
                       <td className="px-3 py-2 text-[11.5px] text-muted-foreground">
                         {p.notes ? <span className="line-clamp-2 whitespace-pre-wrap">{p.notes}</span> : "—"}
@@ -363,7 +363,7 @@ export default function GradLifePositionsList() {
                           <Button size="sm" variant="ghost" className="h-7 px-2" onClick={() => openEdit(p)}>
                             <Pencil size={13} />
                           </Button>
-                          <Button size="sm" variant="ghost" className="h-7 px-2 text-rose-600 hover:bg-rose-50" onClick={() => remove(p)}>
+                          <Button size="sm" variant="ghost" className="h-7 px-2 text-destructive hover:bg-destructive/5" onClick={() => remove(p)}>
                             <Trash2 size={13} />
                           </Button>
                         </div>

@@ -49,25 +49,25 @@ function speakerDisplay(s: Seminar): string {
 /** 상태 배지 스타일: light + dark 모두 명시 */
 const STATUS_STYLES: Record<SeminarStatus, string> = {
   draft:
-    "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+    "bg-muted text-muted-foreground",
   upcoming:
     "bg-primary/10 text-primary dark:bg-primary/20 dark:text-primary",
   ongoing:
-    "bg-amber-100 text-amber-700 dark:bg-amber-950/60 dark:text-amber-300",
+    "bg-warning/10 text-warning",
   completed:
-    "bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400",
+    "bg-muted text-muted-foreground",
   cancelled:
-    "bg-rose-50 text-rose-600 dark:bg-rose-950/40 dark:text-rose-400",
+    "bg-destructive/5 text-destructive",
 };
 
 /** 학기 배지 — light + dark */
 const SEMESTER_BADGE_CLASS =
-  "bg-blue-50 text-blue-700 dark:bg-blue-950/50 dark:text-blue-300";
+  "bg-cat-1/5 text-cat-1";
 
 /** 카드 좌측 액센트 — 진행 중인 세미나만 */
 const LEFT_ACCENT: Partial<Record<SeminarStatus, string>> = {
   upcoming: "border-l-2 border-l-primary",
-  ongoing: "border-l-2 border-l-amber-400",
+  ongoing: "border-l-2 border-l-warning",
 };
 
 export default function SeminarList({ seminars, viewMode = "list" }: Props) {

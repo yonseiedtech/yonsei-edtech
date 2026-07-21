@@ -21,14 +21,14 @@ interface RoleStyle {
 
 const ROLE_STYLES: Record<OrgRole, RoleStyle> = {
   advisor: {
-    card: "border-violet-300/60 bg-violet-50/60",
-    avatar: "bg-violet-100 text-violet-700",
-    badge: "bg-violet-100 text-violet-700",
+    card: "border-cat-5/30 bg-cat-5/5",
+    avatar: "bg-cat-5/10 text-cat-5",
+    badge: "bg-cat-5/10 text-cat-5",
   },
   professor: {
-    card: "border-amber-300/60 bg-amber-50/40",
-    avatar: "bg-amber-100 text-amber-700",
-    badge: "bg-amber-100 text-amber-700",
+    card: "border-warning/30 bg-warning/5",
+    avatar: "bg-warning/10 text-warning",
+    badge: "bg-warning/10 text-warning",
   },
   president: {
     card: "border-primary/40 bg-primary/5",
@@ -36,14 +36,14 @@ const ROLE_STYLES: Record<OrgRole, RoleStyle> = {
     badge: "bg-primary/10 text-primary",
   },
   vice_president: {
-    card: "border-amber-400/60 bg-amber-50/50",
-    avatar: "bg-amber-100 text-amber-700",
-    badge: "bg-amber-100 text-amber-700",
+    card: "border-warning/40 bg-warning/5",
+    avatar: "bg-warning/10 text-warning",
+    badge: "bg-warning/10 text-warning",
   },
   direct_aide: {
-    card: "border-teal-300/60 bg-teal-50/50",
-    avatar: "bg-teal-100 text-teal-700",
-    badge: "bg-teal-100 text-teal-700",
+    card: "border-info/30 bg-info/5",
+    avatar: "bg-info/10 text-info",
+    badge: "bg-info/10 text-info",
   },
   team_member: {
     card: "",
@@ -72,9 +72,9 @@ function OrgNode({ node, isRoot, isIndependent }: { node: OrgTreeNode; isRoot?: 
   const style = getRoleStyle(node.role, !!node.userName);
   // 사이드카 시각 우선 (점선 테두리). 그다음 직속보조(advisor 직속, 점선 teal). 그다음 role 색상. role 없고 root일 때만 primary.
   const cardClass = isIndependent
-    ? "border-dashed border-amber-400/60 bg-amber-50/40"
+    ? "border-dashed border-warning/40 bg-warning/5"
     : node.isDirectAide
-      ? "border-dashed border-teal-400/60 bg-teal-50/40"
+      ? "border-dashed border-info/40 bg-info/5"
       : style.card || (isRoot ? "border-primary/30 bg-primary/5" : "");
 
   const cardInner = (
@@ -119,7 +119,7 @@ function OrgNode({ node, isRoot, isIndependent }: { node: OrgTreeNode; isRoot?: 
           <div className="absolute left-full top-1/2 ml-8 flex -translate-y-1/2 flex-col gap-3">
             {independents.map((ind) => (
               <div key={ind.id} className="flex items-center gap-2">
-                <div className="h-px w-6 border-t border-dashed border-amber-400/70" />
+                <div className="h-px w-6 border-t border-dashed border-warning/40" />
                 <OrgNode node={ind} isIndependent />
               </div>
             ))}
@@ -213,7 +213,7 @@ function MobileOrgList({ nodes, depth = 0 }: { nodes: OrgTreeNode[]; depth?: num
                 </span>
               )}
               {node.isIndependent && (
-                <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-700">독립</span>
+                <span className="rounded bg-warning/10 px-1.5 py-0.5 text-[10px] font-medium text-warning">독립</span>
               )}
               <span className="text-xs text-muted-foreground">{node.userName ?? "공석"}</span>
               {node.department && (

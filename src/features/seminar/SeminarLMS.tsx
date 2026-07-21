@@ -35,9 +35,9 @@ import { toast } from "sonner";
 import EmptyState from "@/components/ui/empty-state";
 
 const STATUS_STYLES: Record<SeminarStatus, string> = {
-  draft: "bg-gray-100 text-gray-500",
+  draft: "bg-muted text-muted-foreground",
   upcoming: "bg-primary/10 text-primary",
-  ongoing: "bg-amber-100 text-amber-700",
+  ongoing: "bg-warning/10 text-warning",
   completed: "bg-muted text-muted-foreground",
   cancelled: "bg-destructive/10 text-destructive",
 };
@@ -191,11 +191,11 @@ export default function SeminarLMS({ seminarId }: Props) {
 
         {/* 미참석자 안내 */}
         {!hasAccess && (
-          <div className="mb-4 flex items-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm text-amber-800">
+          <div className="mb-4 flex items-center gap-3 rounded-2xl border border-warning/20 bg-warning/5 p-4 text-sm text-warning">
             <AlertCircle size={18} className="shrink-0" />
             <div>
               <p className="font-medium">참석 신청 후 이용 가능합니다</p>
-              <p className="mt-0.5 text-xs text-amber-600">
+              <p className="mt-0.5 text-xs text-warning">
                 세미나에 참석 신청하시면 자료실, 후기 작성 등 모든 기능을 이용하실 수 있습니다.
               </p>
             </div>
@@ -204,9 +204,9 @@ export default function SeminarLMS({ seminarId }: Props) {
 
         {/* 연사 후기 링크 (staff 전용) */}
         {isStaff && (
-          <div className="mb-4 rounded-2xl border border-blue-200 bg-blue-50/60 p-4">
+          <div className="mb-4 rounded-2xl border border-cat-1/20 bg-cat-1/5 p-4">
             <h3 className="mb-2 flex items-center gap-2 text-sm font-medium">
-              <Mic size={14} className="text-blue-600" />
+              <Mic size={14} className="text-cat-1" />
               연사 후기 링크
             </h3>
             {speakerToken ? (
@@ -241,9 +241,9 @@ export default function SeminarLMS({ seminarId }: Props) {
 
         {/* 참석자 후기 링크 (staff 전용) */}
         {isStaff && (
-          <div className="mb-4 rounded-2xl border border-emerald-200 bg-emerald-50/60 p-4">
+          <div className="mb-4 rounded-2xl border border-success/20 bg-success/5 p-4">
             <h3 className="mb-2 flex items-center gap-2 text-sm font-medium">
-              <MessageSquare size={14} className="text-emerald-600" />
+              <MessageSquare size={14} className="text-success" />
               참석자 후기 링크
             </h3>
             <div className="space-y-2">

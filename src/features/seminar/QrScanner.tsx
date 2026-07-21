@@ -149,13 +149,13 @@ export default function QrScanner({ onScan, enabled = true }: Props) {
     };
     const msg = messages[error];
     return (
-      <div className="flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border border-amber-200 bg-amber-50 p-6 text-center">
-        <AlertTriangle size={36} className="text-amber-600" />
-        <p className="text-sm font-medium text-amber-900">{msg.title}</p>
-        <p className="text-xs text-amber-800">{msg.help}</p>
+      <div className="flex aspect-square flex-col items-center justify-center gap-3 rounded-2xl border border-warning/20 bg-warning/5 p-6 text-center">
+        <AlertTriangle size={36} className="text-warning" />
+        <p className="text-sm font-medium text-warning">{msg.title}</p>
+        <p className="text-xs text-warning">{msg.help}</p>
         <button
           onClick={() => setRetryKey((k) => k + 1)}
-          className="mt-1 inline-flex items-center gap-1.5 rounded-md bg-amber-600 px-3 py-1.5 text-xs font-medium text-white hover:bg-amber-700"
+          className="mt-1 inline-flex items-center gap-1.5 rounded-md bg-warning px-3 py-1.5 text-xs font-medium text-white hover:bg-warning"
         >
           <RefreshCw size={12} />
           재시도

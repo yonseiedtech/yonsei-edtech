@@ -71,8 +71,8 @@ export default function MemberMiniDialog({ node, onClose, edges, currentUserId }
 
             {/* Sprint 67-AH: 본인과의 관계 표시 (본인 자신이 아닐 때) */}
             {!isMe && currentUserId && (
-              <div className="mt-2 rounded-md border border-blue-200 bg-blue-50/60 p-2.5 dark:border-blue-900 dark:bg-blue-950/30">
-                <p className="flex items-center gap-1 text-[11px] font-semibold text-blue-900 dark:text-blue-100">
+              <div className="mt-2 rounded-md border border-cat-1/20 bg-cat-1/5 p-2.5">
+                <p className="flex items-center gap-1 text-[11px] font-semibold text-cat-1">
                   <Link2 size={11} /> 나와의 관계
                 </p>
                 {relationEdge ? (
@@ -81,13 +81,13 @@ export default function MemberMiniDialog({ node, onClose, edges, currentUserId }
                       <Badge
                         key={k}
                         variant="secondary"
-                        className="bg-blue-100 text-[10px] font-medium text-blue-800 dark:bg-blue-950/50 dark:text-blue-200"
+                        className="bg-cat-1/10 text-[10px] font-medium text-cat-1"
                       >
                         {NETWORK_RELATION_LABELS[k]}
                       </Badge>
                     ))}
                     {relationEdge.weight != null && (
-                      <span className="ml-1 text-[10px] text-blue-700/80 dark:text-blue-300/80">
+                      <span className="ml-1 text-[10px] text-cat-1/80">
                         연결 강도 {relationEdge.weight}
                       </span>
                     )}

@@ -18,13 +18,13 @@ export default function CheckinResult({ result, onDismiss }: Props) {
 
   if (result.success) {
     return (
-      <div className="animate-in fade-in slide-in-from-bottom-2 rounded-2xl border-2 border-green-200 bg-green-50 p-4">
+      <div className="animate-in fade-in slide-in-from-bottom-2 rounded-2xl border-2 border-success/20 bg-success/5 p-4">
         <div className="flex items-center gap-3">
-          <CheckCircle size={28} className="shrink-0 text-green-600" />
+          <CheckCircle size={28} className="shrink-0 text-success" />
           <div>
-            <p className="font-bold text-green-800">출석 완료</p>
+            <p className="font-bold text-success">출석 완료</p>
             <div className="mt-0.5 flex items-center gap-2">
-              <span className="text-sm text-green-700">{result.attendee.userName}</span>
+              <span className="text-sm text-success">{result.attendee.userName}</span>
               <Badge variant="secondary" className="text-[10px]">
                 {result.attendee.userGeneration}기
               </Badge>
@@ -43,12 +43,12 @@ export default function CheckinResult({ result, onDismiss }: Props) {
         })
       : "";
     return (
-      <div className="animate-in fade-in slide-in-from-bottom-2 rounded-2xl border-2 border-amber-200 bg-amber-50 p-4">
+      <div className="animate-in fade-in slide-in-from-bottom-2 rounded-2xl border-2 border-warning/20 bg-warning/5 p-4">
         <div className="flex items-center gap-3">
-          <AlertTriangle size={28} className="shrink-0 text-amber-600" />
+          <AlertTriangle size={28} className="shrink-0 text-warning" />
           <div>
-            <p className="font-bold text-amber-800">이미 체크인됨</p>
-            <p className="mt-0.5 text-sm text-amber-700">
+            <p className="font-bold text-warning">이미 체크인됨</p>
+            <p className="mt-0.5 text-sm text-warning">
               {result.attendee.userName} — {time}에 출석 완료
             </p>
           </div>
@@ -58,12 +58,12 @@ export default function CheckinResult({ result, onDismiss }: Props) {
   }
 
   return (
-    <div className="animate-in fade-in slide-in-from-bottom-2 rounded-2xl border-2 border-red-200 bg-red-50 p-4">
+    <div className="animate-in fade-in slide-in-from-bottom-2 rounded-2xl border-2 border-destructive/20 bg-destructive/5 p-4">
       <div className="flex items-center gap-3">
-        <XCircle size={28} className="shrink-0 text-red-600" />
+        <XCircle size={28} className="shrink-0 text-destructive" />
         <div>
-          <p className="font-bold text-red-800">인식 실패</p>
-          <p className="mt-0.5 text-sm text-red-700">{result.message}</p>
+          <p className="font-bold text-destructive">인식 실패</p>
+          <p className="mt-0.5 text-sm text-destructive">{result.message}</p>
         </div>
       </div>
     </div>

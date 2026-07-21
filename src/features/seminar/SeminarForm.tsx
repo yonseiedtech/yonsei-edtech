@@ -237,12 +237,12 @@ export default function SeminarForm() {
           <div className="flex flex-wrap items-center gap-2">
             <Badge className="bg-primary/10 text-xs text-primary" variant="secondary">예정</Badge>
             {selectedSemester && (
-              <Badge variant="secondary" className="bg-blue-50 text-xs text-blue-700">
+              <Badge variant="secondary" className="bg-cat-1/5 text-xs text-cat-1">
                 {formatSemester(selectedSemester.year, selectedSemester.semester)}
               </Badge>
             )}
             {isOnline && (
-              <Badge variant="secondary" className="bg-blue-50 text-xs text-blue-700">ONLINE</Badge>
+              <Badge variant="secondary" className="bg-cat-1/5 text-xs text-cat-1">ONLINE</Badge>
             )}
           </div>
 
@@ -254,12 +254,12 @@ export default function SeminarForm() {
               <span>{w.date || "____-__-__"} {w.time || "__:__"}</span>
             </div>
             <div className="flex items-center gap-2">
-              {isOnline ? <Video size={16} className="text-blue-500" /> : <MapPin size={16} />}
+              {isOnline ? <Video size={16} className="text-cat-1" /> : <MapPin size={16} />}
               <span>{w.location || (isOnline ? "온라인 (ZOOM)" : "(장소)")}</span>
             </div>
             {isOnline && w.onlineUrl && (
               <div className="flex items-center gap-2 pl-6">
-                <a href={w.onlineUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-blue-600 underline">
+                <a href={w.onlineUrl} target="_blank" rel="noopener noreferrer" className="text-sm text-cat-1 underline">
                   ZOOM 접속 링크
                 </a>
               </div>
@@ -293,7 +293,7 @@ export default function SeminarForm() {
                         <div className="flex flex-wrap items-center gap-2">
                           <span className="text-sm font-medium">{s.name}</span>
                           {s.type === "guest" ? (
-                            <Badge variant="secondary" className="bg-amber-50 text-xs text-amber-700">GUEST</Badge>
+                            <Badge variant="secondary" className="bg-warning/5 text-xs text-warning">GUEST</Badge>
                           ) : (
                             <Badge variant="secondary" className="text-xs">MEMBER</Badge>
                           )}
@@ -350,7 +350,7 @@ export default function SeminarForm() {
             <div>
               <label className="mb-1.5 block text-sm font-medium">선택된 학기</label>
               <div className="flex h-10 items-center rounded-md border border-input bg-muted/30 px-3 text-sm">
-                <Badge variant="secondary" className="bg-blue-50 text-xs text-blue-700">
+                <Badge variant="secondary" className="bg-cat-1/5 text-xs text-cat-1">
                   {selectedSemester ? formatSemester(selectedSemester.year, selectedSemester.semester) : "—"}
                 </Badge>
               </div>
@@ -383,9 +383,9 @@ export default function SeminarForm() {
           </div>
 
           {conflictingSeminars.length > 0 && (
-            <div className="flex items-start gap-2 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-amber-600" />
-              <div className="text-sm text-amber-800">
+            <div className="flex items-start gap-2 rounded-lg border border-warning/20 bg-warning/5 px-4 py-3">
+              <AlertTriangle size={16} className="mt-0.5 shrink-0 text-warning" />
+              <div className="text-sm text-warning">
                 <p className="font-medium">같은 날짜에 세미나가 {conflictingSeminars.length}개 있습니다:</p>
                 <ul className="mt-1 space-y-0.5">
                   {conflictingSeminars.map((s) => (
@@ -404,9 +404,9 @@ export default function SeminarForm() {
                   type="checkbox"
                   checked={isOnline}
                   onChange={(e) => setIsOnline(e.target.checked)}
-                  className="h-4 w-4 rounded border-gray-300"
+                  className="h-4 w-4 rounded border-muted"
                 />
-                <Video size={14} className="text-blue-500" />
+                <Video size={14} className="text-cat-1" />
                 온라인 (ZOOM)
               </label>
             </div>
@@ -470,7 +470,7 @@ export default function SeminarForm() {
                 type="checkbox"
                 checked={autoIssueCertificates}
                 onChange={(e) => setAutoIssueCertificates(e.target.checked)}
-                className="mt-0.5 h-4 w-4 rounded border-gray-300"
+                className="mt-0.5 h-4 w-4 rounded border-muted/30"
               />
               <div>
                 <p className="font-medium">세미나 종료 시 수료증 자동 발급</p>

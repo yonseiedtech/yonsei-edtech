@@ -121,7 +121,7 @@ export default function MemberCard({ member }: Props) {
                 : ""
             }`}
             aria-label={`${member.name} 선배에게 공개 질문 남기기`}
-            className="inline-flex items-center gap-1 rounded-full border border-emerald-200 bg-emerald-50 px-2 py-0.5 text-[11px] font-medium text-emerald-700 transition-colors hover:bg-emerald-100 dark:border-emerald-900 dark:bg-emerald-950/40 dark:text-emerald-300 dark:hover:bg-emerald-900/60"
+            className="inline-flex items-center gap-1 rounded-full border border-success/20 bg-success/5 px-2 py-0.5 text-[11px] font-medium text-success transition-colors hover:bg-success/10"
           >
             <HeartHandshake size={11} aria-hidden />
             멘토 오픈 · 공개 질문

@@ -40,9 +40,9 @@ export default function CheckinDashboard({ seminarId }: Props) {
     <div>
       {/* 통계 */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-3 sm:gap-3">
-        <MiniStat icon={Users} label="전체" value={stats.total} color="text-blue-600" />
-        <MiniStat icon={UserCheck} label="출석" value={stats.checkedIn} color="text-green-600" />
-        <MiniStat icon={UserX} label="미출석" value={stats.remaining} color="text-amber-600" />
+        <MiniStat icon={Users} label="전체" value={stats.total} color="text-cat-1" />
+        <MiniStat icon={UserCheck} label="출석" value={stats.checkedIn} color="text-success" />
+        <MiniStat icon={UserX} label="미출석" value={stats.remaining} color="text-warning" />
       </div>
 
       {/* 프로그레스 바 */}
@@ -53,7 +53,7 @@ export default function CheckinDashboard({ seminarId }: Props) {
         </div>
         <div className="mt-1 h-2 overflow-hidden rounded-full bg-muted">
           <div
-            className="h-full rounded-full bg-green-500 transition-all"
+            className="h-full rounded-full bg-success transition-all"
             style={{ width: `${percent}%` }}
           />
         </div>
@@ -77,7 +77,7 @@ export default function CheckinDashboard({ seminarId }: Props) {
                 </div>
                 {att.checkedIn ? (
                   <div className="flex items-center gap-1.5">
-                    <Badge className="bg-green-100 text-[10px] text-green-700">출석</Badge>
+                    <Badge className="bg-success/10 text-[10px] text-success">출석</Badge>
                     {att.checkedInAt && (
                       <span className="text-[10px] text-muted-foreground">
                         {new Date(att.checkedInAt).toLocaleTimeString("ko-KR", {
@@ -88,7 +88,7 @@ export default function CheckinDashboard({ seminarId }: Props) {
                     )}
                   </div>
                 ) : (
-                  <Badge variant="outline" className="text-[10px] text-amber-600">
+                  <Badge variant="outline" className="text-[10px] text-warning">
                     미출석
                   </Badge>
                 )}

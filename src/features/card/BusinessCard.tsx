@@ -53,7 +53,7 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
       // 다크 모드에서도 이 카드는 흰 배경 + 검은 텍스트로 일관 표시되도록 시맨틱 색상 사용 안 함.
       <div
         ref={ref}
-        className="relative mx-auto w-[320px] overflow-hidden rounded-3xl bg-gradient-to-b from-white to-slate-50 shadow-xl ring-1 ring-slate-200"
+        className="relative mx-auto w-[320px] overflow-hidden rounded-3xl bg-gradient-to-b from-white to-muted/30 shadow-xl ring-1 ring-border"
         style={{ aspectRatio: "9 / 16" }}
       >
         {/* Top accent */}
@@ -93,13 +93,13 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
 
           {/* 이름 + 소속 + 직함 (Sprint 67-G: 순서 변경 — 이름→소속→직함) */}
           <div className="mt-3 text-center">
-            <h2 className="text-xl font-bold text-slate-900">{user.name}</h2>
-            {affiliationLine && <p className="mt-0.5 text-sm text-slate-600">{affiliationLine}</p>}
-            {user.position && <p className="mt-0.5 text-xs text-slate-500">{user.position}</p>}
+            <h2 className="text-xl font-bold text-foreground">{user.name}</h2>
+            {affiliationLine && <p className="mt-0.5 text-sm text-foreground/70">{affiliationLine}</p>}
+            {user.position && <p className="mt-0.5 text-xs text-muted-foreground">{user.position}</p>}
           </div>
 
           {/* 연락처 */}
-          <div className="mt-4 space-y-1 text-center text-xs text-slate-600">
+          <div className="mt-4 space-y-1 text-center text-xs text-foreground/70">
             {user.contactEmail || user.email ? (
               <p className="truncate">{user.contactEmail ?? user.email}</p>
             ) : null}
@@ -124,18 +124,18 @@ const BusinessCard = forwardRef<HTMLDivElement, BusinessCardProps>(
 
           {/* 관심 연구 주제 (첫 번째 1개, 축약) */}
           {user.researchTopics && user.researchTopics.length > 0 && (
-            <p className="mt-2 line-clamp-2 text-center text-[10px] leading-relaxed text-slate-500 px-1">
+            <p className="mt-2 line-clamp-2 text-center text-[10px] leading-relaxed text-muted-foreground px-1">
               {user.researchTopics[0]}
             </p>
           )}
 
           {/* QR */}
           <div className="mt-auto flex flex-col items-center gap-1.5 pt-4">
-            <div className="rounded-xl bg-card p-2 shadow-sm ring-1 ring-slate-200">
+            <div className="rounded-xl bg-card p-2 shadow-sm ring-1 ring-border">
               <QRCodeSVG value={qrValue} size={96} level="M" />
             </div>
             {!hideExchangeHint && (
-              <p className="text-[10px] text-slate-400">QR 스캔 · 명함 교환</p>
+              <p className="text-[10px] text-muted-foreground/60">QR 스캔 · 명함 교환</p>
             )}
           </div>
         </div>

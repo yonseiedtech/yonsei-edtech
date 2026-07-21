@@ -114,7 +114,7 @@ export default function ThesisAnalysisCard({ thesis, canEdit, onSaved }: Props) 
         <h2 className="text-sm font-semibold">
           연구 분석 프로필{" "}
           {reviewed ? (
-            <span className="rounded bg-emerald-100 px-1.5 py-px text-[10px] font-medium text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <span className="rounded bg-success/10 px-1.5 py-px text-[10px] font-medium text-success">
               운영진 검수됨
             </span>
           ) : (

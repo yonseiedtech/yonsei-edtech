@@ -97,9 +97,9 @@ function PipelineBar({ registrations, attendees, seminar }: {
   const isCompleted = seminar.status === "completed";
 
   const steps = [
-    { label: "신청", count: regCount, active: regCount > 0, color: "bg-blue-500" },
-    { label: "참석자 전환", count: converted || attCount, active: attCount > 0, color: "bg-green-500" },
-    { label: "체크인", count: checkedIn, active: checkedIn > 0, color: "bg-emerald-500" },
+    { label: "신청", count: regCount, active: regCount > 0, color: "bg-cat-1" },
+    { label: "참석자 전환", count: converted || attCount, active: attCount > 0, color: "bg-success" },
+    { label: "체크인", count: checkedIn, active: checkedIn > 0, color: "bg-success" },
     { label: "완료", count: isCompleted ? checkedIn : 0, active: isCompleted, color: "bg-primary" },
   ];
 
@@ -118,7 +118,7 @@ function PipelineBar({ registrations, attendees, seminar }: {
               <span className={cn("text-[10px] font-medium", step.active ? "text-foreground" : "text-muted-foreground")}>{step.label}</span>
             </div>
             {i < steps.length - 1 && (
-              <div className={cn("mx-1 h-0.5 w-full min-w-4", step.active ? "bg-green-300" : "bg-muted/50")} />
+              <div className={cn("mx-1 h-0.5 w-full min-w-4", step.active ? "bg-success/30" : "bg-muted/50")} />
             )}
           </div>
         ))}
@@ -217,7 +217,7 @@ function RegistrationAnalysis({
       {/* 통계 카드 */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
         <div className="rounded-2xl border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-blue-600">{total}</p>
+          <p className="text-2xl font-bold text-cat-1">{total}</p>
           <p className="text-xs text-muted-foreground">총 신청</p>
         </div>
         <div className="rounded-2xl border bg-card p-4 text-center">
@@ -225,15 +225,15 @@ function RegistrationAnalysis({
           <p className="text-xs text-muted-foreground">회원</p>
         </div>
         <div className="rounded-2xl border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-green-600">{converted}</p>
+          <p className="text-2xl font-bold text-success">{converted}</p>
           <p className="text-xs text-muted-foreground">참석자 전환</p>
         </div>
         <div className="rounded-2xl border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-emerald-600">{checkedIn}</p>
+          <p className="text-2xl font-bold text-success">{checkedIn}</p>
           <p className="text-xs text-muted-foreground">실제 출석</p>
         </div>
         <div className="rounded-2xl border bg-card p-4 text-center">
-          <p className="text-2xl font-bold text-red-500">{cancelled}</p>
+          <p className="text-2xl font-bold text-destructive">{cancelled}</p>
           <p className="text-xs text-muted-foreground">취소</p>
         </div>
       </div>
@@ -246,7 +246,7 @@ function RegistrationAnalysis({
             <span className="font-medium">{convRate}%</span>
           </div>
           <div className="h-3 w-full rounded-full bg-muted/30">
-            <div className="h-full rounded-full bg-green-500 transition-all" style={{ width: `${convRate}%` }} />
+            <div className="h-full rounded-full bg-success transition-all" style={{ width: `${convRate}%` }} />
           </div>
         </div>
         <div className="rounded-2xl border bg-card p-4">
@@ -255,7 +255,7 @@ function RegistrationAnalysis({
             <span className="font-medium">{checkRate}%</span>
           </div>
           <div className="h-3 w-full rounded-full bg-muted/30">
-            <div className="h-full rounded-full bg-emerald-500 transition-all" style={{ width: `${checkRate}%` }} />
+            <div className="h-full rounded-full bg-success transition-all" style={{ width: `${checkRate}%` }} />
           </div>
         </div>
       </div>
@@ -269,7 +269,7 @@ function RegistrationAnalysis({
               <div key={aff} className="flex items-center gap-2 text-xs">
                 <span className="w-28 truncate text-right text-muted-foreground" title={aff}>{aff}</span>
                 <div className="h-4 flex-1 rounded bg-muted/30">
-                  <div className="h-full rounded bg-blue-500/70 transition-all" style={{ width: `${(count / affMax) * 100}%` }} />
+                  <div className="h-full rounded bg-cat-1/70 transition-all" style={{ width: `${(count / affMax) * 100}%` }} />
                 </div>
                 <span className="w-6 text-right text-muted-foreground">{count}</span>
               </div>
@@ -1189,11 +1189,11 @@ export default function RegistrationsTab() {
                           <div className="flex flex-wrap gap-1">
                             {r.userId && <Badge variant="secondary" className="text-[10px]">회원</Badge>}
                             {r.status === "cancelled" ? (
-                              <Badge className="bg-red-50 text-red-600 text-[10px]">취소</Badge>
+                              <Badge className="bg-destructive/5 text-destructive text-[10px]">취소</Badge>
                             ) : r.convertedAt ? (
-                              <Badge className="bg-green-50 text-green-700 text-[10px]">참석 등록</Badge>
+                              <Badge className="bg-success/5 text-success text-[10px]">참석 등록</Badge>
                             ) : r.status === "confirmed" ? (
-                              <Badge className="bg-blue-50 text-blue-700 text-[10px]">확정</Badge>
+                              <Badge className="bg-cat-1/5 text-cat-1 text-[10px]">확정</Badge>
                             ) : (
                               <Badge variant="outline" className="text-[10px] text-muted-foreground">대기</Badge>
                             )}
@@ -1293,9 +1293,9 @@ export default function RegistrationsTab() {
               return (
                 <>
                   {dupCount > 0 && (
-                    <div className="rounded-lg border border-amber-200 bg-amber-50 px-3 py-2 text-xs text-amber-800">
+                    <div className="rounded-lg border border-warning/20 bg-warning/5 px-3 py-2 text-xs text-warning">
                       <strong>{dupCount}명</strong>이 기존 신청 목록과 중복됩니다 (이메일/학번 기준). 중복 행은 자동으로 건너뜁니다.
-                      {newCount > 0 && <span className="ml-1 text-green-700">신규 {newCount}명만 등록됩니다.</span>}
+                      {newCount > 0 && <span className="ml-1 text-success">신규 {newCount}명만 등록됩니다.</span>}
                     </div>
                   )}
                   <div className="overflow-auto rounded-lg border max-h-60">
@@ -1313,13 +1313,13 @@ export default function RegistrationsTab() {
                         {previewRows.slice(0, 20).map((row, i) => {
                           const isDup = dupIndices.has(i);
                           return (
-                            <tr key={i} className={isDup ? "bg-amber-50/50 opacity-60" : ""}>
+                            <tr key={i} className={isDup ? "bg-warning/5 opacity-60" : ""}>
                               <td className="px-2 py-1.5 text-muted-foreground">{i + 1}</td>
                               {previewHeaders.filter((h) => fieldMapping[h]).map((h) => (
                                 <td key={h} className="px-2 py-1.5">{row[h] || "-"}</td>
                               ))}
                               <td className="px-2 py-1.5">
-                                {isDup ? <Badge className="bg-amber-100 text-amber-700 text-[9px]">중복</Badge> : <Badge className="bg-green-50 text-green-700 text-[9px]">신규</Badge>}
+                                {isDup ? <Badge className="bg-warning/10 text-warning text-[9px]">중복</Badge> : <Badge className="bg-success/5 text-success text-[9px]">신규</Badge>}
                               </td>
                             </tr>
                           );

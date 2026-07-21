@@ -129,25 +129,25 @@ export default function AcademicDashboard() {
         description="세미나·스터디·프로젝트·대외 학술대회 운영 현황을 한눈에 확인합니다."
       />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard icon={<BookOpen size={20} />} title="세미나" color="border-l-blue-500" href="/console/academic/seminars" stats={[
+        <StatCard icon={<BookOpen size={20} />} title="세미나" color="border-l-cat-1" href="/console/academic/seminars" stats={[
           { label: "완료", value: seminarStats.completed },
           { label: "예정", value: seminarStats.upcoming },
           { label: "진행중", value: seminarStats.ongoing },
           { label: "총 참석자", value: seminarStats.totalAttendees },
         ]} />
-        <StatCard icon={<Users size={20} />} title="스터디" color="border-l-green-500" href="/console/academic/studies" stats={[
+        <StatCard icon={<Users size={20} />} title="스터디" color="border-l-success" href="/console/academic/studies" stats={[
           { label: "진행/예정", value: studyStats.ongoing },
           { label: "완료", value: studyStats.completed },
           { label: "모집중", value: studyStats.recruiting },
           { label: "참여자", value: studyStats.totalParticipants },
         ]} />
-        <StatCard icon={<FolderKanban size={20} />} title="프로젝트" color="border-l-blue-500" href="/console/academic/projects" stats={[
+        <StatCard icon={<FolderKanban size={20} />} title="프로젝트" color="border-l-cat-1" href="/console/academic/projects" stats={[
           { label: "진행/예정", value: projectStats.ongoing },
           { label: "완료", value: projectStats.completed },
           { label: "모집중", value: projectStats.recruiting },
           { label: "참여자", value: projectStats.totalParticipants },
         ]} />
-        <StatCard icon={<Globe size={20} />} title="대외 학술대회" color="border-l-amber-500" href="/console/academic/external" stats={[
+        <StatCard icon={<Globe size={20} />} title="대외 학술대회" color="border-l-warning" href="/console/academic/external" stats={[
           { label: "진행/예정", value: externalStats.ongoing },
           { label: "완료", value: externalStats.completed },
           { label: "모집중", value: externalStats.recruiting },

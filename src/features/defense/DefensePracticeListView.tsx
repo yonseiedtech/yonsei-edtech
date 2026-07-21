@@ -175,10 +175,10 @@ export default function DefensePracticeListView({
                           className={cn(
                             "text-white",
                             last.averageScore >= 80
-                              ? "bg-emerald-600"
+                              ? "bg-success"
                               : last.averageScore >= 60
-                              ? "bg-amber-500"
-                              : "bg-rose-500",
+                              ? "bg-warning"
+                              : "bg-destructive",
                           )}
                         >
                           최근 {Math.round(last.averageScore)}점
@@ -211,7 +211,7 @@ export default function DefensePracticeListView({
                         }
                       }}
                     >
-                      <Trash2 size={13} className="text-rose-600" />
+                      <Trash2 size={13} className="text-destructive" />
                     </Button>
                   </div>
                 </div>
@@ -251,10 +251,10 @@ export default function DefensePracticeListView({
                                       className={cn(
                                         "text-white",
                                         r.score >= 80
-                                          ? "bg-emerald-600"
+                                          ? "bg-success"
                                           : r.score >= 60
-                                          ? "bg-amber-500"
-                                          : "bg-rose-500",
+                                          ? "bg-warning"
+                                          : "bg-destructive",
                                       )}
                                     >
                                       {Math.round(r.score)}점
@@ -513,7 +513,7 @@ function PracticeSetEditor({
                       variant="outline"
                       onClick={() => removeQuestion(i)}
                     >
-                      <Trash2 size={13} className="text-rose-600" />
+                      <Trash2 size={13} className="text-destructive" />
                     </Button>
                   </div>
                 </div>
@@ -786,10 +786,10 @@ function OnboardingEmptyState({
   return (
     <div className="space-y-6">
       {/* 1단계: 안내 */}
-      <div className="rounded-2xl border bg-gradient-to-br from-indigo-50 to-violet-50 p-6 dark:from-indigo-950/40 dark:to-violet-950/40">
+      <div className="rounded-2xl border bg-gradient-to-br from-cat-1/5 to-cat-5/5 p-6">
         <div className="flex items-start gap-3">
-          <div className="rounded-full bg-card p-2.5 shadow-sm dark:bg-zinc-900">
-            <Sparkles size={20} className="text-indigo-600 dark:text-indigo-300" />
+          <div className="rounded-full bg-card p-2.5 shadow-sm">
+            <Sparkles size={20} className="text-cat-1" />
           </div>
           <div className="min-w-0 flex-1">
             <h2 className="text-lg font-bold text-foreground">
@@ -802,7 +802,7 @@ function OnboardingEmptyState({
             <div className="mt-4 grid gap-3 sm:grid-cols-3">
               <div className="rounded-lg border bg-card p-3 dark:bg-zinc-900/60">
                 <div className="flex items-center gap-2">
-                  <ListChecks size={14} className="text-indigo-600" />
+                  <ListChecks size={14} className="text-cat-1" />
                   <p className="text-xs font-semibold">1. 질문 준비</p>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -811,7 +811,7 @@ function OnboardingEmptyState({
               </div>
               <div className="rounded-lg border bg-card p-3 dark:bg-zinc-900/60">
                 <div className="flex items-center gap-2">
-                  <Mic size={14} className="text-rose-600" />
+                  <Mic size={14} className="text-destructive" />
                   <p className="text-xs font-semibold">2. 마이크로 답변</p>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">
@@ -820,7 +820,7 @@ function OnboardingEmptyState({
               </div>
               <div className="rounded-lg border bg-card p-3 dark:bg-zinc-900/60">
                 <div className="flex items-center gap-2">
-                  <Target size={14} className="text-emerald-600" />
+                  <Target size={14} className="text-success" />
                   <p className="text-xs font-semibold">3. 비교·복기</p>
                 </div>
                 <p className="mt-1 text-xs text-muted-foreground">

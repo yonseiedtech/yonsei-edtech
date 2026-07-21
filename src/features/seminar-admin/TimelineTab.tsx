@@ -608,7 +608,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                           className="shrink-0"
                           title={`기한 초과! 목표일(${targetDate})이 지났습니다.`}
                         >
-                          <AlertTriangle size={16} className="text-red-500" />
+                          <AlertTriangle size={16} className="text-destructive" />
                         </span>
                       )}
 
@@ -786,7 +786,7 @@ export default function TimelineTab({ seminarId: propSeminarId }: { seminarId?: 
                     </button>
                     <button
                       onClick={() => setTemplateItems(templateItems.filter((t) => t.id !== item.id))}
-                      className="shrink-0 rounded p-1 text-muted-foreground hover:bg-red-50 hover:text-red-500"
+                      className="shrink-0 rounded p-1 text-muted-foreground hover:bg-destructive/5 hover:text-destructive"
                     >
                       <Trash2 size={13} />
                     </button>

@@ -16,18 +16,18 @@ import type { NetworkNode, UserRole } from "@/types";
 
 const ROLE_COLOR: Record<UserRole, string> = {
   // 재학생/일반 회원
-  member: "bg-blue-100 text-blue-700 ring-blue-300 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-800",
+  member: "bg-cat-1/10 text-cat-1 ring-cat-1/30",
   // 졸업생
-  alumni: "bg-emerald-100 text-emerald-700 ring-emerald-300 dark:bg-emerald-950/50 dark:text-emerald-200 dark:ring-emerald-800",
+  alumni: "bg-success/10 text-success ring-success/30",
   // 운영진
-  staff: "bg-amber-100 text-amber-700 ring-amber-300 dark:bg-amber-950/50 dark:text-amber-200 dark:ring-amber-800",
-  president: "bg-amber-100 text-amber-700 ring-amber-300 dark:bg-amber-950/50 dark:text-amber-200 dark:ring-amber-800",
+  staff: "bg-warning/10 text-warning ring-warning/30",
+  president: "bg-warning/10 text-warning ring-warning/30",
   // 자문
-  advisor: "bg-violet-100 text-violet-700 ring-violet-300 dark:bg-violet-950/50 dark:text-violet-200 dark:ring-violet-800",
+  advisor: "bg-cat-5/10 text-cat-5 ring-cat-5/30",
   // 관리자
-  admin: "bg-slate-200 text-slate-700 ring-slate-400 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600",
-  sysadmin: "bg-slate-200 text-slate-700 ring-slate-400 dark:bg-slate-800 dark:text-slate-200 dark:ring-slate-600",
-  guest: "bg-slate-100 text-slate-500 ring-slate-300",
+  admin: "bg-muted text-muted-foreground ring-muted-foreground/40",
+  sysadmin: "bg-muted text-muted-foreground ring-muted-foreground/40",
+  guest: "bg-muted/60 text-muted-foreground ring-muted-foreground/30",
 };
 
 export interface MemberNodeData extends NetworkNode {

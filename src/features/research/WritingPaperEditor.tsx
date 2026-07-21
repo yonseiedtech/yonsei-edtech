@@ -2418,7 +2418,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             모든 항목은 제안이며 최종 판단은 작성자의 몫입니다.
           </p>
           {lintIssues && lintIssues.length === 0 && (
-            <p className="rounded-lg bg-emerald-50 px-3 py-4 text-center text-sm text-emerald-700 dark:bg-emerald-950/30 dark:text-emerald-300">
+            <p className="rounded-lg bg-success/5 px-3 py-4 text-center text-sm text-success">
               ✓ 규칙 검사를 모두 통과했습니다.
             </p>
           )}
@@ -2449,8 +2449,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                           className={cn(
                             "rounded-lg border px-2.5 py-2 text-[11px] leading-relaxed",
                             issue.severity === "warn"
-                              ? "border-amber-200/70 bg-amber-50/50 text-amber-900 dark:border-amber-800/40 dark:bg-amber-950/15 dark:text-amber-100"
-                              : "border-sky-200/70 bg-sky-50/40 text-sky-900 dark:border-sky-800/40 dark:bg-sky-950/15 dark:text-sky-100",
+                              ? "border-warning/20 bg-warning/5 text-warning"
+                              : "border-info/20 bg-info/5 text-info",
                           )}
                         >
                           {issue.sectionHeading && (
@@ -2480,8 +2480,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                       className={cn(
                         "mt-0.5 shrink-0 rounded px-1 py-0.5 text-[9px] font-bold leading-none",
                         qc.covered
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300"
-                          : "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300",
+                          ? "bg-success/10 text-success"
+                          : "bg-warning/10 text-warning",
                       )}
                     >
                       {qc.covered ? "결과 장에서 다룸 후보" : "결과 장에서 핵심어 미발견"}
@@ -2532,7 +2532,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
           <div className="flex shrink-0 items-center gap-2">
             {!readOnly && savedAt && !saving && (
               <span className="hidden items-center gap-1 text-[11px] text-muted-foreground sm:flex">
-                <CheckCircle2 size={12} className="text-emerald-500" />
+                <CheckCircle2 size={12} className="text-success" />
                 {(() => {
                   const diff = Date.now() - new Date(savedAt).getTime();
                   if (diff < 60_000) return "방금 저장됨";
@@ -2761,7 +2761,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                                     <span
                                       className={cn(
                                         "ml-1",
-                                        delta > 0 ? "text-emerald-600" : delta < 0 ? "text-rose-500" : "text-muted-foreground",
+                                        delta > 0 ? "text-success" : delta < 0 ? "text-destructive" : "text-muted-foreground",
                                       )}
                                     >
                                       ({delta > 0 ? "+" : ""}{delta.toLocaleString()})
@@ -2815,7 +2815,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                   title={`미반영 지도 ${pendingByChapter.get(s.key)!.length}건`}
                   className={cn(
                     "ml-0.5 inline-flex h-4 min-w-4 items-center justify-center rounded-full px-1 text-[9px] font-bold",
-                    active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-amber-100 text-amber-700 dark:bg-amber-900/50 dark:text-amber-200",
+                    active ? "bg-primary-foreground/20 text-primary-foreground" : "bg-warning/10 text-warning",
                   )}
                 >
                   {pendingByChapter.get(s.key)!.length}
@@ -3096,8 +3096,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                     className={cn(
                       "shrink-0 rounded-md p-1.5 transition-colors",
                       sectionGuideOpen === sec.id
-                        ? "bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300"
-                        : "text-amber-500/80 hover:bg-amber-50 hover:text-amber-600 dark:hover:bg-amber-950/30",
+                        ? "bg-warning/10 text-warning"
+                        : "text-warning/80 hover:bg-warning/5 hover:text-warning",
                     )}
                   >
                     <Lightbulb size={14} />
@@ -3151,11 +3151,11 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
               {/* 섹션 작성 가이드 — 부심 강의 2·3주차 일반화 */}
               {sectionGuideOpen === sec.id && getSectionGuides(sec.heading) && (
-                <ul className="mt-2 space-y-1.5 rounded-lg border border-amber-200/60 bg-amber-50/50 px-3 py-2.5 dark:border-amber-800/40 dark:bg-amber-950/15">
+                <ul className="mt-2 space-y-1.5 rounded-lg border border-warning/20 bg-warning/5 px-3 py-2.5">
                   {getSectionGuides(sec.heading)!.map((tip, ti) => (
                     <li
                       key={ti}
-                      className="flex gap-1.5 text-[11px] leading-relaxed text-amber-900/90 dark:text-amber-100/90"
+                      className="flex gap-1.5 text-[11px] leading-relaxed text-warning/90"
                     >
                       <span className="mt-0.5 shrink-0">·</span>
                       {tip}
@@ -3344,7 +3344,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         )}
 
         {/* 챕터별 심사 방어 가이드 — 연구 접근별 분기 (기본 접힘) */}
-        <div className="mt-4 rounded-xl border border-amber-200/70 bg-amber-50/40 dark:border-amber-800/50 dark:bg-amber-950/10">
+        <div className="mt-4 rounded-xl border border-warning/20 bg-warning/5">
           <button
             type="button"
             onClick={() => {
@@ -3354,25 +3354,25 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             aria-expanded={guideOpen}
             className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
           >
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-amber-800 dark:text-amber-200">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-warning">
               <Lightbulb size={13} />
               심사위원의 눈 — {STEPS[stepIdx].label} 체크 {guides.length}가지
               {profile?.approach === "qualitative" && (step === "method" || step === "results") && (
-                <span className="font-normal text-amber-700/80 dark:text-amber-300/80">(질적 연구 기준)</span>
+                <span className="font-normal text-warning/80">(질적 연구 기준)</span>
               )}
             </span>
             <ChevronRight
               size={14}
               className={cn(
-                "shrink-0 text-amber-700/70 transition-transform dark:text-amber-300/70",
+                "shrink-0 text-warning/70 transition-transform",
                 guideOpen && "rotate-90",
               )}
             />
           </button>
           {guideOpen && (
-            <ul className="space-y-1.5 border-t border-amber-200/60 px-3.5 py-3 dark:border-amber-800/40">
+            <ul className="space-y-1.5 border-t border-warning/20 px-3.5 py-3">
               {guides.map((tip, i) => (
-                <li key={i} className="flex gap-1.5 text-xs leading-relaxed text-amber-900/90 dark:text-amber-100/90">
+                <li key={i} className="flex gap-1.5 text-xs leading-relaxed text-warning/90">
                   <span className="mt-0.5 shrink-0">·</span>
                   {tip}
                 </li>
@@ -3385,7 +3385,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
         <ReadingDrawer userId={user.id} chapter={step} />
 
         {/* 학술 문형 은행 — 장별 정형 문형, 클릭=클립보드 복사 (2026-06-12) */}
-        <div className="mt-3 rounded-xl border border-violet-200/70 bg-violet-50/30 dark:border-violet-800/50 dark:bg-violet-950/10">
+        <div className="mt-3 rounded-xl border border-cat-5/20 bg-cat-5/5">
           <button
             type="button"
             onClick={() => {
@@ -3395,24 +3395,24 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
             aria-expanded={phrasesOpen}
             className="flex w-full items-center justify-between px-3.5 py-2.5 text-left"
           >
-            <span className="flex items-center gap-1.5 text-xs font-semibold text-violet-800 dark:text-violet-200">
+            <span className="flex items-center gap-1.5 text-xs font-semibold text-cat-5">
               <Quote size={13} />
               학술 문형 — {STEPS[stepIdx].label}에서 자주 쓰는 표현
-              <span className="font-normal text-violet-700/70 dark:text-violet-300/70">(클릭하면 복사돼요)</span>
+              <span className="font-normal text-cat-5/70">(클릭하면 복사돼요)</span>
             </span>
             <ChevronRight
               size={14}
               className={cn(
-                "shrink-0 text-violet-700/70 transition-transform dark:text-violet-300/70",
+                "shrink-0 text-cat-5/70 transition-transform",
                 phrasesOpen && "rotate-90",
               )}
             />
           </button>
           {phrasesOpen && (
-            <div className="space-y-2.5 border-t border-violet-200/60 px-3.5 py-3 dark:border-violet-800/40">
+            <div className="space-y-2.5 border-t border-cat-5/20 px-3.5 py-3">
               {phrasesForChapter(step).map((group) => (
                 <div key={group.label}>
-                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-violet-700/80 dark:text-violet-300/80">
+                  <p className="mb-1 text-[10px] font-semibold uppercase tracking-wide text-cat-5/80">
                     {group.label}
                   </p>
                   <ul className="space-y-1">
@@ -3426,7 +3426,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                               () => toast.error("복사에 실패했습니다."),
                             );
                           }}
-                          className="group flex w-full items-start gap-1.5 rounded-md px-2 py-1 text-left text-[11px] leading-relaxed text-violet-900/90 transition-colors hover:bg-violet-100/60 dark:text-violet-100/90 dark:hover:bg-violet-900/30"
+                          className="group flex w-full items-start gap-1.5 rounded-md px-2 py-1 text-left text-[11px] leading-relaxed text-cat-5/90 transition-colors hover:bg-cat-5/10"
                         >
                           <Copy size={10} className="mt-0.5 shrink-0 opacity-40 group-hover:opacity-100" />
                           {phrase}
@@ -3442,22 +3442,22 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
         {/* 선택한 분석 방법 기술 — 연구 방법 장 한정 자동 표시 (2026-06-12) */}
         {step === "method" && (profile?.methods?.length ?? 0) > 0 && (
-          <div className="mt-3 rounded-xl border border-sky-200/70 bg-sky-50/40 p-3.5 dark:border-sky-800/50 dark:bg-sky-950/10">
-            <p className="flex items-center gap-1.5 text-xs font-semibold text-sky-800 dark:text-sky-200">
+          <div className="mt-3 rounded-xl border border-info/20 bg-info/5 p-3.5">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-info">
               <Microscope size={13} />
               선택한 분석 방법 기술 — &lsquo;자료 분석&rsquo; 섹션에 골격을 삽입할 수 있어요
             </p>
             <div className="mt-2 flex flex-wrap gap-1.5">
               {profile!.methods!.map((m) => (
                 <div key={m} className="flex items-center gap-1 rounded-lg bg-card/60 px-2 py-1.5">
-                  <span className="text-[11px] font-semibold text-sky-900 dark:text-sky-100">
+                  <span className="text-[11px] font-semibold text-info">
                     {STAT_METHOD_LABELS[m]}
                   </span>
                   {!readOnly && (
                     <button
                       type="button"
                       onClick={() => insertAnalysisSkeleton(m)}
-                      className="rounded-full border border-dashed border-sky-400/60 px-2.5 py-1.5 text-[11px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
+                      className="rounded-full border border-dashed border-info/60 px-2.5 py-1.5 text-[11px] font-medium text-info transition-colors hover:bg-info hover:text-white"
                     >
                       + 기술 문장 삽입
                     </button>
@@ -3489,8 +3489,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
         {/* 선택한 분석 방법의 기본 가정 검정 — 결과 장 한정 자동 표시 (2026-06-12) */}
         {step === "results" && resultsMethods.length > 0 && (
-          <div className="mt-3 rounded-xl border border-sky-200/70 bg-sky-50/40 p-3.5 dark:border-sky-800/50 dark:bg-sky-950/10">
-            <p className="flex items-center gap-1.5 text-xs font-semibold text-sky-800 dark:text-sky-200">
+          <div className="mt-3 rounded-xl border border-info/20 bg-info/5 p-3.5">
+            <p className="flex items-center gap-1.5 text-xs font-semibold text-info">
               <Microscope size={13} />
               분석 방법별 가정·결과 골격 — 프로파일 선택 + 연구문제 태그(③) 방법 포함
             </p>
@@ -3501,18 +3501,18 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                 return (
                   <div key={m} className="rounded-lg bg-card/60 p-2.5">
                     <div className="flex flex-wrap items-center gap-1.5">
-                      <span className="text-xs font-bold text-sky-900 dark:text-sky-100">
+                      <span className="text-xs font-bold text-info">
                         {STAT_METHOD_LABELS[m]}
                       </span>
                       {taggedOnlyMethods.has(m) && (
-                        <span className="rounded-full bg-amber-100 px-1.5 py-0.5 text-[9px] font-semibold text-amber-800 dark:bg-amber-900/50 dark:text-amber-200">
+                        <span className="rounded-full bg-warning/10 px-1.5 py-0.5 text-[9px] font-semibold text-warning">
                           연구문제 태그
                         </span>
                       )}
                       {(archiveDocHrefByType.get(m) ?? g.archiveHref) && (
                         <Link
                           href={archiveDocHrefByType.get(m) ?? g.archiveHref!}
-                          className="rounded-full border border-sky-300/60 px-2.5 py-1.5 text-[11px] text-sky-700 transition-colors hover:bg-sky-100 dark:border-sky-700/60 dark:text-sky-300 dark:hover:bg-sky-900/40"
+                          className="rounded-full border border-info/30 px-2.5 py-1.5 text-[11px] text-info transition-colors hover:bg-info/10"
                         >
                           아카이브 개념 보기{archiveDocHrefByType.has(m) ? " (해석·참고문헌)" : ""}
                         </Link>
@@ -3521,7 +3521,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                         <button
                           type="button"
                           onClick={() => insertAssumptionSkeleton(m)}
-                          className="rounded-full border border-dashed border-sky-400/60 px-2.5 py-1.5 text-[11px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
+                          className="rounded-full border border-dashed border-info/60 px-2.5 py-1.5 text-[11px] font-medium text-info transition-colors hover:bg-info hover:text-white"
                         >
                           + 보고 골격 섹션에 삽입
                         </button>
@@ -3530,7 +3530,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                         <button
                           type="button"
                           onClick={() => insertResultTable(m)}
-                          className="rounded-full border border-dashed border-sky-400/60 px-2.5 py-1.5 text-[11px] font-medium text-sky-700 transition-colors hover:bg-sky-600 hover:text-white dark:text-sky-300"
+                          className="rounded-full border border-dashed border-info/60 px-2.5 py-1.5 text-[11px] font-medium text-info transition-colors hover:bg-info hover:text-white"
                         >
                           + 결과 표 골격 삽입
                         </button>
@@ -3539,7 +3539,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                         <button
                           type="button"
                           onClick={() => insertResultsNarrative(m)}
-                          className="rounded-full border border-dashed border-emerald-400/60 px-2 py-0.5 text-[10px] font-medium text-emerald-700 transition-colors hover:bg-emerald-600 hover:text-white dark:text-emerald-300"
+                          className="rounded-full border border-dashed border-success/60 px-2 py-0.5 text-[10px] font-medium text-success transition-colors hover:bg-success hover:text-white"
                         >
                           + 결과 서술문 삽입
                         </button>
@@ -3549,7 +3549,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
                       {g.assumptions.map((a, i) => (
                         <li
                           key={i}
-                          className="flex gap-1.5 text-[11px] leading-relaxed text-sky-900/85 dark:text-sky-100/85"
+                          className="flex gap-1.5 text-[11px] leading-relaxed text-info/85"
                         >
                           <span className="mt-0.5 shrink-0">·</span>
                           {a}
@@ -3565,28 +3565,28 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
         {/* 이 장의 미반영 지도 노트 — 지도 노트 탭과 양방향 연결 (연구 코크핏) */}
         {!readOnly && (pendingByChapter.get(step)?.length ?? 0) > 0 && (
-          <div className="mt-3 rounded-xl border border-rose-200/70 bg-rose-50/40 p-3.5 dark:border-rose-800/50 dark:bg-rose-950/10">
-            <p className="flex items-center justify-between gap-2 text-xs font-semibold text-rose-800 dark:text-rose-200">
+          <div className="mt-3 rounded-xl border border-destructive/20 bg-destructive/5 p-3.5">
+            <p className="flex items-center justify-between gap-2 text-xs font-semibold text-destructive">
               <span className="flex items-center gap-1.5">
                 <GraduationCap size={13} />
                 이 장의 미반영 지도 {pendingByChapter.get(step)!.length}건
               </span>
               <Link
                 href="/mypage/research?tab=feedback"
-                className="font-normal text-rose-700/80 hover:underline dark:text-rose-300/80"
+                className="font-normal text-destructive/80 hover:underline"
               >
                 지도 노트에서 관리 →
               </Link>
             </p>
             <ul className="mt-2 space-y-1.5">
               {pendingByChapter.get(step)!.slice(0, 3).map((n) => (
-                <li key={n.id} className="flex gap-1.5 text-xs leading-relaxed text-rose-900/90 dark:text-rose-100/90">
-                  <span className="mt-0.5 shrink-0 text-[10px] tabular-nums text-rose-600/70">{n.meetingDate.slice(5)}</span>
+                <li key={n.id} className="flex gap-1.5 text-xs leading-relaxed text-destructive/90">
+                  <span className="mt-0.5 shrink-0 text-[10px] tabular-nums text-destructive/70">{n.meetingDate.slice(5)}</span>
                   <span className="line-clamp-2">{n.content}</span>
                 </li>
               ))}
               {pendingByChapter.get(step)!.length > 3 && (
-                <li className="text-[11px] text-rose-700/70 dark:text-rose-300/70">
+                <li className="text-[11px] text-destructive/70">
                   외 {pendingByChapter.get(step)!.length - 3}건…
                 </li>
               )}

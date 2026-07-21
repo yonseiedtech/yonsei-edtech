@@ -2,7 +2,7 @@
  * AUTO-GENERATED — node scripts/gen-rawcolor-baseline.mjs 로 재생성.
  * raw Tailwind 팔레트를 이미 쓰는 기존 파일 목록(부채 baseline).
  * 이 목록에 있는 파일은 차단 규칙에서 제외되고, 새 파일은 error 로 차단된다.
- * 색상 정리 라운드 후 재생성해 목록을 줄일 것. (생성 시점 66개)
+ * 색상 정리 라운드 후 재생성해 목록을 줄일 것. (생성 시점 36개)
  */
 export default [
   "src/app/agents/page.tsx",
@@ -20,24 +20,14 @@ export default [
   "src/components/auth/ConsentSteps.tsx",
   "src/components/chat/ChatWidget.tsx",
   "src/components/diagnosis/DiagnosisReport.tsx",
-  "src/components/members/MemberCard.tsx",
   "src/features/academic-admin/Dashboard.tsx",
-  "src/features/alumni/ThesisAnalysisCard.tsx",
   "src/features/archive/ArchiveGlobalSearch.tsx",
   "src/features/card-news/CardNewsEditor.tsx",
-  "src/features/card/BusinessCard.tsx",
-  "src/features/courses/CourseReviewBlock.tsx",
-  "src/features/courses/ElectiveReviewsByName.tsx",
   "src/features/defense/DefensePracticeListView.tsx",
   "src/features/defense/DefensePracticeRunner.tsx",
-  "src/features/defense/DefenseTemplateAdminView.tsx",
-  "src/features/grad-life/GradLifePositionsList.tsx",
   "src/features/handover/TransitionView.tsx",
-  "src/features/member/OrgChart.tsx",
   "src/features/network/MemberMiniDialog.tsx",
-  "src/features/network/MemberNode.tsx",
   "src/features/network/NetworkAnalyticsReport.tsx",
-  "src/features/newsletter/newsletter-store.ts",
   "src/features/popup/PopupEditor.tsx",
   "src/features/popup/PopupListView.tsx",
   "src/features/research-analytics/KeywordCloud.tsx",
@@ -46,29 +36,9 @@ export default [
   "src/features/research-analytics/ResearchTypeChart.tsx",
   "src/features/research-analytics/SubjectDistribution.tsx",
   "src/features/research/ResearchReportInterview.tsx",
-  "src/features/research/ThesisProgressWidget.tsx",
-  "src/features/research/WritingHeatmap.tsx",
-  "src/features/research/WritingPaperEditor.tsx",
   "src/features/seminar-admin/CertificateGenerator.tsx",
-  "src/features/seminar-admin/NametagGenerator.tsx",
   "src/features/seminar-admin/RegistrationsTab.tsx",
   "src/features/seminar-admin/ReportTab.tsx",
-  "src/features/seminar-admin/TimelineTab.tsx",
-  "src/features/seminar-live/LivePollControl.tsx",
-  "src/features/seminar-live/LivePollRespond.tsx",
-  "src/features/seminar-live/SeminarLiveEntry.tsx",
-  "src/features/seminar-live/SlideUploader.tsx",
-  "src/features/seminar/CheckinDashboard.tsx",
-  "src/features/seminar/CheckinResult.tsx",
-  "src/features/seminar/QrCodeDisplay.tsx",
-  "src/features/seminar/QrScanner.tsx",
-  "src/features/seminar/SeminarConnectedTodos.tsx",
-  "src/features/seminar/SeminarForm.tsx",
-  "src/features/seminar/SeminarLMS.tsx",
-  "src/features/seminar/SeminarList.tsx",
-  "src/features/seminar/SeminarRegistrationForm.tsx",
-  "src/features/seminar/SeminarReviews.tsx",
-  "src/features/seminar/SpeakerRow.tsx",
   "src/features/steppingstone/SemesterRoadmap.tsx",
   "src/lib/design-tokens.ts"
 ];
