@@ -120,7 +120,7 @@ export default function HackathonHubPage() {
         </section>
 
         {/* ── 참가 신청 · 아이디어 보드 ── */}
-        <section className="mt-12">
+        <section id="hackathon-board" className="mt-12">
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <Rocket size={18} className="text-primary" />
             참가 신청 · 아이디어 보드

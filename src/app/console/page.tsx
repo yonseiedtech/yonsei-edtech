@@ -384,7 +384,7 @@ function UpcomingSeasonCard({
                 autoTooltip:
                   "해커톤 소통 보드(comm_boards/comm_questions)에 게시글이 1건 이상이면 자동 체크",
               },
-              { key: "judge_assign", label: "심사위원 배정 완료", auto: null },
+              { key: "judge_assign", label: "심사위원 배정 완료", auto: null, href: "/console/hackathon" },
               {
                 key: "console_ready",
                 label: "당일 콘솔 세팅 점검",

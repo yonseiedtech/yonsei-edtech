@@ -11,10 +11,10 @@
 
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { CheckCircle2, Circle, ChevronRight } from "lucide-react";
+import { CheckCircle2, Circle, ChevronRight, Users } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { hackathonSubmissionsApi } from "@/lib/bkend";
-import type { HackathonSubmission } from "@/types";
+import { hackathonSubmissionsApi, commBoardsApi, commQuestionsApi } from "@/lib/bkend";
+import type { HackathonSubmission, CommBoard, CommQuestion } from "@/types";
 import {
   HACKATHON_PHASE_TIMELINE,
   HACKATHON_EVENT,
@@ -50,9 +50,32 @@ function calcCountdown(): Countdown {
   };
 }
 
+/** 제출 마감(= 심사 단계 startDate)까지 남은 일수 */
+function calcSubmissionDday(): number | null {
+  const judging = HACKATHON_PHASE_TIMELINE.find((p) => p.key === "judging");
+  if (!judging) return null;
+  const deadlineMs = new Date(judging.startDate + "T00:00:00+09:00").getTime();
+  const nowMs = Date.now();
+  const diff = Math.ceil((deadlineMs - nowMs) / (1000 * 60 * 60 * 24));
+  return diff >= 0 ? diff : null;
+}
+
 export default function HackathonPhaseTimeline() {
   const { phase: rawPhase, override, isManual } = useHackathonOps();
   const user = useAuthStore((s) => s.user);
+
+  // v14 new-H2: 참가 신청자 수 (공개 read)
+  const { data: participantCount } = useQuery({
+    queryKey: ["hackathon-participant-count", HACKATHON_CONTEXT_ID],
+    queryFn: async () => {
+      const boardRes = await commBoardsApi.listByContext("hackathon", HACKATHON_CONTEXT_ID);
+      const board = (boardRes.data as CommBoard[])[0];
+      if (!board) return 0;
+      const entriesRes = await commQuestionsApi.listByBoard(board.id);
+      return (entriesRes.data as CommQuestion[]).length;
+    },
+    staleTime: 5 * 60 * 1000,
+  });
 
   // R4 가드: 자동 폴백으로 "수상 발표"에 진입했으나 공개 수상작이 0건이면 심사 단계로 유지.
   // hackathon_submissions list 규칙이 로그인 회원 전용이므로 로그인 사용자만 실측한다
@@ -133,19 +156,27 @@ export default function HackathonPhaseTimeline() {
         })}
       </div>
 
-      {/* 현재 단계 설명 */}
-      {currentPhase && (
-        <p className="mt-2 text-xs text-muted-foreground">
-          <span className="font-semibold text-primary">
-            현재: {currentPhase.label}
+      {/* 현재 단계 설명 + v14 new-H2 참가 신청 카운터 */}
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        {currentPhase && (
+          <p className="text-xs text-muted-foreground">
+            <span className="font-semibold text-primary">
+              현재: {currentPhase.label}
+            </span>
+            {" · "}
+            {currentPhase.description}
+          </p>
+        )}
+        {typeof participantCount === "number" && participantCount > 0 && (
+          <span className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2.5 py-1 text-[11px] font-medium text-primary">
+            <Users size={11} />
+            {participantCount}명 참가 신청
           </span>
-          {" · "}
-          {currentPhase.description}
-        </p>
-      )}
+        )}
+      </div>
 
-      {/* D-day 카운트다운 (행사 전 단계만, hydration 후 노출) */}
-      {countdown && !countdown.done && (phase === "registration") && (
+      {/* D-day 카운트다운 (phase별 — hydration 후 노출) */}
+      {countdown && !countdown.done && phase === "registration" && (
         <div className="mt-5">
           <p className="mb-2 text-[11px] font-medium uppercase tracking-wide text-muted-foreground">
             행사 시작까지
@@ -158,6 +189,23 @@ export default function HackathonPhaseTimeline() {
           </div>
         </div>
       )}
+
+      {/* v14 new-H2: 제출 마감 D-day (제출 단계에서만) */}
+      {phase === "submission" && (() => {
+        const dday = calcSubmissionDday();
+        if (dday === null) return null;
+        const urgent = dday <= 3;
+        return (
+          <div className={`mt-4 flex items-center justify-between gap-2 rounded-xl border px-4 py-2.5 ${urgent ? "border-destructive/30 bg-destructive/5" : "border-amber-300/40 bg-amber-50 dark:border-amber-700/40 dark:bg-amber-950/20"}`}>
+            <div className="flex items-center gap-2">
+              <span className={`text-sm font-bold tabular-nums ${urgent ? "text-destructive" : "text-amber-700 dark:text-amber-400"}`}>
+                제출 마감 D-{dday}
+              </span>
+              <span className="text-xs text-muted-foreground">산출물을 제출하세요</span>
+            </div>
+          </div>
+        );
+      })()}
     </section>
   );
 }

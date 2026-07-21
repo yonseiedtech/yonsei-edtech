@@ -12,8 +12,9 @@
  */
 
 import { useMemo } from "react";
+import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
-import { Users, UserCheck, CheckCircle2, Search } from "lucide-react";
+import { Users, UserCheck, CheckCircle2, Search, ArrowRight } from "lucide-react";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -229,6 +230,14 @@ export default function HackathonTeamView() {
                       ))}
                     </div>
                   </div>
+                  {/* v14 H1: 아이디어 보드 백링크 */}
+                  <Link
+                    href="/hackathon#hackathon-board"
+                    className="mt-2 inline-flex items-center gap-1 text-[11px] font-medium text-primary hover:underline"
+                  >
+                    아이디어 보드에서 합류 신청
+                    <ArrowRight size={10} />
+                  </Link>
                 </li>
               );
             })}
