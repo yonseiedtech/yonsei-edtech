@@ -47,7 +47,7 @@ export default function GraduationChecklistCard({ userId }: Props) {
   if (!requirement || !summary) return null;
 
   return (
-    <div id="graduation-checklist" className="scroll-mt-24 rounded-2xl border-2 border-emerald-200/60 bg-gradient-to-br from-emerald-50 to-emerald-100/60 p-5 dark:border-emerald-800/40 dark:from-emerald-950/20 dark:to-emerald-900/10">
+    <div id="graduation-checklist" className="scroll-mt-24 rounded-2xl border-2 border-success/20 bg-gradient-to-br from-success/5 to-success/10 p-5">
       <div className="flex items-start gap-4">
         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-200/40 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
           <GraduationCap size={22} />
@@ -58,18 +58,18 @@ export default function GraduationChecklistCard({ userId }: Props) {
             <span className="text-[11px] text-muted-foreground">{requirement.programLabel}</span>
           </div>
           <div className="mt-2 flex items-center gap-3">
-            <div className="h-2 flex-1 overflow-hidden rounded-full bg-emerald-200/50 dark:bg-emerald-900/40">
+            <div className="h-2 flex-1 overflow-hidden rounded-full bg-success/10">
               <div
-                className="h-full rounded-full bg-emerald-500 transition-all dark:bg-emerald-400"
+                className="h-full rounded-full bg-success transition-all"
                 style={{ width: `${summary.percent}%` }}
               />
             </div>
-            <span className="text-sm font-bold tabular-nums text-emerald-700 dark:text-emerald-300">
+            <span className="text-sm font-bold tabular-nums text-success">
               {summary.percent}%
             </span>
           </div>
           {summary.allMet && (
-            <p className="mt-1 text-[11px] font-medium text-emerald-700 dark:text-emerald-300">
+            <p className="mt-1 text-[11px] font-medium text-success">
               모든 요건이 충족되었습니다 🎓
             </p>
           )}
@@ -82,7 +82,7 @@ export default function GraduationChecklistCard({ userId }: Props) {
         <div className="rounded-xl border bg-card px-3 py-2.5">
           <div className="flex items-center justify-between text-sm">
             <span className="font-medium">총 이수학점</span>
-            <span className={cn("font-bold tabular-nums", summary.totalMet ? "text-emerald-600 dark:text-emerald-400" : "text-foreground")}>
+            <span className={cn("font-bold tabular-nums", summary.totalMet ? "text-success" : "text-foreground")}>
               {summary.totalEarned} / {summary.totalMin}학점
               {summary.totalMet && <Check size={14} className="ml-1 inline" />}
             </span>
@@ -103,7 +103,7 @@ export default function GraduationChecklistCard({ userId }: Props) {
                 />
                 <span className="truncate">{rule.label}</span>
               </span>
-              <span className={cn("shrink-0 font-bold tabular-nums", rule.met ? "text-emerald-600 dark:text-emerald-400" : "text-foreground")}>
+              <span className={cn("shrink-0 font-bold tabular-nums", rule.met ? "text-success" : "text-foreground")}>
                 {rule.earned} / {rule.min}학점
                 {rule.met && <Check size={14} className="ml-1 inline" />}
               </span>
@@ -141,7 +141,7 @@ export default function GraduationChecklistCard({ userId }: Props) {
                 className={cn(
                   "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border",
                   m.done
-                    ? "border-emerald-500 bg-emerald-500 text-white"
+                    ? "border-success bg-success text-white"
                     : "border-muted-foreground/30 bg-muted text-muted-foreground"
                 )}
                 title="자동 판정 항목"
@@ -156,7 +156,7 @@ export default function GraduationChecklistCard({ userId }: Props) {
                 className={cn(
                   "flex h-5 w-5 shrink-0 items-center justify-center rounded-md border transition",
                   m.done
-                    ? "border-emerald-500 bg-emerald-500 text-white"
+                    ? "border-success bg-success text-white"
                     : "border-muted-foreground/40 bg-card hover:border-emerald-400",
                   savingKey === m.key && "opacity-50"
                 )}
@@ -166,9 +166,9 @@ export default function GraduationChecklistCard({ userId }: Props) {
               </button>
             )}
             <div className="min-w-0 flex-1">
-              <p className={cn("text-sm font-medium", m.done && "text-muted-foreground line-through decoration-emerald-500/50")}>
+              <p className={cn("text-sm font-medium", m.done && "text-muted-foreground line-through decoration-success/50")}>
                 {m.label}
-                {m.auto && <span className="ml-1.5 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-semibold text-emerald-700 no-underline dark:bg-emerald-900/40 dark:text-emerald-300">자동</span>}
+                {m.auto && <span className="ml-1.5 rounded-full bg-success/10 px-1.5 py-0.5 text-[10px] font-semibold text-success no-underline">자동</span>}
               </p>
               {m.hint && <p className="text-[11px] text-muted-foreground">{m.hint}</p>}
             </div>
