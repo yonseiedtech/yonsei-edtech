@@ -28,7 +28,7 @@ import { execSync } from "node:child_process";
 //   (react-hooks 5종 추정 · no-unescaped-entities 잔여)
 // 2026-07-21 no-unescaped-entities 13파일 수정 후: 392 → 360
 // ─────────────────────────────────────────────────────────────
-const CEILING = 360;
+const CEILING = 320;
 
 // ── 1. ESLint 실행 (JSON 포맷) ───────────────────────────────
 // execSync 사용 — ESLint 가 error 시 exit 1 을 던지므로 catch 로 stdout 수집.
