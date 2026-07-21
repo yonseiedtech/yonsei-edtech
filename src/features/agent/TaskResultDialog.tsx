@@ -53,7 +53,7 @@ export default function TaskResultDialog({
 
         {/* 실행 중 상태 */}
         {(isStreaming || isRunning) && (
-          <div className="flex items-center gap-2 rounded-lg bg-blue-50 px-3 py-2 text-sm text-blue-700">
+          <div className="flex items-center gap-2 rounded-lg bg-cat-1/5 px-3 py-2 text-sm text-cat-1">
             <Loader2 size={14} className="animate-spin" />
             {currentTool ? `${currentTool} 실행 중...` : statusMessage || "처리 중..."}
           </div>
@@ -61,7 +61,7 @@ export default function TaskResultDialog({
 
         {/* 에러 */}
         {task.status === "failed" && task.error && (
-          <div className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">
+          <div className="rounded-lg bg-destructive/5 px-3 py-2 text-sm text-destructive">
             {task.error}
           </div>
         )}

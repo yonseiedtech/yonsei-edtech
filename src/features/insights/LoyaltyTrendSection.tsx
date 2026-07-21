@@ -166,9 +166,9 @@ export default function LoyaltyTrendSection({ isAdmin }: { isAdmin: boolean }) {
                 <b
                   className={
                     movement.avgDelta > 0
-                      ? "text-emerald-600"
+                      ? "text-success"
                       : movement.avgDelta < 0
-                        ? "text-rose-600"
+                        ? "text-destructive"
                         : "text-muted-foreground"
                   }
                 >
@@ -177,11 +177,11 @@ export default function LoyaltyTrendSection({ isAdmin }: { isAdmin: boolean }) {
                 </b>
               </span>
               <span className="flex items-center gap-1">
-                <ArrowUpRight size={13} className="text-emerald-600" />
+                <ArrowUpRight size={13} className="text-success" />
                 세그먼트 상승 <b className="tabular-nums">{movement.improved}</b>명
               </span>
               <span className="flex items-center gap-1">
-                <ArrowDownRight size={13} className="text-rose-600" />
+                <ArrowDownRight size={13} className="text-destructive" />
                 세그먼트 하락 <b className="tabular-nums">{movement.declined}</b>명
               </span>
             </div>

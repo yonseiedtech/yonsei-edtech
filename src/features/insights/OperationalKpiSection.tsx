@@ -109,9 +109,9 @@ function KpiCard({
     trend === "up" ? TrendingUp : trend === "down" ? TrendingDown : Minus;
   const trendColor =
     trend === "up"
-      ? "text-emerald-600"
+      ? "text-success"
       : trend === "down"
-        ? "text-rose-500"
+        ? "text-destructive"
         : "text-muted-foreground";
 
   return (
@@ -406,7 +406,7 @@ export default function OperationalKpiSection() {
           value={kpi.thisMonthNew}
           trend={kpi.memberTrend}
           trendLabel={kpi.memberTrendLabel}
-          color="bg-blue-50 text-blue-600"
+          color="bg-cat-1/5 text-cat-1"
           loading={membersLoading}
         />
         <KpiCard
@@ -414,7 +414,7 @@ export default function OperationalKpiSection() {
           label="활성 활동"
           value={kpi.activeActivityCount}
           sub={`전체 ${kpi.totalActivityCount}건 중`}
-          color="bg-violet-50 text-violet-600"
+          color="bg-cat-5/5 text-cat-5"
           loading={activitiesLoading}
         />
         <KpiCard
@@ -422,7 +422,7 @@ export default function OperationalKpiSection() {
           label="평균 세미나 출석률"
           value={isLoading ? "-" : `${kpi.avgAttendanceRate}%`}
           sub="최근 3개월"
-          color="bg-emerald-50 text-emerald-600"
+          color="bg-success/5 text-success"
           loading={seminarsLoading || attendeesLoading}
         />
         <KpiCard
@@ -430,14 +430,14 @@ export default function OperationalKpiSection() {
           label="체크리스트 활성률"
           value={`${kpi.checklistRate}%`}
           sub={`${kpi.enabledItemCount} / ${kpi.totalItemCount} 항목`}
-          color="bg-amber-50 text-amber-600"
+          color="bg-warning/5 text-warning"
         />
         <KpiCard
           icon={Layout}
           label="개인화 적용률"
           value={`${kpi.personalizationRate}%`}
           sub={`${kpi.withLayoutCount} / ${kpi.approvedMemberCount} 명`}
-          color="bg-cyan-50 text-cyan-600"
+          color="bg-info/5 text-info"
           loading={membersLoading}
         />
       </div>
@@ -539,16 +539,16 @@ export default function OperationalKpiSection() {
           ) : (
             <div className="space-y-4">
               <div className="flex items-end gap-3">
-                <span className="text-4xl font-bold text-cyan-600">
+                <span className="text-4xl font-bold text-info">
                   {kpi.personalizationRate}%
                 </span>
                 <span className="mb-1 text-sm text-muted-foreground">
                   승인 회원 중 개인화 레이아웃 저장
                 </span>
               </div>
-              <div className="h-3 w-full overflow-hidden rounded-full bg-slate-100">
+              <div className="h-3 w-full overflow-hidden rounded-full bg-muted">
                 <div
-                  className="h-full rounded-full bg-cyan-500 transition-all"
+                  className="h-full rounded-full bg-info transition-all"
                   style={{ width: `${kpi.personalizationRate}%` }}
                 />
               </div>
@@ -556,7 +556,7 @@ export default function OperationalKpiSection() {
                 {kpi.withLayoutCount}명이 대시보드 위젯 배치를 직접 저장했습니다.
                 (전체 승인 회원 {kpi.approvedMemberCount}명 중)
               </p>
-              <div className="rounded-lg bg-slate-50 p-3 text-xs text-slate-600">
+              <div className="rounded-lg bg-muted/50 p-3 text-xs text-muted-foreground">
                 <p className="font-medium mb-1">체크리스트 항목 현황</p>
                 <p>
                   활성 항목 {kpi.enabledItemCount}개 / 전체 {kpi.totalItemCount}개

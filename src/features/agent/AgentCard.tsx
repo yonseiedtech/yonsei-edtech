@@ -3,9 +3,9 @@
 import type { Agent } from "./agent-types";
 
 const STATUS_STYLES = {
-  idle: "bg-green-100 text-green-700",
-  running: "bg-blue-100 text-blue-700 animate-pulse",
-  error: "bg-red-100 text-red-700",
+  idle: "bg-success/10 text-success",
+  running: "bg-cat-1/10 text-cat-1 animate-pulse",
+  error: "bg-destructive/10 text-destructive",
 };
 
 const STATUS_LABELS = { idle: "대기 중", running: "실행 중", error: "에러" };

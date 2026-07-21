@@ -130,8 +130,8 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
     return (
       <div className="space-y-4 rounded-2xl border bg-card p-8 shadow-sm">
         <div className="flex flex-col items-center gap-3 py-4">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-amber-100">
-            <Clock size={28} className="text-amber-600" />
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-warning/10">
+            <Clock size={28} className="text-warning" />
           </div>
           <h2 className="text-lg font-bold">승인 대기 중</h2>
           <p className="text-center text-sm text-muted-foreground">
@@ -139,8 +139,8 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
           </p>
         </div>
 
-        <div className="rounded-lg bg-amber-50 p-4">
-          <div className="space-y-2 text-sm text-amber-800">
+        <div className="rounded-lg bg-warning/5 p-4">
+          <div className="space-y-2 text-sm text-warning">
             <div className="flex items-start gap-2">
               <Mail size={16} className="mt-0.5 shrink-0" />
               <p>
@@ -153,16 +153,16 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
                 으로 다시 로그인해 이용하실 수 있습니다. 승인 여부는 로그인 시 확인됩니다.
               </p>
             </div>
-            <p className="text-xs text-amber-600">
+            <p className="text-xs text-warning">
               일반적으로 1~2 영업일 이내에 승인이 완료됩니다.
             </p>
             {/* RT-3(2026-07-04): 승인 대기 중에도 가치를 맛보게 — 공개 콘텐츠 링크 */}
-            <div className="mt-2 border-t border-amber-200 pt-2">
-              <p className="mb-1.5 text-xs font-medium text-amber-800">기다리는 동안 둘러보세요</p>
+            <div className="mt-2 border-t border-warning/20 pt-2">
+              <p className="mb-1.5 text-xs font-medium text-warning">기다리는 동안 둘러보세요</p>
               <div className="flex flex-wrap gap-1.5">
-                <Link href="/about" className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs text-amber-800 hover:bg-amber-100">학회 소개</Link>
-                <Link href="/card-news" className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs text-amber-800 hover:bg-amber-100">카드뉴스</Link>
-                <Link href="/journal" className="rounded-full border border-amber-300 bg-white px-2.5 py-1 text-xs text-amber-800 hover:bg-amber-100">연구지</Link>
+                <Link href="/about" className="rounded-full border border-warning/30 bg-white px-2.5 py-1 text-xs text-warning hover:bg-warning/10">학회 소개</Link>
+                <Link href="/card-news" className="rounded-full border border-warning/30 bg-white px-2.5 py-1 text-xs text-warning hover:bg-warning/10">카드뉴스</Link>
+                <Link href="/journal" className="rounded-full border border-warning/30 bg-white px-2.5 py-1 text-xs text-warning hover:bg-warning/10">연구지</Link>
               </div>
             </div>
           </div>
@@ -216,7 +216,7 @@ export default function LoginForm({ onSuccess, hideSignupLink, signupHref }: Log
           type="checkbox"
           checked={rememberUsername}
           onChange={(e) => setRememberUsername(e.target.checked)}
-          className="h-4 w-4 rounded border-gray-300"
+          className="h-4 w-4 rounded border-muted"
         />
         아이디 저장
       </label>

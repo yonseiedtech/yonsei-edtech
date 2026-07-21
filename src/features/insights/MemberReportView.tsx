@@ -222,7 +222,7 @@ export default function MemberReportView() {
 
   if (!isAdmin) {
     return (
-      <div className="rounded-2xl border bg-amber-50 p-6 text-center text-sm text-amber-800">
+      <div className="rounded-2xl border bg-warning/5 p-6 text-center text-sm text-warning">
         <ShieldAlert className="mx-auto mb-2" size={24} />
         관리자 전용 페이지입니다.
       </div>
@@ -237,10 +237,10 @@ export default function MemberReportView() {
     <div className="space-y-6">
       {/* KPI */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Kpi icon={Users} color="bg-blue-50 text-blue-700" label="총 회원" value={kpi.total} sub={`${kpi.activeRate}% 챔피언+활성`} />
-        <Kpi icon={Trophy} color="bg-violet-50 text-violet-700" label="챔피언" value={kpi.champion} sub="loyalty 70+" />
-        <Kpi icon={Clock} color="bg-amber-50 text-amber-700" label="휴면" value={kpi.dormant} sub="loyalty 15 미만" />
-        <Kpi icon={ShieldAlert} color="bg-rose-50 text-rose-700" label="운영진 저활동" value={kpi.staffLow} sub="loyalty 30 미만" />
+        <Kpi icon={Users} color="bg-cat-1/5 text-cat-1" label="총 회원" value={kpi.total} sub={`${kpi.activeRate}% 챔피언+활성`} />
+        <Kpi icon={Trophy} color="bg-cat-5/5 text-cat-5" label="챔피언" value={kpi.champion} sub="loyalty 70+" />
+        <Kpi icon={Clock} color="bg-warning/5 text-warning" label="휴면" value={kpi.dormant} sub="loyalty 15 미만" />
+        <Kpi icon={ShieldAlert} color="bg-destructive/5 text-destructive" label="운영진 저활동" value={kpi.staffLow} sub="loyalty 30 미만" />
       </section>
 
       {/* 세그먼트 분포 */}
@@ -292,7 +292,7 @@ export default function MemberReportView() {
               </span>
               <div className="h-2 flex-1 overflow-hidden rounded-full bg-muted">
                 <div
-                  className={cn("h-full rounded-full", stage === 0 ? "bg-slate-300 dark:bg-slate-600" : "bg-gradient-to-r from-primary to-sky-500")}
+                  className={cn("h-full rounded-full", stage === 0 ? "bg-muted-foreground/30" : "bg-gradient-to-r from-primary to-cat-1")}
                   style={{ width: `${pct}%` }}
                 />
               </div>
@@ -319,7 +319,7 @@ export default function MemberReportView() {
                 </span>
                 <div className="relative h-4 flex-1 overflow-hidden rounded-full bg-muted">
                   <div
-                    className="h-full rounded-full bg-violet-500"
+                    className="h-full rounded-full bg-cat-5"
                     style={{ width: `${avgLoyalty}%` }}
                   />
                 </div>
@@ -350,21 +350,21 @@ export default function MemberReportView() {
           </div>
           <div className="mb-4 flex flex-wrap gap-x-4 gap-y-1.5 text-xs">
             <span className="flex items-center gap-1.5">
-              <ArrowUpRight size={14} className="text-emerald-600" />
+              <ArrowUpRight size={14} className="text-success" />
               상승 <b className="tabular-nums">{momentum.rising}</b>
             </span>
             <span className="flex items-center gap-1.5">
-              <ArrowRight size={14} className="text-slate-400" />
+              <ArrowRight size={14} className="text-muted-foreground" />
               유지 <b className="tabular-nums">{momentum.flat}</b>
             </span>
             <span className="flex items-center gap-1.5">
-              <ArrowDownRight size={14} className="text-rose-600" />
+              <ArrowDownRight size={14} className="text-destructive" />
               하락 <b className="tabular-nums">{momentum.falling}</b>
             </span>
           </div>
           {momentum.cooling.length > 0 ? (
             <>
-              <p className="mb-2 text-xs font-medium text-rose-700">
+              <p className="mb-2 text-xs font-medium text-destructive">
                 최근 활동이 식어가는 회원 (하락폭 큰 순)
               </p>
               <ul className="space-y-1.5">
@@ -385,7 +385,7 @@ export default function MemberReportView() {
                     <span className="tabular-nums text-xs text-muted-foreground">
                       {m.prevCount} → {m.recentCount}
                     </span>
-                    <span className="flex items-center gap-0.5 text-xs font-bold tabular-nums text-rose-600">
+                    <span className="flex items-center gap-0.5 text-xs font-bold tabular-nums text-destructive">
                       <ArrowDownRight size={12} />
                       {m.prevCount - m.recentCount}
                     </span>
@@ -410,17 +410,17 @@ export default function MemberReportView() {
 
       {/* 운영진 저활동 경보 */}
       {staffAlerts.length > 0 && (
-        <section className="rounded-2xl border border-rose-200 bg-rose-50/40 p-5">
-          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-rose-800">
+        <section className="rounded-2xl border border-destructive/20 bg-destructive/5 p-5">
+          <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-destructive">
             <AlertTriangle size={16} />
             운영진 저활동 경보 ({staffAlerts.length}명)
           </div>
-          <p className="mb-3 text-xs text-rose-700/80">
+          <p className="mb-3 text-xs text-destructive">
             staff 이상 권한 보유 인원 중 로얄티 점수 30 미만 (참여·콘텐츠·연구 모두 저조).
           </p>
           <div className="overflow-x-auto rounded-lg border bg-card">
             <table className="w-full min-w-[640px] text-sm">
-              <thead className="bg-rose-50/60 text-xs text-rose-800">
+              <thead className="bg-destructive/5 text-xs text-destructive">
                 <tr className="text-left">
                   <th className="px-3 py-2 font-medium">이름</th>
                   <th className="px-3 py-2 font-medium">역할</th>
@@ -431,7 +431,7 @@ export default function MemberReportView() {
               </thead>
               <tbody className="divide-y">
                 {staffAlerts.map((r) => (
-                  <tr key={r.userId} className="hover:bg-rose-50/30">
+                  <tr key={r.userId} className="hover:bg-destructive/5">
                     <td className="px-3 py-2 font-medium">
                       <a href={`/profile/${r.userId}`} className="hover:underline">{r.name}</a>
                     </td>
@@ -453,7 +453,7 @@ export default function MemberReportView() {
         {/* 챔피언 Top 10 */}
         <section className="rounded-2xl border bg-card p-5">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-            <Crown size={16} className="text-violet-600" />
+            <Crown size={16} className="text-cat-5" />
             로얄티 Top 10
           </div>
           <ol className="space-y-2">
@@ -462,7 +462,7 @@ export default function MemberReportView() {
                 <div className="flex items-center gap-2">
                   <span className={cn(
                     "flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-xs font-bold",
-                    i === 0 ? "bg-amber-400 text-white" : i < 3 ? "bg-amber-200 text-amber-900" : "bg-muted text-foreground",
+                    i === 0 ? "bg-warning text-white" : i < 3 ? "bg-warning/20 text-warning" : "bg-muted text-foreground",
                   )}>
                     {i + 1}
                   </span>
@@ -489,7 +489,7 @@ export default function MemberReportView() {
         {/* 저활동·휴면 회원 */}
         <section className="rounded-2xl border bg-card p-5">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-            <Clock size={16} className="text-amber-600" />
+            <Clock size={16} className="text-warning" />
             저활동·휴면 회원 (loyalty 15 미만 우선)
           </div>
           {dormantList.length === 0 ? (
@@ -584,7 +584,7 @@ export default function MemberReportView() {
                     <Badge variant="outline" className={cn("text-[10px]", segmentColor(r.segment))}>
                       {segmentLabel(r.segment)}
                     </Badge>
-                    {r.staffLowActivity && <Badge variant="outline" className="ml-1 border-rose-200 bg-rose-50 text-[10px] text-rose-700">경보</Badge>}
+                    {r.staffLowActivity && <Badge variant="outline" className="ml-1 border-destructive/20 bg-destructive/5 text-[10px] text-destructive">경보</Badge>}
                   </td>
                   <td className="px-3 py-2 text-center tabular-nums">{r.attendanceCount}</td>
                   <td className="px-3 py-2 text-center tabular-nums">{r.activityCount}</td>
@@ -593,7 +593,7 @@ export default function MemberReportView() {
                   <td className="px-3 py-2 text-center tabular-nums">{r.studyHours > 0 ? r.studyHours.toFixed(1) : "-"}</td>
                   <td className="px-3 py-2 text-center">
                     {r.hasResearchProposal ? (
-                      <Badge variant="outline" className="bg-violet-50 text-violet-700 text-[10px]">
+                      <Badge variant="outline" className="bg-cat-5/5 text-cat-5 text-[10px]">
                         <FileText size={10} className="mr-0.5" />보유
                       </Badge>
                     ) : (
@@ -637,20 +637,20 @@ function Kpi({ icon: Icon, color, label, value, sub }: {
 }
 
 const SCORE_CHIP_TONE = {
-  blue: "bg-blue-50 text-blue-700 border-blue-200",
-  emerald: "bg-emerald-50 text-emerald-700 border-emerald-200",
-  violet: "bg-violet-50 text-violet-700 border-violet-200",
-  amber: "bg-amber-50 text-amber-700 border-amber-200",
-  slate: "bg-slate-50 text-slate-600 border-slate-200",
+  blue: "bg-cat-1/5 text-cat-1 border-cat-1/20",
+  emerald: "bg-success/5 text-success border-success/20",
+  violet: "bg-cat-5/5 text-cat-5 border-cat-5/20",
+  amber: "bg-warning/5 text-warning border-warning/20",
+  slate: "bg-muted/50 text-muted-foreground border-muted-foreground/20",
 } as const;
 
 /** 세그먼트 분포 막대·범례용 솔리드 색상 */
 const SEGMENT_BAR_COLOR: Record<MemberMetricsRow["segment"], string> = {
-  champion: "bg-violet-500",
-  active: "bg-emerald-500",
-  new: "bg-blue-500",
-  at_risk: "bg-amber-500",
-  dormant: "bg-slate-400",
+  champion: "bg-cat-5",
+  active: "bg-success",
+  new: "bg-cat-1",
+  at_risk: "bg-warning",
+  dormant: "bg-muted-foreground",
 };
 
 function ScoreChip({ label, value, max, tone }: {

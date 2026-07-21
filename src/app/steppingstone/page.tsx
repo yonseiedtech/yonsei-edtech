@@ -27,7 +27,7 @@ const STATIC_TRACKS: StaticTrack[] = [
       "합격 직후부터 입학 후 1학기 정착까지, 사전 준비 · OT · 수강신청 · 학회 가입을 한 흐름으로 안내합니다.",
     icon: GraduationCap,
     href: "/steppingstone/onboarding",
-    color: "bg-blue-50 text-blue-700 dark:bg-blue-950 dark:text-blue-300",
+    color: "bg-cat-1/5 text-cat-1",
   },
   {
     key: "current_student",
@@ -35,7 +35,7 @@ const STATIC_TRACKS: StaticTrack[] = [
     description: "학기별 학습 흐름·연구 노하우·세미나 활용법.",
     icon: BookOpen,
     href: "/steppingstone/current-student",
-    color: "bg-emerald-50 text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300",
+    color: "bg-success/5 text-success",
   },
   {
     key: "comprehensive_exam",
@@ -43,7 +43,7 @@ const STATIC_TRACKS: StaticTrack[] = [
     description: "주요 학회·학술대회 일정, 발표 신청 방법, 발표문/포스터 작성 가이드.",
     icon: ScrollText,
     href: "/steppingstone/conference",
-    color: "bg-amber-50 text-amber-700 dark:bg-amber-950 dark:text-amber-300",
+    color: "bg-warning/5 text-warning",
   },
   {
     key: "graduation",
@@ -51,7 +51,7 @@ const STATIC_TRACKS: StaticTrack[] = [
     description: "논문 심사 연습(음성 채점·따라 읽기) · 심사 절차 · 졸업 후 네트워크.",
     icon: Award,
     href: "/steppingstone/thesis-defense",
-    color: "bg-purple-50 text-purple-700 dark:bg-purple-950 dark:text-purple-300",
+    color: "bg-cat-5/5 text-cat-5",
   },
 ];
 
@@ -80,7 +80,7 @@ export default function SteppingstoneHubPage() {
           학회 자체 운영 가이드 시스템
         </div>
         <div className="mt-4 flex items-start gap-4">
-          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-sky-400/15 text-primary shadow-sm">
+          <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-primary/15 to-cat-1/15 text-primary shadow-sm">
             <Compass size={28} />
           </div>
           <div className="flex-1">
@@ -173,10 +173,10 @@ export default function SteppingstoneHubPage() {
           <div className="group relative flex flex-col overflow-hidden rounded-2xl border bg-card p-6 transition-all duration-300 hover:-translate-y-0.5 hover:border-primary/30 hover:shadow-lg">
             <div
               aria-hidden
-              className="absolute inset-y-0 left-0 w-1 bg-indigo-600 transition-all group-hover:w-1.5"
+              className="absolute inset-y-0 left-0 w-1 bg-cat-1 transition-all group-hover:w-1.5"
             />
             <div className="flex items-center gap-3">
-              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-indigo-50 text-indigo-700 shadow-sm transition-transform group-hover:scale-105 dark:bg-indigo-950 dark:text-indigo-300">
+              <div className="flex h-14 w-14 items-center justify-center rounded-2xl bg-cat-1/5 text-cat-1 shadow-sm transition-transform group-hover:scale-105">
                 <Blocks size={26} />
               </div>
               <div className="flex-1">

@@ -105,10 +105,10 @@ export default function FeedbackPage() {
       />
 
       {submitted ? (
-        <div className="mt-8 rounded-2xl border bg-green-50/60 p-8 text-center">
-          <CheckCircle2 size={40} className="mx-auto mb-4 text-green-600" />
-          <h2 className="mb-2 text-lg font-bold text-green-800">피드백이 전달되었습니다!</h2>
-          <p className="mb-6 text-sm text-green-700">
+        <div className="mt-8 rounded-2xl border bg-success/5 p-8 text-center">
+          <CheckCircle2 size={40} className="mx-auto mb-4 text-success" />
+          <h2 className="mb-2 text-lg font-bold text-success">피드백이 전달되었습니다!</h2>
+          <p className="mb-6 text-sm text-success">
             소중한 의견 감사합니다. 다음 개선에 반영하겠습니다.
           </p>
           <Button variant="outline" size="sm" onClick={handleReset}>

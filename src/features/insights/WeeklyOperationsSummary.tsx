@@ -285,7 +285,7 @@ export default function WeeklyOperationsSummary() {
           label="신규 회원 (최근 7일)"
           value={newMembers.last7}
           sub={`최근 30일 ${newMembers.last30}명`}
-          color="bg-blue-50 text-blue-600 dark:bg-blue-950/30"
+          color="bg-cat-1/5 text-cat-1"
           loading={metricsLoading}
         />
         <SummaryCard
@@ -293,7 +293,7 @@ export default function WeeklyOperationsSummary() {
           label="활동 모멘텀 (30일)"
           value={`${activityTrend.delta >= 0 ? "+" : ""}${activityTrend.delta}`}
           sub={`이벤트 ${activityTrend.recentEvents} (이전 ${activityTrend.prevEvents})`}
-          color="bg-violet-50 text-violet-600 dark:bg-violet-950/30"
+          color="bg-cat-5/5 text-cat-5"
           loading={metricsLoading}
         />
         <SummaryCard
@@ -301,7 +301,7 @@ export default function WeeklyOperationsSummary() {
           label="이탈 위험 회원"
           value={churnRisk.length}
           sub="활동 감소·장기 미접속"
-          color="bg-rose-50 text-rose-600 dark:bg-rose-950/30"
+          color="bg-destructive/5 text-destructive"
           loading={metricsLoading}
         />
         <SummaryCard
@@ -309,7 +309,7 @@ export default function WeeklyOperationsSummary() {
           label="미응답 신청"
           value={truePending.length + totalActivityPending}
           sub={`가입 ${truePending.length} · 활동 ${totalActivityPending}`}
-          color="bg-amber-50 text-amber-600 dark:bg-amber-950/30"
+          color="bg-warning/5 text-warning"
           loading={isLoading || actsLoading || applicantsLoading}
         />
       </div>
@@ -330,20 +330,20 @@ export default function WeeklyOperationsSummary() {
         >
           {/* 승인 대기 신뢰도 분리 */}
           <div className="mb-3 grid grid-cols-2 gap-2">
-            <div className="rounded-lg border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900 dark:bg-emerald-950/30">
-              <p className="flex items-center gap-1 text-xs font-medium text-emerald-700 dark:text-emerald-300">
+            <div className="rounded-lg border border-success/20 bg-success/5 p-3">
+              <p className="flex items-center gap-1 text-xs font-medium text-success">
                 <ShieldCheck size={13} /> 자동 승인 가능
               </p>
-              <p className="mt-1 text-xl font-bold text-emerald-700 dark:text-emerald-300">
+              <p className="mt-1 text-xl font-bold text-success">
                 {qualifying.length}
                 <span className="ml-1 text-xs font-normal text-muted-foreground">명</span>
               </p>
             </div>
-            <div className="rounded-lg border border-amber-200 bg-amber-50 p-3 dark:border-amber-900 dark:bg-amber-950/30">
-              <p className="flex items-center gap-1 text-xs font-medium text-amber-700 dark:text-amber-300">
+            <div className="rounded-lg border border-warning/20 bg-warning/5 p-3">
+              <p className="flex items-center gap-1 text-xs font-medium text-warning">
                 <AlertTriangle size={13} /> 수동 검토 필요
               </p>
-              <p className="mt-1 text-xl font-bold text-amber-700 dark:text-amber-300">
+              <p className="mt-1 text-xl font-bold text-warning">
                 {risky.length}
                 <span className="ml-1 text-xs font-normal text-muted-foreground">명</span>
               </p>
@@ -375,8 +375,8 @@ export default function WeeklyOperationsSummary() {
                     <span
                       className={`ml-2 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-semibold ${
                         isQualifying
-                          ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300"
-                          : "bg-amber-100 text-amber-700 dark:bg-amber-950/40 dark:text-amber-300"
+                          ? "bg-success/10 text-success"
+                          : "bg-warning/10 text-warning"
                       }`}
                     >
                       {isQualifying ? "신뢰" : "검토"}
@@ -400,23 +400,23 @@ export default function WeeklyOperationsSummary() {
           ) : (
             <div className="space-y-3">
               <div className="grid grid-cols-3 gap-2">
-                <div className="rounded-lg bg-emerald-50 p-3 text-center dark:bg-emerald-950/30">
-                  <TrendingUp size={16} className="mx-auto text-emerald-600" />
-                  <p className="mt-1 text-lg font-bold text-emerald-700 dark:text-emerald-300">
+                <div className="rounded-lg bg-success/5 p-3 text-center">
+                  <TrendingUp size={16} className="mx-auto text-success" />
+                  <p className="mt-1 text-lg font-bold text-success">
                     {activityTrend.rising}
                   </p>
                   <p className="text-[10px] text-muted-foreground">상승</p>
                 </div>
-                <div className="rounded-lg bg-slate-50 p-3 text-center dark:bg-slate-900/40">
-                  <Minus size={16} className="mx-auto text-slate-500" />
-                  <p className="mt-1 text-lg font-bold text-slate-700 dark:text-slate-300">
+                <div className="rounded-lg bg-muted/50 p-3 text-center">
+                  <Minus size={16} className="mx-auto text-muted-foreground" />
+                  <p className="mt-1 text-lg font-bold text-foreground">
                     {activityTrend.flat}
                   </p>
                   <p className="text-[10px] text-muted-foreground">유지</p>
                 </div>
-                <div className="rounded-lg bg-rose-50 p-3 text-center dark:bg-rose-950/30">
-                  <TrendingDown size={16} className="mx-auto text-rose-500" />
-                  <p className="mt-1 text-lg font-bold text-rose-700 dark:text-rose-300">
+                <div className="rounded-lg bg-destructive/5 p-3 text-center">
+                  <TrendingDown size={16} className="mx-auto text-destructive" />
+                  <p className="mt-1 text-lg font-bold text-destructive">
                     {activityTrend.falling}
                   </p>
                   <p className="text-[10px] text-muted-foreground">하강</p>
@@ -429,9 +429,9 @@ export default function WeeklyOperationsSummary() {
                 <strong
                   className={
                     activityTrend.delta > 0
-                      ? "text-emerald-600"
+                      ? "text-success"
                       : activityTrend.delta < 0
-                        ? "text-rose-500"
+                        ? "text-destructive"
                         : "text-foreground"
                   }
                 >
@@ -467,10 +467,10 @@ export default function WeeklyOperationsSummary() {
                 <li key={user.id}>
                   <Link
                     href={`/console/members/${user.id}`}
-                    className="group flex items-center justify-between rounded-lg border bg-background px-3 py-2 text-sm transition-colors hover:border-rose-200"
+                    className="group flex items-center justify-between rounded-lg border bg-background px-3 py-2 text-sm transition-colors hover:border-destructive/20"
                   >
                     <div className="min-w-0">
-                      <p className="truncate font-medium transition-colors group-hover:text-rose-600">
+                      <p className="truncate font-medium transition-colors group-hover:text-destructive">
                         {user.name}
                       </p>
                       <p className="truncate text-[11px] text-muted-foreground">
@@ -480,7 +480,7 @@ export default function WeeklyOperationsSummary() {
                           : " · 접속 기록 없음"}
                       </p>
                     </div>
-                    <span className="ml-2 shrink-0 rounded-full bg-rose-100 px-2 py-0.5 text-[10px] font-semibold text-rose-600 dark:bg-rose-950/40 dark:text-rose-300">
+                    <span className="ml-2 shrink-0 rounded-full bg-destructive/10 px-2 py-0.5 text-[10px] font-semibold text-destructive">
                       위험
                     </span>
                   </Link>
@@ -522,10 +522,10 @@ export default function WeeklyOperationsSummary() {
                   <li key={activity.id}>
                     <Link
                       href={detailHref}
-                      className="group flex items-center justify-between rounded-lg border bg-background px-3 py-2 text-sm transition-colors hover:border-amber-200"
+                      className="group flex items-center justify-between rounded-lg border bg-background px-3 py-2 text-sm transition-colors hover:border-warning/20"
                     >
                       <div className="min-w-0">
-                        <p className="truncate font-medium transition-colors group-hover:text-amber-600">
+                        <p className="truncate font-medium transition-colors group-hover:text-warning">
                           {activity.title}
                         </p>
                         <p className="truncate text-[11px] text-muted-foreground">
@@ -533,7 +533,7 @@ export default function WeeklyOperationsSummary() {
                           {activity.date ? ` · ${formatDate(activity.date)}` : ""}
                         </p>
                       </div>
-                      <span className="ml-2 shrink-0 rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-950/40 dark:text-amber-300">
+                      <span className="ml-2 shrink-0 rounded-full bg-warning/10 px-2 py-0.5 text-[10px] font-semibold text-warning">
                         <Clock size={10} className="-mt-0.5 mr-0.5 inline" />
                         {pendingCount}건
                       </span>

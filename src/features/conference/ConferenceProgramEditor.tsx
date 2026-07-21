@@ -919,7 +919,7 @@ export default function ConferenceProgramEditor({
                   variant="outline"
                   onClick={() => aiFileInputRef.current?.click()}
                   disabled={extracting}
-                  className="border-purple-200 bg-purple-50 text-purple-700 hover:bg-purple-100"
+                  className="border-cat-5/20 bg-cat-5/5 text-cat-5 hover:bg-cat-5/10"
                 >
                   {extracting ? (
                     <Loader2 className="mr-1 h-3.5 w-3.5 animate-spin" />
@@ -957,15 +957,15 @@ export default function ConferenceProgramEditor({
         <div className="flex items-center gap-2">
           {/* Phase 0 P0: dirty / 저장 중 / 저장됨 상태 표시 */}
           {saving ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 px-2 py-0.5 text-[11px] font-semibold text-blue-700 dark:bg-blue-950/40 dark:text-blue-300">
+            <span className="inline-flex items-center gap-1 rounded-full bg-cat-1/10 px-2 py-0.5 text-[11px] font-semibold text-cat-1">
               <Loader2 className="h-3 w-3 animate-spin" /> 저장 중…
             </span>
           ) : isDirty ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 px-2 py-0.5 text-[11px] font-semibold text-amber-800 dark:bg-amber-950/40 dark:text-amber-300">
+            <span className="inline-flex items-center gap-1 rounded-full bg-warning/10 px-2 py-0.5 text-[11px] font-semibold text-warning">
               ● 저장 안 됨
             </span>
           ) : savedAt ? (
-            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-semibold text-emerald-700 dark:bg-emerald-950/40 dark:text-emerald-300">
+            <span className="inline-flex items-center gap-1 rounded-full bg-success/10 px-2 py-0.5 text-[11px] font-semibold text-success">
               ✓ 저장됨 · {savedAt.toLocaleTimeString("ko-KR")}
             </span>
           ) : null}
@@ -1242,13 +1242,13 @@ export default function ConferenceProgramEditor({
         <DialogContent className="max-h-[85vh] max-w-3xl overflow-y-auto">
           <DialogHeader>
             <DialogTitle className="flex items-center gap-2">
-              <Sparkles className="h-4 w-4 text-purple-600" />
+              <Sparkles className="h-4 w-4 text-cat-5" />
               AI 추출 결과 미리보기
             </DialogTitle>
           </DialogHeader>
           {extractPreview && (
             <div className="space-y-4">
-              <div className="rounded-lg border bg-purple-50 px-3 py-2 text-xs text-purple-900">
+              <div className="rounded-lg border bg-cat-5/5 px-3 py-2 text-xs text-cat-5">
                 총 {extractPreview.days.length}일 ·{" "}
                 {extractPreview.days.reduce((n, d) => n + d.sessions.length, 0)}개 세션이 추출되었습니다.
                 결과를 검토한 뒤 <b>병합</b>(기존 일자에 추가) 또는 <b>교체</b>(전체 덮어쓰기)를 선택하세요.
@@ -1462,9 +1462,9 @@ export default function ConferenceProgramEditor({
             <DialogTitle>시간 충돌 검사 결과</DialogTitle>
           </DialogHeader>
           {conflictsDialog && conflictsDialog.items.length === 0 ? (
-            <div className="rounded-md border border-emerald-200 bg-emerald-50 p-4 text-sm text-emerald-900 dark:border-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-100">
+            <div className="rounded-md border border-success/20 bg-success/5 p-4 text-sm text-success">
               ✓ 동일 트랙·동일 시간 충돌이 발견되지 않았습니다.
-              <p className="mt-1 text-xs text-emerald-800/80 dark:text-emerald-200/70">
+              <p className="mt-1 text-xs text-success">
                 포스터·휴식·네트워킹·미디어 카테고리 및 다른 트랙끼리는 동시 진행으로 정상 처리됩니다.
               </p>
             </div>

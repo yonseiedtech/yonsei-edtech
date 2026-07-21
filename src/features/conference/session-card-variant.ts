@@ -26,17 +26,17 @@ export function getSessionCardVariant(
 
 /** 카테고리별 좌측 컬러 바 색상 (primary variant 전용) */
 export const CATEGORY_ACCENT_BAR: Record<ConferenceSessionCategory, string> = {
-  keynote: "bg-purple-500 dark:bg-purple-400",
-  symposium: "bg-blue-500 dark:bg-blue-400",
-  panel: "bg-indigo-500 dark:bg-indigo-400",
-  paper: "bg-emerald-500 dark:bg-emerald-400",
-  poster: "bg-amber-500 dark:bg-amber-400",
-  media: "bg-fuchsia-500 dark:bg-fuchsia-400",
-  workshop: "bg-rose-500 dark:bg-rose-400",
-  networking: "bg-pink-500 dark:bg-pink-400",
-  ceremony: "bg-slate-600 dark:bg-slate-300",
-  break: "bg-gray-400 dark:bg-gray-500",
-  other: "bg-gray-400 dark:bg-gray-500",
+  keynote: "bg-cat-5",
+  symposium: "bg-cat-1",
+  panel: "bg-cat-1",
+  paper: "bg-success",
+  poster: "bg-warning",
+  media: "bg-cat-4",
+  workshop: "bg-destructive",
+  networking: "bg-cat-4",
+  ceremony: "bg-muted-foreground",
+  break: "bg-muted-foreground",
+  other: "bg-muted-foreground",
 };
 
 /** variant 별 카드 전체 클래스 (Card 컴포넌트 className 으로 적용) */
@@ -46,7 +46,7 @@ export function cardClassesForVariant(
 ): string {
   // Sprint 67-X: 시각 위계 강화 — plan 없어도 카드가 활성 느낌이 나도록
   const base = isPlanned
-    ? "border-blue-300 bg-blue-50/60 shadow-sm dark:border-blue-700 dark:bg-blue-950/40"
+    ? "border-cat-1/30 bg-cat-1/5 shadow-sm"
     : "border-border/80 bg-card";
 
   if (variant === "primary") {

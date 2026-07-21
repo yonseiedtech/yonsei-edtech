@@ -62,8 +62,8 @@ const STATUS_LABELS: Record<SessionPlanStatus, string> = {
 };
 
 const STATUS_COLORS: Record<SessionPlanStatus, string> = {
-  planned: "bg-blue-50 text-blue-700",
-  attended: "bg-emerald-50 text-emerald-700",
+  planned: "bg-cat-1/5 text-cat-1",
+  attended: "bg-success/5 text-success",
   skipped: "bg-muted text-muted-foreground",
 };
 
@@ -406,7 +406,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
         <CardHeader>
           <CardTitle className="flex flex-wrap items-center gap-2">
             {program.title}
-            <Badge variant="secondary" className="bg-amber-50 text-xs text-amber-700">
+            <Badge variant="secondary" className="bg-warning/5 text-xs text-warning">
               {activityTitle}
             </Badge>
           </CardTitle>
@@ -427,7 +427,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
             )}
             <Link
               href={`/activities/external/${activityId}/program/roundup`}
-              className="inline-flex items-center gap-1 rounded-md border border-amber-200 bg-amber-50 px-2 py-0.5 text-xs font-medium text-amber-900 hover:bg-amber-100"
+              className="inline-flex items-center gap-1 rounded-md border border-warning/20 bg-warning/5 px-2 py-0.5 text-xs font-medium text-warning hover:bg-warning/10"
               title="참석자들의 후기를 세션별로 모아 봅니다"
             >
               <Sparkles className="h-3 w-3" /> 후기 라운드업
@@ -435,12 +435,12 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
           </div>
           {user && (
             <div className="flex flex-wrap items-center gap-2">
-              <Badge className="bg-blue-50 text-blue-700">내 일정 {myCount}개</Badge>
-              {attendedCount > 0 && <Badge className="bg-emerald-50 text-emerald-700">참석 완료 {attendedCount}개</Badge>}
+              <Badge className="bg-cat-1/5 text-cat-1">내 일정 {myCount}개</Badge>
+              {attendedCount > 0 && <Badge className="bg-success/5 text-success">참석 완료 {attendedCount}개</Badge>}
               {conflictPairCount > 0 && (
                 <Badge
                   variant="outline"
-                  className="border-rose-300 bg-rose-50 text-rose-700"
+                  className="border-destructive/30 bg-destructive/5 text-destructive"
                   title="같은 시간대에 여러 세션을 선택했습니다"
                 >
                   <AlertTriangle className="mr-1 h-3 w-3" />
@@ -485,7 +485,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
       </Card>
 
       {!user && (
-        <div className="rounded-md border border-amber-200 bg-amber-50 p-4 text-sm text-amber-900">
+        <div className="rounded-md border border-warning/20 bg-warning/5 p-4 text-sm text-warning">
           로그인하시면 세션을 내 일정에 추가하고 후기를 남길 수 있어요. {" "}
           <Link href="/login" className="font-semibold underline">로그인하기</Link>
         </div>
@@ -677,7 +677,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                 <button
                   type="button"
                   onClick={() => setOnlyMine((v) => !v)}
-                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${onlyMine ? "bg-blue-100 text-blue-800 ring-2 ring-blue-300 dark:bg-blue-950/50 dark:text-blue-200 dark:ring-blue-700" : "border border-input bg-background text-muted-foreground hover:bg-muted"}`}
+                  className={`shrink-0 rounded-full px-3 py-1.5 text-xs font-semibold transition-colors ${onlyMine ? "bg-cat-1/10 text-cat-1 ring-2 ring-cat-1/30" : "border border-input bg-background text-muted-foreground hover:bg-muted"}`}
                   title="내가 추가한 세션만 보기"
                   aria-pressed={onlyMine}
                 >
@@ -826,9 +826,9 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                   <Card
                     className={`relative transition-all hover:shadow-md hover:-translate-y-0.5 ${cardClassesForVariant(variant, !!plan)} ${
                       isLive
-                        ? "ring-2 ring-emerald-500/60 dark:ring-emerald-400/60 shadow-md"
+                        ? "ring-2 ring-success/60 shadow-md"
                         : hasConflict
-                          ? "ring-2 ring-rose-400/40 dark:ring-rose-500/40"
+                          ? "ring-2 ring-destructive/40"
                           : ""
                     } ${isPast ? "opacity-75" : ""}`}
                   >
@@ -836,7 +836,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                       <span
                         aria-label="지금 진행 중"
                         title="지금 진행 중"
-                        className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2 py-0.5 text-[10px] font-bold text-white shadow"
+                        className="absolute right-3 top-3 z-10 inline-flex items-center gap-1 rounded-full bg-success px-2 py-0.5 text-[10px] font-bold text-white shadow"
                       >
                         <span className="relative flex h-2 w-2">
                           <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-white opacity-75" />
@@ -874,7 +874,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                         {companions.length > 0 && (
                           <Badge
                             variant="secondary"
-                            className="bg-purple-50 text-xs text-purple-700 dark:bg-purple-950/40 dark:text-purple-200"
+                            className="bg-cat-5/5 text-xs text-cat-5"
                             title={companions.map((c) => c.userName ?? "회원").join(", ")}
                           >
                             함께 {companions.length}명
@@ -883,7 +883,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                         {hasConflict && (
                           <Badge
                             variant="outline"
-                            className="border-rose-300 bg-rose-50 text-xs text-rose-700 dark:border-rose-700 dark:bg-rose-950/40 dark:text-rose-200"
+                            className="border-destructive/30 bg-destructive/5 text-xs text-destructive"
                             title={`시간이 겹치는 일정: ${conflicts.map((c) => `${c.sessionStartTime}~${c.sessionEndTime} ${c.sessionTitle ?? ""}`).join(", ")}`}
                           >
                             <AlertTriangle className="mr-1 h-3 w-3" />
@@ -922,38 +922,38 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                       )}
 
                       {plan && companions.length > 0 && (
-                        <div className="flex flex-wrap items-center gap-1 rounded-md border border-purple-100 bg-purple-50/50 p-2 text-xs text-purple-900">
+                        <div className="flex flex-wrap items-center gap-1 rounded-md border border-cat-5/20 bg-cat-5/5 p-2 text-xs text-cat-5">
                           <UserIcon className="h-3 w-3" />
                           <span className="font-semibold">함께 참석:</span>
                           {companions.slice(0, 6).map((c) => (
                             <Badge
                               key={c.id}
                               variant="secondary"
-                              className="bg-card text-[11px] text-purple-800"
+                              className="bg-card text-[11px] text-cat-5"
                             >
                               {c.userName ?? "회원"}
                             </Badge>
                           ))}
                           {companions.length > 6 && (
-                            <span className="text-[11px] text-purple-700">
+                            <span className="text-[11px] text-cat-5">
                               +{companions.length - 6}명
                             </span>
                           )}
                         </div>
                       )}
                       {plan?.reasonForSelection && (
-                        <div className="rounded-md bg-blue-50 p-2 text-xs text-blue-900">
+                        <div className="rounded-md bg-cat-1/5 p-2 text-xs text-cat-1">
                           <strong>선택 이유:</strong> {plan.reasonForSelection}
                         </div>
                       )}
                       {plan?.reflection && (
-                        <div className="rounded-md bg-emerald-50 p-2 text-xs text-emerald-900">
+                        <div className="rounded-md bg-success/5 p-2 text-xs text-success">
                           <strong>참석 후기:</strong> {plan.reflection}
                           {plan.rating ? <span className="ml-2">★ {plan.rating}/5</span> : null}
                         </div>
                       )}
                       {plan?.personalNotes && (
-                        <div className="rounded-md border border-amber-200 bg-amber-50/60 p-2 text-xs text-amber-900">
+                        <div className="rounded-md border border-warning/20 bg-warning/5 p-2 text-xs text-warning">
                           <div className="mb-0.5 flex items-center gap-1 font-semibold">
                             <NotebookPen className="h-3 w-3" /> 내 노트 (비공개)
                           </div>
@@ -1136,7 +1136,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
                     >
                       <Star
                         className={`h-5 w-5 ${
-                          n <= reflectionDialog.rating ? "fill-amber-400 text-amber-400" : "text-muted-foreground"
+                          n <= reflectionDialog.rating ? "fill-warning text-warning" : "text-muted-foreground"
                         }`}
                       />
                     </button>

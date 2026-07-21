@@ -22,7 +22,7 @@ export default function SessionIndicator({ className }: { className?: string }) 
         onMouseLeave={() => setHover(false)}
       >
         <div className="flex items-center gap-1 rounded-full border bg-muted/40 px-2 py-1 text-[11px] text-muted-foreground">
-          <ShieldCheck size={12} className="text-emerald-500" />
+          <ShieldCheck size={12} className="text-success" />
           세션 유지
         </div>
         {hover && (
@@ -43,9 +43,9 @@ export default function SessionIndicator({ className }: { className?: string }) 
         className={cn(
           "flex items-center gap-1 rounded-full border px-2 py-1 text-[11px] font-medium transition-colors",
           danger
-            ? "border-red-300 bg-red-50 text-red-600 animate-pulse"
+            ? "border-destructive/30 bg-destructive/5 text-destructive animate-pulse"
             : warn
-              ? "border-amber-300 bg-amber-50 text-amber-700"
+              ? "border-warning/30 bg-warning/5 text-warning"
               : "border-border bg-muted/40 text-muted-foreground",
         )}
         title="운영진 세션 (무활동 2시간 제한)"

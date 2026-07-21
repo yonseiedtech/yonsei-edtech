@@ -38,8 +38,8 @@ const STATUS_LABELS: Record<UserSessionPlan["status"], string> = {
 };
 
 const STATUS_COLORS: Record<UserSessionPlan["status"], string> = {
-  planned: "bg-blue-100 text-blue-800 dark:bg-blue-950/40 dark:text-blue-200",
-  attended: "bg-emerald-100 text-emerald-800 dark:bg-emerald-950/40 dark:text-emerald-200",
+  planned: "bg-cat-1/10 text-cat-1",
+  attended: "bg-success/10 text-success",
   skipped: "bg-muted text-muted-foreground",
 };
 
@@ -163,7 +163,7 @@ export default function MyActivitySessionsTab({ activityId, userId }: Props) {
         <div className="flex flex-wrap items-center gap-3 text-sm">
           <span>총 <b>{plans.length}</b>건</span>
           <span className="text-muted-foreground">·</span>
-          <span>참석 <b className="text-emerald-700 dark:text-emerald-300">{attendedCount}</b></span>
+          <span>참석 <b className="text-success">{attendedCount}</b></span>
           <span className="text-muted-foreground">·</span>
           <span>후기 작성 <b>{reflectedCount}</b></span>
         </div>
@@ -203,7 +203,7 @@ export default function MyActivitySessionsTab({ activityId, userId }: Props) {
                     </Badge>
                   )}
                   {p.rating && (
-                    <span className="inline-flex items-center gap-0.5 text-xs text-amber-700 dark:text-amber-300">
+                    <span className="inline-flex items-center gap-0.5 text-xs text-warning">
                       <Star className="h-3 w-3 fill-current" /> {p.rating}/5
                     </span>
                   )}
@@ -233,29 +233,29 @@ export default function MyActivitySessionsTab({ activityId, userId }: Props) {
                 )}
                 {/* Sprint 67 — 함께 참석 (본인 외): 회원명 chip 으로 표시 */}
                 {companions.length > 0 && (
-                  <div className="mt-1.5 flex flex-wrap items-center gap-1 rounded-md bg-purple-50 px-2 py-1 text-[11px] dark:bg-purple-950/30">
-                    <Users className="h-3 w-3 shrink-0 text-purple-700 dark:text-purple-300" />
-                    <span className="font-semibold text-purple-900 dark:text-purple-200">
+                  <div className="mt-1.5 flex flex-wrap items-center gap-1 rounded-md bg-cat-5/5 px-2 py-1 text-[11px]">
+                    <Users className="h-3 w-3 shrink-0 text-cat-5" />
+                    <span className="font-semibold text-cat-5">
                       함께 {companions.length}명:
                     </span>
                     {companions.slice(0, 6).map((c) => (
                       <Badge
                         key={c.id}
                         variant="secondary"
-                        className="bg-card text-[10px] text-purple-800 dark:text-purple-200"
+                        className="bg-card text-[10px] text-cat-5"
                       >
                         {c.userName ?? "회원"}
                       </Badge>
                     ))}
                     {companions.length > 6 && (
-                      <span className="text-purple-700 dark:text-purple-300">
+                      <span className="text-cat-5">
                         +{companions.length - 6}명
                       </span>
                     )}
                   </div>
                 )}
                 {p.reflection && (
-                  <p className="mt-1 line-clamp-2 rounded bg-emerald-50 px-2 py-1 text-xs text-emerald-900 dark:bg-emerald-950/30 dark:text-emerald-200">
+                  <p className="mt-1 line-clamp-2 rounded bg-success/5 px-2 py-1 text-xs text-success">
                     <MessageSquare className="mr-1 inline h-3 w-3" />
                     {p.reflection}
                   </p>

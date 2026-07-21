@@ -100,9 +100,9 @@ export default function ForgotPasswordPage() {
         {/* 완료 화면 — signup 자동승인 카드 패턴 참고 */}
         {step === "done" ? (
           <div className="rounded-3xl border bg-card p-8 text-center shadow-lg sm:p-10">
-            <div className="relative mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/15 to-sky-400/15 text-primary">
+            <div className="relative mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-gradient-to-br from-primary/15 to-cat-1/15 text-primary">
               <ShieldCheck size={36} />
-              <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-emerald-500 text-white shadow-md">
+              <span className="absolute -right-1 -top-1 flex h-6 w-6 items-center justify-center rounded-full bg-success text-white shadow-md">
                 <CheckCircle size={14} />
               </span>
             </div>

@@ -344,15 +344,15 @@ export default function ArchiveLandingPage() {
             className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="교육공학 진단평가 시작"
           >
-            <article className="overflow-hidden rounded-2xl border border-teal-200 bg-gradient-to-br from-teal-50 via-success/5 to-cyan-50 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md dark:border-teal-800 dark:from-teal-950/40 dark:to-cyan-950/40">
+            <article className="overflow-hidden rounded-2xl border border-info/20 bg-gradient-to-br from-info/5 via-success/5 to-info/5 shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70 text-teal-700 shadow-sm dark:bg-muted/60 dark:text-teal-300">
+                <div className="inline-flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-white/70 text-info shadow-sm dark:bg-muted/60">
                   <ClipboardCheck className="h-6 w-6" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
                   <div className="flex items-center gap-2">
                     <h3 className="text-lg font-semibold tracking-tight">먼저, 내 수준을 진단해 볼까요?</h3>
-                    <Badge variant="outline" className="text-[10px] font-medium border-teal-300 bg-white/60 text-teal-700 dark:bg-slate-900/50 dark:text-teal-300">
+                    <Badge variant="outline" className="text-[10px] font-medium border-info/30 bg-white/60 text-info">
                       추천 시작점
                     </Badge>
                   </div>
@@ -655,9 +655,9 @@ export default function ArchiveLandingPage() {
             className="group block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="선행연구 정리·서론 작성 가이드 보기"
           >
-            <article className="rounded-2xl border-l-4 border-l-teal-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <article className="rounded-2xl border-l-4 border-l-info bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-teal-100 text-teal-700 dark:bg-teal-950/60 dark:text-teal-300">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
                   <ListChecks className="h-5 w-5" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">
@@ -780,9 +780,9 @@ export default function ArchiveLandingPage() {
             className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
             aria-label="논문 인용 가이드 보기"
           >
-            <article className="rounded-2xl border-l-4 border-l-cyan-400 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+            <article className="rounded-2xl border-l-4 border-l-info bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
               <div className="flex items-center gap-4 p-5">
-                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cyan-100 text-cyan-700 dark:bg-cyan-950/60 dark:text-cyan-300">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
                   <Quote className="h-5 w-5" aria-hidden />
                 </div>
                 <div className="min-w-0 flex-1">

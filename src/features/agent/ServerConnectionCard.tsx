@@ -61,14 +61,14 @@ export default function ServerConnectionCard() {
 
   // 프로젝트 경로 복사 UI (항상 표시)
   const projectPathUI = (
-    <div className="flex items-center gap-2 rounded-lg border border-blue-100 bg-blue-50/50 px-3 py-2">
-      <Terminal size={14} className="shrink-0 text-blue-600" />
-      <span className="text-xs text-blue-700">프로젝트 경로</span>
-      <code className="flex-1 rounded bg-card/80 px-2 py-1 font-mono text-xs text-blue-900">
+    <div className="flex items-center gap-2 rounded-lg border border-cat-1/10 bg-cat-1/5 px-3 py-2">
+      <Terminal size={14} className="shrink-0 text-cat-1" />
+      <span className="text-xs text-cat-1">프로젝트 경로</span>
+      <code className="flex-1 rounded bg-card/80 px-2 py-1 font-mono text-xs text-cat-1">
         C:\work\yonsei-edtech
       </code>
-      <button onClick={handleCopyPath} className="rounded p-1 hover:bg-blue-100" title="경로 복사">
-        {copiedPath ? <Check size={14} className="text-green-600" /> : <Copy size={14} className="text-blue-500" />}
+      <button onClick={handleCopyPath} className="rounded p-1 hover:bg-cat-1/10" title="경로 복사">
+        {copiedPath ? <Check size={14} className="text-success" /> : <Copy size={14} className="text-cat-1" />}
       </button>
     </div>
   );
@@ -77,12 +77,12 @@ export default function ServerConnectionCard() {
   if (connected && !showSetup) {
     return (
       <div className="space-y-3">
-        <div className="rounded-2xl border border-green-200 bg-green-50/50 p-4">
+        <div className="rounded-2xl border border-success/20 bg-success/5 p-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <CheckCircle size={18} className="text-green-600" />
-              <span className="font-medium text-green-800">에이전트 서버 연결됨</span>
-              <span className="text-sm text-green-600">
+              <CheckCircle size={18} className="text-success" />
+              <span className="font-medium text-success">에이전트 서버 연결됨</span>
+              <span className="text-sm text-success">
                 · 에이전트 {health.agents}개
                 {health.running_tasks > 0 && ` · 실행 중 ${health.running_tasks}건`}
               </span>
@@ -106,38 +106,38 @@ export default function ServerConnectionCard() {
           <span className="font-semibold">에이전트 서버 연결</span>
         </div>
         {connected && (
-          <span className="flex items-center gap-1 text-sm text-green-600">
-            <span className="h-2 w-2 rounded-full bg-green-500" /> 연결됨
+          <span className="flex items-center gap-1 text-sm text-success">
+            <span className="h-2 w-2 rounded-full bg-success" /> 연결됨
           </span>
         )}
       </div>
 
       {/* 온보딩 가이드 */}
-      <div className="mt-4 rounded-lg border border-blue-100 bg-blue-50/50 p-4">
-        <h4 className="flex items-center gap-1.5 text-sm font-medium text-blue-800">
+      <div className="mt-4 rounded-lg border border-cat-1/10 bg-cat-1/5 p-4">
+        <h4 className="flex items-center gap-1.5 text-sm font-medium text-cat-1">
           <Terminal size={14} />
           서버 실행 방법
         </h4>
-        <ol className="mt-2 space-y-1.5 text-sm text-blue-700">
+        <ol className="mt-2 space-y-1.5 text-sm text-cat-1">
           <li>
             1. 프로젝트 폴더에서 터미널을 열어주세요
             <div className="mt-1 flex items-center gap-2">
-              <code className="flex-1 rounded bg-card/80 px-2.5 py-1.5 font-mono text-xs text-blue-900">
+              <code className="flex-1 rounded bg-card/80 px-2.5 py-1.5 font-mono text-xs text-cat-1">
                 C:\work\yonsei-edtech
               </code>
-              <button onClick={handleCopyPath} className="rounded p-1 hover:bg-blue-100" title="경로 복사">
-                {copiedPath ? <Check size={14} className="text-green-600" /> : <Copy size={14} className="text-blue-500" />}
+              <button onClick={handleCopyPath} className="rounded p-1 hover:bg-cat-1/10" title="경로 복사">
+                {copiedPath ? <Check size={14} className="text-success" /> : <Copy size={14} className="text-cat-1" />}
               </button>
             </div>
           </li>
           <li>
             2. 아래 명령어를 실행하세요
             <div className="mt-1 flex items-center gap-2">
-              <code className="flex-1 rounded bg-card/80 px-2.5 py-1.5 font-mono text-xs text-blue-900">
+              <code className="flex-1 rounded bg-card/80 px-2.5 py-1.5 font-mono text-xs text-cat-1">
                 cd agent-server; python main.py
               </code>
-              <button onClick={handleCopyCommand} className="rounded p-1 hover:bg-blue-100" title="복사">
-                {copied ? <Check size={14} className="text-green-600" /> : <Copy size={14} className="text-blue-500" />}
+              <button onClick={handleCopyCommand} className="rounded p-1 hover:bg-cat-1/10" title="복사">
+                {copied ? <Check size={14} className="text-success" /> : <Copy size={14} className="text-cat-1" />}
               </button>
             </div>
           </li>
@@ -170,7 +170,7 @@ export default function ServerConnectionCard() {
 
       {/* 연결 결과 */}
       {testError && (
-        <div className="mt-3 flex items-center gap-2 rounded-lg bg-red-50 px-3 py-2 text-sm text-red-600">
+        <div className="mt-3 flex items-center gap-2 rounded-lg bg-destructive/5 px-3 py-2 text-sm text-destructive">
           <XCircle size={14} />
           {testError.message}
           {testError.message.includes("Failed to fetch") && " — 서버가 실행 중인지 확인해주세요."}

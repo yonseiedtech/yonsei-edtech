@@ -234,10 +234,10 @@ export function segmentLabel(s: MemberMetricsRow["segment"]): string {
 
 export function segmentColor(s: MemberMetricsRow["segment"]): string {
   switch (s) {
-    case "champion": return "bg-violet-100 text-violet-800 border-violet-200";
-    case "active": return "bg-emerald-100 text-emerald-800 border-emerald-200";
-    case "at_risk": return "bg-amber-100 text-amber-800 border-amber-200";
-    case "dormant": return "bg-rose-100 text-rose-800 border-rose-200";
-    case "new": return "bg-sky-100 text-sky-800 border-sky-200";
+    case "champion": return "bg-cat-5/10 text-cat-5 border-cat-5/20";
+    case "active": return "bg-success/10 text-success border-success/20";
+    case "at_risk": return "bg-warning/10 text-warning border-warning/20";
+    case "dormant": return "bg-destructive/10 text-destructive border-destructive/20";
+    case "new": return "bg-info/10 text-info border-info/20";
   }
 }

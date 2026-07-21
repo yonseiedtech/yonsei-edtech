@@ -48,7 +48,7 @@ const activities = [
     title: "대외 학술대회",
     desc: "외부 학술대회 참가, 학회 발표 등 대외 활동을 통해 학문적 역량을 확장합니다.",
     schedule: "수시",
-    color: "bg-amber-50 text-amber-700",
+    color: "bg-warning/5 text-warning",
     href: "/activities/external",
   },
   {
@@ -101,7 +101,7 @@ export default function ActivitiesPage() {
       .filter((p) => p.category === "notice" || p.category === "promotion")
       .map((p) => ({
         category: p.category === "notice" ? "공지" : "홍보",
-        color: p.category === "notice" ? "bg-amber-50 text-amber-700" : "bg-secondary/10 text-secondary",
+        color: p.category === "notice" ? "bg-warning/5 text-warning" : "bg-secondary/10 text-secondary",
         title: p.title,
         desc: p.content.split("\n")[0].slice(0, 60),
         date: formatDate(p.createdAt),

@@ -42,15 +42,15 @@ const STALE_TIME = 5 * 60_000;
 
 /** 준비도 낮을수록(지원 필요) 진한 경고색 */
 function readinessTone(pct: number): string {
-  if (pct < 40) return "text-rose-600";
-  if (pct < 70) return "text-amber-600";
-  return "text-emerald-600";
+  if (pct < 40) return "text-destructive";
+  if (pct < 70) return "text-warning";
+  return "text-success";
 }
 
 function readinessBar(pct: number): string {
-  if (pct < 40) return "bg-rose-500";
-  if (pct < 70) return "bg-amber-500";
-  return "bg-emerald-500";
+  if (pct < 40) return "bg-destructive";
+  if (pct < 70) return "bg-warning";
+  return "bg-success";
 }
 
 function formatDate(iso?: string): string {
@@ -229,7 +229,7 @@ export default function DiagnosticInsightsView() {
 
   if (!isAdmin) {
     return (
-      <div className="rounded-2xl border bg-amber-50 p-6 text-center text-sm text-amber-800">
+      <div className="rounded-2xl border bg-warning/5 p-6 text-center text-sm text-warning">
         <ShieldAlert className="mx-auto mb-2" size={24} />
         관리자 전용 페이지입니다. (회원 준비도·약점은 개인정보)
       </div>
@@ -253,8 +253,8 @@ export default function DiagnosticInsightsView() {
   return (
     <div className="space-y-6">
       {/* 안내 */}
-      <div className="flex items-start gap-2 rounded-xl border border-sky-200 bg-sky-50/60 p-3 text-xs text-sky-900">
-        <Stethoscope size={15} className="mt-0.5 shrink-0 text-sky-600" />
+      <div className="flex items-start gap-2 rounded-xl border border-info/20 bg-info/5 p-3 text-xs text-info">
+        <Stethoscope size={15} className="mt-0.5 shrink-0 text-info" />
         <p>
           회원이 응시한 진단평가의 <b>최신 결과</b> 기준 준비도·약점을 집계합니다.
           준비도 낮은 회원이 위로 정렬되어 <b>누구에게 무엇을 지원할지</b> 파악할 수 있습니다.
@@ -264,17 +264,17 @@ export default function DiagnosticInsightsView() {
 
       {/* KPI */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-        <Kpi icon={Users} color="bg-blue-50 text-blue-700" label="응시 회원" value={kpi.total} sub="진단 1회 이상" />
-        <Kpi icon={TrendingDown} color="bg-rose-50 text-rose-700" label="지원 필요" value={kpi.support} sub="준비도 40 미만" />
-        <Kpi icon={FileText} color="bg-violet-50 text-violet-700" label="평균 논문작성" value={kpi.avgPaper} sub="0~100" />
-        <Kpi icon={Microscope} color="bg-indigo-50 text-indigo-700" label="평균 연구분석" value={kpi.avgAnalysis} sub="0~100" />
+        <Kpi icon={Users} color="bg-cat-1/5 text-cat-1" label="응시 회원" value={kpi.total} sub="진단 1회 이상" />
+        <Kpi icon={TrendingDown} color="bg-destructive/5 text-destructive" label="지원 필요" value={kpi.support} sub="준비도 40 미만" />
+        <Kpi icon={FileText} color="bg-cat-5/5 text-cat-5" label="평균 논문작성" value={kpi.avgPaper} sub="0~100" />
+        <Kpi icon={Microscope} color="bg-cat-1/5 text-cat-1" label="평균 연구분석" value={kpi.avgAnalysis} sub="0~100" />
       </section>
 
       {/* 공통 약점 개념 */}
       {commonWeakConcepts.length > 0 && (
         <section className="rounded-2xl border bg-card p-5">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold">
-            <AlertTriangle size={16} className="text-amber-600" />
+            <AlertTriangle size={16} className="text-warning" />
             공통 약점 개념 Top {commonWeakConcepts.length}
             <span className="text-[11px] font-normal text-muted-foreground">
               회원 최신 진단의 약점 개념 빈도 — 세미나·워크숍 기획 근거
@@ -284,10 +284,10 @@ export default function DiagnosticInsightsView() {
             {commonWeakConcepts.map((c) => (
               <span
                 key={c.name}
-                className="inline-flex items-center gap-1.5 rounded-full border border-amber-200 bg-amber-50 px-3 py-1 text-xs text-amber-800"
+                className="inline-flex items-center gap-1.5 rounded-full border border-warning/20 bg-warning/5 px-3 py-1 text-xs text-warning"
               >
                 <span className="font-medium">{c.name}</span>
-                <span className="rounded-full bg-amber-200/70 px-1.5 text-[10px] font-bold tabular-nums text-amber-900">
+                <span className="rounded-full bg-warning/20 px-1.5 text-[10px] font-bold tabular-nums text-warning">
                   {c.count}명
                 </span>
               </span>
@@ -339,7 +339,7 @@ export default function DiagnosticInsightsView() {
                   <td className="px-3 py-2 font-medium">
                     <a href={`/profile/${r.userId}`} className="hover:underline">{r.name}</a>
                     {r.minReadiness < 40 && (
-                      <Badge variant="outline" className="ml-1 border-rose-200 bg-rose-50 text-[10px] text-rose-700">
+                      <Badge variant="outline" className="ml-1 border-destructive/20 bg-destructive/5 text-[10px] text-destructive">
                         지원
                       </Badge>
                     )}
@@ -370,7 +370,7 @@ export default function DiagnosticInsightsView() {
                         {r.weakConceptNames.slice(0, 3).map((n, i) => (
                           <span
                             key={`${n}-${i}`}
-                            className="rounded-full border border-violet-200 bg-violet-50 px-1.5 py-0.5 text-[10px] text-violet-700"
+                            className="rounded-full border border-cat-5/20 bg-cat-5/5 px-1.5 py-0.5 text-[10px] text-cat-5"
                           >
                             {n}
                           </span>

@@ -6,9 +6,9 @@ import { formatDistanceToNow } from "@/lib/utils";
 
 const STATUS_CONFIG = {
   pending: { icon: Clock, color: "text-muted-foreground", label: "대기" },
-  running: { icon: Loader2, color: "text-blue-600", label: "실행 중", animate: true },
-  completed: { icon: Check, color: "text-green-600", label: "완료" },
-  failed: { icon: AlertCircle, color: "text-red-500", label: "실패" },
+  running: { icon: Loader2, color: "text-cat-1", label: "실행 중", animate: true },
+  completed: { icon: Check, color: "text-success", label: "완료" },
+  failed: { icon: AlertCircle, color: "text-destructive", label: "실패" },
 };
 
 export default function TaskListItem({
@@ -40,7 +40,7 @@ export default function TaskListItem({
           <span className="truncate text-sm font-medium">{task.title}</span>
         </div>
         {task.error && (
-          <p className="mt-0.5 truncate text-xs text-red-500">{task.error}</p>
+          <p className="mt-0.5 truncate text-xs text-destructive">{task.error}</p>
         )}
       </div>
       <span className="shrink-0 text-xs text-muted-foreground">
