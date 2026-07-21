@@ -32,13 +32,13 @@ const CHAPTER_META: Record<
   Chapter,
   { label: string; icon: React.ElementType; color: string }
 > = {
-  field: { label: "교육현장의 문제 정의", icon: School, color: "from-amber-500 to-orange-500" },
-  env: { label: "환경 분석", icon: School, color: "from-cyan-500 to-blue-500" },
-  learner: { label: "학습자 분석", icon: GraduationCap, color: "from-purple-500 to-fuchsia-500" },
-  task: { label: "학습 과제·목표 분석", icon: GraduationCap, color: "from-rose-500 to-pink-500" },
-  theory: { label: "교육공학 이론", icon: BookOpen, color: "from-emerald-500 to-teal-500" },
-  prior: { label: "선행연구 분석", icon: FlaskConical, color: "from-blue-500 to-indigo-500" },
-  bridge: { label: "연결", icon: ArrowRight, color: "from-slate-400 to-slate-500" },
+  field: { label: "교육현장의 문제 정의", icon: School, color: "from-warning to-warning" },
+  env: { label: "환경 분석", icon: School, color: "from-info to-cat-1" },
+  learner: { label: "학습자 분석", icon: GraduationCap, color: "from-cat-5 to-cat-4" },
+  task: { label: "학습 과제·목표 분석", icon: GraduationCap, color: "from-destructive to-cat-4" },
+  theory: { label: "교육공학 이론", icon: BookOpen, color: "from-success to-info" },
+  prior: { label: "선행연구 분석", icon: FlaskConical, color: "from-cat-1 to-cat-1" },
+  bridge: { label: "연결", icon: ArrowRight, color: "from-muted to-muted" },
 };
 
 /** 챕터 진행률 표시에서 bridge 는 제외. 정통 ID 6챕터 흐름. */

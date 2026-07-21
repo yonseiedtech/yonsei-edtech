@@ -94,7 +94,7 @@ function SignupContent() {
       <div className="flex min-h-[70vh] items-center justify-center px-4">
         <div className="w-full max-w-md animate-in fade-in slide-in-from-bottom-4 duration-500">
           <div className="rounded-3xl border bg-card p-8 text-center shadow-lg sm:p-10">
-            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-amber-50 text-amber-500 dark:bg-amber-950/40 dark:text-amber-300">
+            <div className="mx-auto mb-5 flex h-20 w-20 items-center justify-center rounded-full bg-warning/5 text-warning">
               <CheckCircle size={36} />
             </div>
             <h1 className="text-2xl font-bold tracking-tight sm:text-3xl">
@@ -108,18 +108,18 @@ function SignupContent() {
             <div className="mt-6 flex items-center justify-center gap-0">
               {/* 단계 1: 접수됨 (완료) */}
               <div className="flex flex-col items-center gap-1.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-amber-500 text-white">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full bg-warning text-white">
                   <CheckCircle size={16} />
                 </div>
-                <span className="text-[10px] font-semibold text-amber-600 dark:text-amber-400">접수됨</span>
+                <span className="text-[10px] font-semibold text-warning">접수됨</span>
               </div>
-              <div className="mb-3.5 h-0.5 w-10 bg-amber-300 dark:bg-amber-700" />
+              <div className="mb-3.5 h-0.5 w-10 bg-warning/30" />
               {/* 단계 2: 검토 중 (진행 중) */}
               <div className="flex flex-col items-center gap-1.5">
-                <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-amber-400 bg-amber-50 text-amber-600 text-xs font-bold dark:bg-amber-950/40 dark:text-amber-300">
+                <div className="flex h-8 w-8 items-center justify-center rounded-full border-2 border-warning/50 bg-warning/5 text-warning text-xs font-bold">
                   2
                 </div>
-                <span className="text-[10px] font-semibold text-amber-500">검토 중</span>
+                <span className="text-[10px] font-semibold text-warning">검토 중</span>
               </div>
               <div className="mb-3.5 h-0.5 w-10 bg-muted" />
               {/* 단계 3: 승인 완료 (대기) */}
@@ -132,8 +132,8 @@ function SignupContent() {
             </div>
 
             {/* 승인 안내 */}
-            <div className="mt-5 rounded-2xl border-2 border-dashed border-amber-300/50 bg-amber-50/60 p-4 text-left dark:border-amber-800/40 dark:bg-amber-950/20">
-              <p className="flex items-center gap-1.5 text-xs font-semibold text-amber-700 dark:text-amber-300">
+            <div className="mt-5 rounded-2xl border-2 border-dashed border-warning/30 bg-warning/5 p-4 text-left">
+              <p className="flex items-center gap-1.5 text-xs font-semibold text-warning">
                 <Compass size={12} />
                 승인 안내
               </p>

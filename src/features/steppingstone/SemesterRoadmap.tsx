@@ -257,7 +257,7 @@ function StageCard({ stage, isMine, isLoggedIn, onProgressChange }: StageCardPro
         isMine
           ? "border-primary shadow-lg ring-2 ring-primary/20"
           : cn(stage.bgColor, "hover:shadow-md"),
-        isMastered && !isMine && "ring-2 ring-emerald-400/40 dark:ring-emerald-500/30"
+        isMastered && !isMine && "ring-2 ring-success/40"
       )}
     >
       {/* 내 학기 배지 */}
@@ -270,7 +270,7 @@ function StageCard({ stage, isMine, isLoggedIn, onProgressChange }: StageCardPro
       {/* Mastery Achieved 배지 (100% 완료) */}
       {isMastered && (
         <span
-          className="absolute -top-3 right-4 inline-flex items-center gap-1 rounded-full bg-emerald-500 px-2.5 py-0.5 text-[11px] font-bold text-white shadow-sm dark:bg-emerald-600"
+          className="absolute -top-3 right-4 inline-flex items-center gap-1 rounded-full bg-success px-2.5 py-0.5 text-[11px] font-bold text-white shadow-sm"
           title="Mastery Learning (Bloom, 1968) — 이 단계의 모든 항목을 완료했습니다"
         >
           <Trophy size={10} className="fill-current" />
@@ -284,7 +284,7 @@ function StageCard({ stage, isMine, isLoggedIn, onProgressChange }: StageCardPro
           className={cn(
             "inline-flex h-8 w-8 items-center justify-center rounded-lg text-xs font-bold",
             isMastered
-              ? "bg-emerald-500 text-white dark:bg-emerald-600"
+              ? "bg-success text-white"
               : isMine
               ? "bg-primary text-primary-foreground"
               : `bg-card ${stage.color}`
