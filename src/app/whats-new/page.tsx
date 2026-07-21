@@ -75,7 +75,7 @@ const FEATURES: Feature[] = [
     ],
     cta: "스터디 커리큘럼 설계하기",
     ctaHref: "/activities/studies",
-    color: "from-violet-500/10 to-transparent",
+    color: "from-cat-5/10 to-transparent",
     iconBg: "bg-cat-5/10",
     iconColor: "text-cat-5",
   },
@@ -96,7 +96,7 @@ const FEATURES: Feature[] = [
     ],
     cta: "대시보드 확인하기",
     ctaHref: "/dashboard",
-    color: "from-green-500/10 to-transparent",
+    color: "from-success/10 to-transparent",
     iconBg: "bg-success/10",
     iconColor: "text-success",
   },
@@ -117,7 +117,7 @@ const FEATURES: Feature[] = [
     ],
     cta: "세미나 목록 보기",
     ctaHref: "/seminars",
-    color: "from-rose-500/10 to-transparent",
+    color: "from-destructive/10 to-transparent",
     iconBg: "bg-destructive/10",
     iconColor: "text-destructive",
   },
@@ -138,7 +138,7 @@ const FEATURES: Feature[] = [
     ],
     cta: "해커톤 참여하기",
     ctaHref: "/hackathon",
-    color: "from-amber-500/10 to-transparent",
+    color: "from-warning/10 to-transparent",
     iconBg: "bg-warning/10",
     iconColor: "text-warning",
   },
@@ -159,7 +159,7 @@ const FEATURES: Feature[] = [
     ],
     cta: "대시보드에서 보내기",
     ctaHref: "/dashboard",
-    color: "from-pink-500/10 to-transparent",
+    color: "from-cat-4/10 to-transparent",
     iconBg: "bg-cat-4/10",
     iconColor: "text-cat-4",
   },
@@ -600,7 +600,7 @@ export default function WhatsNewPage() {
               <MessageSquare size={18} />
             </div>
             <div>
-              <p className="font-semibold text-slate-800 dark:text-slate-200">이 기능에 대한 의견이 있으신가요?</p>
+              <p className="font-semibold text-foreground">이 기능에 대한 의견이 있으신가요?</p>
               <p className="mt-0.5 text-sm text-muted-foreground">
                 버그 제보, UI 개선 제안, 새 기능 요청을 자유롭게 남겨주세요.
               </p>
