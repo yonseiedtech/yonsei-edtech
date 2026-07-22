@@ -33,6 +33,7 @@ import {
   Trash2,
   Save,
   Pin,
+  ChevronDown,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -52,6 +53,46 @@ import {
 } from "./config";
 
 const MAX_LEN = 140;
+
+// ── 팀 빌딩 사전 설문 상수 ──
+const SURVEY_AI_LEVELS: Array<1 | 2 | 3 | 4 | 5> = [1, 2, 3, 4, 5];
+const SURVEY_VIBE_OPTIONS: { value: "none" | "tried" | "often"; label: string }[] = [
+  { value: "none", label: "없음" },
+  { value: "tried", label: "한두 번" },
+  { value: "often", label: "자주" },
+];
+const SURVEY_TOOL_PRESETS = ["ChatGPT", "Claude", "Cursor"];
+const SURVEY_STRENGTH_OPTIONS = ["기획·연구", "디자인", "개발", "발표"];
+const VIBE_LABELS: Record<"none" | "tried" | "often", string> = {
+  none: "없음",
+  tried: "한두 번",
+  often: "자주",
+};
+
+function buildHackathonSurvey(
+  aiLiteracy: 1 | 2 | 3 | 4 | 5 | null,
+  vibeCoding: "none" | "tried" | "often" | null,
+  tools: string[],
+  otherTool: string,
+  strengths: string[],
+): CommQuestion["hackathonSurvey"] {
+  const allTools = [
+    ...tools,
+    ...(otherTool.trim() ? [otherTool.trim()] : []),
+  ];
+  const hasAny =
+    aiLiteracy !== null ||
+    vibeCoding !== null ||
+    allTools.length > 0 ||
+    strengths.length > 0;
+  if (!hasAny) return undefined;
+  return {
+    ...(aiLiteracy !== null ? { aiLiteracy } : {}),
+    ...(vibeCoding !== null ? { vibeCoding } : {}),
+    ...(allTools.length > 0 ? { tools: allTools } : {}),
+    ...(strengths.length > 0 ? { strengths } : {}),
+  };
+}
 
 /** body 앞에 붙은 관심 영역 태그 추출 (예: "K-12 학교 현장: 본문" → "K-12 학교 현장") */
 function extractArea(body: string): string | null {
@@ -80,6 +121,19 @@ export default function HackathonBoard() {
   const [editTeamPref, setEditTeamPref] = useState<HackathonTeamPref>(HACKATHON_TEAM_PREFS.undecided);
   // H1: 관심 영역 태그 (신청 폼 선택)
   const [areaTag, setAreaTag] = useState<string | null>(null);
+  // 팀 빌딩 사전 설문 — 신청 폼
+  const [surveyOpen, setSurveyOpen] = useState(false);
+  const [surveyAiLiteracy, setSurveyAiLiteracy] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
+  const [surveyVibeCoding, setSurveyVibeCoding] = useState<"none" | "tried" | "often" | null>(null);
+  const [surveyTools, setSurveyTools] = useState<string[]>([]);
+  const [surveyOtherTool, setSurveyOtherTool] = useState("");
+  const [surveyStrengths, setSurveyStrengths] = useState<string[]>([]);
+  // 팀 빌딩 사전 설문 — 수정 폼
+  const [editSurveyAiLiteracy, setEditSurveyAiLiteracy] = useState<1 | 2 | 3 | 4 | 5 | null>(null);
+  const [editSurveyVibeCoding, setEditSurveyVibeCoding] = useState<"none" | "tried" | "often" | null>(null);
+  const [editSurveyTools, setEditSurveyTools] = useState<string[]>([]);
+  const [editSurveyOtherTool, setEditSurveyOtherTool] = useState("");
+  const [editSurveyStrengths, setEditSurveyStrengths] = useState<string[]>([]);
 
   useEffect(() => {
     setOnboardingDismissed(localStorage.getItem("hackathon_onboarding_dismissed") === "1");
@@ -209,6 +263,13 @@ export default function HackathonBoard() {
     }
     setSaving(true);
     try {
+      const hackathonSurvey = buildHackathonSurvey(
+        surveyAiLiteracy,
+        surveyVibeCoding,
+        surveyTools,
+        surveyOtherTool,
+        surveyStrengths,
+      );
       await commQuestionsApi.create({
         boardId: board.id,
         contextId: board.contextId,
@@ -217,9 +278,16 @@ export default function HackathonBoard() {
         anonymous: false,
         presenter: teamPref,
         body,
+        ...(hackathonSurvey ? { hackathonSurvey } : {}),
       });
       setProblem("");
       setAreaTag(null);
+      setSurveyOpen(false);
+      setSurveyAiLiteracy(null);
+      setSurveyVibeCoding(null);
+      setSurveyTools([]);
+      setSurveyOtherTool("");
+      setSurveyStrengths([]);
       refresh();
       toast.success("참가 신청이 완료되었습니다. 현장에서 만나요!");
     } catch (e) {
@@ -240,7 +308,18 @@ export default function HackathonBoard() {
     }
     setSaving(true);
     try {
-      await commQuestionsApi.update(myEntry.id, { body, presenter: editTeamPref });
+      const hackathonSurvey = buildHackathonSurvey(
+        editSurveyAiLiteracy,
+        editSurveyVibeCoding,
+        editSurveyTools,
+        editSurveyOtherTool,
+        editSurveyStrengths,
+      );
+      await commQuestionsApi.update(myEntry.id, {
+        body,
+        presenter: editTeamPref,
+        ...(hackathonSurvey !== undefined ? { hackathonSurvey } : {}),
+      });
       setEditingEntry(false);
       refresh();
       toast.success("아이디어를 수정했습니다.");
@@ -445,6 +524,14 @@ export default function HackathonBoard() {
                   onClick={() => {
                     setEditBody(myEntry.body ?? "");
                     setEditTeamPref((myEntry.presenter as HackathonTeamPref) ?? HACKATHON_TEAM_PREFS.undecided);
+                    const s = myEntry.hackathonSurvey;
+                    setEditSurveyAiLiteracy(s?.aiLiteracy ?? null);
+                    setEditSurveyVibeCoding(s?.vibeCoding ?? null);
+                    const existingPresets = (s?.tools ?? []).filter((t) => SURVEY_TOOL_PRESETS.includes(t));
+                    const existingOther = (s?.tools ?? []).find((t) => !SURVEY_TOOL_PRESETS.includes(t)) ?? "";
+                    setEditSurveyTools(existingPresets);
+                    setEditSurveyOtherTool(existingOther);
+                    setEditSurveyStrengths(s?.strengths ?? []);
                     setEditingEntry(true);
                   }}
                   className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-foreground"
@@ -493,6 +580,116 @@ export default function HackathonBoard() {
                     {pref}
                   </button>
                 ))}
+              </div>
+              {/* 팀 빌딩 설문 수정 */}
+              <div className="border-t border-border pt-3">
+                <p className="mb-2 text-xs font-medium text-muted-foreground">
+                  팀 빌딩 설문 (선택)
+                </p>
+                <div className="space-y-3">
+                  <div>
+                    <span className="mb-1.5 block text-xs text-muted-foreground">AI 리터러시</span>
+                    <div className="flex gap-1.5">
+                      {SURVEY_AI_LEVELS.map((n) => (
+                        <button
+                          key={n}
+                          type="button"
+                          aria-pressed={editSurveyAiLiteracy === n}
+                          onClick={() => setEditSurveyAiLiteracy((p) => (p === n ? null : n))}
+                          className={`h-7 w-7 rounded-full border text-xs font-semibold transition-colors ${
+                            editSurveyAiLiteracy === n
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border text-muted-foreground hover:bg-accent"
+                          }`}
+                        >
+                          {n}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="mb-1.5 block text-xs text-muted-foreground">바이브코딩 경험</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {SURVEY_VIBE_OPTIONS.map(({ value, label }) => (
+                        <button
+                          key={value}
+                          type="button"
+                          aria-pressed={editSurveyVibeCoding === value}
+                          onClick={() =>
+                            setEditSurveyVibeCoding((p) => (p === value ? null : value))
+                          }
+                          className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                            editSurveyVibeCoding === value
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border text-muted-foreground hover:bg-accent"
+                          }`}
+                        >
+                          {label}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  <div>
+                    <span className="mb-1.5 block text-xs text-muted-foreground">AI 도구</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {SURVEY_TOOL_PRESETS.map((tool) => {
+                        const sel = editSurveyTools.includes(tool);
+                        return (
+                          <button
+                            key={tool}
+                            type="button"
+                            aria-pressed={sel}
+                            onClick={() =>
+                              setEditSurveyTools((p) =>
+                                sel ? p.filter((t) => t !== tool) : [...p, tool],
+                              )
+                            }
+                            className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                              sel
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border text-muted-foreground hover:bg-accent"
+                            }`}
+                          >
+                            {tool}
+                          </button>
+                        );
+                      })}
+                      <input
+                        value={editSurveyOtherTool}
+                        onChange={(e) => setEditSurveyOtherTool(e.target.value.slice(0, 30))}
+                        placeholder="기타"
+                        className="w-20 rounded-full border border-border bg-background px-2.5 py-1 text-xs placeholder:text-muted-foreground/60 outline-none focus-visible:ring-1 focus-visible:ring-ring/40"
+                      />
+                    </div>
+                  </div>
+                  <div>
+                    <span className="mb-1.5 block text-xs text-muted-foreground">강점</span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {SURVEY_STRENGTH_OPTIONS.map((s) => {
+                        const sel = editSurveyStrengths.includes(s);
+                        return (
+                          <button
+                            key={s}
+                            type="button"
+                            aria-pressed={sel}
+                            onClick={() =>
+                              setEditSurveyStrengths((p) =>
+                                sel ? p.filter((x) => x !== s) : [...p, s],
+                              )
+                            }
+                            className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                              sel
+                                ? "border-primary bg-primary text-primary-foreground"
+                                : "border-border text-muted-foreground hover:bg-accent"
+                            }`}
+                          >
+                            {s}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+                </div>
               </div>
               <div className="flex gap-2">
                 <Button size="sm" onClick={handleUpdate} disabled={saving || !editBody.trim()}>
@@ -636,6 +833,145 @@ export default function HackathonBoard() {
             </div>
           </div>
 
+          {/* 팀 빌딩 사전 설문 — 접이식 · 선택 */}
+          <div className="mt-4 border-t border-border pt-3">
+            <button
+              type="button"
+              onClick={() => setSurveyOpen((o) => !o)}
+              aria-expanded={surveyOpen}
+              className="flex w-full items-center justify-between text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+            >
+              <span>
+                팀 빌딩 사전 설문{" "}
+                <span className="font-normal opacity-70">(선택 · 30초)</span>
+              </span>
+              <ChevronDown
+                size={13}
+                className={`shrink-0 transition-transform ${surveyOpen ? "rotate-180" : ""}`}
+              />
+            </button>
+            {surveyOpen && (
+              <div className="mt-3 space-y-4">
+                {/* ① AI 리터러시 */}
+                <div>
+                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    AI 리터러시 자기평가
+                  </span>
+                  <div className="flex gap-1.5">
+                    {SURVEY_AI_LEVELS.map((n) => (
+                      <button
+                        key={n}
+                        type="button"
+                        aria-pressed={surveyAiLiteracy === n}
+                        onClick={() => setSurveyAiLiteracy((p) => (p === n ? null : n))}
+                        className={`h-7 w-7 rounded-full border text-xs font-semibold transition-colors ${
+                          surveyAiLiteracy === n
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border text-muted-foreground hover:bg-accent"
+                        }`}
+                      >
+                        {n}
+                      </button>
+                    ))}
+                  </div>
+                  <p className="mt-1 text-[11px] text-muted-foreground">1 낮음 · 5 높음</p>
+                </div>
+                {/* ② 바이브코딩 경험 */}
+                <div>
+                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    바이브코딩 경험
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {SURVEY_VIBE_OPTIONS.map(({ value, label }) => (
+                      <button
+                        key={value}
+                        type="button"
+                        aria-pressed={surveyVibeCoding === value}
+                        onClick={() => setSurveyVibeCoding((p) => (p === value ? null : value))}
+                        className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                          surveyVibeCoding === value
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border text-muted-foreground hover:bg-accent"
+                        }`}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+                {/* ③ AI 도구 */}
+                <div>
+                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    주로 쓰는 AI 도구
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {SURVEY_TOOL_PRESETS.map((tool) => {
+                      const sel = surveyTools.includes(tool);
+                      return (
+                        <button
+                          key={tool}
+                          type="button"
+                          aria-pressed={sel}
+                          onClick={() =>
+                            setSurveyTools((p) =>
+                              sel ? p.filter((t) => t !== tool) : [...p, tool],
+                            )
+                          }
+                          className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                            sel
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border text-muted-foreground hover:bg-accent"
+                          }`}
+                        >
+                          {tool}
+                        </button>
+                      );
+                    })}
+                    <input
+                      value={surveyOtherTool}
+                      onChange={(e) => setSurveyOtherTool(e.target.value.slice(0, 30))}
+                      placeholder="기타"
+                      className="w-20 rounded-full border border-border bg-background px-2.5 py-1 text-xs placeholder:text-muted-foreground/60 outline-none focus-visible:ring-1 focus-visible:ring-ring/40"
+                    />
+                  </div>
+                </div>
+                {/* ④ 강점 */}
+                <div>
+                  <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                    나의 강점 (복수 선택)
+                  </span>
+                  <div className="flex flex-wrap gap-1.5">
+                    {SURVEY_STRENGTH_OPTIONS.map((s) => {
+                      const sel = surveyStrengths.includes(s);
+                      return (
+                        <button
+                          key={s}
+                          type="button"
+                          aria-pressed={sel}
+                          onClick={() =>
+                            setSurveyStrengths((p) =>
+                              sel ? p.filter((x) => x !== s) : [...p, s],
+                            )
+                          }
+                          className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                            sel
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border text-muted-foreground hover:bg-accent"
+                          }`}
+                        >
+                          {s}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+                <p className="text-[11px] text-muted-foreground">
+                  팀 매칭에 참고돼요 — 수정 폼에서도 나중에 채울 수 있어요
+                </p>
+              </div>
+            )}
+          </div>
+
           <div className="mt-3 flex justify-end">
             <Button
               size="sm"
@@ -748,6 +1084,29 @@ export default function HackathonBoard() {
                   <p className="text-sm leading-relaxed text-foreground">
                     {displayBody}
                   </p>
+                  {/* 설문 칩 — muted 톤 · 설문 존재 시만 렌더 */}
+                  {entry.hackathonSurvey && (
+                    <div className="mt-1.5 flex flex-wrap gap-1">
+                      {entry.hackathonSurvey.vibeCoding && (
+                        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                          {VIBE_LABELS[entry.hackathonSurvey.vibeCoding]}
+                        </span>
+                      )}
+                      {(entry.hackathonSurvey.strengths ?? []).slice(0, 2).map((s) => (
+                        <span
+                          key={s}
+                          className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground"
+                        >
+                          {s}
+                        </span>
+                      ))}
+                      {(entry.hackathonSurvey.strengths?.length ?? 0) > 2 && (
+                        <span className="inline-flex items-center rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
+                          +{(entry.hackathonSurvey.strengths?.length ?? 0) - 2}
+                        </span>
+                      )}
+                    </div>
+                  )}
                   <div className="mt-2.5 flex flex-wrap items-center gap-2 text-xs text-muted-foreground">
                     <span className="font-medium text-foreground">
                       {entry.authorName ?? "회원"}

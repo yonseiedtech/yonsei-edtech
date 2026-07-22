@@ -158,7 +158,7 @@ export default function HackathonDdayConsole() {
 
   /** 참가자 명단 CSV 다운로드 (v14-H2) */
   function downloadParticipantsCsv() {
-    const header = "이름,팀희망,아이디어,공감수,신청일";
+    const header = "이름,팀희망,아이디어,공감수,신청일,AI리터러시,바이브코딩,도구,강점";
     const rows = entries.map((e) => {
       // 수식 인젝션 방어: =,+,-,@,탭,CR 로 시작하는 셀은 ' prefix 로 무력화 (Excel/Sheets DDE·HYPERLINK 차단)
       const escape = (v: string) => {
@@ -166,12 +166,17 @@ export default function HackathonDdayConsole() {
         const safe = /^[=+\-@\t\r]/.test(flat) ? `'${flat}` : flat;
         return `"${safe.replace(/"/g, '""')}"`;
       };
+      const sv = e.hackathonSurvey;
       return [
         escape(e.authorName ?? ""),
         escape(e.presenter ?? ""),
         escape(e.body ?? ""),
         String(e.likeCount ?? 0),
         (e.createdAt ?? "").slice(0, 10),
+        sv?.aiLiteracy != null ? String(sv.aiLiteracy) : "",
+        sv?.vibeCoding != null ? escape(sv.vibeCoding) : "",
+        sv?.tools?.length ? escape(sv.tools.join("/")) : "",
+        sv?.strengths?.length ? escape(sv.strengths.join("/")) : "",
       ].join(",");
     });
     const csv = "﻿" + [header, ...rows].join("\n");
@@ -273,9 +278,17 @@ export default function HackathonDdayConsole() {
       {/* ── 참가자 명단 CSV (v14-H2) ── */}
       {entries.length > 0 && (
         <div className="flex items-center justify-between gap-2">
-          <p className="text-xs text-muted-foreground">
-            참가 신청자 <span className="font-semibold text-foreground">{entries.length}명</span>
-          </p>
+          <div className="flex flex-col gap-0.5">
+            <p className="text-xs text-muted-foreground">
+              참가 신청자 <span className="font-semibold text-foreground">{entries.length}명</span>
+            </p>
+            <p className="text-xs text-muted-foreground">
+              설문 응답{" "}
+              <span className="font-semibold text-foreground">
+                {entries.filter((e) => e.hackathonSurvey).length}/{entries.length}
+              </span>
+            </p>
+          </div>
           <Button size="sm" variant="outline" onClick={downloadParticipantsCsv}>
             <Download size={13} className="mr-1" />
             참가자 명단 CSV

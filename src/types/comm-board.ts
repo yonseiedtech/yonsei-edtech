@@ -45,6 +45,17 @@ export interface CommQuestion {
   answerCount: number;
   /** 운영진이 고정한 공지 여부 — true 이면 보드 상단에 핀 공지로 표시 */
   pinned?: boolean;
+  /** 해커톤 참가 신청 시 팀 빌딩 사전 설문 (선택 입력) */
+  hackathonSurvey?: {
+    /** AI 리터러시 자기평가 1(낮음)~5(높음) */
+    aiLiteracy?: 1 | 2 | 3 | 4 | 5;
+    /** 바이브코딩 경험 */
+    vibeCoding?: "none" | "tried" | "often";
+    /** 주로 쓰는 AI 도구 목록 (ChatGPT·Claude·Cursor·기타 자유 입력) */
+    tools?: string[];
+    /** 강점 영역 (기획·연구 / 디자인 / 개발 / 발표) */
+    strengths?: string[];
+  };
   createdAt?: string;
   updatedAt?: string;
 }
