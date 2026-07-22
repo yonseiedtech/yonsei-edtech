@@ -8,15 +8,12 @@ import {
   HelpCircle,
   Users,
 } from "lucide-react";
-import { Trophy } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 import { formatDday } from "@/lib/dday";
 import HackathonBoard from "@/features/hackathon/HackathonBoard";
-import HackathonSubmissions from "@/features/hackathon/HackathonSubmissions";
-import HackathonAwards from "@/features/hackathon/HackathonAwards";
 import HackathonPhaseTimeline from "@/features/hackathon/HackathonPhaseTimeline";
-import HackathonTeamView from "@/features/hackathon/HackathonTeamView";
 import HackathonLiveBanner from "@/features/hackathon/HackathonLiveBanner";
+import HackathonSectionGate from "@/features/hackathon/HackathonSectionGate";
 import {
   HACKATHON_EVENT,
   HACKATHON_TIMELINE,
@@ -103,36 +100,8 @@ export default function HackathonHubPage() {
         {/* ── 단계별 진행 상태 + D-day 카운트다운 (v8-H6) ── */}
         <HackathonPhaseTimeline />
 
-        {/* ── 수상작 (행사 전: 예정 안내, 심사 중: 심사 중 안내, 이후: 공개 갤러리) ── */}
-        <HackathonAwards />
-
-        {/* ── 팀 현황 (M6-v9) ── */}
-        <section className="mt-12">
-          <h2 className="flex items-center gap-2 text-lg font-bold">
-            <Users size={18} className="text-primary" />
-            팀 현황
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            확정된 팀과 팀원을 찾는 중인 아이디어를 한눈에 볼 수 있어요. 아이디어 보드에서 합류 희망을 표시하고 팀을 만들어 보세요.
-          </p>
-          <div className="mt-5">
-            <HackathonTeamView />
-          </div>
-        </section>
-
-        {/* ── 산출물 제출 ── */}
-        <section className="mt-12">
-          <h2 className="flex items-center gap-2 text-lg font-bold">
-            <Trophy size={18} className="text-primary" />
-            산출물 제출
-          </h2>
-          <p className="mt-1 text-sm text-muted-foreground">
-            우리 팀의 결과물을 제목·설명·링크와 함께 남기세요. 발표 후 심사를 거쳐 수상작이 선정됩니다.
-          </p>
-          <div className="mt-5">
-            <HackathonSubmissions />
-          </div>
-        </section>
+        {/* ── 수상작·팀 현황·산출물 제출 — 운영진 콘솔 공개 토글 시 노출 ── */}
+        <HackathonSectionGate />
 
         {/* ── 참가 신청 · 아이디어 보드 ── */}
         <section id="hackathon-board" className="mt-12">

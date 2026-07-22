@@ -24,7 +24,7 @@ import {
   Settings, MessageCircle, ScrollText, ChevronDown, ChevronRight,
   ShieldCheck, Megaphone, CalendarDays, MessageSquareQuote, Images, ClipboardCheck, Workflow, LayoutGrid,
   UserPlus, ListChecks, AlertTriangle, Archive, Map, Bot, Sparkles, Trophy,
-  PackageSearch, Network,
+  PackageSearch, Network, Gift,
 } from "lucide-react";
 import { fetchPendingDrafts } from "@/features/content-draft/content-draft-store";
 import { useState } from "react";
@@ -255,6 +255,7 @@ function ConsoleShell({ children }: { children: React.ReactNode }) {
         { href: "/console/newsletter", label: "학회보", icon: Newspaper },
         { href: "/console/journal", label: "학회지 운영", icon: BookOpen },
         { href: "/console/card-news", label: "카드뉴스", icon: Images },
+        { href: "/console/celebration-card", label: "축하카드", icon: Gift },
         { href: "/console/content-drafts", label: "콘텐츠 초안함", icon: Sparkles, badge: contentDraftCount },
         { href: "/console/popups", label: "팝업 공지", icon: Megaphone },
       ],

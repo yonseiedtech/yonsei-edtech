@@ -182,17 +182,39 @@ export const HACKATHON_AWARDS_ANNOUNCE_DATE = "2026-08-29";
 /** 당일 운영 오버라이드 site_settings 저장 키 */
 export const HACKATHON_OPS_SETTINGS_KEY = "hackathon_ops";
 
+/**
+ * 허브 영역 공개 여부 — 운영진이 콘솔에서 영역별로 켜야 노출.
+ * 기본값(필드 부재·null): 전부 false(비공개) — 행사 당일 순서에 맞춰 공개.
+ */
+export interface SectionVisibility {
+  /** 팀 현황 섹션 공개 여부 */
+  teams: boolean;
+  /** 산출물 제출 섹션 공개 여부 */
+  submissions: boolean;
+  /** 수상작 영역 공개 여부 (발표 예정 플레이스홀더 포함) */
+  awards: boolean;
+}
+
+export const HACKATHON_SECTION_VISIBILITY_DEFAULT: SectionVisibility = {
+  teams: false,
+  submissions: false,
+  awards: false,
+};
+
 /** 운영진 수동 오버라이드 — 각 필드 null 이면 자동(날짜) 폴백 */
 export interface HackathonOpsOverride {
   /** 진행 단계 수동 지정 (null = getHackathonPhase 자동) */
   phase: HackathonPhaseKey | null;
   /** 제출 마감 수동 지정 (null = isHackathonSubmissionClosed 자동) */
   submissionClosed: boolean | null;
+  /** 허브 영역 공개 여부 (null = 전부 비공개 기본값) */
+  sectionVisibility: SectionVisibility | null;
 }
 
 export const HACKATHON_OPS_DEFAULT: HackathonOpsOverride = {
   phase: null,
   submissionClosed: null,
+  sectionVisibility: null,
 };
 
 /** 수동 우선·자동 폴백으로 현재 진행 단계 판정. */
@@ -209,6 +231,13 @@ export function resolveHackathonSubmissionClosed(
   now: Date = new Date(),
 ): boolean {
   return override?.submissionClosed ?? isHackathonSubmissionClosed(now);
+}
+
+/** 허브 영역 공개 여부 판정 — null 이면 전부 비공개 기본값 반환. */
+export function resolveSectionVisibility(
+  override: HackathonOpsOverride | null | undefined,
+): SectionVisibility {
+  return override?.sectionVisibility ?? HACKATHON_SECTION_VISIBILITY_DEFAULT;
 }
 
 /**

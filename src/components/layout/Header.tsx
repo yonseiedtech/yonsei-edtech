@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useState, useRef, useEffect, useMemo } from "react";
+import { useState, useRef, useEffect } from "react";
 import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, Users, FlaskConical, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
@@ -14,7 +14,6 @@ import NotificationBell from "@/features/notifications/NotificationBell";
 import ThemeToggle from "@/components/ThemeToggle";
 import SessionIndicator from "@/features/auth/SessionIndicator";
 import GlobalSearch from "@/components/layout/GlobalSearch";
-import { HACKATHON_AWARDS_ANNOUNCE_DATE } from "@/features/hackathon/config";
 
 interface NavLink {
   href: string;
@@ -474,26 +473,8 @@ export default function Header() {
   const { logout } = useAuth();
   const showAdmin = isAtLeast(user, "staff");
 
-  // 에듀테크 해커톤 진입점 — 수상 발표일+7일 이내에만 노출 (hydration 안전)
-  const [showHackathon, setShowHackathon] = useState(false);
-  useEffect(() => {
-    const cutoff = new Date(HACKATHON_AWARDS_ANNOUNCE_DATE);
-    cutoff.setDate(cutoff.getDate() + 7);
-    // eslint-disable-next-line react-hooks/set-state-in-effect -- SSR/CSR 불일치 방지용 마운트 후 1회 플래그 (의도적)
-    setShowHackathon(new Date() <= cutoff);
-  }, []);
-
-  const navGroups = useMemo((): NavGroup[] => {
-    if (!showHackathon) return PUBLIC_NAV;
-    return PUBLIC_NAV.map((group) => {
-      if (group.label !== "학술 활동") return group;
-      const baseItems = group.items ?? [];
-      const internalIdx = baseItems.findIndex((item) => item.href === "/activities/internal");
-      const items = [...baseItems];
-      items.splice(internalIdx + 1, 0, { href: "/hackathon", label: "에듀테크 해커톤" });
-      return { ...group, items };
-    });
-  }, [showHackathon]);
+  // 해커톤 진입은 대내 학술대회 목록·대시보드 배너 경유 — 내비 별도 항목 없음 (2026-07-22 사용자 결정)
+  const navGroups = PUBLIC_NAV;
 
   // 모바일 메뉴 열림 시 배경 스크롤 방지
   useEffect(() => {

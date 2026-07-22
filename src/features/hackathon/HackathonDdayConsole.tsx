@@ -28,6 +28,8 @@ import {
   Lock,
   Unlock,
   Download,
+  Eye,
+  EyeOff,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Badge } from "@/components/ui/badge";
@@ -60,7 +62,7 @@ const PHASE_LABEL: Record<HackathonPhaseKey, string> = Object.fromEntries(
 ) as Record<HackathonPhaseKey, string>;
 
 export default function HackathonDdayConsole() {
-  const { override, recordId, phase, submissionClosed, isManual, isLoading } =
+  const { override, recordId, phase, submissionClosed, sectionVisibility, isManual, isLoading } =
     useHackathonOps();
   const updateOps = useUpdateHackathonOps();
 
@@ -127,7 +129,14 @@ export default function HackathonDdayConsole() {
 
   function resetToAuto() {
     updateOps.mutate(
-      { recordId, value: { phase: null, submissionClosed: null } },
+      {
+        recordId,
+        value: {
+          phase: null,
+          submissionClosed: null,
+          sectionVisibility: override.sectionVisibility,
+        },
+      },
       {
         onSuccess: () => toast.success("자동(날짜 기준)으로 되돌렸습니다."),
         onError: (e) =>
@@ -369,6 +378,63 @@ export default function HackathonDdayConsole() {
             );
           })}
         </ol>
+      </div>
+
+      {/* ── 영역 공개 토글 ── */}
+      <div className="rounded-2xl border bg-card p-5">
+        <div className="mb-1 flex flex-wrap items-center gap-2">
+          <p className="text-sm font-semibold text-foreground">영역 공개</p>
+          <span className="ml-auto text-xs text-muted-foreground">
+            단계 전환과 독립적 — 단계를 전환해도 자동 공개되지 않습니다
+          </span>
+        </div>
+        <p className="mb-4 text-xs text-muted-foreground">
+          행사 당일 순서에 맞춰 공개하세요 — 팀 현황 → 산출물 제출 → 수상작
+        </p>
+        <ul className="space-y-2">
+          {(
+            [
+              { key: "teams", label: "팀 현황" },
+              { key: "submissions", label: "산출물 제출" },
+              { key: "awards", label: "수상작" },
+            ] as const
+          ).map(({ key, label }) => {
+            const visible = sectionVisibility[key];
+            return (
+              <li
+                key={key}
+                className="flex flex-wrap items-center justify-between gap-3 rounded-xl border bg-muted/20 px-4 py-3"
+              >
+                <span className="text-sm font-medium text-foreground">
+                  {label}
+                </span>
+                <div className="flex items-center gap-2">
+                  <Badge variant={visible ? "default" : "outline"}>
+                    {visible ? "공개" : "비공개"}
+                  </Badge>
+                  <Button
+                    size="sm"
+                    variant={visible ? "outline" : "default"}
+                    onClick={() => {
+                      const newVis = { ...sectionVisibility, [key]: !visible };
+                      apply({ sectionVisibility: newVis });
+                    }}
+                    disabled={busy}
+                  >
+                    {busy ? (
+                      <Loader2 size={13} className="mr-1 animate-spin" />
+                    ) : visible ? (
+                      <EyeOff size={13} className="mr-1" />
+                    ) : (
+                      <Eye size={13} className="mr-1" />
+                    )}
+                    {visible ? "숨기기" : "공개"}
+                  </Button>
+                </div>
+              </li>
+            );
+          })}
+        </ul>
       </div>
     </div>
   );

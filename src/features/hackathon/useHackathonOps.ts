@@ -19,8 +19,10 @@ import {
   HACKATHON_OPS_DEFAULT,
   resolveHackathonPhase,
   resolveHackathonSubmissionClosed,
+  resolveSectionVisibility,
   type HackathonOpsOverride,
   type HackathonPhaseKey,
+  type SectionVisibility,
 } from "./config";
 
 const QUERY_KEY = ["site_settings", HACKATHON_OPS_SETTINGS_KEY];
@@ -44,6 +46,7 @@ export function useHackathonOps() {
         override: {
           phase: parsed.phase ?? null,
           submissionClosed: parsed.submissionClosed ?? null,
+          sectionVisibility: parsed.sectionVisibility ?? null,
         },
         recordId: (row.id as string) ?? null,
       };
@@ -63,8 +66,12 @@ export function useHackathonOps() {
     [override],
   );
   const isManual = override.phase !== null || override.submissionClosed !== null;
+  const sectionVisibility = useMemo<SectionVisibility>(
+    () => resolveSectionVisibility(override),
+    [override],
+  );
 
-  return { override, recordId, phase, submissionClosed, isManual, isLoading };
+  return { override, recordId, phase, submissionClosed, sectionVisibility, isManual, isLoading };
 }
 
 export function useUpdateHackathonOps() {
