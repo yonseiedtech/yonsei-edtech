@@ -66,13 +66,30 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
                   .update(merged.id, { lastLoginAt: new Date().toISOString() })
                   // D3: 성공 시에만 스로틀 마킹 — 실패·탭 조기 종료 시 당일 재시도 유지
                   .then(() => localStorage.setItem(k, today))
-                  .catch((e) =>
+                  .catch((e) => {
                     console.warn(
                       "[auth] lastLoginAt 갱신 실패 (레거시 doc id≠uid 또는 권한 거부):",
                       merged.id,
                       e,
-                    ),
-                  );
+                    );
+                    // D1 폴백: Admin SDK 경유 heartbeat — firestore.rules isOwner 거부 회피.
+                    // 클라이언트 실패 시에만 호출하므로 저빈도 — 별도 스로틀 불필요.
+                    firebaseUser
+                      .getIdToken()
+                      .then((idToken) =>
+                        fetch("/api/auth/heartbeat", {
+                          method: "POST",
+                          headers: { Authorization: `Bearer ${idToken}` },
+                        }),
+                      )
+                      .then((res) => {
+                        // 폴백 성공 시에만 스로틀 키 마킹 (D3 원칙 유지)
+                        if (res.ok) localStorage.setItem(k, today);
+                      })
+                      .catch(() => {
+                        // 폴백도 실패 — 상위 warn 으로 충분
+                      });
+                  });
               }
             } catch {
               // localStorage 접근 불가(시크릿 모드 등) — throttle 없이 기존 동작 폴백
