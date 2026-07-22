@@ -118,6 +118,20 @@ export interface HackathonJudging {
 }
 
 /**
+ * 참가자 응원 투표 (X1). doc id = `${submissionId}_${userId}` (1인 1제출물 1표·멱등).
+ * awards phase 이후 마감. 본인 팀(ownerId·memberIds) 제출물에는 투표 불가.
+ */
+export interface HackathonSubmissionVote {
+  /** `${submissionId}_${userId}` */
+  id: string;
+  submissionId: string;
+  userId: string;
+  /** HACKATHON_CONTEXT_ID — 회차별 집계 쿼리용 */
+  contextId: string;
+  createdAt?: string;
+}
+
+/**
  * 아이디어 보드 합류 희망 표시 (M6-v9).
  * doc id = `${questionId}_${userId}` (결정적 — 멱등 upsert)
  */

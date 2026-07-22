@@ -1616,14 +1616,35 @@ service cloud.firestore {
     }
 
     // hackathon_judgings: 심사위원별 루브릭 점수. doc id = `${submissionId}_${judgeId}`.
-    //   심사는 운영진(staff+)만 — 각 심사위원은 자기 doc 만 기록(judgeId == uid 강제).
+    //   X1(2026-07-22): 심사단 = 외부인원/졸업생 — site_settings/hackathon_judges.judgeIds 명단 포함자도 채점 가능.
+    //   judgeId == uid·결정적 docId 강제는 유지(기록 위조 불가). 외부 심사위원의 list 는
+    //   본인 기록 필터 쿼리(judgeId == uid)만 통과 — 타 심사위원 점수 열람 차단(심사 독립성).
+    function isHackathonJudge() {
+      return isAuthenticated()
+        && request.auth.uid in get(/databases/$(database)/documents/site_settings/hackathon_judges).data.judgeIds;
+    }
     match /hackathon_judgings/{docId} {
-      allow read, list: if isStaffOrAbove();
-      allow create, update: if isStaffOrAbove()
+      allow get: if isStaffOrAbove()
+        || (isAuthenticated() && resource.data.judgeId == request.auth.uid);
+      allow list: if isStaffOrAbove()
+        || (isAuthenticated() && resource.data.judgeId == request.auth.uid);
+      allow create, update: if (isStaffOrAbove() || isHackathonJudge())
         && request.resource.data.judgeId == request.auth.uid
         && docId == request.resource.data.submissionId + '_' + request.auth.uid;
       allow delete: if isStaffOrAbove()
         && (resource.data.judgeId == request.auth.uid || isAdmin());
+    }
+
+    // hackathon_submission_votes: 참가자 응원 투표 (X1). doc id = `${submissionId}_${userId}`.
+    //   1인 1제출물 1표 — 본인 문서만 생성/삭제, 토글은 delete+create. 집계는 인증 사용자 열람.
+    match /hackathon_submission_votes/{docId} {
+      allow read, list: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid
+        && docId == request.resource.data.submissionId + '_' + request.auth.uid;
+      allow update: if false;
+      allow delete: if isAuthenticated()
+        && resource.data.userId == request.auth.uid;
     }
 
     // hackathon_team_joins: 아이디어 카드 합류 희망 표시 (M6-v9).

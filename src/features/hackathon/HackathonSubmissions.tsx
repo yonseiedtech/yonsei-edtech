@@ -13,7 +13,7 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Trophy,
   Loader2,
@@ -28,6 +28,7 @@ import {
   CheckCircle2,
   Pencil,
   X,
+  ThumbsUp,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
@@ -35,10 +36,11 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { hackathonSubmissionsApi } from "@/lib/bkend";
+import { hackathonSubmissionsApi, hackathonSubmissionVotesApi } from "@/lib/bkend";
 import {
   HACKATHON_AWARD_LABELS,
   type HackathonSubmission,
+  type HackathonSubmissionVote,
 } from "@/types";
 import MemberAutocomplete, { type SelectedMember } from "@/components/ui/MemberAutocomplete";
 import { useAllMembers } from "@/features/member/useMembers";
@@ -83,7 +85,7 @@ function toForm(s: HackathonSubmission): FormState {
 export default function HackathonSubmissions() {
   const user = useAuthStore((s) => s.user);
   const queryClient = useQueryClient();
-  const { submissionClosed: closed } = useHackathonOps();
+  const { submissionClosed: closed, phase } = useHackathonOps();
   const { members: allMembers } = useAllMembers();
 
   const [form, setForm] = useState<FormState>(EMPTY_FORM);
@@ -146,8 +148,54 @@ export default function HackathonSubmissions() {
     [submissions],
   );
 
+  // ── 참가자 응원 투표 (X1) ──
+  const { data: votes = [] } = useQuery({
+    queryKey: ["hackathon-votes", HACKATHON_CONTEXT_ID],
+    enabled: !!user,
+    queryFn: async () => {
+      const res = await hackathonSubmissionVotesApi.listByContext(HACKATHON_CONTEXT_ID);
+      return res.data as HackathonSubmissionVote[];
+    },
+  });
+
+  const myVotedIds = useMemo(() => {
+    if (!user) return new Set<string>();
+    return new Set(votes.filter((v) => v.userId === user.id).map((v) => v.submissionId));
+  }, [votes, user]);
+
+  const voteCounts = useMemo(() => {
+    const counts = new Map<string, number>();
+    for (const v of votes) {
+      counts.set(v.submissionId, (counts.get(v.submissionId) ?? 0) + 1);
+    }
+    return counts;
+  }, [votes]);
+
+  const toggleVote = useMutation({
+    mutationFn: async (s: HackathonSubmission) => {
+      if (!user) return;
+      if (myVotedIds.has(s.id)) {
+        await hackathonSubmissionVotesApi.unvote(s.id, user.id);
+      } else {
+        await hackathonSubmissionVotesApi.vote(s.id, user.id, HACKATHON_CONTEXT_ID);
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["hackathon-votes"] });
+    },
+    onError: (e) => toast.error(`투표 오류: ${e instanceof Error ? e.message : "오류"}`),
+  });
+
+  function isOwnSubmission(s: HackathonSubmission): boolean {
+    if (!user) return false;
+    if (s.ownerId === user.id) return true;
+    if (s.memberIds?.includes(user.id)) return true;
+    return false;
+  }
+
   function refresh() {
     queryClient.invalidateQueries({ queryKey: ["hackathon-submissions"] });
+    queryClient.invalidateQueries({ queryKey: ["hackathon-votes"] });
   }
 
   function startEdit() {
@@ -430,36 +478,80 @@ export default function HackathonSubmissions() {
           />
         ) : (
           <ul className="space-y-2.5">
-            {sorted.map((s) => (
-              <li
-                key={s.id}
-                className="rounded-2xl border bg-card p-4 transition-shadow hover:shadow-sm"
-              >
-                <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-sm font-semibold text-foreground">{s.title}</p>
-                  {s.award && (
-                    <Badge variant="default" className="gap-0.5 text-[10px]">
-                      <Trophy size={9} /> {HACKATHON_AWARD_LABELS[s.award]}
-                    </Badge>
-                  )}
-                  {user && s.ownerId === user.id && (
-                    <span className="text-[11px] text-primary">· 우리 팀</span>
-                  )}
-                </div>
-                <p className="mt-0.5 text-xs font-medium text-muted-foreground">
-                  {s.teamName}
-                  {s.members.length > 0 && (
-                    <span className="ml-1 text-muted-foreground/80">
-                      · {s.members.join(", ")}
-                    </span>
-                  )}
-                </p>
-                <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
-                  {s.description}
-                </p>
-                <SubmissionLinks submission={s} />
-              </li>
-            ))}
+            {sorted.map((s) => {
+              const voteCount = voteCounts.get(s.id) ?? 0;
+              const voted = myVotedIds.has(s.id);
+              const own = isOwnSubmission(s);
+              // awards phase 이후에는 투표 마감 — 버튼 비활성, 집계만 표시
+              const votingOpen = phase !== "awards";
+              const canVote = !!user && !own && votingOpen;
+              return (
+                <li
+                  key={s.id}
+                  className="rounded-2xl border bg-card p-4 transition-shadow hover:shadow-sm"
+                >
+                  <div className="flex flex-wrap items-center gap-2">
+                    <p className="text-sm font-semibold text-foreground">{s.title}</p>
+                    {s.award && (
+                      <Badge variant="default" className="gap-0.5 text-[10px]">
+                        <Trophy size={9} /> {HACKATHON_AWARD_LABELS[s.award]}
+                      </Badge>
+                    )}
+                    {user && s.ownerId === user.id && (
+                      <span className="text-[11px] text-primary">· 우리 팀</span>
+                    )}
+                  </div>
+                  <p className="mt-0.5 text-xs font-medium text-muted-foreground">
+                    {s.teamName}
+                    {s.members.length > 0 && (
+                      <span className="ml-1 text-muted-foreground/80">
+                        · {s.members.join(", ")}
+                      </span>
+                    )}
+                  </p>
+                  <p className="mt-2 whitespace-pre-wrap text-sm leading-relaxed text-foreground">
+                    {s.description}
+                  </p>
+                  <SubmissionLinks submission={s} />
+                  {/* 응원 투표 */}
+                  <div className="mt-2.5 flex items-center gap-2">
+                    <button
+                      type="button"
+                      onClick={() => toggleVote.mutate(s)}
+                      disabled={!canVote || toggleVote.isPending}
+                      aria-pressed={voted}
+                      title={
+                        !user
+                          ? "로그인 후 투표할 수 있습니다"
+                          : own
+                            ? "본인 팀에는 투표할 수 없습니다"
+                            : !votingOpen
+                              ? "수상 발표 이후 투표가 마감되었습니다"
+                              : voted
+                                ? "투표 취소"
+                                : "응원 투표"
+                      }
+                      className={`inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+                        voted
+                          ? "border-primary bg-primary/10 font-medium text-primary"
+                          : canVote
+                            ? "border-border text-muted-foreground hover:bg-accent"
+                            : "border-border text-muted-foreground"
+                      }`}
+                    >
+                      <ThumbsUp
+                        size={11}
+                        className={voted ? "fill-primary text-primary" : ""}
+                      />
+                      응원{voteCount > 0 && ` ${voteCount}`}
+                    </button>
+                    {own && (
+                      <span className="text-[11px] text-muted-foreground">본인 팀 투표 불가</span>
+                    )}
+                  </div>
+                </li>
+              );
+            })}
           </ul>
         )}
       </section>

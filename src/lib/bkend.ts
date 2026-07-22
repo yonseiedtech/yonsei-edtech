@@ -34,7 +34,7 @@ import {
   type QueryConstraint,
 } from "firebase/firestore";
 import { auth, db } from "./firebase";
-import type { HackathonSubmission, HackathonJudging, HackathonTeamJoin } from "@/types/hackathon";
+import type { HackathonSubmission, HackathonJudging, HackathonTeamJoin, HackathonSubmissionVote } from "@/types/hackathon";
 import type {
   User, Post, Comment, Seminar, SeminarSession, SeminarAttendee,
   SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
@@ -4567,6 +4567,22 @@ export const hackathonJudgingsApi = {
     ),
   delete: (submissionId: string, judgeId: string) =>
     dataApi.delete("hackathon_judgings", `${submissionId}_${judgeId}`),
+  /**
+   * 외부/졸업생 심사위원이 자신의 점수만 조회 (X1).
+   * rules 개정 후(보고서 참조) 동작. 권한 없으면 빈 배열 반환(graceful).
+   */
+  listMineByContext: async (contextId: string, judgeId: string): Promise<HackathonJudging[]> => {
+    try {
+      const res = await dataApi.list<HackathonJudging>("hackathon_judgings", {
+        "filter[contextId]": contextId,
+        "filter[judgeId]": judgeId,
+        limit: 500,
+      });
+      return res.data;
+    } catch {
+      return [];
+    }
+  },
 };
 
 // ── 에듀테크 해커톤 팀 합류 희망 (M6-v9) ──
@@ -4589,4 +4605,52 @@ export const hackathonTeamJoinsApi = {
   /** 합류 희망 취소 */
   delete: (questionId: string, userId: string) =>
     dataApi.delete("hackathon_team_joins", `${questionId}_${userId}`),
+};
+
+// ── 해커톤 심사위원 명단 (X1) ──
+// site_settings 컬렉션, docId = "hackathon_judges" (결정적).
+// hackathon_ops 패턴과 달리 judgeIds 를 JSON 문자열이 아닌 직접 배열 필드로 저장한다.
+// Firestore rules 에서 get(/…/site_settings/hackathon_judges).data.judgeIds 로 직접 접근하기 위함.
+const HACKATHON_JUDGES_DOC_ID = "hackathon_judges" as const;
+export const hackathonJudgesApi = {
+  /** 심사위원 uid 목록 조회. 문서 없으면 빈 배열 반환. */
+  get: async (): Promise<string[]> => {
+    try {
+      const doc = await dataApi.get<{ key: string; judgeIds: string[] }>(
+        "site_settings",
+        HACKATHON_JUDGES_DOC_ID,
+      );
+      return Array.isArray(doc.judgeIds) ? doc.judgeIds : [];
+    } catch {
+      return [];
+    }
+  },
+  /** 심사위원 목록 저장 (결정적 docId upsert). */
+  save: (judgeIds: string[]) =>
+    dataApi.upsert("site_settings", HACKATHON_JUDGES_DOC_ID, {
+      key: HACKATHON_JUDGES_DOC_ID,
+      judgeIds,
+    }),
+};
+
+// ── 해커톤 참가자 응원 투표 (X1) ──
+// hackathon_submission_votes: 1인 1제출물 1표. doc id = `${submissionId}_${userId}`.
+// awards phase 이후 마감. 본인 팀 제출물 투표 불가(UI 게이트).
+export const hackathonSubmissionVotesApi = {
+  /** 한 회차의 전체 투표 (공개 집계용) */
+  listByContext: (contextId: string) =>
+    dataApi.list<HackathonSubmissionVote>("hackathon_submission_votes", {
+      "filter[contextId]": contextId,
+      limit: 10000,
+    }),
+  /** 투표 (upsert — 멱등) */
+  vote: (submissionId: string, userId: string, contextId: string) =>
+    dataApi.upsert<HackathonSubmissionVote>(
+      "hackathon_submission_votes",
+      `${submissionId}_${userId}`,
+      { submissionId, userId, contextId },
+    ),
+  /** 투표 취소 */
+  unvote: (submissionId: string, userId: string) =>
+    dataApi.delete("hackathon_submission_votes", `${submissionId}_${userId}`),
 };
