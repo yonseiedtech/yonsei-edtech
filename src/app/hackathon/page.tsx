@@ -6,16 +6,30 @@ import HackathonPhaseTimeline from "@/features/hackathon/HackathonPhaseTimeline"
 import HackathonSectionGate from "@/features/hackathon/HackathonSectionGate";
 import HackathonHeroMeta from "@/features/hackathon/HackathonHeroMeta";
 import HackathonDayTimeline from "@/features/hackathon/HackathonDayTimeline";
-import { HACKATHON_EVENT, HACKATHON_FAQ } from "@/features/hackathon/config";
+import {
+  HACKATHON_EVENT,
+  HACKATHON_FAQ,
+  HACKATHON_DEFAULT_EVENT_MODE,
+  PROPOSAL_EVENT,
+} from "@/features/hackathon/config";
 
 // D-day·색상 임계값이 빌드 시점에 고정되지 않도록 1시간 주기 재생성 (리뷰 M-2)
 export const revalidate = 3600;
 
-export const metadata: Metadata = {
-  title: HACKATHON_EVENT.title,
-  description:
-    "교육 현장의 문제를 함께 정의하고 에듀테크로 해법을 만드는 하루. 개발이 처음이어도, 아이디어만 있어도 괜찮은 부담 없는 미니 학술대회. 2026년 8월 22일.",
-};
+// 정적 메타·섹션 헤더는 기본 행사 모드(config 폴백) 기준 — 히어로 등 동적 표면은 레코드 실시간 반영
+const isProposalDefault = HACKATHON_DEFAULT_EVENT_MODE === "proposal";
+
+export const metadata: Metadata = isProposalDefault
+  ? {
+      title: PROPOSAL_EVENT.title,
+      description:
+        "각자의 연구 계획을 프로포절로 정리해 공유하고 피드백으로 다듬는 연세교육공학회 대내 학술대회. 2026년 8월 22일.",
+    }
+  : {
+      title: HACKATHON_EVENT.title,
+      description:
+        "교육 현장의 문제를 함께 정의하고 에듀테크로 해법을 만드는 하루. 개발이 처음이어도, 아이디어만 있어도 괜찮은 부담 없는 미니 학술대회. 2026년 8월 22일.",
+    };
 
 export default function HackathonHubPage() {
   return (
@@ -30,14 +44,16 @@ export default function HackathonHubPage() {
         {/* ── 수상작·팀 현황·산출물 제출 — 운영진 콘솔 공개 토글 시 노출 ── */}
         <HackathonSectionGate />
 
-        {/* ── 참가 신청 · 아이디어 보드 ── */}
+        {/* ── 참가 신청 보드 (모드별 헤더 — 정적 폴백 기준) ── */}
         <section id="hackathon-board" className="mt-12">
           <h2 className="flex items-center gap-2 text-lg font-bold">
             <Rocket size={18} className="text-primary" />
-            참가 신청 · 아이디어 보드
+            {isProposalDefault ? "참가 신청 · 연구 보드" : "참가 신청 · 아이디어 보드"}
           </h2>
           <p className="mt-1 text-sm text-muted-foreground">
-            풀고 싶은 교육 현장의 문제를 한 줄로 남기면 참가 신청이 됩니다. 서로의 문제에 공감하며 팀을 찾아보세요.
+            {isProposalDefault
+              ? "연구 제목·주제·설계를 프로포절로 등록하면 참가 신청이 됩니다. 서로의 연구 계획에 공감을 남겨보세요."
+              : "풀고 싶은 교육 현장의 문제를 한 줄로 남기면 참가 신청이 됩니다. 서로의 문제에 공감하며 팀을 찾아보세요."}
           </p>
           <div className="mt-5">
             <HackathonBoard />
