@@ -14,7 +14,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import PageHeader from "@/components/ui/page-header";
 import PageContainer from "@/components/ui/page-container";
-import { Plus, Calendar, Search, AlertCircle, List, LayoutGrid, X } from "lucide-react";
+import { Plus, Calendar, Search, AlertCircle, List, LayoutGrid, X, ArrowRight } from "lucide-react";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
 import EmptyState from "@/components/ui/empty-state";
 
@@ -286,6 +286,24 @@ export default function SeminarsPage() {
           ) : (
             <SeminarList seminars={sorted} viewMode={viewMode} />
           )}
+        </div>
+
+        {/* ── 수요 조사 진입 카드 ─────────────────────────────────────────── */}
+        <div className="mt-8">
+          <Link
+            href="/activities/demand"
+            className="flex items-center justify-between gap-4 rounded-2xl border border-dashed bg-card px-5 py-4 text-sm transition-colors hover:border-primary/40 hover:bg-primary/5"
+          >
+            <div>
+              <p className="font-semibold text-foreground">
+                듣고 싶은 세미나 주제가 있나요?
+              </p>
+              <p className="mt-0.5 text-muted-foreground">
+                수요 조사 보드에 등록하면 개설 검토에 반영됩니다.
+              </p>
+            </div>
+            <ArrowRight size={18} className="shrink-0 text-muted-foreground" />
+          </Link>
         </div>
       </div>
     </PageContainer>

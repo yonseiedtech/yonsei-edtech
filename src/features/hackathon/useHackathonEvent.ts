@@ -19,6 +19,9 @@ import {
   HACKATHON_SUBMISSION_DEADLINE,
   HACKATHON_AWARDS_ANNOUNCE_DATE,
   HACKATHON_PHASE_TIMELINE,
+  HACKATHON_DEFAULT_EVENT_MODE,
+  PROPOSAL_EVENT,
+  type EventMode,
 } from "./config";
 
 export interface ResolvedHackathonEvent {
@@ -39,19 +42,28 @@ export interface ResolvedHackathonEvent {
     judging: string;
     awards: string;
   };
+  /**
+   * 행사 모드 — Firestore(hackathonSettings.eventMode) → HACKATHON_DEFAULT_EVENT_MODE 순으로 해상.
+   * "proposal" 이면 팀 기능 숨김·3필드 프로포절 폼 활성.
+   */
+  eventMode: EventMode;
 }
 
-/** config 상수 기준 불변 기본값 — 로딩 중 폴백으로 사용 */
+/**
+ * config 상수 기준 불변 기본값 — 로딩 중 폴백으로 사용.
+ * HACKATHON_DEFAULT_EVENT_MODE 가 "proposal" 이면 PROPOSAL_EVENT 값을 기본값으로 선택한다.
+ */
+const isProposalDefault = HACKATHON_DEFAULT_EVENT_MODE === "proposal";
 const CONFIG_DEFAULTS: ResolvedHackathonEvent = {
-  title: HACKATHON_EVENT.title,
-  tagline: HACKATHON_EVENT.tagline,
+  title: isProposalDefault ? PROPOSAL_EVENT.title : HACKATHON_EVENT.title,
+  tagline: isProposalDefault ? PROPOSAL_EVENT.tagline : HACKATHON_EVENT.tagline,
   date: HACKATHON_EVENT.date,
   dayLabel: HACKATHON_EVENT.dayLabel,
   timeLabel: HACKATHON_EVENT.timeLabel,
   place: HACKATHON_EVENT.place,
-  intro: HACKATHON_EVENT.intro,
-  highlights: HACKATHON_EVENT.highlights,
-  timeline: HACKATHON_TIMELINE,
+  intro: isProposalDefault ? PROPOSAL_EVENT.intro : HACKATHON_EVENT.intro,
+  highlights: isProposalDefault ? PROPOSAL_EVENT.highlights : HACKATHON_EVENT.highlights,
+  timeline: isProposalDefault ? [...PROPOSAL_EVENT.timeline] : HACKATHON_TIMELINE,
   submissionDeadline: HACKATHON_SUBMISSION_DEADLINE,
   awardsAnnounceDate: HACKATHON_AWARDS_ANNOUNCE_DATE,
   phaseStartDates: {
@@ -60,6 +72,7 @@ const CONFIG_DEFAULTS: ResolvedHackathonEvent = {
     judging: HACKATHON_PHASE_TIMELINE[2].startDate,
     awards: HACKATHON_PHASE_TIMELINE[3].startDate,
   },
+  eventMode: HACKATHON_DEFAULT_EVENT_MODE,
 };
 
 /**
@@ -99,6 +112,8 @@ export function useHackathonEvent(): {
         judging: pd?.judging ?? defaults.phaseStartDates.judging,
         awards: pd?.awards ?? defaults.phaseStartDates.awards,
       },
+      // eventMode: Firestore 레코드 → config 상수 폴백 순으로 해상
+      eventMode: s?.eventMode ?? defaults.eventMode,
     };
   }, [conferences]);
 

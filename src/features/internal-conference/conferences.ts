@@ -16,6 +16,8 @@ import {
   HACKATHON_CONTEXT_ID,
   HACKATHON_EVENT,
   HACKATHON_AWARDS_ANNOUNCE_DATE,
+  PROPOSAL_EVENT,
+  type EventMode,
 } from "@/features/hackathon/config";
 
 /** 대내 학술대회 유형. */
@@ -26,6 +28,12 @@ export type InternalConferenceKind = "hackathon" | "symposium";
  * 각 필드를 채우면 공개 허브·콘솔의 해당 표시부가 즉시 반영된다.
  */
 export interface HackathonSettings {
+  /**
+   * 행사 모드 — "hackathon": 팀 기반 해커톤 / "proposal": 개인 연구 계획 발표회.
+   * 없으면 config.HACKATHON_DEFAULT_EVENT_MODE 폴백.
+   * 운영진이 콘솔 행사 설정 탭에서 저장하면 Firestore 레코드에 확정된다.
+   */
+  eventMode?: EventMode;
   /** 행사 소개 문구 (히어로 섹션 intro 텍스트) */
   intro?: string;
   /** 세부 안내 불릿 — 비어 있으면 config 상수 사용 */
@@ -101,9 +109,11 @@ export const INTERNAL_CONFERENCES: readonly InternalConference[] = [
     slug: "hackathon-2026-08-22",
     contextId: HACKATHON_CONTEXT_ID,
     kind: "hackathon",
-    title: HACKATHON_EVENT.title,
-    tagline: HACKATHON_EVENT.tagline,
-    description: HACKATHON_EVENT.intro,
+    // proposal 모드 기본값 — site_settings 문서가 이미 존재하면 코드 시드는 무시됨.
+    // 운영진이 콘솔 행사 설정에서 제목·소개 등을 저장해야 Firestore 값이 갱신됨.
+    title: PROPOSAL_EVENT.title,
+    tagline: PROPOSAL_EVENT.tagline,
+    description: PROPOSAL_EVENT.intro,
     date: HACKATHON_EVENT.date,
     dayLabel: HACKATHON_EVENT.dayLabel,
     timeLabel: HACKATHON_EVENT.timeLabel,
@@ -117,6 +127,12 @@ export const INTERNAL_CONFERENCES: readonly InternalConference[] = [
       awards: true,
     },
     hubHref: "/hackathon",
+    hackathonSettings: {
+      eventMode: "proposal",
+      intro: PROPOSAL_EVENT.intro,
+      highlights: [...PROPOSAL_EVENT.highlights],
+      timeline: [...PROPOSAL_EVENT.timeline],
+    },
   },
 ];
 

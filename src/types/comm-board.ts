@@ -1,5 +1,5 @@
-// 소통 보드(Q&A) 타입 — 스터디 회차·세미나·수업 발표(class)·졸업생 멘토링(mentoring)·해커톤(hackathon) 공용
-export type CommContextType = "study" | "project" | "external" | "seminar" | "class" | "mentoring" | "hackathon";
+// 소통 보드(Q&A) 타입 — 스터디 회차·세미나·수업 발표(class)·졸업생 멘토링(mentoring)·해커톤(hackathon)·수요조사(demand) 공용
+export type CommContextType = "study" | "project" | "external" | "seminar" | "class" | "mentoring" | "hackathon" | "demand";
 export type CommBoardStatus = "open" | "closed";
 export type CommSortMode = "recent" | "popular";
 export type CommLikeTarget = "question" | "answer";
@@ -57,6 +57,28 @@ export interface CommQuestion {
     tools?: string[];
     /** 강점 영역 (기획·연구 / 디자인 / 개발 / 발표) */
     strengths?: string[];
+  };
+  /**
+   * proposal 모드 행사(연구 계획 발표회 등) 참가 신청 데이터.
+   * body 에는 proposal.title 을 저장하여 기존 검색·목록 호환을 유지한다.
+   */
+  proposal?: {
+    /** 연구 제목 (≤100자, 필수) */
+    title: string;
+    /** 연구 주제·배경 요약 (≤300자) */
+    topic: string;
+    /** 연구 설계·방법 개요 (≤500자) */
+    design: string;
+  };
+  /**
+   * 수요 조사 보드 선호 설정 (demand contextType 전용).
+   * presenter 슬롯에 "스터디 희망" | "세미나 희망" 유형을 저장하고,
+   * 추가 선호 정보는 이 필드에 담는다.
+   */
+  demandPref?: {
+    format?: "온라인" | "오프라인" | "무관";
+    /** 희망 주기·수준 등 메모 (≤100자) */
+    note?: string;
   };
   createdAt?: string;
   updatedAt?: string;

@@ -20,8 +20,11 @@ import {
   HACKATHON_EVENT,
   HACKATHON_CONTEXT_ID,
   resolveHackathonPhaseGuarded,
+  getPhaseLabel,
+  getPhaseDescription,
 } from "./config";
 import { useHackathonOps } from "./useHackathonOps";
+import { useHackathonEvent } from "./useHackathonEvent";
 
 /** 행사 시작 시각 UTC ms (2026-08-22 10:00 KST = 01:00 UTC) */
 function getEventStartMs(): number {
@@ -62,6 +65,8 @@ function calcSubmissionDday(): number | null {
 
 export default function HackathonPhaseTimeline() {
   const { phase: rawPhase, override, isManual } = useHackathonOps();
+  const { event: hackEvent } = useHackathonEvent();
+  const eventMode = hackEvent.eventMode;
   const user = useAuthStore((s) => s.user);
 
   // v14 new-H2: 참가 신청자 수 (공개 read)
@@ -141,7 +146,7 @@ export default function HackathonPhaseTimeline() {
                         : "text-muted-foreground/50"
                   }`}
                 >
-                  {p.label}
+                  {getPhaseLabel(p.key, eventMode)}
                 </span>
               </div>
               {i < HACKATHON_PHASE_TIMELINE.length - 1 && (
@@ -161,10 +166,10 @@ export default function HackathonPhaseTimeline() {
         {currentPhase && (
           <p className="text-xs text-muted-foreground">
             <span className="font-semibold text-primary">
-              현재: {currentPhase.label}
+              현재: {getPhaseLabel(currentPhase.key, eventMode)}
             </span>
             {" · "}
-            {currentPhase.description}
+            {getPhaseDescription(currentPhase.key, eventMode)}
           </p>
         )}
         {typeof participantCount === "number" && participantCount > 0 && (

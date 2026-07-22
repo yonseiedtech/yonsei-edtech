@@ -155,6 +155,8 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
   const [guestStaffName, setGuestStaffName] = useState("");
   const [guestParticipantName, setGuestParticipantName] = useState("");
   const [expandedTimers, setExpandedTimers] = useState<Set<string>>(new Set());
+  // 신청현황 탭 — 사전 답변 펼침 (운영진)
+  const [expandedAnswerKeys, setExpandedAnswerKeys] = useState<Set<string>>(new Set());
   const [uploadingPid, setUploadingPid] = useState<string | null>(null);
   const fileInputRefs = useRef<Map<string, HTMLInputElement | null>>(new Map());
   // 일괄 주차 생성
@@ -1074,6 +1076,17 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       <Search size={16} className="mr-1.5" />신청현황 조회
                     </Button>
                   </div>
+                ) : type === "study" ? (
+                  // 스터디: 사전질문 답변 페이지로 이동
+                  user ? (
+                    <Link href={`/activities/studies/${activityId}/apply`} className="inline-flex h-11 w-full items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 sm:w-auto">
+                      <UserPlus size={16} className="mr-1.5" />참여 신청
+                    </Link>
+                  ) : (
+                    <Link href={`/login?next=${encodeURIComponent(`/activities/studies/${activityId}/apply`)}`} className="inline-flex h-11 w-full items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 sm:w-auto">
+                      <UserPlus size={16} className="mr-1.5" />로그인 후 참여 신청
+                    </Link>
+                  )
                 ) : user ? (
                   <Button size="lg" className="w-full font-semibold sm:w-auto" onClick={() => applyMutation.mutate()} disabled={applyMutation.isPending}>
                     <UserPlus size={16} className="mr-1.5" />참여 신청
@@ -1128,7 +1141,226 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                     포스터가 등록되지 않았습니다. 자세한 정보는 로그인 후 확인할 수 있습니다.
                   </div>
                 )
+              ) : type === "study" ? (
+                // ─── 스터디 개요 (모두랩 참고 순서) ───
+                <>
+                  {/* 썸네일 */}
+                  {activity.imageUrl && (
+                    <div className="overflow-hidden rounded-2xl border bg-card">
+                      <Image src={activity.imageUrl} alt={`${activity.title} 포스터`} width={800} height={600} className="block w-full h-auto" />
+                    </div>
+                  )}
+
+                  {/* 1. 기본 정보 메타 카드 */}
+                  <div className="rounded-2xl border bg-card p-4">
+                    <h3 className="mb-3 text-sm font-semibold">기본 정보</h3>
+                    <dl className="grid grid-cols-2 gap-x-4 gap-y-3 text-sm sm:grid-cols-3">
+                      <div>
+                        <dt className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground"><Calendar size={11} />기간</dt>
+                        <dd className="mt-0.5">{activity.date}{activity.endDate ? ` ~ ${activity.endDate}` : ""}</dd>
+                      </div>
+                      {activity.scheduleLabel && (
+                        <div>
+                          <dt className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground"><Clock size={11} />모임 일정</dt>
+                          <dd className="mt-0.5">{activity.scheduleLabel as string}</dd>
+                        </div>
+                      )}
+                      {activity.location && (
+                        <div>
+                          <dt className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground"><MapPin size={11} />장소/방식</dt>
+                          <dd className="mt-0.5">{activity.location}</dd>
+                        </div>
+                      )}
+                      <div>
+                        <dt className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground"><Users size={11} />정원</dt>
+                        <dd className="mt-0.5">
+                          {activity.maxParticipants
+                            ? `${participants.length} / ${activity.maxParticipants}명`
+                            : `${participants.length}명 참여 중`}
+                        </dd>
+                      </div>
+                      {recruitmentPeriodLabel && (
+                        <div>
+                          <dt className="flex items-center gap-1 text-[11px] font-medium text-muted-foreground"><Calendar size={11} />모집 기간</dt>
+                          <dd className="mt-0.5">{recruitmentPeriodLabel}</dd>
+                        </div>
+                      )}
+                      <div>
+                        <dt className="text-[11px] font-medium text-muted-foreground">선발 방식</dt>
+                        <dd className="mt-0.5">
+                          {registrationMethod === "manual"
+                            ? "운영진 직접 선발"
+                            : applicationForm.length > 0
+                              ? "사전질문 심사"
+                              : "선착순"}
+                        </dd>
+                      </div>
+                    </dl>
+                  </div>
+
+                  {/* 2. 한줄소개 + 태그 */}
+                  {(activity.tagline || (activity.tags && (activity.tags as string[]).length > 0)) && (
+                    <div className="space-y-2">
+                      {activity.tagline && (
+                        <p className="text-sm font-medium text-foreground">{activity.tagline as string}</p>
+                      )}
+                      {activity.tags && (activity.tags as string[]).length > 0 && (
+                        <div className="flex flex-wrap gap-1">
+                          {(activity.tags as string[]).map((t) => (
+                            <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 3. 상세 소개 */}
+                  <div className="rounded-2xl border bg-card p-6">
+                    <h3 className="mb-2 text-sm font-semibold">상세 소개</h3>
+                    <p className="whitespace-pre-wrap text-sm leading-relaxed">{activity.description}</p>
+                    {activity.detailContent && (
+                      <div className="mt-4 border-t pt-4">
+                        <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{activity.detailContent}</p>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* 4. 운영방식 */}
+                  {activity.operation && (
+                    <div className="rounded-2xl border bg-card p-4">
+                      <h3 className="mb-2 text-sm font-semibold">운영방식</h3>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{activity.operation as string}</p>
+                    </div>
+                  )}
+
+                  {/* 5. 커리큘럼 — M3 마법사 산출 데이터 소비 */}
+                  {curriculumDesign && (
+                    <div className="rounded-2xl border bg-card p-4 space-y-2">
+                      <div className="flex items-center gap-1.5">
+                        <Wand2 size={13} className="text-primary" />
+                        <h3 className="text-sm font-semibold">커리큘럼 설계</h3>
+                      </div>
+                      <div className="flex flex-wrap gap-1">
+                        {curriculumDesign.models.map((m) => (
+                          <Badge key={m.id} variant="secondary" className="bg-primary/10 text-primary text-[10px]">
+                            {m.name}
+                          </Badge>
+                        ))}
+                      </div>
+                      {progressList.length > 0 && (
+                        <p className="text-xs text-muted-foreground">
+                          회차 진행{" "}
+                          <span className="font-medium text-foreground">{progressDone} / {progressList.length}</span>
+                        </p>
+                      )}
+                      {nextSessionWithObjective && (
+                        <p className="line-clamp-1 text-xs text-muted-foreground">
+                          다음 회차 목표:{" "}
+                          <span className="text-foreground">{nextSessionWithObjective.objective}</span>
+                        </p>
+                      )}
+                    </div>
+                  )}
+
+                  {/* 6. 참여요건 */}
+                  {activity.requirements && (
+                    <div className="rounded-2xl border bg-card p-4">
+                      <h3 className="mb-2 text-sm font-semibold">참여요건</h3>
+                      <p className="whitespace-pre-wrap text-sm leading-relaxed text-muted-foreground">{activity.requirements as string}</p>
+                    </div>
+                  )}
+
+                  {/* 7. 사전질문 미리보기 */}
+                  {applicationForm.filter((f) => f.type !== "section_break").length > 0 && (
+                    <div className="rounded-2xl border bg-card p-4 space-y-3">
+                      <div>
+                        <h3 className="text-sm font-semibold">사전질문</h3>
+                        <p className="mt-0.5 text-xs text-muted-foreground">신청 시 아래 질문에 답변해 주세요.</p>
+                      </div>
+                      <ol className="space-y-2 pl-1">
+                        {applicationForm
+                          .filter((f) => f.type !== "section_break")
+                          .map((f, i) => (
+                            <li key={f.id} className="text-sm">
+                              <span className="font-medium">{i + 1}. {f.label}</span>
+                              {f.required && <span className="ml-1 text-[10px] text-destructive">*필수</span>}
+                              {f.description && (
+                                <p className="mt-0.5 text-xs text-muted-foreground">{f.description}</p>
+                              )}
+                            </li>
+                          ))}
+                      </ol>
+                    </div>
+                  )}
+
+                  {/* 8. 모임장 소개 카드 */}
+                  {leaderId && (() => {
+                    const leaderMember = memberMap.get(leaderId);
+                    if (!leaderMember) return null;
+                    return (
+                      <div className="rounded-2xl border bg-card p-4 space-y-3">
+                        <h3 className="text-sm font-semibold">모임장 소개</h3>
+                        <div className="flex items-start gap-3">
+                          {leaderMember.profileImage ? (
+                            <Image
+                              src={leaderMember.profileImage}
+                              alt={leaderMember.name ?? "모임장"}
+                              width={48}
+                              height={48}
+                              className="h-12 w-12 shrink-0 rounded-full object-cover"
+                            />
+                          ) : (
+                            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">
+                              <User size={20} />
+                            </div>
+                          )}
+                          <div className="flex-1 min-w-0">
+                            <div className="flex flex-wrap items-center gap-1.5">
+                              <span className="font-semibold">{leaderMember.name}</span>
+                              {leaderMember.generation && (
+                                <Badge variant="secondary" className="text-[10px]">{leaderMember.generation}기</Badge>
+                              )}
+                            </div>
+                            {leaderMember.bio && (
+                              <p className="mt-1 text-xs text-muted-foreground leading-relaxed line-clamp-2">{leaderMember.bio}</p>
+                            )}
+                            {leaderMember.researchInterests && (leaderMember.researchInterests as string[]).length > 0 && (
+                              <div className="mt-1.5 flex flex-wrap gap-1">
+                                {(leaderMember.researchInterests as string[]).slice(0, 5).map((ri) => (
+                                  <Badge key={ri} variant="secondary" className="bg-primary/10 text-primary text-[10px]">{ri}</Badge>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
+                  {/* 9. 하단 신청 CTA */}
+                  {!isJoined && !hasApplied && recruitmentStatus === "recruiting" && registrationMethod === "open" && (
+                    <div className="rounded-2xl border bg-card p-5">
+                      <p className="mb-3 text-sm font-medium">참여에 관심 있으신가요?</p>
+                      {user ? (
+                        <Link
+                          href={`/activities/studies/${activityId}/apply`}
+                          className="inline-flex h-11 w-full items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 sm:w-auto"
+                        >
+                          <UserPlus size={16} className="mr-1.5" />참여 신청하기
+                        </Link>
+                      ) : (
+                        <Link
+                          href={`/login?next=${encodeURIComponent(`/activities/studies/${activityId}/apply`)}`}
+                          className="inline-flex h-11 w-full items-center justify-center rounded-md bg-primary px-6 text-sm font-semibold text-primary-foreground shadow-xs hover:bg-primary/90 sm:w-auto"
+                        >
+                          <UserPlus size={16} className="mr-1.5" />로그인 후 참여 신청
+                        </Link>
+                      )}
+                    </div>
+                  )}
+                </>
               ) : (
+                // ─── 기존 레이아웃 (external / project) ───
                 <>
                   {activity.imageUrl && (
                     <div className="overflow-hidden rounded-2xl border bg-card">
@@ -1143,12 +1375,12 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       </div>
                     )}
                   </div>
-                  {activity.tags && activity.tags.length > 0 && (
+                  {activity.tags && (activity.tags as string[]).length > 0 && (
                     <div className="flex flex-wrap gap-1">
-                      {activity.tags.map((t) => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}
+                      {(activity.tags as string[]).map((t) => <Badge key={t} variant="secondary" className="text-xs">{t}</Badge>)}
                     </div>
                   )}
-                  {/* M3: 커리큘럼 설계 요약 카드 — 마법사 산출 데이터 소비 · 설계 없으면 미노출 */}
+                  {/* M3: 커리큘럼 설계 요약 카드 */}
                   {curriculumDesign && (
                     <div className="rounded-2xl border bg-card p-4 space-y-2">
                       <div className="flex items-center gap-1.5">
@@ -1157,11 +1389,7 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       </div>
                       <div className="flex flex-wrap gap-1">
                         {curriculumDesign.models.map((m) => (
-                          <Badge
-                            key={m.id}
-                            variant="secondary"
-                            className="bg-primary/10 text-primary text-[10px]"
-                          >
+                          <Badge key={m.id} variant="secondary" className="bg-primary/10 text-primary text-[10px]">
                             {m.name}
                           </Badge>
                         ))}
@@ -1169,22 +1397,18 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                       {progressList.length > 0 && (
                         <p className="text-xs text-muted-foreground">
                           회차 진행{" "}
-                          <span className="font-medium text-foreground">
-                            {progressDone} / {progressList.length}
-                          </span>
+                          <span className="font-medium text-foreground">{progressDone} / {progressList.length}</span>
                         </p>
                       )}
                       {nextSessionWithObjective && (
                         <p className="line-clamp-1 text-xs text-muted-foreground">
                           다음 회차 목표:{" "}
-                          <span className="text-foreground">
-                            {nextSessionWithObjective.objective}
-                          </span>
+                          <span className="text-foreground">{nextSessionWithObjective.objective}</span>
                         </p>
                       )}
                     </div>
                   )}
-                  {/* Sprint 67-Z/QA-H2: 학술대회 참석자 후기 섹션 — isStaff 만 (leader 제외, regrets 권한 정확화) */}
+                  {/* Sprint 67-Z/QA-H2: 학술대회 참석자 후기 섹션 */}
                   {type === "external" && (
                     <AttendeeReviewsSection
                       activityId={activityId}
@@ -2393,6 +2617,52 @@ export default function ActivityDetail({ activityId, type, backHref, backLabel }
                             <span className="font-medium text-muted-foreground">제목:</span> {a.speakerPaperTitle}
                           </p>
                         )}
+                        {/* 사전 답변 — 운영진이 펼쳐볼 수 있게 */}
+                        {isStaff && a.answers && Object.keys(a.answers).length > 0 && (() => {
+                          const isExpanded = expandedAnswerKeys.has(key);
+                          const answerFields = [...applicationForm, ...(Object.values(applicationFormByType).flat() as FormField[])].filter(f => f.type !== "section_break");
+                          return (
+                            <div className="mt-1.5">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  setExpandedAnswerKeys((prev) => {
+                                    const next = new Set(prev);
+                                    if (next.has(key)) next.delete(key); else next.add(key);
+                                    return next;
+                                  });
+                                }}
+                                className="flex items-center gap-1 text-[11px] text-primary hover:underline"
+                              >
+                                {isExpanded ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                                사전 답변 {isExpanded ? "접기" : "보기"}
+                              </button>
+                              {isExpanded && (
+                                <div className="mt-1.5 space-y-1.5 rounded-lg border bg-muted/20 p-2">
+                                  {answerFields.length > 0
+                                    ? answerFields.map((f) => {
+                                        const val = a.answers?.[f.id] ?? a.answers?.[f.label];
+                                        if (!val) return null;
+                                        const display = Array.isArray(val) ? (val as string[]).join(", ") : String(val);
+                                        return (
+                                          <div key={f.id}>
+                                            <p className="text-[10px] font-medium text-muted-foreground">{f.label}</p>
+                                            <p className="text-xs">{display}</p>
+                                          </div>
+                                        );
+                                      })
+                                    : Object.entries(a.answers ?? {}).map(([k, v]) => (
+                                        <div key={k}>
+                                          <p className="text-[10px] font-medium text-muted-foreground">{k}</p>
+                                          <p className="text-xs">{Array.isArray(v) ? (v as string[]).join(", ") : String(v)}</p>
+                                        </div>
+                                      ))
+                                  }
+                                </div>
+                              )}
+                            </div>
+                          );
+                        })()}
                       </div>
                       <div className="flex shrink-0 flex-wrap items-center gap-2 sm:self-start">
                         {isStaff && (

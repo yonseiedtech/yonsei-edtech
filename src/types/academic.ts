@@ -197,6 +197,14 @@ export interface Activity { [key: string]: unknown;
    * 운영자가 false 로 설정하면 자동 발급되지 않고 수동 발급 필요.
    */
   autoIssueCertificates?: boolean;
+  /** 한줄소개 — 스터디 목적·특징 한 문장 요약 (스터디 전용) */
+  tagline?: string;
+  /** 모임 일정 문구 — 예: "매주 목요일 19:00~21:00" (스터디 전용) */
+  scheduleLabel?: string;
+  /** 참여요건 — 신청 전 확인해야 할 조건 (자유 텍스트) */
+  requirements?: string;
+  /** 운영방식 — 스터디 진행 방법 설명 (자유 텍스트) */
+  operation?: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;

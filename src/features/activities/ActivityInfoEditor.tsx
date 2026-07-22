@@ -109,6 +109,19 @@ export default function ActivityInfoEditor({
   const [semester, setSemester] = useState<"" | "first" | "second">(
     (activity.semester as "first" | "second" | undefined) ?? "",
   );
+  // 스터디/프로젝트 전용 추가 필드
+  const [tagline, setTagline] = useState(
+    typeof activity.tagline === "string" ? activity.tagline : "",
+  );
+  const [scheduleLabel, setScheduleLabel] = useState(
+    typeof activity.scheduleLabel === "string" ? activity.scheduleLabel : "",
+  );
+  const [operation, setOperation] = useState(
+    typeof activity.operation === "string" ? activity.operation : "",
+  );
+  const [requirements, setRequirements] = useState(
+    typeof activity.requirements === "string" ? activity.requirements : "",
+  );
   const [saving, setSaving] = useState(false);
   const [deleting, setDeleting] = useState(false);
 
@@ -145,6 +158,10 @@ export default function ActivityInfoEditor({
     setImageUrl(activity.imageUrl ?? "");
     setYear(activity.year != null ? String(activity.year) : "");
     setSemester((activity.semester as "first" | "second" | undefined) ?? "");
+    setTagline(typeof activity.tagline === "string" ? activity.tagline : "");
+    setScheduleLabel(typeof activity.scheduleLabel === "string" ? activity.scheduleLabel : "");
+    setOperation(typeof activity.operation === "string" ? activity.operation : "");
+    setRequirements(typeof activity.requirements === "string" ? activity.requirements : "");
   }, [activity]);
 
   function toggleType(t: ExternalParticipantType) {
@@ -217,6 +234,14 @@ export default function ActivityInfoEditor({
         imageUrl: imageUrl.trim() || undefined,
         year: parsedYear,
         semester: semester === "" ? undefined : semester,
+        ...(!isExternal
+          ? {
+              tagline: tagline.trim() || undefined,
+              scheduleLabel: scheduleLabel.trim() || undefined,
+              operation: operation.trim() || undefined,
+              requirements: requirements.trim() || undefined,
+            }
+          : {}),
       });
       toast.success("활동 정보가 저장되었습니다.");
       onSaved?.();
@@ -301,6 +326,52 @@ export default function ActivityInfoEditor({
           placeholder="예: AI, 학습분석, 디지털리터러시"
         />
       </div>
+
+      {/* 스터디/프로젝트 전용 추가 필드 */}
+      {!isExternal && (
+        <>
+          <div>
+            <label className="mb-1 block text-xs font-medium">
+              한줄소개
+              <span className="ml-1 text-[10px] font-normal text-muted-foreground">(상세 페이지 상단 표시)</span>
+            </label>
+            <Input
+              value={tagline}
+              onChange={(e) => setTagline(e.target.value)}
+              placeholder="예: 논문 방법론을 함께 읽고 토론하는 스터디입니다"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium">
+              모임 일정 문구
+              <span className="ml-1 text-[10px] font-normal text-muted-foreground">(요일·시간 문구)</span>
+            </label>
+            <Input
+              value={scheduleLabel}
+              onChange={(e) => setScheduleLabel(e.target.value)}
+              placeholder="예: 매주 목요일 19:00~21:00"
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium">운영방식</label>
+            <Textarea
+              value={operation}
+              onChange={(e) => setOperation(e.target.value)}
+              placeholder="스터디 진행 방법, 도구, 규칙 등을 자유롭게 작성하세요"
+              rows={3}
+            />
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium">참여요건</label>
+            <Textarea
+              value={requirements}
+              onChange={(e) => setRequirements(e.target.value)}
+              placeholder="신청 전 확인해야 할 조건이나 사전 지식 등을 작성하세요"
+              rows={3}
+            />
+          </div>
+        </>
+      )}
 
       {isExternal && (
         <>

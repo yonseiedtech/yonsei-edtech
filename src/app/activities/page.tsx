@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useMemo, useEffect } from "react";
-import { BookOpen, FolderKanban, Users, Globe, Calendar, ArrowRight, Trophy } from "lucide-react";
+import { BookOpen, FolderKanban, Users, Globe, Calendar, ArrowRight, Trophy, ClipboardList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { cn } from "@/lib/utils";
 import { useSeminars } from "@/features/seminar/useSeminar";
@@ -59,6 +59,15 @@ const activities = [
     schedule: "수시",
     color: "bg-primary/10 text-primary",
     href: "/activities/internal",
+  },
+  {
+    icon: ClipboardList,
+    category: "수요 조사",
+    title: "수요 조사 · 개설 희망",
+    desc: "열렸으면 하는 스터디나 세미나 주제를 등록해보세요. 공감이 많은 주제부터 개설을 검토합니다.",
+    schedule: "상시",
+    color: "bg-secondary/10 text-secondary",
+    href: "/activities/demand",
   },
 ];
 

@@ -46,6 +46,7 @@ import { commBoardsApi, commQuestionsApi, commLikesApi, hackathonTeamJoinsApi } 
 import type { CommBoard, CommQuestion, HackathonTeamJoin } from "@/types";
 import { ensureHackathonBoard } from "./ensure-hackathon-board";
 import { useHackathonOps } from "./useHackathonOps";
+import { useHackathonEvent } from "./useHackathonEvent";
 import {
   HACKATHON_INTEREST_AREAS,
   HACKATHON_TEAM_PREFS,
@@ -111,8 +112,18 @@ export default function HackathonBoard() {
   const queryClient = useQueryClient();
   const { phase } = useHackathonOps();
   const registrationOpen = phase === "registration";
+  const { event: hackEvent } = useHackathonEvent();
+  const isProposalMode = hackEvent.eventMode === "proposal";
 
   const [problem, setProblem] = useState("");
+  // ── proposal 모드 신청 폼 필드 ──
+  const [propTitle, setPropTitle] = useState("");
+  const [propTopic, setPropTopic] = useState("");
+  const [propDesign, setPropDesign] = useState("");
+  // ── proposal 모드 수정 폼 필드 ──
+  const [editPropTitle, setEditPropTitle] = useState("");
+  const [editPropTopic, setEditPropTopic] = useState("");
+  const [editPropDesign, setEditPropDesign] = useState("");
   const [teamPref, setTeamPref] = useState<HackathonTeamPref>(
     HACKATHON_TEAM_PREFS.undecided,
   );
@@ -275,11 +286,27 @@ export default function HackathonBoard() {
 
   async function handleRegister() {
     if (!board || !user) return;
-    const body = problem.trim();
-    if (!body) {
-      toast.error("풀고 싶은 문제를 한 줄 입력하세요.");
-      return;
+
+    // proposal 모드: 3필드 폼 / hackathon 모드: 한 줄 문제 입력
+    let body: string;
+    let proposal: { title: string; topic: string; design: string } | undefined;
+    if (isProposalMode) {
+      const rawTitle = propTitle.trim();
+      if (!rawTitle) {
+        toast.error("연구 제목을 입력하세요.");
+        return;
+      }
+      // body = areaTag 포함한 제목 (area filter 호환)
+      body = areaTag ? `${areaTag}: ${rawTitle}` : rawTitle;
+      proposal = { title: rawTitle, topic: propTopic.trim(), design: propDesign.trim() };
+    } else {
+      body = problem.trim();
+      if (!body) {
+        toast.error("풀고 싶은 문제를 한 줄 입력하세요.");
+        return;
+      }
     }
+
     setSaving(true);
     try {
       const hackathonSurvey = buildHackathonSurvey(
@@ -297,9 +324,13 @@ export default function HackathonBoard() {
         anonymous: false,
         presenter: teamPref,
         body,
+        ...(proposal ? { proposal } : {}),
         ...(hackathonSurvey ? { hackathonSurvey } : {}),
       });
       setProblem("");
+      setPropTitle("");
+      setPropTopic("");
+      setPropDesign("");
       setAreaTag(null);
       setSurveyOpen(false);
       setSurveyAiLiteracy(null);
@@ -317,14 +348,30 @@ export default function HackathonBoard() {
     }
   }
 
-  /** v14-H3: 내 아이디어 수정 */
+  /** v14-H3: 내 아이디어/프로포절 수정 */
   async function handleUpdate() {
     if (!myEntry) return;
-    const body = editBody.trim();
-    if (!body) {
-      toast.error("풀고 싶은 문제를 입력하세요.");
-      return;
+
+    let body: string;
+    let proposal: { title: string; topic: string; design: string } | undefined;
+    if (isProposalMode) {
+      const rawTitle = editPropTitle.trim();
+      if (!rawTitle) {
+        toast.error("연구 제목을 입력하세요.");
+        return;
+      }
+      // 기존 area 태그가 body에 인코딩되어 있으면 보존
+      const existingArea = extractArea(myEntry.body);
+      body = existingArea ? `${existingArea}: ${rawTitle}` : rawTitle;
+      proposal = { title: rawTitle, topic: editPropTopic.trim(), design: editPropDesign.trim() };
+    } else {
+      body = editBody.trim();
+      if (!body) {
+        toast.error("풀고 싶은 문제를 입력하세요.");
+        return;
+      }
     }
+
     setSaving(true);
     try {
       const hackathonSurvey = buildHackathonSurvey(
@@ -337,11 +384,12 @@ export default function HackathonBoard() {
       await commQuestionsApi.update(myEntry.id, {
         body,
         presenter: editTeamPref,
+        ...(proposal !== undefined ? { proposal } : {}),
         ...(hackathonSurvey !== undefined ? { hackathonSurvey } : {}),
       });
       setEditingEntry(false);
       refresh();
-      toast.success("아이디어를 수정했습니다.");
+      toast.success(isProposalMode ? "프로포절을 수정했습니다." : "아이디어를 수정했습니다.");
     } catch (e) {
       console.error("[hackathon/update]", e);
       toast.error("수정 실패 — 잠시 후 다시 시도해주세요.");
@@ -454,11 +502,25 @@ export default function HackathonBoard() {
       toast.error("이름을 입력하세요.");
       return;
     }
-    const body = problem.trim();
-    if (!body) {
-      toast.error("풀고 싶은 문제를 한 줄 입력하세요.");
-      return;
+
+    let body: string;
+    let proposal: { title: string; topic: string; design: string } | undefined;
+    if (isProposalMode) {
+      const rawTitle = propTitle.trim();
+      if (!rawTitle) {
+        toast.error("연구 제목을 입력하세요.");
+        return;
+      }
+      body = areaTag ? `${areaTag}: ${rawTitle}` : rawTitle;
+      proposal = { title: rawTitle, topic: propTopic.trim(), design: propDesign.trim() };
+    } else {
+      body = problem.trim();
+      if (!body) {
+        toast.error("풀고 싶은 문제를 한 줄 입력하세요.");
+        return;
+      }
     }
+
     setSaving(true);
     try {
       const hackathonSurvey = buildHackathonSurvey(
@@ -479,6 +541,7 @@ export default function HackathonBoard() {
             : {}),
           body,
           presenter: teamPref,
+          ...(proposal ? { proposal } : {}),
           ...(hackathonSurvey ? { hackathonSurvey } : {}),
         }),
       });
@@ -492,6 +555,9 @@ export default function HackathonBoard() {
       setGuestAppId(data.id);
       // 폼 초기화
       setProblem("");
+      setPropTitle("");
+      setPropTopic("");
+      setPropDesign("");
       setAreaTag(null);
       setSurveyOpen(false);
       setSurveyAiLiteracy(null);
@@ -596,70 +662,120 @@ export default function HackathonBoard() {
                       className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
                     />
                   </div>
-                  {/* 관심 영역 태그 */}
-                  <div className="flex flex-wrap gap-1.5">
-                    {HACKATHON_INTEREST_AREAS.map((area) => (
-                      <button
-                        key={area}
-                        type="button"
-                        aria-pressed={areaTag === area}
-                        onClick={() =>
-                          setAreaTag((prev) => {
-                            const next = prev === area ? null : area;
-                            if (next)
-                              setProblem((p) =>
-                                p.trim() ? p : `${next}: `,
-                              );
-                            return next;
-                          })
+                  {/* proposal 모드: 3필드 연구 폼 / hackathon 모드: 기존 문제+팀희망 */}
+                  {isProposalMode ? (
+                    <>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                          연구 제목 <span className="text-destructive">*</span>
+                          <span className="ml-1 font-normal opacity-70">(100자 이내)</span>
+                        </label>
+                        <input
+                          value={propTitle}
+                          onChange={(e) => setPropTitle(e.target.value.slice(0, 100))}
+                          placeholder="예: 자기주도학습이 학업성취에 미치는 영향"
+                          className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                        />
+                        <div className="mt-0.5 text-right text-[11px] text-muted-foreground">{propTitle.length}/100</div>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                          연구 주제·배경 요약
+                          <span className="ml-1 font-normal opacity-70">(300자 이내)</span>
+                        </label>
+                        <textarea
+                          value={propTopic}
+                          onChange={(e) => setPropTopic(e.target.value.slice(0, 300))}
+                          rows={2}
+                          placeholder="어떤 문제를 왜 연구하려는지 간략히"
+                          className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                        />
+                        <div className="mt-0.5 text-right text-[11px] text-muted-foreground">{propTopic.length}/300</div>
+                      </div>
+                      <div>
+                        <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                          연구 설계·방법 개요
+                          <span className="ml-1 font-normal opacity-70">(500자 이내)</span>
+                        </label>
+                        <textarea
+                          value={propDesign}
+                          onChange={(e) => setPropDesign(e.target.value.slice(0, 500))}
+                          rows={3}
+                          placeholder="연구 방법, 대상, 측정 도구 등"
+                          className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                        />
+                        <div className="mt-0.5 text-right text-[11px] text-muted-foreground">{propDesign.length}/500</div>
+                      </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* 관심 영역 태그 */}
+                      <div className="flex flex-wrap gap-1.5">
+                        {HACKATHON_INTEREST_AREAS.map((area) => (
+                          <button
+                            key={area}
+                            type="button"
+                            aria-pressed={areaTag === area}
+                            onClick={() =>
+                              setAreaTag((prev) => {
+                                const next = prev === area ? null : area;
+                                if (next)
+                                  setProblem((p) =>
+                                    p.trim() ? p : `${next}: `,
+                                  );
+                                return next;
+                              })
+                            }
+                            className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                              areaTag === area
+                                ? "border-primary bg-primary/10 font-medium text-primary"
+                                : "border-border text-muted-foreground hover:bg-accent"
+                            }`}
+                          >
+                            {area}
+                          </button>
+                        ))}
+                      </div>
+                      {/* 문제 입력 */}
+                      <textarea
+                        value={problem}
+                        onChange={(e) =>
+                          setProblem(e.target.value.slice(0, MAX_LEN))
                         }
-                        className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                          areaTag === area
-                            ? "border-primary bg-primary/10 font-medium text-primary"
-                            : "border-border text-muted-foreground hover:bg-accent"
-                        }`}
-                      >
-                        {area}
-                      </button>
-                    ))}
-                  </div>
-                  {/* 문제 입력 */}
-                  <textarea
-                    value={problem}
-                    onChange={(e) =>
-                      setProblem(e.target.value.slice(0, MAX_LEN))
-                    }
-                    rows={2}
-                    placeholder="예: 학생마다 이해 속도가 다른데 한 명의 교사가 모두를 챙기기 어렵다"
-                    className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-                  />
-                  <div className="text-right text-[11px] text-muted-foreground">
-                    {problem.length}/{MAX_LEN}
-                  </div>
-                  {/* 팀 참여 희망 */}
-                  <div>
-                    <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
-                      팀 참여 희망
-                    </span>
-                    <div className="flex flex-wrap gap-1.5">
-                      {HACKATHON_TEAM_PREF_LIST.map((pref) => (
-                        <button
-                          key={pref}
-                          type="button"
-                          onClick={() => setTeamPref(pref)}
-                          aria-pressed={teamPref === pref}
-                          className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                            teamPref === pref
-                              ? "border-primary bg-primary text-primary-foreground"
-                              : "border-border text-muted-foreground hover:bg-accent"
-                          }`}
-                        >
-                          {pref}
-                        </button>
-                      ))}
-                    </div>
-                  </div>
-                  {/* 팀 빌딩 사전 설문 — 접이식 */}
+                        rows={2}
+                        placeholder="예: 학생마다 이해 속도가 다른데 한 명의 교사가 모두를 챙기기 어렵다"
+                        className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                      />
+                      <div className="text-right text-[11px] text-muted-foreground">
+                        {problem.length}/{MAX_LEN}
+                      </div>
+                      {/* 팀 참여 희망 */}
+                      <div>
+                        <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                          팀 참여 희망
+                        </span>
+                        <div className="flex flex-wrap gap-1.5">
+                          {HACKATHON_TEAM_PREF_LIST.map((pref) => (
+                            <button
+                              key={pref}
+                              type="button"
+                              onClick={() => setTeamPref(pref)}
+                              aria-pressed={teamPref === pref}
+                              className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                                teamPref === pref
+                                  ? "border-primary bg-primary text-primary-foreground"
+                                  : "border-border text-muted-foreground hover:bg-accent"
+                              }`}
+                            >
+                              {pref}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+                    </>
+                  )}
+                  {/* 팀 빌딩 사전 설문 — hackathon 모드 전용 · 접이식 */}
+                  {!isProposalMode && (
                   <div className="border-t border-border pt-3">
                     <button
                       type="button"
@@ -810,6 +926,7 @@ export default function HackathonBoard() {
                       </div>
                     )}
                   </div>
+                  )}
                   <div className="flex items-center justify-between gap-2">
                     <Button
                       size="sm"
@@ -825,7 +942,7 @@ export default function HackathonBoard() {
                       disabled={
                         saving ||
                         !guestNameInput.trim() ||
-                        !problem.trim()
+                        (isProposalMode ? !propTitle.trim() : !problem.trim())
                       }
                     >
                       {saving ? (
@@ -868,8 +985,8 @@ export default function HackathonBoard() {
         </section>
       )}
 
-      {/* ── 팀 형성 흐름 안내 (첫 방문 1회 · localStorage dismiss) ── */}
-      {!onboardingDismissed && (
+      {/* ── 팀 형성 흐름 안내 (hackathon 모드만 · 첫 방문 1회 · localStorage dismiss) ── */}
+      {!isProposalMode && !onboardingDismissed && (
         <div className="relative rounded-2xl border bg-card p-4">
           <button
             aria-label="안내 닫기"
@@ -925,6 +1042,12 @@ export default function HackathonBoard() {
                   onClick={() => {
                     setEditBody(myEntry.body ?? "");
                     setEditTeamPref((myEntry.presenter as HackathonTeamPref) ?? HACKATHON_TEAM_PREFS.undecided);
+                    // proposal 모드: 3필드 프리필
+                    if (isProposalMode) {
+                      setEditPropTitle(myEntry.proposal?.title ?? myEntry.body ?? "");
+                      setEditPropTopic(myEntry.proposal?.topic ?? "");
+                      setEditPropDesign(myEntry.proposal?.design ?? "");
+                    }
                     const s = myEntry.hackathonSurvey;
                     setEditSurveyAiLiteracy(s?.aiLiteracy ?? null);
                     setEditSurveyVibeCoding(s?.vibeCoding ?? null);
@@ -956,32 +1079,77 @@ export default function HackathonBoard() {
           {editingEntry ? (
             /* ── 수정 폼 ── */
             <div className="mt-3 space-y-3">
-              <textarea
-                value={editBody}
-                onChange={(e) => setEditBody(e.target.value.slice(0, MAX_LEN))}
-                rows={2}
-                className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-              />
-              <div className="text-right text-[11px] text-muted-foreground">
-                {editBody.length}/{MAX_LEN}
-              </div>
-              <div className="flex flex-wrap gap-1.5">
-                {HACKATHON_TEAM_PREF_LIST.map((pref) => (
-                  <button
-                    key={pref}
-                    type="button"
-                    onClick={() => setEditTeamPref(pref)}
-                    aria-pressed={editTeamPref === pref}
-                    className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                      editTeamPref === pref
-                        ? "border-primary bg-primary text-primary-foreground"
-                        : "border-border text-muted-foreground hover:bg-accent"
-                    }`}
-                  >
-                    {pref}
-                  </button>
-                ))}
-              </div>
+              {isProposalMode ? (
+                /* proposal 모드: 3필드 수정 폼 */
+                <>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      연구 제목 <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                      value={editPropTitle}
+                      onChange={(e) => setEditPropTitle(e.target.value.slice(0, 100))}
+                      placeholder="연구 제목"
+                      className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                    />
+                    <div className="mt-0.5 text-right text-[11px] text-muted-foreground">{editPropTitle.length}/100</div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      연구 주제·배경 <span className="font-normal opacity-70">(선택 · ≤300자)</span>
+                    </label>
+                    <textarea
+                      value={editPropTopic}
+                      onChange={(e) => setEditPropTopic(e.target.value.slice(0, 300))}
+                      rows={2}
+                      className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                    />
+                    <div className="mt-0.5 text-right text-[11px] text-muted-foreground">{editPropTopic.length}/300</div>
+                  </div>
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      연구 설계·방법 <span className="font-normal opacity-70">(선택 · ≤500자)</span>
+                    </label>
+                    <textarea
+                      value={editPropDesign}
+                      onChange={(e) => setEditPropDesign(e.target.value.slice(0, 500))}
+                      rows={2}
+                      className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                    />
+                    <div className="mt-0.5 text-right text-[11px] text-muted-foreground">{editPropDesign.length}/500</div>
+                  </div>
+                </>
+              ) : (
+                /* hackathon 모드: 한 줄 body 수정 */
+                <>
+                  <textarea
+                    value={editBody}
+                    onChange={(e) => setEditBody(e.target.value.slice(0, MAX_LEN))}
+                    rows={2}
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  />
+                  <div className="text-right text-[11px] text-muted-foreground">
+                    {editBody.length}/{MAX_LEN}
+                  </div>
+                  <div className="flex flex-wrap gap-1.5">
+                    {HACKATHON_TEAM_PREF_LIST.map((pref) => (
+                      <button
+                        key={pref}
+                        type="button"
+                        onClick={() => setEditTeamPref(pref)}
+                        aria-pressed={editTeamPref === pref}
+                        className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                          editTeamPref === pref
+                            ? "border-primary bg-primary text-primary-foreground"
+                            : "border-border text-muted-foreground hover:bg-accent"
+                        }`}
+                      >
+                        {pref}
+                      </button>
+                    ))}
+                  </div>
+                </>
+              )}
               {/* 팀 빌딩 설문 수정 */}
               <div className="border-t border-border pt-3">
                 <p className="mb-2 text-xs font-medium text-muted-foreground">
@@ -1093,7 +1261,11 @@ export default function HackathonBoard() {
                 </div>
               </div>
               <div className="flex gap-2">
-                <Button size="sm" onClick={handleUpdate} disabled={saving || !editBody.trim()}>
+                <Button
+                  size="sm"
+                  onClick={handleUpdate}
+                  disabled={saving || (isProposalMode ? !editPropTitle.trim() : !editBody.trim())}
+                >
                   {saving ? <Loader2 size={13} className="mr-1 animate-spin" /> : <Save size={13} className="mr-1" />}
                   저장
                 </Button>
@@ -1104,14 +1276,30 @@ export default function HackathonBoard() {
             </div>
           ) : (
             <>
-              <p className="mt-2 text-sm text-foreground">
-                <span className="font-medium">내가 남긴 문제 </span>
-                {myEntry.body}
-              </p>
+              {isProposalMode ? (
+                /* proposal 모드: 연구 제목·주제 표시 */
+                <div className="mt-2 space-y-1">
+                  <p className="text-sm font-semibold text-foreground">
+                    {myEntry.proposal?.title ?? myEntry.body}
+                  </p>
+                  {myEntry.proposal?.topic && (
+                    <p className="text-xs text-muted-foreground line-clamp-2">
+                      {myEntry.proposal.topic}
+                    </p>
+                  )}
+                </div>
+              ) : (
+                <p className="mt-2 text-sm text-foreground">
+                  <span className="font-medium">내가 남긴 문제 </span>
+                  {myEntry.body}
+                </p>
+              )}
               <div className="mt-2 flex items-center gap-2 text-xs text-muted-foreground">
-                <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
-                  <Users size={11} /> {myEntry.presenter}
-                </span>
+                {!isProposalMode && (
+                  <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
+                    <Users size={11} /> {myEntry.presenter}
+                  </span>
+                )}
                 <span className="inline-flex items-center gap-1">
                   <Heart size={11} /> 공감 {myEntry.likeCount}
                 </span>
@@ -1126,8 +1314,8 @@ export default function HackathonBoard() {
             </>
           )}
 
-          {/* ── 합류 희망자 목록 + 팀 확정 (편집 중에는 숨김) ── */}
-          {!editingEntry && myEntry.presenter === HACKATHON_TEAM_PREFS.wantTeam && (
+          {/* ── 합류 희망자 목록 + 팀 확정 (hackathon 모드 · 편집 중에는 숨김) ── */}
+          {!isProposalMode && !editingEntry && myEntry.presenter === HACKATHON_TEAM_PREFS.wantTeam && (
             <div className="mt-3 border-t border-primary/15 pt-3">
               <p className="mb-1.5 text-xs font-medium text-muted-foreground">
                 합류 희망자
@@ -1175,10 +1363,14 @@ export default function HackathonBoard() {
         <section className="rounded-2xl border bg-card p-4">
           <h3 className="flex items-center gap-1.5 text-sm font-bold">
             <Lightbulb size={16} className="text-primary" />
-            참가 신청 — 풀고 싶은 교육 현장의 문제 한 줄
+            {isProposalMode
+              ? "참가 신청 — 연구 계획 프로포절 등록"
+              : "참가 신청 — 풀고 싶은 교육 현장의 문제 한 줄"}
           </h3>
           <p className="mt-1 text-xs text-muted-foreground">
-            거창하지 않아도 좋아요. 평소 궁금했던 교육 현장의 문제를 한 줄로 남기면 신청이 됩니다.
+            {isProposalMode
+              ? "연구 제목·주제·방법을 간략히 정리해 등록하면 신청이 됩니다."
+              : "거창하지 않아도 좋아요. 평소 궁금했던 교육 현장의 문제를 한 줄로 남기면 신청이 됩니다."}
           </p>
 
           {/* H1: 관심 영역 태그 선택 (토글) */}
@@ -1206,40 +1398,85 @@ export default function HackathonBoard() {
             ))}
           </div>
 
-          <textarea
-            value={problem}
-            onChange={(e) => setProblem(e.target.value.slice(0, MAX_LEN))}
-            rows={2}
-            placeholder="예: 학생마다 이해 속도가 다른데 한 명의 교사가 모두를 챙기기 어렵다"
-            className="mt-3 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
-          />
-          <div className="mt-0.5 text-right text-[11px] text-muted-foreground">
-            {problem.length}/{MAX_LEN}
-          </div>
-
-          {/* 팀 참여 희망 여부 */}
-          <div className="mt-2">
-            <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
-              팀 참여 희망
-            </span>
-            <div className="flex flex-wrap gap-1.5">
-              {HACKATHON_TEAM_PREF_LIST.map((pref) => (
-                <button
-                  key={pref}
-                  type="button"
-                  onClick={() => setTeamPref(pref)}
-                  aria-pressed={teamPref === pref}
-                  className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
-                    teamPref === pref
-                      ? "border-primary bg-primary text-primary-foreground"
-                      : "border-border text-muted-foreground hover:bg-accent"
-                  }`}
-                >
-                  {pref}
-                </button>
-              ))}
+          {isProposalMode ? (
+            /* proposal 모드: 연구 제목·주제·설계 3필드 */
+            <div className="mt-3 space-y-3">
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                  연구 제목 <span className="text-destructive">*</span>
+                </label>
+                <input
+                  value={propTitle}
+                  onChange={(e) => setPropTitle(e.target.value.slice(0, 100))}
+                  placeholder="예: AI 피드백이 학습자 자기효능감에 미치는 영향"
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                />
+                <div className="mt-0.5 text-right text-[11px] text-muted-foreground">{propTitle.length}/100</div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                  연구 주제·배경 <span className="font-normal opacity-70">(선택 · ≤300자)</span>
+                </label>
+                <textarea
+                  value={propTopic}
+                  onChange={(e) => setPropTopic(e.target.value.slice(0, 300))}
+                  rows={2}
+                  placeholder="연구 주제와 배경을 간략히 설명해주세요"
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                />
+                <div className="mt-0.5 text-right text-[11px] text-muted-foreground">{propTopic.length}/300</div>
+              </div>
+              <div>
+                <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                  연구 설계·방법 <span className="font-normal opacity-70">(선택 · ≤500자)</span>
+                </label>
+                <textarea
+                  value={propDesign}
+                  onChange={(e) => setPropDesign(e.target.value.slice(0, 500))}
+                  rows={2}
+                  placeholder="연구 방법이나 설계를 설명해주세요"
+                  className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                />
+                <div className="mt-0.5 text-right text-[11px] text-muted-foreground">{propDesign.length}/500</div>
+              </div>
             </div>
-          </div>
+          ) : (
+            /* hackathon 모드: 한 줄 문제 입력 + 팀 참여 희망 */
+            <>
+              <textarea
+                value={problem}
+                onChange={(e) => setProblem(e.target.value.slice(0, MAX_LEN))}
+                rows={2}
+                placeholder="예: 학생마다 이해 속도가 다른데 한 명의 교사가 모두를 챙기기 어렵다"
+                className="mt-3 w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+              />
+              <div className="mt-0.5 text-right text-[11px] text-muted-foreground">
+                {problem.length}/{MAX_LEN}
+              </div>
+              <div className="mt-2">
+                <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                  팀 참여 희망
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  {HACKATHON_TEAM_PREF_LIST.map((pref) => (
+                    <button
+                      key={pref}
+                      type="button"
+                      onClick={() => setTeamPref(pref)}
+                      aria-pressed={teamPref === pref}
+                      className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                        teamPref === pref
+                          ? "border-primary bg-primary text-primary-foreground"
+                          : "border-border text-muted-foreground hover:bg-accent"
+                      }`}
+                    >
+                      {pref}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            </>
+          )}
 
           {/* 팀 빌딩 사전 설문 — 접이식 · 선택 */}
           <div className="mt-4 border-t border-border pt-3">
@@ -1384,7 +1621,7 @@ export default function HackathonBoard() {
             <Button
               size="sm"
               onClick={handleRegister}
-              disabled={saving || !problem.trim()}
+              disabled={saving || (isProposalMode ? !propTitle.trim() : !problem.trim())}
             >
               {saving ? (
                 <Loader2 size={14} className="mr-1 animate-spin" />
@@ -1397,12 +1634,12 @@ export default function HackathonBoard() {
         </section>
       )}
 
-      {/* ── 아이디어 보드 ── */}
+      {/* ── 아이디어 보드 / 연구 보드 ── */}
       <section>
         <div className="mb-3 flex flex-wrap items-center gap-1.5">
           <h3 className="mr-1 flex items-center gap-1.5 text-sm font-bold">
             <Lightbulb size={15} className="text-primary" />
-            아이디어 보드
+            {isProposalMode ? "연구 보드" : "아이디어 보드"}
           </h3>
           <button
             type="button"
@@ -1416,7 +1653,8 @@ export default function HackathonBoard() {
           >
             전체 {entries.length}
           </button>
-          {HACKATHON_TEAM_PREF_LIST.filter(
+          {/* 팀 희망 필터: hackathon 모드에서만 표시 */}
+          {!isProposalMode && HACKATHON_TEAM_PREF_LIST.filter(
             (p) => (prefCounts.get(p) ?? 0) > 0,
           ).map((p) => (
             <button
@@ -1486,14 +1724,27 @@ export default function HackathonBoard() {
                   key={entry.id}
                   className="rounded-2xl border bg-card p-4 transition-shadow hover:shadow-sm"
                 >
-                  {entryArea && (
+                  {!isProposalMode && entryArea && (
                     <span className="mb-1.5 inline-flex items-center rounded-full bg-primary/8 px-2 py-0.5 text-[11px] font-medium text-primary">
                       {entryArea}
                     </span>
                   )}
-                  <p className="text-sm leading-relaxed text-foreground">
-                    {displayBody}
-                  </p>
+                  {isProposalMode ? (
+                    <>
+                      <p className="text-sm font-semibold leading-snug text-foreground">
+                        {entry.proposal?.title ?? displayBody}
+                      </p>
+                      {entry.proposal?.topic && (
+                        <p className="mt-1 line-clamp-2 text-xs leading-relaxed text-muted-foreground">
+                          {entry.proposal.topic}
+                        </p>
+                      )}
+                    </>
+                  ) : (
+                    <p className="text-sm leading-relaxed text-foreground">
+                      {displayBody}
+                    </p>
+                  )}
                   {/* 설문 칩 — muted 톤 · 설문 존재 시만 렌더 */}
                   {entry.hackathonSurvey && (
                     <div className="mt-1.5 flex flex-wrap gap-1">
@@ -1530,7 +1781,7 @@ export default function HackathonBoard() {
                         </span>
                       )}
                     </span>
-                    {entry.presenter && (
+                    {!isProposalMode && entry.presenter && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
                         <Users size={11} /> {entry.presenter}
                       </span>
@@ -1567,8 +1818,8 @@ export default function HackathonBoard() {
                     </button>
                   </div>
 
-                  {/* ── 합류자 칩 ── */}
-                  {joiners.length > 0 && (
+                  {/* ── 합류자 칩 — hackathon 모드만 ── */}
+                  {!isProposalMode && joiners.length > 0 && (
                     <div className="mt-2 flex flex-wrap gap-1">
                       {joiners.map((j) => (
                         <span
@@ -1582,8 +1833,8 @@ export default function HackathonBoard() {
                     </div>
                   )}
 
-                  {/* ── 합류 희망 + 합류 신청 — "팀원 찾는 중"이고 본인 카드가 아닐 때 ── */}
-                  {isWantTeam && !mine && (
+                  {/* ── 합류 희망 + 합류 신청 — hackathon 모드 · "팀원 찾는 중"이고 본인 카드가 아닐 때 ── */}
+                  {!isProposalMode && isWantTeam && !mine && (
                     <div className="mt-2.5">
                       {user ? (
                         <div className="flex flex-wrap items-center gap-2">

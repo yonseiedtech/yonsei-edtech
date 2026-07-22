@@ -41,10 +41,32 @@ export async function POST(req: NextRequest) {
     body.presenter ?? HACKATHON_TEAM_PREFS.undecided,
   ).trim();
 
+  // proposal 필드 정제 — proposal 모드 신청 시 포함
+  let proposal: { title: string; topic: string; design: string } | undefined;
+  if (body.proposal && typeof body.proposal === "object") {
+    const p = body.proposal as Record<string, unknown>;
+    const pTitle = String(p.title ?? "").trim().slice(0, 100);
+    if (pTitle) {
+      proposal = {
+        title: pTitle,
+        topic: String(p.topic ?? "").trim().slice(0, 300),
+        design: String(p.design ?? "").trim().slice(0, 500),
+      };
+    }
+  }
+
   if (!guestName) {
     return NextResponse.json({ error: "이름이 필요합니다." }, { status: 400 });
   }
-  if (!questionBody || questionBody.length > MAX_LEN) {
+  // proposal 모드: body는 제목에서 파생(≤100자), hackathon 모드: body 직접 검증(≤140자)
+  if (proposal) {
+    if (!questionBody) {
+      return NextResponse.json(
+        { error: "연구 제목이 필요합니다." },
+        { status: 400 },
+      );
+    }
+  } else if (!questionBody || questionBody.length > MAX_LEN) {
     return NextResponse.json(
       { error: "문제 입력(1~140자)이 필요합니다." },
       { status: 400 },
@@ -140,6 +162,7 @@ export async function POST(req: NextRequest) {
     answerCount: 0,
     body: questionBody,
     presenter,
+    ...(proposal ? { proposal } : {}),
     ...(hackathonSurvey ? { hackathonSurvey } : {}),
     createdAt: FieldValue.serverTimestamp(),
     updatedAt: FieldValue.serverTimestamp(),

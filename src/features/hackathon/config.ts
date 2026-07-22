@@ -9,6 +9,15 @@
  * 프로비저닝된다 (ensure-hackathon-board.ts).
  */
 
+/** 행사 모드 — hackathon: 팀 기반 해커톤 / proposal: 개인 연구 계획 발표회 */
+export type EventMode = "hackathon" | "proposal";
+
+/**
+ * 이 행사(hackathon-2026-08-22)의 코드 기본 행사 모드.
+ * Firestore 레코드(hackathonSettings.eventMode)가 존재하면 그 값이 우선한다.
+ */
+export const HACKATHON_DEFAULT_EVENT_MODE: EventMode = "proposal";
+
 /** 해커톤 보드 컨텍스트 식별자 (단일 전역 보드) */
 export const HACKATHON_CONTEXT_ID = "hackathon-2026-08-22";
 
@@ -284,6 +293,67 @@ export function resolveHackathonPhaseGuarded(
     return "judging";
   }
   return phase;
+}
+
+// ─────────────────────────────────────────────────────────────
+// proposal 모드 상수 (연구 계획 발표회, 2026-07-23)
+// 이 상수들은 Firestore 레코드에 아직 eventMode 가 없을 때의 폴백으로 사용된다.
+// ─────────────────────────────────────────────────────────────
+
+/** proposal 모드 행사 기본 메타 */
+export const PROPOSAL_EVENT = {
+  title: "2026 연구 계획 발표회",
+  tagline: "연세교육공학회 대내 학술대회",
+  intro:
+    "각자의 연구 계획을 프로포절로 정리해 공유하고, 동료·선배의 피드백으로 설계를 다듬는 자리입니다. " +
+    "완성도보다 '연구 질문을 명확히 하는 경험'에 무게를 둡니다. " +
+    "함께하면 혼자 마주쳤을 막막함이 한결 가벼워집니다.",
+  highlights: [
+    "개인 단위 발표 — 팀 구성 없이 나의 연구 계획을 발표합니다.",
+    "프로포절 포맷 안내 — 연구 제목·주제·설계를 간단히 정리해 등록하면 됩니다.",
+    "결과물은 학회 아카이브의 씨앗으로 — 발표 자료는 연구 아카이브에 남겨집니다.",
+  ],
+  timeline: [
+    { time: "10:00", label: "등록·오리엔테이션" },
+    { time: "10:30", label: "연구 계획 라이트닝 발표" },
+    { time: "12:00", label: "점심·네트워킹" },
+    { time: "13:00", label: "피드백 세션" },
+    { time: "15:30", label: "종합 토론" },
+    { time: "17:00", label: "클로징" },
+  ],
+} as const;
+
+/** proposal 모드 단계 라벨 매핑 */
+export const PROPOSAL_PHASE_LABELS: Record<HackathonPhaseKey, string> = {
+  registration: "참가 접수",
+  submission: "프로포절 제출",
+  judging: "심사(피드백)",
+  awards: "우수 발표",
+};
+
+/** proposal 모드 단계 설명 매핑 */
+export const PROPOSAL_PHASE_DESCRIPTIONS: Record<HackathonPhaseKey, string> = {
+  registration: "연구 보드에 연구 계획을 프로포절로 등록하세요.",
+  submission: "발표 자료를 제출합니다.",
+  judging: "동료와 선배의 피드백을 받습니다.",
+  awards: "우수 발표가 선정되고 학회 아카이브로 남습니다.",
+};
+
+/**
+ * eventMode 에 따라 단계 라벨 반환 — 라벨 매핑 유틸 단일 출처.
+ * proposal 모드는 PROPOSAL_PHASE_LABELS, hackathon 모드는 HACKATHON_PHASE_TIMELINE 상수 사용.
+ */
+export function getPhaseLabel(key: HackathonPhaseKey, eventMode: EventMode): string {
+  if (eventMode === "proposal") return PROPOSAL_PHASE_LABELS[key];
+  return HACKATHON_PHASE_TIMELINE.find((p) => p.key === key)?.label ?? key;
+}
+
+/**
+ * eventMode 에 따라 단계 설명 반환.
+ */
+export function getPhaseDescription(key: HackathonPhaseKey, eventMode: EventMode): string {
+  if (eventMode === "proposal") return PROPOSAL_PHASE_DESCRIPTIONS[key];
+  return HACKATHON_PHASE_TIMELINE.find((p) => p.key === key)?.description ?? "";
 }
 
 /** 자주 묻는 질문 */

@@ -130,6 +130,7 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/seminars", label: "세미나" },
       { href: "/activities/projects", label: "프로젝트" },
       { href: "/activities/studies", label: "스터디" },
+      { href: "/activities/demand", label: "수요 조사" },
       { href: "/activities/internal", label: "대내 학술대회" },
       { href: "/activities/external", label: "대외 학술대회" },
       // 사용자 요청(2026-07-19): 리더보드는 메인 메뉴 비노출 — 마이페이지 잔디 "순위 보기"로만 진입

@@ -70,6 +70,8 @@ import {
   HACKATHON_SUBMISSION_DEADLINE,
   HACKATHON_AWARDS_ANNOUNCE_DATE,
   HACKATHON_PHASE_TIMELINE,
+  HACKATHON_DEFAULT_EVENT_MODE,
+  type EventMode,
 } from "@/features/hackathon/config";
 import {
   INTERNAL_CONFERENCES,
@@ -370,6 +372,8 @@ interface TimelineRow {
 }
 
 interface EventSettingsForm {
+  /** 행사 모드 — "hackathon" | "proposal" */
+  eventMode: EventMode;
   title: string;
   tagline: string;
   date: string;
@@ -391,6 +395,7 @@ function buildEventSettingsForm(conf: InternalConference | null | undefined): Ev
   const s = conf?.hackathonSettings;
   const hs = s?.highlights ?? [...HACKATHON_EVENT.highlights];
   return {
+    eventMode: s?.eventMode ?? HACKATHON_DEFAULT_EVENT_MODE,
     title: conf?.title ?? HACKATHON_EVENT.title,
     tagline: conf?.tagline ?? HACKATHON_EVENT.tagline,
     date: conf?.date ?? HACKATHON_EVENT.date,
@@ -468,6 +473,7 @@ function HackathonEventSettingsTab() {
       return;
     }
     const hackathonSettings: HackathonSettings = {
+      eventMode: form.eventMode,
       intro: form.intro.trim() || undefined,
       highlights: form.highlights.some((h) => h.trim())
         ? form.highlights.filter((h) => h.trim())
@@ -557,6 +563,32 @@ function HackathonEventSettingsTab() {
           편집할 수 있습니다.
         </div>
       )}
+
+      {/* ── 행사 모드 ── */}
+      <div className="rounded-2xl border bg-card p-5">
+        <p className="mb-1 text-sm font-semibold text-foreground">행사 모드</p>
+        <p className="mb-3 text-xs text-muted-foreground">
+          팀 해커톤(아이디어+팀 빌딩) 또는 개인 연구 계획 발표회(3필드 프로포절 폼)를 선택합니다.
+          저장 후 즉시 반영됩니다.
+        </p>
+        <div className="flex gap-2">
+          {(["hackathon", "proposal"] as const).map((mode) => (
+            <button
+              key={mode}
+              type="button"
+              onClick={() => setField("eventMode", mode)}
+              aria-pressed={form.eventMode === mode}
+              className={`rounded-full border px-4 py-1.5 text-xs font-medium transition-colors ${
+                form.eventMode === mode
+                  ? "border-primary bg-primary text-primary-foreground"
+                  : "border-border text-muted-foreground hover:bg-accent"
+              }`}
+            >
+              {mode === "hackathon" ? "팀 해커톤" : "연구 계획 발표회"}
+            </button>
+          ))}
+        </div>
+      </div>
 
       {/* ── 기본 정보 ── */}
       <div className="rounded-2xl border bg-card p-5">
