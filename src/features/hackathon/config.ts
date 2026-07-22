@@ -87,9 +87,15 @@ export const HACKATHON_SUBMISSION_DEADLINE = "2026-08-22T21:30";
 /**
  * 제출이 마감되었는지 판정 — 마감 시각 이후면 true.
  * (미래 마감 시각 파싱 실패 시 안전하게 열림 상태 유지)
+ *
+ * @param now 판정 기준 시각 (기본: 현재)
+ * @param deadlineOverride 이벤트 레코드에서 주입된 마감 시각 문자열 — 없으면 상수 폴백
  */
-export function isHackathonSubmissionClosed(now: Date = new Date()): boolean {
-  const deadline = new Date(HACKATHON_SUBMISSION_DEADLINE);
+export function isHackathonSubmissionClosed(
+  now: Date = new Date(),
+  deadlineOverride?: string,
+): boolean {
+  const deadline = new Date(deadlineOverride ?? HACKATHON_SUBMISSION_DEADLINE);
   if (Number.isNaN(deadline.getTime())) return false;
   return now.getTime() > deadline.getTime();
 }
@@ -156,12 +162,19 @@ export const HACKATHON_PHASE_TIMELINE: readonly HackathonPhaseInfo[] = [
 /**
  * 오늘 날짜 기준 현재 진행 단계 판정.
  * HACKATHON_PHASE_TIMELINE 의 startDate 와 순서에만 의존한다.
+ *
+ * @param now 판정 기준 시각 (기본: 현재)
+ * @param phaseStartDates 이벤트 레코드에서 주입된 단계별 시작일 — 없는 키는 상수 폴백
  */
-export function getHackathonPhase(now: Date = new Date()): HackathonPhaseKey {
+export function getHackathonPhase(
+  now: Date = new Date(),
+  phaseStartDates?: { registration?: string; submission?: string; judging?: string; awards?: string },
+): HackathonPhaseKey {
   const ymd = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, "0")}-${String(now.getDate()).padStart(2, "0")}`;
   let current: HackathonPhaseKey = "registration";
   for (const phase of HACKATHON_PHASE_TIMELINE) {
-    if (ymd >= phase.startDate) current = phase.key;
+    const start = phaseStartDates?.[phase.key] ?? phase.startDate;
+    if (ymd >= start) current = phase.key;
   }
   return current;
 }
@@ -217,20 +230,28 @@ export const HACKATHON_OPS_DEFAULT: HackathonOpsOverride = {
   sectionVisibility: null,
 };
 
-/** 수동 우선·자동 폴백으로 현재 진행 단계 판정. */
+/**
+ * 수동 우선·자동 폴백으로 현재 진행 단계 판정.
+ * @param phaseStartDates 이벤트 레코드에서 주입된 단계별 시작일 (없으면 상수 폴백)
+ */
 export function resolveHackathonPhase(
   override: HackathonOpsOverride | null | undefined,
   now: Date = new Date(),
+  phaseStartDates?: { registration?: string; submission?: string; judging?: string; awards?: string },
 ): HackathonPhaseKey {
-  return override?.phase ?? getHackathonPhase(now);
+  return override?.phase ?? getHackathonPhase(now, phaseStartDates);
 }
 
-/** 수동 우선·자동 폴백으로 제출 마감 여부 판정. */
+/**
+ * 수동 우선·자동 폴백으로 제출 마감 여부 판정.
+ * @param deadlineOverride 이벤트 레코드에서 주입된 마감 시각 (없으면 상수 폴백)
+ */
 export function resolveHackathonSubmissionClosed(
   override: HackathonOpsOverride | null | undefined,
   now: Date = new Date(),
+  deadlineOverride?: string,
 ): boolean {
-  return override?.submissionClosed ?? isHackathonSubmissionClosed(now);
+  return override?.submissionClosed ?? isHackathonSubmissionClosed(now, deadlineOverride);
 }
 
 /** 허브 영역 공개 여부 판정 — null 이면 전부 비공개 기본값 반환. */
@@ -255,8 +276,9 @@ export function resolveHackathonPhaseGuarded(
   override: HackathonOpsOverride | null | undefined,
   publishedCount: number,
   now: Date = new Date(),
+  phaseStartDates?: { registration?: string; submission?: string; judging?: string; awards?: string },
 ): HackathonPhaseKey {
-  const phase = resolveHackathonPhase(override, now);
+  const phase = resolveHackathonPhase(override, now, phaseStartDates);
   const manualAwards = (override?.phase ?? null) === "awards";
   if (phase === "awards" && !manualAwards && publishedCount < 1) {
     return "judging";

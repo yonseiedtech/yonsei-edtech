@@ -439,6 +439,22 @@ function ConferenceCard({ conference, isStaff, onEdit, onDelete }: ConferenceCar
         )}
       </div>
 
+      {/* 운영진에게 해커톤 상세 설정 링크 안내 */}
+      {isStaff && conference.kind === "hackathon" && (
+        <div
+          className="mt-3 text-[11px] text-muted-foreground"
+          onClick={(e) => e.stopPropagation()}
+        >
+          상세 설정:{" "}
+          <Link
+            href="/console/hackathon"
+            className="underline underline-offset-2 hover:text-primary"
+          >
+            콘솔 › 해커톤 운영 › 행사 설정
+          </Link>
+        </div>
+      )}
+
       <div className="mt-4 flex items-center justify-between gap-2">
         {/* CTA 힌트 */}
         {(hasHub || hasExternal) ? (

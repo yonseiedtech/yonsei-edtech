@@ -21,6 +21,30 @@ import {
 /** 대내 학술대회 유형. */
 export type InternalConferenceKind = "hackathon" | "symposium";
 
+/**
+ * 해커톤 유형 행사 전용 설정 (옵셔널 — 없으면 hackathon/config 상수 폴백).
+ * 각 필드를 채우면 공개 허브·콘솔의 해당 표시부가 즉시 반영된다.
+ */
+export interface HackathonSettings {
+  /** 행사 소개 문구 (히어로 섹션 intro 텍스트) */
+  intro?: string;
+  /** 세부 안내 불릿 — 비어 있으면 config 상수 사용 */
+  highlights?: string[];
+  /** 당일 타임라인 항목 목록 */
+  timeline?: { time: string; label: string }[];
+  /** 산출물 제출 마감 "YYYY-MM-DDTHH:mm" */
+  submissionDeadline?: string;
+  /** 수상 발표일 "YYYY-MM-DD" */
+  awardsAnnounceDate?: string;
+  /** 단계별 시작일 — 없는 항목은 HACKATHON_PHASE_TIMELINE 상수 폴백 */
+  phaseStartDates?: {
+    registration?: string;
+    submission?: string;
+    judging?: string;
+    awards?: string;
+  };
+}
+
 /** 행사별 활성 기능 토글. */
 export interface InternalConferenceFeatures {
   /** 참가 신청·아이디어 보드 */
@@ -64,6 +88,8 @@ export interface InternalConference {
   externalLink?: string;
   /** 진행 상태 — 미지정 시 date 로 자동 계산(getConferenceStatus) */
   status?: InternalConferenceStatus;
+  /** 해커톤 유형 행사 전용 설정 (옵셔널). 없으면 hackathon/config 상수 폴백. */
+  hackathonSettings?: HackathonSettings;
 }
 
 /**

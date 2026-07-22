@@ -13,7 +13,7 @@
  *  - 운영진: 수상 등급 지정 + 공개(published) 토글 → 공개 페이지 수상작 섹션 반영
  */
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Trophy,
@@ -28,12 +28,17 @@ import {
   Trash2,
   Shield,
   X,
+  Settings,
+  Plus,
 } from "lucide-react";
 import { toast } from "sonner";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import MemberAutocomplete, { type SelectedMember } from "@/components/ui/MemberAutocomplete";
 import HackathonDdayConsole from "@/features/hackathon/HackathonDdayConsole";
 import HackathonJudgingScoreForm from "@/features/hackathon/HackathonJudgingScoreForm";
@@ -58,12 +63,25 @@ import {
   type HackathonTeamJoin,
   type HackathonSubmissionVote,
 } from "@/types";
-import { HACKATHON_CONTEXT_ID } from "@/features/hackathon/config";
+import {
+  HACKATHON_CONTEXT_ID,
+  HACKATHON_EVENT,
+  HACKATHON_TIMELINE,
+  HACKATHON_SUBMISSION_DEADLINE,
+  HACKATHON_AWARDS_ANNOUNCE_DATE,
+  HACKATHON_PHASE_TIMELINE,
+} from "@/features/hackathon/config";
 import {
   INTERNAL_CONFERENCES,
   getConferenceByContextId,
   getCurrentConference,
+  type InternalConference,
+  type HackathonSettings,
 } from "@/features/internal-conference/conferences";
+import {
+  useInternalConferences,
+  useSaveInternalConferences,
+} from "@/features/site-settings/useInternalConferences";
 
 export default function HackathonJudgingConsolePage() {
   const user = useAuthStore((s) => s.user);
@@ -208,10 +226,18 @@ export default function HackathonJudgingConsolePage() {
         <TabsList>
           <TabsTrigger value="dday">당일 운영</TabsTrigger>
           <TabsTrigger value="judging">심사</TabsTrigger>
+          <TabsTrigger value="event-settings">
+            <Settings size={13} className="mr-1" />
+            행사 설정
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="dday" className="mt-5">
           <HackathonDdayConsole />
+        </TabsContent>
+
+        <TabsContent value="event-settings" className="mt-5">
+          <HackathonEventSettingsTab />
         </TabsContent>
 
         <TabsContent value="judging" className="mt-5">
@@ -332,6 +358,394 @@ export default function HackathonJudgingConsolePage() {
           )}
         </TabsContent>
       </Tabs>
+    </div>
+  );
+}
+
+// ── 행사 설정 탭 ─────────────────────────────────────────────────────────────
+
+interface TimelineRow {
+  time: string;
+  label: string;
+}
+
+interface EventSettingsForm {
+  title: string;
+  tagline: string;
+  date: string;
+  dayLabel: string;
+  timeLabel: string;
+  place: string;
+  intro: string;
+  highlights: string[];
+  timeline: TimelineRow[];
+  submissionDeadline: string;
+  awardsAnnounceDate: string;
+  phaseRegistration: string;
+  phaseSubmission: string;
+  phaseJudging: string;
+  phaseAwards: string;
+}
+
+function buildEventSettingsForm(conf: InternalConference | null | undefined): EventSettingsForm {
+  const s = conf?.hackathonSettings;
+  const hs = s?.highlights ?? [...HACKATHON_EVENT.highlights];
+  return {
+    title: conf?.title ?? HACKATHON_EVENT.title,
+    tagline: conf?.tagline ?? HACKATHON_EVENT.tagline,
+    date: conf?.date ?? HACKATHON_EVENT.date,
+    dayLabel: conf?.dayLabel ?? HACKATHON_EVENT.dayLabel,
+    timeLabel: conf?.timeLabel ?? HACKATHON_EVENT.timeLabel,
+    place: conf?.place ?? HACKATHON_EVENT.place,
+    intro: s?.intro ?? HACKATHON_EVENT.intro,
+    highlights: [hs[0] ?? "", hs[1] ?? "", hs[2] ?? ""],
+    timeline: s?.timeline ? [...s.timeline] : [...HACKATHON_TIMELINE],
+    submissionDeadline: s?.submissionDeadline ?? HACKATHON_SUBMISSION_DEADLINE,
+    awardsAnnounceDate:
+      s?.awardsAnnounceDate ?? conf?.awardsAnnounceDate ?? HACKATHON_AWARDS_ANNOUNCE_DATE,
+    phaseRegistration:
+      s?.phaseStartDates?.registration ?? HACKATHON_PHASE_TIMELINE[0]?.startDate ?? "",
+    phaseSubmission: s?.phaseStartDates?.submission ?? HACKATHON_PHASE_TIMELINE[1]?.startDate ?? "",
+    phaseJudging: s?.phaseStartDates?.judging ?? HACKATHON_PHASE_TIMELINE[2]?.startDate ?? "",
+    phaseAwards: s?.phaseStartDates?.awards ?? HACKATHON_PHASE_TIMELINE[3]?.startDate ?? "",
+  };
+}
+
+function HackathonEventSettingsTab() {
+  const { conferences, recordId, isLoading: confLoading } = useInternalConferences();
+  const { mutateAsync: saveConferences, isPending: saving } = useSaveInternalConferences();
+
+  const hackathonConferences = useMemo(
+    () => conferences.filter((c) => c.kind === "hackathon"),
+    [conferences],
+  );
+
+  const [selCtxId, setSelCtxId] = useState(HACKATHON_CONTEXT_ID);
+  const selConf = useMemo(
+    () => hackathonConferences.find((c) => c.contextId === selCtxId) ?? null,
+    [hackathonConferences, selCtxId],
+  );
+
+  const isActiveConference = selCtxId === HACKATHON_CONTEXT_ID;
+
+  const [form, setForm] = useState<EventSettingsForm>(() => buildEventSettingsForm(selConf));
+
+  // 행사 선택 변경 시 폼 초기화 (selCtxId 변경 시에만 실행 — selConf 는 파생값이므로 의존 제외)
+  useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
+    setForm(buildEventSettingsForm(selConf));
+  }, [selCtxId]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  function setField<K extends keyof EventSettingsForm>(k: K, v: EventSettingsForm[K]) {
+    setForm((prev) => ({ ...prev, [k]: v }));
+  }
+
+  function updateTimeline(idx: number, field: keyof TimelineRow, value: string) {
+    setForm((prev) => {
+      const next = [...prev.timeline];
+      next[idx] = { ...next[idx], [field]: value };
+      return { ...prev, timeline: next };
+    });
+  }
+
+  function removeTimelineRow(idx: number) {
+    setForm((prev) => ({
+      ...prev,
+      timeline: prev.timeline.filter((_, i) => i !== idx),
+    }));
+  }
+
+  function addTimelineRow() {
+    setForm((prev) => ({
+      ...prev,
+      timeline: [...prev.timeline, { time: "", label: "" }],
+    }));
+  }
+
+  async function handleSave() {
+    if (!selConf) {
+      toast.error("저장할 행사를 선택하세요.");
+      return;
+    }
+    const hackathonSettings: HackathonSettings = {
+      intro: form.intro.trim() || undefined,
+      highlights: form.highlights.some((h) => h.trim())
+        ? form.highlights.filter((h) => h.trim())
+        : undefined,
+      timeline: form.timeline.filter((r) => r.time.trim() || r.label.trim()).length > 0
+        ? form.timeline.filter((r) => r.time.trim() || r.label.trim())
+        : undefined,
+      submissionDeadline: form.submissionDeadline.trim() || undefined,
+      awardsAnnounceDate: form.awardsAnnounceDate.trim() || undefined,
+      phaseStartDates:
+        form.phaseRegistration || form.phaseSubmission || form.phaseJudging || form.phaseAwards
+          ? {
+              registration: form.phaseRegistration || undefined,
+              submission: form.phaseSubmission || undefined,
+              judging: form.phaseJudging || undefined,
+              awards: form.phaseAwards || undefined,
+            }
+          : undefined,
+    };
+    const updated: InternalConference = {
+      ...selConf,
+      title: form.title.trim() || selConf.title,
+      tagline: form.tagline.trim() || selConf.tagline,
+      date: form.date.trim() || selConf.date,
+      dayLabel: form.dayLabel.trim() || selConf.dayLabel,
+      timeLabel: form.timeLabel.trim() || selConf.timeLabel,
+      place: form.place.trim() || selConf.place,
+      awardsAnnounceDate: form.awardsAnnounceDate.trim() || selConf.awardsAnnounceDate,
+      hackathonSettings,
+    };
+    const next = conferences.map((c) =>
+      c.contextId === selCtxId ? updated : c,
+    );
+    try {
+      await saveConferences({ recordId, conferences: next });
+      toast.success("행사 설정을 저장했습니다.");
+    } catch (e) {
+      toast.error(`저장 실패: ${e instanceof Error ? e.message : "오류"}`);
+    }
+  }
+
+  if (confLoading) {
+    return (
+      <div className="flex justify-center py-12">
+        <Loader2 className="animate-spin text-muted-foreground" />
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-6">
+      {/* 안내 배너 */}
+      <div className="rounded-xl border bg-primary/5 px-4 py-3 text-xs text-muted-foreground">
+        이 행사는{" "}
+        <span className="font-semibold text-foreground">대내 학술대회 목록</span>의 항목으로
+        관리됩니다. 기본 정보 수정은 이 폼과{" "}
+        <span className="font-medium text-foreground">/activities/internal</span>의 수정
+        다이얼로그에서 모두 가능합니다.
+      </div>
+
+      {/* 행사 선택 */}
+      {hackathonConferences.length > 1 && (
+        <div className="flex flex-wrap items-center gap-3">
+          <label htmlFor="es-conf-picker" className="text-sm font-medium">
+            행사 선택
+          </label>
+          <select
+            id="es-conf-picker"
+            value={selCtxId}
+            onChange={(e) => setSelCtxId(e.target.value)}
+            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+          >
+            {hackathonConferences.map((c) => (
+              <option key={c.contextId} value={c.contextId}>
+                {c.title}
+              </option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* 비활성 행사 안내 */}
+      {!isActiveConference && (
+        <div className="rounded-xl border border-warning/40 bg-warning/10 px-4 py-3 text-sm text-muted-foreground">
+          이 행사의 운영 표면(당일 운영·심사)은 현재 활성 행사(
+          {HACKATHON_CONTEXT_ID})와 연결됩니다. 이 폼에서는 기본 정보와 해커톤 설정만
+          편집할 수 있습니다.
+        </div>
+      )}
+
+      {/* ── 기본 정보 ── */}
+      <div className="rounded-2xl border bg-card p-5">
+        <p className="mb-4 text-sm font-semibold text-foreground">기본 정보</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="es-title">제목</Label>
+            <Input
+              id="es-title"
+              value={form.title}
+              onChange={(e) => setField("title", e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="es-tagline">태그라인</Label>
+            <Input
+              id="es-tagline"
+              value={form.tagline}
+              onChange={(e) => setField("tagline", e.target.value)}
+              placeholder="연세교육공학회 미니 학술대회"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="es-date">날짜 (YYYY-MM-DD)</Label>
+            <Input
+              id="es-date"
+              value={form.date}
+              onChange={(e) => setField("date", e.target.value)}
+              placeholder="2026-08-22"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="es-daylabel">요일 표시</Label>
+            <Input
+              id="es-daylabel"
+              value={form.dayLabel}
+              onChange={(e) => setField("dayLabel", e.target.value)}
+              placeholder="토요일"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="es-timelabel">시간 표시</Label>
+            <Input
+              id="es-timelabel"
+              value={form.timeLabel}
+              onChange={(e) => setField("timeLabel", e.target.value)}
+              placeholder="오전 10시 – 오후 10시"
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="es-place">장소</Label>
+            <Input
+              id="es-place"
+              value={form.place}
+              onChange={(e) => setField("place", e.target.value)}
+              placeholder="연세대학교 교육과학관"
+            />
+          </div>
+          <div className="space-y-1.5 sm:col-span-2">
+            <Label htmlFor="es-intro">소개 문구</Label>
+            <Textarea
+              id="es-intro"
+              value={form.intro}
+              onChange={(e) => setField("intro", e.target.value)}
+              rows={3}
+            />
+          </div>
+          {/* 하이라이트 3줄 */}
+          <div className="space-y-2 sm:col-span-2">
+            <Label>하이라이트 (최대 3줄)</Label>
+            {[0, 1, 2].map((i) => (
+              <Input
+                key={i}
+                value={form.highlights[i] ?? ""}
+                onChange={(e) => {
+                  const next = [...form.highlights];
+                  next[i] = e.target.value;
+                  setField("highlights", next);
+                }}
+                placeholder={`하이라이트 ${i + 1}`}
+              />
+            ))}
+          </div>
+        </div>
+      </div>
+
+      {/* ── 당일 타임라인 편집기 ── */}
+      <div className="rounded-2xl border bg-card p-5">
+        <p className="mb-1 text-sm font-semibold text-foreground">당일 타임라인</p>
+        <p className="mb-4 text-xs text-muted-foreground">
+          저장 후 /hackathon 허브의 타임라인 섹션에 즉시 반영됩니다.
+        </p>
+        <div className="space-y-2">
+          {form.timeline.map((row, idx) => (
+            <div key={idx} className="flex gap-2">
+              <Input
+                placeholder="10:00"
+                value={row.time}
+                onChange={(e) => updateTimeline(idx, "time", e.target.value)}
+                className="w-24 shrink-0"
+              />
+              <Input
+                placeholder="등록·오리엔테이션"
+                value={row.label}
+                onChange={(e) => updateTimeline(idx, "label", e.target.value)}
+                className="flex-1"
+              />
+              <button
+                type="button"
+                onClick={() => removeTimelineRow(idx)}
+                className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                aria-label="행 삭제"
+              >
+                <X size={14} />
+              </button>
+            </div>
+          ))}
+          <Button size="sm" variant="outline" onClick={addTimelineRow} className="mt-1">
+            <Plus size={13} className="mr-1" />
+            행 추가
+          </Button>
+        </div>
+      </div>
+
+      {/* ── 일정 설정 ── */}
+      <div className="rounded-2xl border bg-card p-5">
+        <p className="mb-4 text-sm font-semibold text-foreground">일정 설정</p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          <div className="space-y-1.5">
+            <Label htmlFor="es-deadline">제출 마감 (YYYY-MM-DDTHH:mm)</Label>
+            <Input
+              id="es-deadline"
+              type="datetime-local"
+              value={form.submissionDeadline}
+              onChange={(e) => setField("submissionDeadline", e.target.value)}
+            />
+          </div>
+          <div className="space-y-1.5">
+            <Label htmlFor="es-awards-date">수상 발표일 (YYYY-MM-DD)</Label>
+            <Input
+              id="es-awards-date"
+              type="date"
+              value={form.awardsAnnounceDate}
+              onChange={(e) => setField("awardsAnnounceDate", e.target.value)}
+            />
+          </div>
+        </div>
+      </div>
+
+      {/* ── 단계 시작일 ── */}
+      <div className="rounded-2xl border bg-card p-5">
+        <p className="mb-1 text-sm font-semibold text-foreground">단계별 시작일</p>
+        <p className="mb-4 text-xs text-muted-foreground">
+          비워두면 코드 상수를 폴백으로 사용합니다. 날짜를 입력하면 해당 날짜 이후 단계로 자동
+          전환됩니다 (수동 오버라이드가 없는 경우).
+        </p>
+        <div className="grid gap-4 sm:grid-cols-2">
+          {(
+            [
+              { id: "es-phase-reg", label: "참가 접수 시작", key: "phaseRegistration" },
+              { id: "es-phase-sub", label: "산출물 제출 시작", key: "phaseSubmission" },
+              { id: "es-phase-jud", label: "심사 시작", key: "phaseJudging" },
+              { id: "es-phase-awd", label: "수상 발표", key: "phaseAwards" },
+            ] as { id: string; label: string; key: keyof EventSettingsForm }[]
+          ).map(({ id, label, key }) => (
+            <div key={id} className="space-y-1.5">
+              <Label htmlFor={id}>{label} (YYYY-MM-DD)</Label>
+              <Input
+                id={id}
+                type="date"
+                value={form[key] as string}
+                onChange={(e) => setField(key, e.target.value)}
+              />
+            </div>
+          ))}
+        </div>
+      </div>
+
+      {/* 저장 버튼 */}
+      <div className="flex justify-end">
+        <Button onClick={handleSave} disabled={saving}>
+          {saving ? (
+            <Loader2 size={14} className="mr-1.5 animate-spin" />
+          ) : (
+            <Save size={14} className="mr-1.5" />
+          )}
+          설정 저장
+        </Button>
+      </div>
     </div>
   );
 }

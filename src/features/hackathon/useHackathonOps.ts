@@ -1,11 +1,14 @@
 "use client";
 
 /**
- * 해커톤 당일 운영 오버라이드 훅 (H3-v10, 2026-07-20)
+ * 해커톤 당일 운영 오버라이드 훅 (H3-v10, 2026-07-20 / 설정 주입 확장 2026-07-22)
  *
  * 단계 전환(접수/제출/심사/수상)과 제출 마감 여부를 운영진이 콘솔에서 수동으로
  * 덮어쓸 수 있게 한다. 저장은 site_settings(key="hackathon_ops") 재사용 — 신규 컬렉션 없음.
  * 수동 값이 있으면 우선, 없으면 하드코딩 날짜 기준 자동 폴백(수동 우선·자동 폴백).
+ *
+ * 2026-07-22: useHackathonEvent() 에서 이벤트 레코드의 phaseStartDates / submissionDeadline 을
+ * 주입한다. 이벤트 레코드에 설정이 없으면 기존 동작(config 상수)과 100% 동일.
  *
  * 공개 컴포넌트(HackathonPhaseTimeline·HackathonAwards·HackathonSubmissions)와
  * 콘솔 당일 운영 탭이 같은 쿼리 키를 공유하므로 React Query 가 요청을 dedupe 한다.
@@ -24,6 +27,7 @@ import {
   type HackathonPhaseKey,
   type SectionVisibility,
 } from "./config";
+import { useHackathonEvent } from "./useHackathonEvent";
 
 const QUERY_KEY = ["site_settings", HACKATHON_OPS_SETTINGS_KEY];
 
@@ -54,16 +58,19 @@ export function useHackathonOps() {
     staleTime: 60 * 1000,
   });
 
+  // 이벤트 레코드 설정 주입 — internal_conferences React Query 가 dedupe
+  const { event } = useHackathonEvent();
+
   const override = data?.override ?? HACKATHON_OPS_DEFAULT;
   const recordId = data?.recordId ?? null;
 
   const phase = useMemo<HackathonPhaseKey>(
-    () => resolveHackathonPhase(override),
-    [override],
+    () => resolveHackathonPhase(override, new Date(), event.phaseStartDates),
+    [override, event],
   );
   const submissionClosed = useMemo(
-    () => resolveHackathonSubmissionClosed(override),
-    [override],
+    () => resolveHackathonSubmissionClosed(override, new Date(), event.submissionDeadline),
+    [override, event],
   );
   const isManual = override.phase !== null || override.submissionClosed !== null;
   const sectionVisibility = useMemo<SectionVisibility>(
