@@ -7,6 +7,7 @@ import { useAuthStore } from "./auth-store";
 import { profilesApi } from "@/lib/bkend";
 import { mergeToUser } from "./merge-user";
 import { runAllGuestLinkers } from "@/lib/guestLinker";
+import { todayYmdKst } from "@/lib/dday";
 
 export default function AuthProvider({ children }: { children: React.ReactNode }) {
   const { setUser, setInitialized } = useAuthStore();
@@ -58,11 +59,13 @@ export default function AuthProvider({ children }: { children: React.ReactNode }
           if (merged?.id && !isImpersonating) {
             try {
               const k = `last-login-ymd-${merged.id}`;
-              const today = new Date().toISOString().slice(0, 10);
+              // D2(2026-07-22): UTC 날짜 → KST 날짜 — KST 0~9시 재방문이 전날로 묶여 미반영되던 경계 해소
+              const today = todayYmdKst();
               if (localStorage.getItem(k) !== today) {
-                localStorage.setItem(k, today);
                 profilesApi
                   .update(merged.id, { lastLoginAt: new Date().toISOString() })
+                  // D3: 성공 시에만 스로틀 마킹 — 실패·탭 조기 종료 시 당일 재시도 유지
+                  .then(() => localStorage.setItem(k, today))
                   .catch((e) =>
                     console.warn(
                       "[auth] lastLoginAt 갱신 실패 (레거시 doc id≠uid 또는 권한 거부):",

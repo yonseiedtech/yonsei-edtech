@@ -603,6 +603,59 @@ interface RetentionCounts {
   cron_runs: number;
 }
 
+function NewcomerSequenceCheckCard() {
+  const [running, setRunning] = useState(false);
+  const [result, setResult] = useState<{ newcomers: number; wouldSend: number } | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  async function run() {
+    setRunning(true);
+    setError(null);
+    try {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("로그인이 필요합니다.");
+      const res = await fetch("/api/cron/newcomer-activation-sequence?dryRun=true", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`점검 실패 (${res.status})`);
+      const json = (await res.json()) as {
+        newcomers: number;
+        steps: Record<string, { sent: number }>;
+      };
+      const wouldSend = Object.values(json.steps ?? {}).reduce((a, s) => a + (s.sent ?? 0), 0);
+      setResult({ newcomers: json.newcomers ?? 0, wouldSend });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "점검 실패");
+    } finally {
+      setRunning(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border border-dashed bg-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <h2 className="text-xs font-semibold">신입 시퀀스 파이프라인 점검 (dry-run)</h2>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            발송·기록 없이 전 경로를 실행해 cron_runs에 점검 기록을 남깁니다. 성공하면 핸들러는 정상 —
+            정기 기록 부재는 스케줄/인증 문제로 좁혀집니다.
+          </p>
+        </div>
+        <Button size="sm" variant="outline" onClick={run} disabled={running} className="h-7 gap-1 px-2 text-[11px]">
+          {running ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
+          점검 실행
+        </Button>
+      </div>
+      {error && <p className="mt-2 text-[11px] text-destructive">{error}</p>}
+      {result && (
+        <p className="mt-2 text-[11px] text-success">
+          정상 완료 — 신입 코호트 {result.newcomers}명 · 오늘 발송 대상(스킵·중복 제외) {result.wouldSend}건
+        </p>
+      )}
+    </div>
+  );
+}
+
 function RetentionDryRunCard() {
   const [running, setRunning] = useState(false);
   const [counts, setCounts] = useState<RetentionCounts | null>(null);
@@ -759,6 +812,10 @@ export default function CronLogsPage() {
 
       {/* M4(v11) — 신입 첫 2주 시퀀스 단계별 발송 현황 (push_logs 재사용) */}
       <NewcomerSequenceStatusSection logs={logs} isLoading={isLoading} />
+
+      {/* 2026-07-22 — 신입 시퀀스 파이프라인 점검 (dry-run, 발송·기록 없음).
+          cron_runs 기록 부재 시 스케줄/인증/핸들러 어느 단이 문제인지 즉시 판별용. */}
+      <NewcomerSequenceCheckCard />
 
       {/* v7-H3 — 로그 보존 정리 dry-run (조회 전용, 삭제 없음).
           자동 스케줄은 vercel.json 미등록(휴면) — 여기서 삭제 예정 규모를 확인한 뒤 활성화를 결정한다. */}

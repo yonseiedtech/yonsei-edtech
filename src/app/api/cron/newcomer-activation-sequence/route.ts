@@ -1,7 +1,8 @@
-﻿import { NextRequest } from "next/server";
+﻿import { NextRequest, NextResponse } from "next/server";
 import { withCronLog } from "@/lib/cron-observability";
 import { getAdminDb } from "@/lib/firebase-admin";
 import { verifyCronAuth } from "@/lib/cron-auth";
+import { requireAuth } from "@/lib/api-auth";
 import { sendPushToUsers } from "@/lib/push-admin";
 import { fanOutNotificationAdmin } from "@/lib/notifications-bridge";
 import { cohortKeyOf, currentSemesterKey } from "@/lib/semester";
@@ -85,10 +86,19 @@ type UserDoc = {
   interestKeywords?: unknown[] | null;
 };
 
+// 콜드스타트+전체 회원 스캔 여유 — 기본 타임아웃 킬로 기록이 유실되지 않게 (2026-07-22)
+export const maxDuration = 60;
+
 // ── 핸들러 ───────────────────────────────────────────────────────────────────
 async function _handler(req: NextRequest) {
+  // ?dryRun=true — 발송·기록 없이 전체 파이프라인 점검(관리자 세션 허용, analytics-retention 패턴)
+  const dryRun = new URL(req.url).searchParams.get("dryRun") === "true";
   if (!verifyCronAuth(req)) {
-    return Response.json({ error: "Unauthorized" }, { status: 401 });
+    if (!dryRun) {
+      return Response.json({ error: "Unauthorized" }, { status: 401 });
+    }
+    const authResult = await requireAuth(req, "admin");
+    if (authResult instanceof NextResponse) return authResult;
   }
 
   try {
@@ -171,6 +181,12 @@ async function _handler(req: NextRequest) {
 
       const finalIds = finalTargets.map((u) => u.id);
 
+      // dry-run: 발송·기록 없이 대상 집계만 (파이프라인 점검용)
+      if (dryRun) {
+        res.sent = finalTargets.length;
+        continue;
+      }
+
       // 인앱 알림 fan-out (항상)
       await fanOutNotificationAdmin(finalIds, {
         type: "newcomer_sequence",
@@ -211,6 +227,7 @@ async function _handler(req: NextRequest) {
 
     return Response.json({
       ok: true,
+      dryRun: dryRun ? 1 : 0,
       todayYmd,
       semKey,
       newcomers: newcomers.length,

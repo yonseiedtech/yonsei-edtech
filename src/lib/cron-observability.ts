@@ -91,8 +91,26 @@ export function withCronLog(
       throw err;
     }
 
-    // 401은 인증 실패 — 실제 cron 실행이 아니므로 로깅 제외
-    if (res.status === 401) return res;
+    // 401 처리: 외부 임의 접근의 401은 로깅 제외(노이즈)하되,
+    // Vercel 스케줄러가 보낸 진짜 cron 호출(x-vercel-cron 헤더)이 401이면 "인증 깨짐"이므로
+    // 실패로 기록한다 — 기록이 아예 없으면 "실행 안 됨"처럼 보이는 관측 사각(2026-07-22 실증) 방지.
+    if (res.status === 401) {
+      if (req.headers.get("x-vercel-cron")) {
+        const durationMs = Date.now() - startMs;
+        const endedAt = new Date().toISOString();
+        await logCronRun({
+          kind,
+          startedAt,
+          endedAt,
+          durationMs,
+          success: false,
+          summary: {},
+          errorMessage: "cron auth 실패(401) — CRON_SECRET 환경변수 확인 필요",
+          createdAt: endedAt,
+        }).catch(() => {});
+      }
+      return res;
+    }
 
     const durationMs = Date.now() - startMs;
     const endedAt = new Date().toISOString();
