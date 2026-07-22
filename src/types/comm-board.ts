@@ -34,6 +34,8 @@ export interface CommQuestion {
   authorId?: string;
   authorName?: string;
   guestName?: string;
+  /** 비회원 신청 시 이메일 — 가입 후 자동 연결(linkGuestHackathonApps)에 사용 */
+  guestEmail?: string;
   anonymous: boolean;
   body: string;
   /** 어느 발표자에 대한 질문인지 (board.presenters 중 하나, 없으면 공통) */

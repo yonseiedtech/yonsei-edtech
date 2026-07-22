@@ -3,6 +3,7 @@
 /**
  * 해커톤 참가 신청 + 아이디어 보드 (v6-H6, 2026-07-18)
  * M6-v9 (2026-07-20): 팀 합류 희망 액션 + 합류자 칩 + 팀 확정 프리필 연결
+ * guest-apply (2026-07-23): 비회원 참가 신청 경로 추가
  *
  * 기존 소통 보드(comm_boards, contextType="hackathon") 인프라를 재사용 — 신규 컬렉션 최소화.
  *  - 참가 신청 = "풀고 싶은 교육 현장의 문제" 한 줄 등록 (= comm_question)
@@ -10,11 +11,12 @@
  *  - 공감 = commLikesApi.toggle (question 좋아요)
  *  - 합류 희망 = hackathon_team_joins (결정적 docId: `${questionId}_${userId}`)
  *  - 팀 확정 = sessionStorage + CustomEvent 로 HackathonSubmissions 프리필 연결
- *  - 1인 1신청 — 본인(authorId) 질문 존재 여부로 판정
- * 게스트는 가입 유도(로그인 CTA).
+ *  - 1인 1신청 — 회원: authorId 질문 존재 여부, 비회원: localStorage docId
+ * 비회원: /api/hackathon/guest-apply 경유, guestName+guestEmail 저장, 가입 시 자동 연결.
  */
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import {
   Lightbulb,
@@ -40,7 +42,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { commQuestionsApi, commLikesApi, hackathonTeamJoinsApi } from "@/lib/bkend";
+import { commBoardsApi, commQuestionsApi, commLikesApi, hackathonTeamJoinsApi } from "@/lib/bkend";
 import type { CommBoard, CommQuestion, HackathonTeamJoin } from "@/types";
 import { ensureHackathonBoard } from "./ensure-hackathon-board";
 import { useHackathonOps } from "./useHackathonOps";
@@ -53,6 +55,8 @@ import {
 } from "./config";
 
 const MAX_LEN = 140;
+/** localStorage 키 — 비회원 신청 docId 저장 (1인 1신청 근사) */
+const GUEST_APP_KEY = "hackathon_guest_app_id";
 
 // ── 팀 빌딩 사전 설문 상수 ──
 const SURVEY_AI_LEVELS: Array<1 | 2 | 3 | 4 | 5> = [1, 2, 3, 4, 5];
@@ -135,16 +139,30 @@ export default function HackathonBoard() {
   const [editSurveyOtherTool, setEditSurveyOtherTool] = useState("");
   const [editSurveyStrengths, setEditSurveyStrengths] = useState<string[]>([]);
 
+  // ── 비회원 상태 ──
+  /** 비회원 신청 폼 표시 여부 */
+  const [guestView, setGuestView] = useState<"cta" | "form">("cta");
+  /** 비회원 입력 이름 (필수) */
+  const [guestNameInput, setGuestNameInput] = useState("");
+  /** 비회원 입력 이메일 (선택 · 가입 시 자동 연결용) */
+  const [guestEmailInput, setGuestEmailInput] = useState("");
+  /** localStorage 에서 복원한 비회원 신청 docId */
+  const [guestAppId, setGuestAppId] = useState<string | null>(null);
+
   useEffect(() => {
     setOnboardingDismissed(localStorage.getItem("hackathon_onboarding_dismissed") === "1");
+    setGuestAppId(localStorage.getItem(GUEST_APP_KEY));
   }, []);
 
-  // 보드 프로비저닝 — 로그인 사용자만 (rules: create 는 ownerId==auth.uid)
+  // 보드 — 로그인 사용자는 ensureHackathonBoard(없으면 생성), 게스트는 조회만.
+  // comm_boards read 는 public(allow read, list: if true) — 인증 불필요.
   const { data: board, isLoading: boardLoading } = useQuery<CommBoard | null>({
     queryKey: ["hackathon-board"],
-    queryFn: () =>
-      user ? ensureHackathonBoard(user.id, user.name) : Promise.resolve(null),
-    enabled: !!user,
+    queryFn: async () => {
+      if (user) return ensureHackathonBoard(user.id, user.name);
+      const res = await commBoardsApi.listByContext("hackathon", HACKATHON_CONTEXT_ID);
+      return (res.data as CommBoard[])[0] ?? null;
+    },
     staleTime: 5 * 60 * 1000,
   });
 
@@ -191,10 +209,11 @@ export default function HackathonBoard() {
     return new Set(allJoins.filter((j) => j.userId === user.id).map((j) => j.questionId));
   }, [allJoins, user]);
 
-  const myEntry = useMemo(
-    () => (user ? entries.find((e) => e.authorId === user.id) : undefined),
-    [entries, user],
-  );
+  const myEntry = useMemo(() => {
+    if (user) return entries.find((e) => e.authorId === user.id);
+    if (guestAppId) return entries.find((e) => e.id === guestAppId);
+    return undefined;
+  }, [entries, user, guestAppId]);
 
   const sorted = useMemo(
     () =>
@@ -427,22 +446,74 @@ export default function HackathonBoard() {
     );
   }
 
-  // ── 비로그인: 가입 유도 ──
-  if (!user) {
-    return (
-      <EmptyState
-        icon={LogIn}
-        title="로그인하고 참가 신청하기"
-        description="참가 신청과 아이디어 등록은 회원 전용입니다. 로그인하면 풀고 싶은 문제를 남기고 팀원을 찾을 수 있어요."
-        actions={[
-          { label: "로그인", href: "/login" },
-          { label: "회원가입", href: "/signup", variant: "outline" },
-        ]}
-      />
-    );
+  /** 비회원 참가 신청 — /api/hackathon/guest-apply (Admin SDK) 경유 */
+  async function handleGuestRegister() {
+    if (!board) return;
+    const name = guestNameInput.trim();
+    if (!name) {
+      toast.error("이름을 입력하세요.");
+      return;
+    }
+    const body = problem.trim();
+    if (!body) {
+      toast.error("풀고 싶은 문제를 한 줄 입력하세요.");
+      return;
+    }
+    setSaving(true);
+    try {
+      const hackathonSurvey = buildHackathonSurvey(
+        surveyAiLiteracy,
+        surveyVibeCoding,
+        surveyTools,
+        surveyOtherTool,
+        surveyStrengths,
+      );
+      const res = await fetch("/api/hackathon/guest-apply", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          boardId: board.id,
+          guestName: name,
+          ...(guestEmailInput.trim()
+            ? { guestEmail: guestEmailInput.trim().toLowerCase() }
+            : {}),
+          body,
+          presenter: teamPref,
+          ...(hackathonSurvey ? { hackathonSurvey } : {}),
+        }),
+      });
+      if (!res.ok) {
+        const err = (await res.json()) as { error?: string };
+        toast.error(err.error ?? "신청 실패 — 잠시 후 다시 시도해주세요.");
+        return;
+      }
+      const data = (await res.json()) as { id: string };
+      localStorage.setItem(GUEST_APP_KEY, data.id);
+      setGuestAppId(data.id);
+      // 폼 초기화
+      setProblem("");
+      setAreaTag(null);
+      setSurveyOpen(false);
+      setSurveyAiLiteracy(null);
+      setSurveyVibeCoding(null);
+      setSurveyTools([]);
+      setSurveyOtherTool("");
+      setSurveyStrengths([]);
+      setGuestView("cta");
+      refresh();
+      toast.success(
+        "비회원으로 참가 신청이 완료되었습니다! 가입하면 이 신청이 계정과 연결됩니다.",
+        { duration: 5000 },
+      );
+    } catch (e) {
+      console.error("[hackathon/guest-register]", e);
+      toast.error("신청 실패 — 잠시 후 다시 시도해주세요.");
+    } finally {
+      setSaving(false);
+    }
   }
 
-  if (boardLoading || !board) {
+  if (boardLoading || (!board && !!user)) {
     return (
       <div className="space-y-2">
         <Skeleton className="h-28 w-full rounded-2xl" />
@@ -453,6 +524,331 @@ export default function HackathonBoard() {
 
   return (
     <div className="space-y-6">
+      {/* ── 비로그인: 로그인 CTA + 비회원 신청 경로 ── */}
+      {!user && (
+        <section className="rounded-2xl border bg-card p-4 space-y-3">
+          <div className="flex flex-wrap items-center gap-3">
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold">로그인하면 더 많은 기능을 쓸 수 있어요</p>
+              <p className="mt-0.5 text-xs text-muted-foreground">
+                팀 합류·공감·팀 확정·제출은 회원 전용입니다.
+              </p>
+            </div>
+            <div className="flex shrink-0 gap-2">
+              <Link href="/login">
+                <Button size="sm">
+                  <LogIn size={13} className="mr-1" />
+                  로그인
+                </Button>
+              </Link>
+              <Link href="/signup">
+                <Button size="sm" variant="outline">회원가입</Button>
+              </Link>
+            </div>
+          </div>
+
+          {/* 비회원 신청 경로 — 접수 기간이고 아직 신청 전인 경우 */}
+          {registrationOpen && !myEntry && board && (
+            <div className="border-t border-border pt-3">
+              {guestView === "cta" ? (
+                <button
+                  type="button"
+                  onClick={() => setGuestView("form")}
+                  className="text-sm text-muted-foreground underline underline-offset-4 transition-colors hover:text-foreground"
+                >
+                  비회원으로 신청하기
+                </button>
+              ) : (
+                <div className="space-y-3">
+                  <p className="flex items-center gap-1.5 text-sm font-bold">
+                    <UserPlus size={15} className="text-primary" />
+                    비회원 참가 신청
+                  </p>
+                  {/* 이름 */}
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      이름 <span className="text-destructive">*</span>
+                    </label>
+                    <input
+                      value={guestNameInput}
+                      onChange={(e) =>
+                        setGuestNameInput(e.target.value.slice(0, 30))
+                      }
+                      placeholder="홍길동"
+                      className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                    />
+                  </div>
+                  {/* 이메일 */}
+                  <div>
+                    <label className="mb-1 block text-xs font-medium text-muted-foreground">
+                      이메일{" "}
+                      <span className="font-normal opacity-70">
+                        (선택 — 가입 시 신청 자동 연결)
+                      </span>
+                    </label>
+                    <input
+                      type="email"
+                      value={guestEmailInput}
+                      onChange={(e) =>
+                        setGuestEmailInput(e.target.value.slice(0, 100))
+                      }
+                      placeholder="example@yonsei.ac.kr"
+                      className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                    />
+                  </div>
+                  {/* 관심 영역 태그 */}
+                  <div className="flex flex-wrap gap-1.5">
+                    {HACKATHON_INTEREST_AREAS.map((area) => (
+                      <button
+                        key={area}
+                        type="button"
+                        aria-pressed={areaTag === area}
+                        onClick={() =>
+                          setAreaTag((prev) => {
+                            const next = prev === area ? null : area;
+                            if (next)
+                              setProblem((p) =>
+                                p.trim() ? p : `${next}: `,
+                              );
+                            return next;
+                          })
+                        }
+                        className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                          areaTag === area
+                            ? "border-primary bg-primary/10 font-medium text-primary"
+                            : "border-border text-muted-foreground hover:bg-accent"
+                        }`}
+                      >
+                        {area}
+                      </button>
+                    ))}
+                  </div>
+                  {/* 문제 입력 */}
+                  <textarea
+                    value={problem}
+                    onChange={(e) =>
+                      setProblem(e.target.value.slice(0, MAX_LEN))
+                    }
+                    rows={2}
+                    placeholder="예: 학생마다 이해 속도가 다른데 한 명의 교사가 모두를 챙기기 어렵다"
+                    className="w-full rounded-md border bg-background px-3 py-2 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/40"
+                  />
+                  <div className="text-right text-[11px] text-muted-foreground">
+                    {problem.length}/{MAX_LEN}
+                  </div>
+                  {/* 팀 참여 희망 */}
+                  <div>
+                    <span className="mb-1.5 block text-xs font-medium text-muted-foreground">
+                      팀 참여 희망
+                    </span>
+                    <div className="flex flex-wrap gap-1.5">
+                      {HACKATHON_TEAM_PREF_LIST.map((pref) => (
+                        <button
+                          key={pref}
+                          type="button"
+                          onClick={() => setTeamPref(pref)}
+                          aria-pressed={teamPref === pref}
+                          className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                            teamPref === pref
+                              ? "border-primary bg-primary text-primary-foreground"
+                              : "border-border text-muted-foreground hover:bg-accent"
+                          }`}
+                        >
+                          {pref}
+                        </button>
+                      ))}
+                    </div>
+                  </div>
+                  {/* 팀 빌딩 사전 설문 — 접이식 */}
+                  <div className="border-t border-border pt-3">
+                    <button
+                      type="button"
+                      onClick={() => setSurveyOpen((o) => !o)}
+                      aria-expanded={surveyOpen}
+                      className="flex w-full items-center justify-between text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+                    >
+                      <span>
+                        팀 빌딩 사전 설문{" "}
+                        <span className="font-normal opacity-70">
+                          (선택 · 30초)
+                        </span>
+                      </span>
+                      <ChevronDown
+                        size={13}
+                        className={`shrink-0 transition-transform ${surveyOpen ? "rotate-180" : ""}`}
+                      />
+                    </button>
+                    {surveyOpen && (
+                      <div className="mt-3 space-y-4">
+                        <div>
+                          <span className="mb-1.5 block text-xs text-muted-foreground">
+                            AI 리터러시 자기평가
+                          </span>
+                          <div className="flex gap-1.5">
+                            {SURVEY_AI_LEVELS.map((n) => (
+                              <button
+                                key={n}
+                                type="button"
+                                aria-pressed={surveyAiLiteracy === n}
+                                onClick={() =>
+                                  setSurveyAiLiteracy((p) =>
+                                    p === n ? null : n,
+                                  )
+                                }
+                                className={`h-7 w-7 rounded-full border text-xs font-semibold transition-colors ${
+                                  surveyAiLiteracy === n
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-border text-muted-foreground hover:bg-accent"
+                                }`}
+                              >
+                                {n}
+                              </button>
+                            ))}
+                          </div>
+                          <p className="mt-1 text-[11px] text-muted-foreground">
+                            1 낮음 · 5 높음
+                          </p>
+                        </div>
+                        <div>
+                          <span className="mb-1.5 block text-xs text-muted-foreground">
+                            바이브코딩 경험
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {SURVEY_VIBE_OPTIONS.map(({ value, label }) => (
+                              <button
+                                key={value}
+                                type="button"
+                                aria-pressed={surveyVibeCoding === value}
+                                onClick={() =>
+                                  setSurveyVibeCoding((p) =>
+                                    p === value ? null : value,
+                                  )
+                                }
+                                className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                                  surveyVibeCoding === value
+                                    ? "border-primary bg-primary text-primary-foreground"
+                                    : "border-border text-muted-foreground hover:bg-accent"
+                                }`}
+                              >
+                                {label}
+                              </button>
+                            ))}
+                          </div>
+                        </div>
+                        <div>
+                          <span className="mb-1.5 block text-xs text-muted-foreground">
+                            주로 쓰는 AI 도구
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {SURVEY_TOOL_PRESETS.map((tool) => {
+                              const sel = surveyTools.includes(tool);
+                              return (
+                                <button
+                                  key={tool}
+                                  type="button"
+                                  aria-pressed={sel}
+                                  onClick={() =>
+                                    setSurveyTools((p) =>
+                                      sel
+                                        ? p.filter((t) => t !== tool)
+                                        : [...p, tool],
+                                    )
+                                  }
+                                  className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                                    sel
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border text-muted-foreground hover:bg-accent"
+                                  }`}
+                                >
+                                  {tool}
+                                </button>
+                              );
+                            })}
+                            <input
+                              value={surveyOtherTool}
+                              onChange={(e) =>
+                                setSurveyOtherTool(
+                                  e.target.value.slice(0, 30),
+                                )
+                              }
+                              placeholder="기타"
+                              className="w-20 rounded-full border border-border bg-background px-2.5 py-1 text-xs placeholder:text-muted-foreground/60 outline-none focus-visible:ring-1 focus-visible:ring-ring/40"
+                            />
+                          </div>
+                        </div>
+                        <div>
+                          <span className="mb-1.5 block text-xs text-muted-foreground">
+                            나의 강점 (복수 선택)
+                          </span>
+                          <div className="flex flex-wrap gap-1.5">
+                            {SURVEY_STRENGTH_OPTIONS.map((s) => {
+                              const sel = surveyStrengths.includes(s);
+                              return (
+                                <button
+                                  key={s}
+                                  type="button"
+                                  aria-pressed={sel}
+                                  onClick={() =>
+                                    setSurveyStrengths((p) =>
+                                      sel
+                                        ? p.filter((x) => x !== s)
+                                        : [...p, s],
+                                    )
+                                  }
+                                  className={`rounded-full border px-2.5 py-1 text-xs transition-colors ${
+                                    sel
+                                      ? "border-primary bg-primary text-primary-foreground"
+                                      : "border-border text-muted-foreground hover:bg-accent"
+                                  }`}
+                                >
+                                  {s}
+                                </button>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                  <div className="flex items-center justify-between gap-2">
+                    <Button
+                      size="sm"
+                      variant="ghost"
+                      onClick={() => setGuestView("cta")}
+                      disabled={saving}
+                    >
+                      취소
+                    </Button>
+                    <Button
+                      size="sm"
+                      onClick={handleGuestRegister}
+                      disabled={
+                        saving ||
+                        !guestNameInput.trim() ||
+                        !problem.trim()
+                      }
+                    >
+                      {saving ? (
+                        <Loader2 size={14} className="mr-1 animate-spin" />
+                      ) : (
+                        <Send size={14} className="mr-1" />
+                      )}
+                      비회원으로 신청하기
+                    </Button>
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* 접수 마감 안내 (비로그인·접수 종료) */}
+          {!registrationOpen && !myEntry && (
+            <p className="border-t border-border pt-3 text-xs text-muted-foreground">
+              참가 접수가 마감되었습니다. 아래 아이디어 보드를 확인하세요.
+            </p>
+          )}
+        </section>
+      )}
       {/* ── 핀 공지 — 운영진이 pinned:true 로 설정한 comm_boards hackathon 항목 ── */}
       {entries.filter((e) => e.pinned).length > 0 && (
         <section className="space-y-2">
@@ -515,9 +911,14 @@ export default function HackathonBoard() {
             <h3 className="flex items-center gap-1.5 text-sm font-bold text-primary">
               <CheckCircle2 size={16} />
               참가 신청 완료
+              {!user && (
+                <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
+                  게스트
+                </span>
+              )}
             </h3>
-            {/* v14-H3: 수정·삭제 버튼 */}
-            {!editingEntry && (
+            {/* 수정·삭제 버튼 — 회원만 (게스트는 수정 불가) */}
+            {!editingEntry && !!user && (
               <div className="flex gap-1">
                 <button
                   type="button"
@@ -715,6 +1116,13 @@ export default function HackathonBoard() {
                   <Heart size={11} /> 공감 {myEntry.likeCount}
                 </span>
               </div>
+              {/* 게스트 안내 */}
+              {!user && (
+                <p className="mt-2 text-[11px] text-muted-foreground">
+                  같은 브라우저에서만 내 신청을 확인할 수 있습니다.
+                  수정·삭제가 필요하면 운영진에게 문의하세요.
+                </p>
+              )}
             </>
           )}
 
@@ -1059,7 +1467,9 @@ export default function HackathonBoard() {
           <ul className="space-y-2.5">
             {visible.map((entry) => {
               const liked = likedSet.has(`question__${entry.id}`);
-              const mine = entry.authorId === user.id;
+              const mine = user
+                ? entry.authorId === user.id
+                : entry.id === guestAppId;
               const isWantTeam =
                 entry.presenter === HACKATHON_TEAM_PREFS.wantTeam;
               const joiners = joinsByQuestion.get(entry.id) ?? [];
@@ -1113,6 +1523,12 @@ export default function HackathonBoard() {
                       {mine && (
                         <span className="ml-1 text-primary">· 나</span>
                       )}
+                      {/* 게스트 배지 — authorId 없고 guestName 있을 때 */}
+                      {!entry.authorId && entry.guestName && (
+                        <span className="ml-1 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-normal text-muted-foreground">
+                          게스트
+                        </span>
+                      )}
                     </span>
                     {entry.presenter && (
                       <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5">
@@ -1121,15 +1537,27 @@ export default function HackathonBoard() {
                     )}
                     <button
                       type="button"
-                      onClick={() => handleLike(entry)}
+                      onClick={() => {
+                        if (!user) {
+                          toast.info("공감하려면 로그인하세요.");
+                          return;
+                        }
+                        void handleLike(entry);
+                      }}
                       disabled={mine}
                       aria-pressed={liked}
-                      title={mine ? "본인 아이디어에는 공감할 수 없습니다" : "공감하기"}
+                      title={
+                        mine
+                          ? "본인 아이디어에는 공감할 수 없습니다"
+                          : !user
+                            ? "로그인하면 공감할 수 있어요"
+                            : "공감하기"
+                      }
                       className={`ml-auto inline-flex items-center gap-1 rounded-full border px-2.5 py-1 transition-colors ${
                         liked
                           ? "border-primary bg-primary/10 text-primary"
                           : "border-border hover:bg-accent"
-                      } ${mine ? "cursor-not-allowed opacity-50" : ""}`}
+                      } ${mine || !user ? "cursor-not-allowed opacity-50" : ""}`}
                     >
                       <Heart
                         size={12}
@@ -1156,39 +1584,49 @@ export default function HackathonBoard() {
 
                   {/* ── 합류 희망 + 합류 신청 — "팀원 찾는 중"이고 본인 카드가 아닐 때 ── */}
                   {isWantTeam && !mine && (
-                    <div className="mt-2.5 flex flex-wrap items-center gap-2">
-                      <button
-                        type="button"
-                        onClick={() => handleJoinToggle(entry)}
-                        aria-pressed={iJoined}
-                        className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
-                          iJoined
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border text-muted-foreground hover:bg-accent"
-                        }`}
-                      >
-                        {iJoined ? (
-                          <>
-                            <UserCheck size={12} />
-                            합류 희망 표시 중
-                          </>
-                        ) : (
-                          <>
-                            <UserPlus size={12} />
-                            합류 희망
-                          </>
-                        )}
-                      </button>
-                      {/* 합류 신청 — 접수 기간에만 노출. 합류 희망 표시의 다음 단계 */}
-                      {registrationOpen && (
-                        <button
-                          type="button"
-                          onClick={() => handleJoinApply(entry)}
-                          className="inline-flex items-center gap-1.5 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
-                        >
-                          <ArrowRight size={12} />
-                          이 팀에 합류 신청
-                        </button>
+                    <div className="mt-2.5">
+                      {user ? (
+                        <div className="flex flex-wrap items-center gap-2">
+                          <button
+                            type="button"
+                            onClick={() => handleJoinToggle(entry)}
+                            aria-pressed={iJoined}
+                            className={`inline-flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs font-medium transition-colors ${
+                              iJoined
+                                ? "border-primary bg-primary/10 text-primary"
+                                : "border-border text-muted-foreground hover:bg-accent"
+                            }`}
+                          >
+                            {iJoined ? (
+                              <>
+                                <UserCheck size={12} />
+                                합류 희망 표시 중
+                              </>
+                            ) : (
+                              <>
+                                <UserPlus size={12} />
+                                합류 희망
+                              </>
+                            )}
+                          </button>
+                          {/* 합류 신청 — 접수 기간에만 노출 */}
+                          {registrationOpen && (
+                            <button
+                              type="button"
+                              onClick={() => handleJoinApply(entry)}
+                              className="inline-flex items-center gap-1.5 rounded-full border border-primary px-3 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/10"
+                            >
+                              <ArrowRight size={12} />
+                              이 팀에 합류 신청
+                            </button>
+                          )}
+                        </div>
+                      ) : (
+                        /* 게스트: 팀 합류 불가 안내 */
+                        <p className="text-xs text-muted-foreground">
+                          <LogIn size={11} className="mr-0.5 inline" />
+                          가입하면 팀 찾기에 참여할 수 있어요
+                        </p>
                       )}
                     </div>
                   )}

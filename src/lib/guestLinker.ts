@@ -115,12 +115,53 @@ export async function linkGuestCertificates({
   return { linked };
 }
 
-/** 위 3종 linker를 순차 실행 */
+/**
+ * 비회원 해커톤 신청(comm_questions) → 로그인 회원 자동 연결.
+ * 서버 라우트 /api/auth/link-guest-hackathon 으로 위임 (Admin SDK — guestEmail 매칭·삭제).
+ * 시그니처 유지 — 호출처(runAllGuestLinkers) 영향 없음.
+ */
+export async function linkGuestHackathonApps(
+  _input: LinkerInput,
+): Promise<LinkerResult> {
+  void _input;
+  try {
+    const idToken = await auth.currentUser?.getIdToken();
+    if (!idToken) {
+      console.warn("[guestLinker] hackathon linking skipped — no auth token");
+      return { linked: 0 };
+    }
+    const res = await fetch("/api/auth/link-guest-hackathon", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${idToken}`,
+      },
+      body: JSON.stringify({}),
+    });
+    if (!res.ok) {
+      console.warn("[guestLinker] hackathon linking failed:", res.status);
+      return { linked: 0 };
+    }
+    const json = (await res.json()) as { linked?: number };
+    return { linked: json.linked ?? 0 };
+  } catch {
+    console.warn("[guestLinker] hackathon linking failed");
+    return { linked: 0 };
+  }
+}
+
+/** 위 4종 linker를 순차 실행 */
 export async function runAllGuestLinkers(
   input: LinkerInput,
-): Promise<{ attendees: LinkerResult; applicants: LinkerResult; certificates: LinkerResult }> {
+): Promise<{
+  attendees: LinkerResult;
+  applicants: LinkerResult;
+  certificates: LinkerResult;
+  hackathon: LinkerResult;
+}> {
   const attendees = await linkGuestAttendees(input);
   const applicants = await linkGuestApplicants(input);
   const certificates = await linkGuestCertificates(input);
-  return { attendees, applicants, certificates };
+  const hackathon = await linkGuestHackathonApps(input);
+  return { attendees, applicants, certificates, hackathon };
 }

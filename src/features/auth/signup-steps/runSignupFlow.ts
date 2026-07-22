@@ -162,7 +162,8 @@ export async function runSignupFlow(
     const totalLinked =
       result.attendees.linked +
       result.applicants.linked +
-      result.certificates.linked;
+      result.certificates.linked +
+      result.hackathon.linked;
     if (totalLinked > 0) {
       const parts: string[] = [];
       if (result.attendees.linked > 0)
@@ -171,6 +172,8 @@ export async function runSignupFlow(
         parts.push(`신청 ${result.applicants.linked}건`);
       if (result.certificates.linked > 0)
         parts.push(`수료증 ${result.certificates.linked}건`);
+      if (result.hackathon.linked > 0)
+        parts.push(`해커톤 신청 ${result.hackathon.linked}건`);
       toast.success(
         `이전 활동 기록이 연동되었습니다 (${parts.join(", ")}).`,
       );
