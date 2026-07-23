@@ -2,9 +2,16 @@ import type { Metadata } from "next";
 import { BreadcrumbListJsonLd } from "@/components/seo/JsonLd";
 
 export const metadata: Metadata = {
-  title: "학회 소개",
+  title: "학회 소개 | 연세교육공학회",
   description:
     "연세대학교 교육대학원 교육공학전공 학술 커뮤니티 연세교육공학회의 비전, 연혁, 인사말, 조직도를 소개합니다.",
+  openGraph: {
+    title: "학회 소개 | 연세교육공학회",
+    description:
+      "연세대학교 교육대학원 교육공학전공 학술 커뮤니티 연세교육공학회의 비전, 연혁, 인사말, 조직도를 소개합니다.",
+    url: "https://yonsei-edtech.vercel.app/about",
+    siteName: "연세교육공학회",
+  },
 };
 
 export default function AboutLayout({
