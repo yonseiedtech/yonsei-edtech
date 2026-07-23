@@ -68,14 +68,15 @@ export async function GET(req: NextRequest) {
   }
 
   // 목록 조회 — published 전체 로드 후 메모리 필터 (인덱스 미생성 대비)
+  // orderBy 는 where 와 조합 시 복합 인덱스가 필요하므로 제거하고 메모리 정렬(인덱스 미생성 대비)
   const snap = await db
     .collection("learning_guides")
     .where("status", "==", "published")
-    .orderBy("createdAt", "desc")
     .get();
   let data = snap.docs.map(
     (d) => ({ id: d.id, ...normalizeDoc(d.data() as Record<string, unknown>) }) as Record<string, unknown>,
   );
+  data.sort((a, b) => String(b.createdAt ?? "").localeCompare(String(a.createdAt ?? "")));
 
   // 카테고리·태그 필터 (메모리)
   if (category) data = data.filter((g) => g.category === category);

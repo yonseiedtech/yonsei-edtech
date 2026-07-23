@@ -34,10 +34,14 @@ export async function GET(req: NextRequest) {
 
   try {
     const db = getAdminDb();
+    // orderBy 제거(복합 인덱스 회피) 후 메모리 정렬
     const snap = chapterId
-      ? await db.collection("guide_pages").where("chapterId", "==", chapterId).orderBy("order", "asc").get()
-      : await db.collection("guide_pages").where("guideId", "==", guideId!).orderBy("order", "asc").get();
-    const data = snap.docs.map((d) => ({ id: d.id, ...normalizeDoc(d.data() as Record<string, unknown>) }));
+      ? await db.collection("guide_pages").where("chapterId", "==", chapterId).get()
+      : await db.collection("guide_pages").where("guideId", "==", guideId!).get();
+    const data = snap.docs.map(
+      (d) => ({ id: d.id, ...normalizeDoc(d.data() as Record<string, unknown>) }) as Record<string, unknown>,
+    );
+    data.sort((a, b) => Number(a.order ?? 0) - Number(b.order ?? 0));
     return Response.json({ data });
   } catch (err) {
     console.error("[guide-pages GET]", err);
