@@ -3,7 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useParams } from "next/navigation";
 import {
-  BookMarked, Plus, Trash2, ChevronUp, ChevronDown, Eye, EyeOff,
+  BookMarked, Plus, Trash2, ChevronUp, ChevronDown, Eye,
   Save, Loader2, ArrowLeft, FileText, Link2,
 } from "lucide-react";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
@@ -29,15 +29,18 @@ import Link from "next/link";
 interface PageEditorProps {
   page: GuidePage;
   onSave: (id: string, data: Partial<GuidePage>) => Promise<void>;
+  onDirtyChange?: (dirty: boolean) => void;
 }
 
-function PageEditor({ page, onSave }: PageEditorProps) {
+type EditorView = "edit" | "split" | "preview";
+
+function PageEditor({ page, onSave, onDirtyChange }: PageEditorProps) {
   const [title, setTitle] = useState(page.title);
   const [pageType, setPageType] = useState<"native" | "embed">(page.pageType);
   const [body, setBody] = useState(page.body ?? "");
   const [embedUrl, setEmbedUrl] = useState(page.embedUrl ?? "");
   const [embedKind, setEmbedKind] = useState<"pdf" | "link" | "youtube">(page.embedKind ?? "link");
-  const [preview, setPreview] = useState(false);
+  const [view, setView] = useState<EditorView>("edit");
   const [saving, setSaving] = useState(false);
 
   // 페이지 변경 시 상태 동기화
@@ -47,11 +50,24 @@ function PageEditor({ page, onSave }: PageEditorProps) {
     setBody(page.body ?? "");
     setEmbedUrl(page.embedUrl ?? "");
     setEmbedKind(page.embedKind ?? "link");
-    setPreview(false);
+    setView("edit");
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [page.id]);
 
+  // 미저장 변경(dirty) 판별 — 페이지 이동 경고용
+  const dirty =
+    title !== page.title ||
+    pageType !== page.pageType ||
+    (pageType === "native" && body !== (page.body ?? "")) ||
+    (pageType === "embed" &&
+      (embedUrl !== (page.embedUrl ?? "") || embedKind !== (page.embedKind ?? "link")));
+
+  useEffect(() => {
+    onDirtyChange?.(dirty);
+  }, [dirty, onDirtyChange]);
+
   async function handleSave() {
+    if (saving) return;
     setSaving(true);
     try {
       await onSave(page.id, {
@@ -70,16 +86,28 @@ function PageEditor({ page, onSave }: PageEditorProps) {
     }
   }
 
+  const VIEW_TABS: { key: EditorView; label: string }[] = [
+    { key: "edit", label: "에디터" },
+    { key: "split", label: "분할" },
+    { key: "preview", label: "미리보기" },
+  ];
+
   return (
     <div className="space-y-4">
-      {/* 페이지 제목 */}
+      {/* 페이지 제목 + dirty 배지 */}
       <div>
-        <Label className="text-xs">페이지 제목</Label>
+        <div className="flex items-center justify-between mb-1">
+          <Label className="text-xs">페이지 제목</Label>
+          {dirty && (
+            <span className="rounded bg-warning/10 px-1.5 py-0.5 text-[10px] font-medium text-warning">
+              저장 안 됨
+            </span>
+          )}
+        </div>
         <Input
           value={title}
           onChange={(e) => setTitle(e.target.value)}
           placeholder="페이지 제목"
-          className="mt-1"
         />
       </div>
 
@@ -114,32 +142,58 @@ function PageEditor({ page, onSave }: PageEditorProps) {
         </div>
       </div>
 
-      {/* 네이티브: 마크다운 에디터 */}
+      {/* 네이티브: 마크다운 에디터 (에디터/분할/미리보기) */}
       {pageType === "native" && (
         <div>
           <div className="flex items-center justify-between mb-1">
             <Label className="text-xs">마크다운 본문</Label>
-            <button
-              type="button"
-              onClick={() => setPreview((v) => !v)}
-              className="flex items-center gap-1 text-[11px] text-muted-foreground hover:text-foreground"
-            >
-              {preview ? <><EyeOff size={11} /> 에디터</> : <><Eye size={11} /> 미리보기</>}
-            </button>
-          </div>
-          {preview ? (
-            <div className="min-h-40 rounded-lg border bg-card p-4">
-              <SimpleMarkdown body={body} className="text-sm" />
+            <div className="flex items-center gap-2">
+              <span className="text-[10px] text-muted-foreground tabular-nums">{body.length}자</span>
+              <div className="flex items-center gap-0.5 rounded-md border p-0.5">
+                {VIEW_TABS.map((t) => (
+                  <button
+                    key={t.key}
+                    type="button"
+                    onClick={() => setView(t.key)}
+                    className={cn(
+                      "rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors",
+                      view === t.key
+                        ? "bg-primary text-primary-foreground"
+                        : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {t.label}
+                  </button>
+                ))}
+              </div>
             </div>
-          ) : (
-            <Textarea
-              value={body}
-              onChange={(e) => setBody(e.target.value)}
-              placeholder={`# 제목\n\n본문을 마크다운으로 입력하세요.\n\n**굵게** *기울임* \`코드\`\n\n- 목록\n- 항목`}
-              rows={14}
-              className="mt-0 font-mono text-sm resize-y"
-            />
-          )}
+          </div>
+          <div className={cn("gap-3", view === "split" ? "grid grid-cols-1 md:grid-cols-2" : "block")}>
+            {view !== "preview" && (
+              <Textarea
+                value={body}
+                onChange={(e) => setBody(e.target.value)}
+                onKeyDown={(e) => {
+                  if ((e.metaKey || e.ctrlKey) && e.key === "s") {
+                    e.preventDefault();
+                    void handleSave();
+                  }
+                }}
+                placeholder={`# 제목\n\n본문을 마크다운으로 입력하세요.\n\n**굵게** *기울임* \`코드\`\n\n- 목록\n- 항목`}
+                rows={14}
+                className="font-mono text-sm resize-y"
+              />
+            )}
+            {view !== "edit" && (
+              <div className="min-h-40 overflow-auto rounded-lg border bg-card p-4">
+                {body.trim() ? (
+                  <SimpleMarkdown body={body} className="text-sm" />
+                ) : (
+                  <p className="text-xs text-muted-foreground">미리볼 내용이 없습니다.</p>
+                )}
+              </div>
+            )}
+          </div>
         </div>
       )}
 
@@ -210,6 +264,16 @@ export default function GuideEditPage() {
   const [addingPage, setAddingPage] = useState<string | null>(null);
 
   const selectedPage = pages.find((p) => p.id === selectedPageId) ?? null;
+
+  // 페이지 에디터 미저장(dirty) 상태 — 다른 페이지 이동 시 경고
+  const [pageDirty, setPageDirty] = useState(false);
+  const handleDirtyChange = useCallback((d: boolean) => setPageDirty(d), []);
+
+  function selectPage(nextId: string) {
+    if (nextId === selectedPageId) return;
+    if (pageDirty && !confirm("저장하지 않은 변경이 있습니다. 이동하면 사라집니다. 계속할까요?")) return;
+    setSelectedPageId(nextId);
+  }
 
   async function load() {
     setLoading(true);
@@ -584,7 +648,7 @@ export default function GuideEditPage() {
                         <li key={page.id} className="flex items-center gap-1">
                           <button
                             type="button"
-                            onClick={() => setSelectedPageId(page.id)}
+                            onClick={() => selectPage(page.id)}
                             className={cn(
                               "flex-1 text-left truncate rounded px-2 py-1 text-xs transition-colors",
                               selectedPageId === page.id
@@ -663,13 +727,20 @@ export default function GuideEditPage() {
         <div className="lg:col-span-3">
           <Card>
             <CardHeader className="pb-2">
-              <CardTitle className="text-sm font-semibold">
-                {selectedPage ? `페이지 편집: ${selectedPage.title}` : "페이지를 선택하세요"}
-              </CardTitle>
+              <div className="flex items-center justify-between gap-2">
+                <CardTitle className="text-sm font-semibold truncate">
+                  {selectedPage ? `페이지 편집: ${selectedPage.title}` : "페이지를 선택하세요"}
+                </CardTitle>
+                {selectedPage && pageDirty && (
+                  <span className="shrink-0 rounded bg-warning/10 px-1.5 py-0.5 text-[10px] font-medium text-warning">
+                    저장 안 됨
+                  </span>
+                )}
+              </div>
             </CardHeader>
             <CardContent className="pb-5">
               {selectedPage ? (
-                <PageEditor key={selectedPage.id} page={selectedPage} onSave={savePage} />
+                <PageEditor key={selectedPage.id} page={selectedPage} onSave={savePage} onDirtyChange={handleDirtyChange} />
               ) : (
                 <p className="py-8 text-center text-xs text-muted-foreground">
                   왼쪽 목차에서 페이지를 선택하거나 새 페이지를 추가하세요.
