@@ -1,8 +1,13 @@
-"use client";
-
+import type { Metadata } from "next";
 import { Shield } from "lucide-react";
 import AuthGuard from "@/features/auth/AuthGuard";
 import CategoryBoardPage from "@/features/board/CategoryBoardPage";
+
+export const metadata: Metadata = {
+  title: "운영진 게시판 | 연세교육공학회",
+  description: "연세교육공학회 운영진 전용 게시판입니다.",
+  robots: { index: false, follow: false },
+};
 
 export default function StaffBoardPage() {
   return (

@@ -1,7 +1,17 @@
-"use client";
-
+import type { Metadata } from "next";
 import { Rocket } from "lucide-react";
 import CategoryBoardPage from "@/features/board/CategoryBoardPage";
+
+export const metadata: Metadata = {
+  title: "업데이트 게시판 | 연세교육공학회",
+  description: "연세교육공학회 서비스의 최신 업데이트와 변경 내역을 운영진이 투명하게 공유합니다.",
+  openGraph: {
+    title: "업데이트 게시판 | 연세교육공학회",
+    description: "연세교육공학회 서비스의 최신 업데이트와 변경 내역을 확인하세요.",
+    url: "https://yonsei-edtech.vercel.app/board/update",
+    siteName: "연세교육공학회",
+  },
+};
 
 /**
  * 업데이트 게시판 (Sprint 67-AL)
