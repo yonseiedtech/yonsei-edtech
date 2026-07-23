@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 
 interface SlideViewerProps {
@@ -39,21 +40,20 @@ export default function SlideViewer({
     <div className={cn("flex flex-col gap-1.5", className)}>
       {/* 16:9 슬라이드 컨테이너 — 검정 배경으로 레터박싱 */}
       <div className="relative w-full overflow-hidden rounded-2xl border bg-black">
-        <div className="aspect-video w-full">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
+        <div className="relative aspect-video w-full">
+          <Image
             key={currentSlide}
             src={src}
             alt={`슬라이드 ${currentSlide + 1}`}
-            className="h-full w-full object-contain"
+            fill
+            className="object-contain"
           />
         </div>
       </div>
 
       {/* 다음 슬라이드 미리 로딩 */}
       {nextSrc && (
-        // eslint-disable-next-line @next/next/no-img-element
-        <img src={nextSrc} alt="" aria-hidden className="hidden" />
+        <Image src={nextSrc} alt="" aria-hidden width={1920} height={1080} loading="eager" className="hidden" />
       )}
 
       <p className="text-center text-xs text-muted-foreground">

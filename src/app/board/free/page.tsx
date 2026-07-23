@@ -3,11 +3,11 @@ import { MessageSquare } from "lucide-react";
 import CategoryBoardPage from "@/features/board/CategoryBoardPage";
 
 export const metadata: Metadata = {
-  title: "자유게시판 | 연세교육공학회",
-  description: "연세교육공학회 자유게시판입니다. 학회 회원들과 자유롭게 이야기를 나눠보세요.",
+  title: "자유 게시판 | 연세교육공학회",
+  description: "회원들의 자유로운 소통 공간입니다.",
   openGraph: {
-    title: "자유게시판 | 연세교육공학회",
-    description: "연세교육공학회 자유게시판입니다. 학회 회원들과 자유롭게 이야기를 나눠보세요.",
+    title: "자유 게시판 | 연세교육공학회",
+    description: "회원들의 자유로운 소통 공간입니다.",
     url: "https://yonsei-edtech.vercel.app/board/free",
     siteName: "연세교육공학회",
   },

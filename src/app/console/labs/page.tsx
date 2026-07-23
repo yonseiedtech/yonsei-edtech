@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { useLabs } from "@/features/labs/useLabs";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -106,8 +107,9 @@ export default function LabsPage() {
                 className="group flex flex-col overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-md"
               >
                 {l.thumbnailUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img src={l.thumbnailUrl} alt={l.title} className="h-40 w-full object-cover" />
+                  <div className="relative h-40 w-full overflow-hidden">
+                    <Image src={l.thumbnailUrl} alt={l.title} fill className="object-cover" />
+                  </div>
                 ) : (
                   <div className="flex h-40 w-full items-center justify-center bg-gradient-to-br from-primary/5 via-info/5 to-info/5 text-primary/50">
                     <FlaskConical size={42} />

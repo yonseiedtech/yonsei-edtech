@@ -9,6 +9,7 @@
 import { useEffect, useMemo, useState, type ReactNode } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
+import Image from "next/image";
 import { QRCodeSVG } from "qrcode.react";
 import {
   ArrowLeft, ArrowRight, Radio, Play, Pause, Square, Monitor, ExternalLink, Presentation,
@@ -206,8 +207,7 @@ export default function SeminarLiveHostPage() {
                     )}
                     title={`슬라이드 ${i + 1}`}
                   >
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img src={url} alt={`슬라이드 ${i + 1}`} className="h-full w-full object-cover" />
+                    <Image src={url} alt={`슬라이드 ${i + 1}`} fill className="object-cover" />
                   </button>
                 ))}
               </div>

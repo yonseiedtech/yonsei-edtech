@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import Image from "next/image";
 import { useState } from "react";
 import { useLabs } from "@/features/labs/useLabs";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -88,11 +89,11 @@ function LabCard({ lab }: LabCardProps) {
         {/* 섬네일 */}
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           {lab.thumbnailUrl ? (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img
+            <Image
               src={lab.thumbnailUrl}
               alt={lab.title}
-              className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              fill
+              className="object-cover transition-transform duration-300 group-hover:scale-105"
             />
           ) : (
             <div className="flex h-full w-full items-center justify-center bg-gradient-to-br from-primary/5 via-cat-1/5 to-cat-1/5">

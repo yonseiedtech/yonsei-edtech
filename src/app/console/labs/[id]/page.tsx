@@ -2,6 +2,7 @@
 
 import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Image from "next/image";
 import Link from "next/link";
 import { toast } from "sonner";
 import {
@@ -144,8 +145,9 @@ export default function LabDetailPage({ params }: { params: Promise<{ id: string
       {lab.kind === "external" && lab.externalUrl && (
         <section className="mb-6 overflow-hidden rounded-2xl border">
           {lab.thumbnailUrl && (
-            // eslint-disable-next-line @next/next/no-img-element
-            <img src={lab.thumbnailUrl} alt={lab.title} className="max-h-80 w-full object-cover" />
+            <div className="relative h-80 w-full overflow-hidden">
+              <Image src={lab.thumbnailUrl} alt={lab.title} fill className="object-cover" />
+            </div>
           )}
           <div className="flex items-center justify-between gap-3 border-t bg-muted/30 p-3">
             <code className="flex-1 truncate text-xs text-muted-foreground">{lab.externalUrl}</code>

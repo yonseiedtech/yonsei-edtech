@@ -3,11 +3,11 @@ import { Megaphone } from "lucide-react";
 import CategoryBoardPage from "@/features/board/CategoryBoardPage";
 
 export const metadata: Metadata = {
-  title: "홍보게시판 | 연세교육공학회",
-  description: "연세교육공학회 홍보게시판입니다. 학회 관련 홍보 및 행사 안내를 확인하세요.",
+  title: "홍보 게시판 | 연세교육공학회",
+  description: "세미나·스터디·공지 홍보글을 확인하세요.",
   openGraph: {
-    title: "홍보게시판 | 연세교육공학회",
-    description: "연세교육공학회 홍보게시판입니다. 학회 관련 홍보 및 행사 안내를 확인하세요.",
+    title: "홍보 게시판 | 연세교육공학회",
+    description: "세미나·스터디·공지 홍보글을 확인하세요.",
     url: "https://yonsei-edtech.vercel.app/board/promotion",
     siteName: "연세교육공학회",
   },
