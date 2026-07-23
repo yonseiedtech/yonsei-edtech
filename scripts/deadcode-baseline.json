@@ -1,6 +1,6 @@
 {
   "ceiling": 26,
-  "generatedAt": "2026-07-21",
+  "generatedAt": "2026-07-23",
   "tool": "knip@6.27.0",
   "note": "node scripts/gen-deadcode-baseline.mjs 로 재생성. ceiling보다 이슈 수가 늘면 check-deadcode-ratchet.mjs 가 exit 1.",
   "unusedExports": 26,
@@ -107,25 +107,25 @@
       "file": "src/lib/bkend.ts",
       "name": "activityMaterialsApi",
       "kind": "export",
-      "line": 1540
+      "line": 1545
     },
     {
       "file": "src/lib/bkend.ts",
       "name": "emailLogsApi",
       "kind": "export",
-      "line": 1547
+      "line": 1552
     },
     {
       "file": "src/lib/bkend.ts",
       "name": "thesisClaimsApi",
       "kind": "export",
-      "line": 2079
+      "line": 2084
     },
     {
       "file": "src/lib/bkend.ts",
       "name": "thesisReferencesApi",
       "kind": "export",
-      "line": 2068
+      "line": 2073
     },
     {
       "file": "src/lib/diagnostic-seed.ts",

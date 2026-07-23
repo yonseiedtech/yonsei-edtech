@@ -6,14 +6,6 @@
 export const ACTIVITY_GROUP_CATEGORIES = ["독서", "취미", "친목", "운동", "기타"] as const;
 export type ActivityGroupCategory = (typeof ACTIVITY_GROUP_CATEGORIES)[number];
 
-export const ACTIVITY_GROUP_CATEGORY_LABELS: Record<ActivityGroupCategory, string> = {
-  독서: "독서",
-  취미: "취미",
-  친목: "친목",
-  운동: "운동",
-  기타: "기타",
-};
-
 export type ActivityGroupStatus = "recruiting" | "active" | "closed";
 
 export const ACTIVITY_GROUP_STATUS_LABELS: Record<ActivityGroupStatus, string> = {
