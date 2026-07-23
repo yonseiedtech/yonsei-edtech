@@ -69,18 +69,22 @@ export default function HackathonPhaseTimeline() {
   const eventMode = hackEvent.eventMode;
   const user = useAuthStore((s) => s.user);
 
-  // v14 new-H2: 참가 신청자 수 (공개 read)
-  const { data: participantCount } = useQuery({
-    queryKey: ["hackathon-participant-count", HACKATHON_CONTEXT_ID],
+  // v14 new-H2: 참가 신청자 수 + v15 H2: pinned 공지 (공개 read, 단일 fetch)
+  const { data: boardData } = useQuery<{ count: number; pinned: CommQuestion | null }>({
+    queryKey: ["hackathon-board-data", HACKATHON_CONTEXT_ID],
     queryFn: async () => {
       const boardRes = await commBoardsApi.listByContext("hackathon", HACKATHON_CONTEXT_ID);
       const board = (boardRes.data as CommBoard[])[0];
-      if (!board) return 0;
+      if (!board) return { count: 0, pinned: null };
       const entriesRes = await commQuestionsApi.listByBoard(board.id);
-      return (entriesRes.data as CommQuestion[]).length;
+      const entries = entriesRes.data as CommQuestion[];
+      const pinned = entries.find((q) => q.pinned) ?? null;
+      return { count: entries.length, pinned };
     },
     staleTime: 5 * 60 * 1000,
   });
+  const participantCount = boardData?.count;
+  const pinnedNotice = boardData?.pinned;
 
   // R4 가드: 자동 폴백으로 "수상 발표"에 진입했으나 공개 수상작이 0건이면 심사 단계로 유지.
   // hackathon_submissions list 규칙이 로그인 회원 전용이므로 로그인 사용자만 실측한다
@@ -211,6 +215,16 @@ export default function HackathonPhaseTimeline() {
           </div>
         );
       })()}
+
+      {/* v15 H2: pinned 운영진 공지 (있을 때만 표시) */}
+      {pinnedNotice && (
+        <div className="mt-4 rounded-xl border-l-4 border-primary bg-primary/5 px-4 py-3">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-primary">
+            📌 운영진 공지
+          </p>
+          <p className="mt-1 text-xs text-foreground">{pinnedNotice.body}</p>
+        </div>
+      )}
     </section>
   );
 }
