@@ -168,7 +168,7 @@ export default function SubjectDistribution({ theses }: { theses: AlumniThesis[]
               >
                 {grandTotal}
               </text>
-              <text textAnchor="middle" dy="2em" fontSize={9} fill="#64748b">
+              <text textAnchor="middle" dy="2em" fontSize={9} fill="hsl(var(--muted-foreground))"
                 건 매칭
               </text>
             </svg>

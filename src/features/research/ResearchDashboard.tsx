@@ -98,7 +98,7 @@ export default function ResearchDashboard({ papers, history, periodStart, period
                   <Tooltip cursor={{ fill: "rgba(0,0,0,0.04)" }} contentStyle={{ fontSize: 11 }} />
                   <Bar dataKey="count" radius={[3, 3, 0, 0]}>
                     {hourData.map((_, i) => (
-                      <Cell key={i} fill="#3b82f6" />
+                      <Cell key={i} fill="hsl(var(--primary))" />
                     ))}
                   </Bar>
                 </BarChart>

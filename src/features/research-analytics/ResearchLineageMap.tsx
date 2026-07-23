@@ -351,7 +351,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
                 x2={leftPadding + ei * colW}
                 y1={18}
                 y2={height - 38}
-                stroke="#e2e8f0"
+                stroke="hsl(var(--border))"
                 strokeDasharray="3 4"
                 strokeWidth={1}
               />
@@ -414,7 +414,7 @@ export default function ResearchLineageMap({ theses }: { theses: AlumniThesis[] 
                   }}
                 >
                   {display}
-                  <tspan fontSize={9} fill="#64748b" dx={3}>
+                  <tspan fontSize={9} fill="hsl(var(--muted-foreground))" dx={3}>
                     ×{n.count}
                   </tspan>
                 </text>
