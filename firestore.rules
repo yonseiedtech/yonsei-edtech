@@ -1708,6 +1708,26 @@ service cloud.firestore {
                 && get(/databases/$(database)/documents/activity_groups/$(resource.data.groupId)).data.leaderId == request.auth.uid));
     }
 
+    // ─── 러닝 가이드 (전자책 MVP, 2026-07-23) — 쓰기는 전량 Admin SDK 라우트 경유(저자 자격 서버검증) ───
+    // 가이드·챕터·페이지: 인증 read(공개범위 정밀 필터는 API 라우트), 클라 직접 write 금지.
+    match /learning_guides/{guideId} {
+      allow read, list: if isAuthenticated();
+      allow write: if false;
+    }
+    match /guide_chapters/{chapterId} {
+      allow read, list: if isAuthenticated();
+      allow write: if false;
+    }
+    match /guide_pages/{pageId} {
+      allow read, list: if isAuthenticated();
+      allow write: if false;
+    }
+    // 개인 진행: 본인 문서만 read(docId `${uid}_${guideId}`), write 는 Admin 라우트 전용.
+    match /learning_guide_progress/{progressId} {
+      allow read: if isAuthenticated() && progressId.matches(request.auth.uid + '_.*');
+      allow write: if false;
+    }
+
     // ─── User Notes (사용자 개인 메모) ───
     // read/write: 본인(userId 일치)만. admin 은 감사 목적으로 read 허용.
     match /user_notes/{docId} {

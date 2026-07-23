@@ -105,3 +105,6 @@ export * from "./research-journal";
 
 // 소통 보드 (Q&A Communication Board) — 스터디 회차·세미나 공용
 export * from "./comm-board";
+
+// 러닝 가이드 (Learning Guide MVP — 2026-07-23)
+export * from "./learning-guide";

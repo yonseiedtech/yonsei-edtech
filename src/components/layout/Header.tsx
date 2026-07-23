@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState, useRef, useEffect } from "react";
-import { Menu, X, User, Shield, ChevronDown, BookUser, LayoutDashboard, LogOut, Settings, Users, FlaskConical, Sparkles } from "lucide-react";
+import { Menu, X, User, Shield, ChevronDown, LayoutDashboard, LogOut, FlaskConical, Sparkles } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -152,6 +152,7 @@ const PUBLIC_NAV: NavGroup[] = [
           { href: "/research", label: "연세교육공학 연구 분석" },
           { href: "/alumni/thesis", label: "졸업생 학위논문" },
           { href: "/archive", label: "교육공학 아카이브" },
+          { href: "/learning-guides", label: "러닝 가이드" },
             ],
       },
     ],
