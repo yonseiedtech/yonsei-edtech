@@ -11,7 +11,7 @@
  * 방법론 팁은 연구방법론 커리큘럼(타당도·인과·설계·통계 위계·작성 원칙)을 일반화한 내용.
  */
 
-import { useMemo, useState } from "react";
+import { Fragment, useMemo, useState } from "react";
 import Link from "next/link";
 import {
   Compass,
@@ -32,7 +32,7 @@ import { cn } from "@/lib/utils";
 import { useWritingPaper } from "./useWritingPaper";
 import { computeThesisProgress } from "./thesis-progress";
 import { Badge } from "@/components/ui/badge";
-import { profilesApi, researchPapersApi, researchReportsApi, researchProposalsApi } from "@/lib/bkend";
+import { profilesApi, researchPapersApi, researchReportsApi, researchProposalsApi, researchDesignsApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { getEffectiveSemesterCount } from "@/lib/interview-target";
 import type { User } from "@/types";
@@ -194,6 +194,106 @@ interface Props {
   editable?: boolean;
 }
 
+// ── 4단계 산출물 진행률 바 ────────────────────────────────────────────────────
+interface OutputProgressStage {
+  key: string;
+  label: string;
+  href: string;
+  /** 예상 소요 기간 (예: "8~12주") */
+  durationHint: string;
+  done: boolean;
+}
+
+function JourneyOutputProgress({ stages }: { stages: OutputProgressStage[] }) {
+  const completedCount = stages.filter((s) => s.done).length;
+  const activeIdx = stages.findIndex((s) => !s.done);
+
+  return (
+    <div className="mt-3 rounded-xl border bg-card/60 p-3.5">
+      <div className="mb-3 flex items-center justify-between gap-2">
+        <p className="text-[11px] font-semibold text-muted-foreground">핵심 산출물 진행</p>
+        <span
+          className={cn(
+            "text-[11px] font-bold tabular-nums",
+            completedCount === stages.length ? "text-success" : "text-muted-foreground",
+          )}
+        >
+          {completedCount}/{stages.length} 단계 완료
+        </span>
+      </div>
+
+      <ol className="flex items-start gap-0" aria-label="논문 핵심 산출물 4단계">
+        {stages.map((stage, i) => {
+          const isDone = stage.done;
+          const isActive = !isDone && i === activeIdx;
+
+          return (
+            <Fragment key={stage.key}>
+              <li className="flex min-w-0 flex-1 flex-col items-center gap-0.5">
+                <Link
+                  href={stage.href}
+                  title={`${stage.label} 탭으로 이동`}
+                  className="flex flex-col items-center gap-0.5 text-center transition-opacity hover:opacity-80"
+                >
+                  <span
+                    aria-label={
+                      isDone
+                        ? `${stage.label} 완료`
+                        : isActive
+                          ? `${stage.label} 진행 중`
+                          : `${stage.label} 미시작`
+                    }
+                    className={cn(
+                      "flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 text-xs font-bold transition-all",
+                      isDone
+                        ? "border-success bg-success text-white"
+                        : isActive
+                          ? "animate-pulse border-primary bg-primary/10 text-primary ring-2 ring-primary/20"
+                          : "border-muted bg-muted/60 text-muted-foreground/50",
+                    )}
+                  >
+                    {isDone ? <Check size={12} strokeWidth={3} /> : i + 1}
+                  </span>
+                  <span
+                    className={cn(
+                      "text-[10px] font-semibold leading-tight",
+                      isDone
+                        ? "text-success"
+                        : isActive
+                          ? "text-primary"
+                          : "text-muted-foreground/50",
+                    )}
+                  >
+                    {stage.label}
+                  </span>
+                  <span className="text-[9px] leading-tight text-muted-foreground/40">
+                    {stage.durationHint}
+                  </span>
+                </Link>
+              </li>
+              {i < stages.length - 1 && (
+                <span
+                  aria-hidden
+                  className={cn(
+                    "mt-3 h-0.5 flex-1 rounded-full",
+                    isDone ? "bg-success/40" : "bg-muted",
+                  )}
+                />
+              )}
+            </Fragment>
+          );
+        })}
+      </ol>
+
+      {completedCount === stages.length && (
+        <p className="mt-2 text-center text-[10px] font-semibold text-success">
+          모든 핵심 산출물을 작성했습니다 🎉
+        </p>
+      )}
+    </div>
+  );
+}
+
 export default function ThesisJourney({ user, editable = true }: Props) {
   const autoStage = useMemo(() => {
     const sem = getEffectiveSemesterCount(user);
@@ -266,6 +366,58 @@ export default function ThesisJourney({ user, editable = true }: Props) {
   const completedReads = useMemo(
     () => (myPapers as { readStatus?: string; isDraft?: boolean }[]).filter((pp) => !pp.isDraft && pp.readStatus === "completed").length,
     [myPapers],
+  );
+
+  // 연구 설계 — 본인 화면에서만 조회 (캐시 키 useResearchDesign 과 동일)
+  const { data: myDesigns = [] } = useQuery({
+    queryKey: ["research_design", user.id],
+    queryFn: async () => {
+      const res = await researchDesignsApi.listByUser(user.id);
+      return res.data as Array<{ approach?: string; procedureSteps?: unknown[] }>;
+    },
+    enabled: editable && !!user.id,
+    staleTime: 5 * 60_000,
+  });
+  const hasDesign = useMemo(
+    () =>
+      myDesigns.length > 0 &&
+      !!((myDesigns[0].approach ?? "").trim() || (myDesigns[0].procedureSteps?.length ?? 0) > 0),
+    [myDesigns],
+  );
+
+  // 4단계 산출물 진행 상태 (계획서 → 연구 설계 → 논문 작성 → 연구보고서)
+  const outputStages: OutputProgressStage[] = useMemo(
+    () => [
+      {
+        key: "proposal",
+        label: "계획서",
+        href: "/mypage/research?tab=proposal",
+        durationHint: "8~12주",
+        done: myProposals.length > 0,
+      },
+      {
+        key: "design",
+        label: "연구 설계",
+        href: "/mypage/research?tab=design",
+        durationHint: "4~6주",
+        done: hasDesign,
+      },
+      {
+        key: "writing",
+        label: "논문 작성",
+        href: "/mypage/research?tab=writing",
+        durationHint: "16~24주",
+        done: writingPercent >= 10,
+      },
+      {
+        key: "report",
+        label: "연구보고서",
+        href: "/mypage/research?tab=reportdoc",
+        durationHint: "4~8주",
+        done: myReports.length > 0,
+      },
+    ],
+    [myProposals.length, hasDesign, writingPercent, myReports.length],
   );
 
   /** 단계별 산출물 칩 텍스트 — 없으면 null */
@@ -356,6 +508,9 @@ export default function ThesisJourney({ user, editable = true }: Props) {
           ))}
         </div>
       )}
+
+      {/* ── 산출물 4단계 진행률 (계획서 → 연구 설계 → 논문 작성 → 연구보고서) ── */}
+      {editable && <JourneyOutputProgress stages={outputStages} />}
 
       {/* ── 스테퍼 ── */}
       <ol className="mt-4 flex items-center gap-0 overflow-x-auto pb-1" aria-label="논문 여정 5단계">
