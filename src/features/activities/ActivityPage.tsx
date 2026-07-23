@@ -95,9 +95,11 @@ interface Props {
   color: string;
   /** 서버 ISR 프리패치 초기 데이터. 제공 시 첫 화면 스켈레톤 없이 즉시 렌더. */
   initialActivities?: Activity[];
+  /** 목록 하단에 추가할 인라인 섹션 (예: 수요 조사). */
+  footerSection?: React.ReactNode;
 }
 
-export default function ActivityPage({ type, icon, title, subtitle, color, initialActivities }: Props) {
+export default function ActivityPage({ type, icon, title, subtitle, color, initialActivities, footerSection }: Props) {
   const { user } = useAuthStore();
   const isStaff = isAtLeast(user, "staff");
   const queryClient = useQueryClient();
@@ -715,6 +717,8 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
             </div>
           )}
         </div>
+
+        {footerSection}
 
         {/* 등록/수정 Dialog */}
         <Dialog open={dialogOpen} onOpenChange={(open) => !open && closeDialog()}>

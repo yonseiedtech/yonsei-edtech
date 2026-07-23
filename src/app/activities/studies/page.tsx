@@ -12,6 +12,7 @@ import { Users } from "lucide-react";
 import { Timestamp } from "firebase-admin/firestore";
 import { getAdminDb } from "@/lib/firebase-admin";
 import ActivityPage from "@/features/activities/ActivityPage";
+import DemandSurveySection from "@/features/demand/DemandSurveySection";
 import type { Activity } from "@/types";
 
 export const runtime = "nodejs";
@@ -49,6 +50,7 @@ export default async function StudiesPage() {
       subtitle="AI 교육, UX 리서치, 교수설계 등 관심 주제별 소그룹 스터디를 운영합니다."
       color="bg-accent/10 text-accent"
       initialActivities={initialActivities}
+      footerSection={<DemandSurveySection kind="study" />}
     />
   );
 }
