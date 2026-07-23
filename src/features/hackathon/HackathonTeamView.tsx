@@ -191,6 +191,16 @@ export default function HackathonTeamView() {
                     ))}
                   </div>
                 )}
+                {/* v15 H1: 원본 아이디어 보드 링크 (ideaPostId 저장 시 표시) */}
+                {s.ideaPostId && (
+                  <Link
+                    href="/hackathon#hackathon-board"
+                    className="ml-auto inline-flex items-center gap-0.5 text-[11px] font-medium text-primary hover:underline"
+                  >
+                    원본 아이디어
+                    <ArrowRight size={10} />
+                  </Link>
+                )}
               </li>
             ))}
           </ul>

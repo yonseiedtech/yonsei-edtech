@@ -83,6 +83,8 @@ export interface HackathonSubmission {
   repoUrl?: string;
   /** 팀원 이름 목록 */
   members: string[];
+  /** 원본 아이디어 게시글 id (comm_questions) — 선택. 있으면 팀 카드에 아이디어 링크 표시 (v15-H1) */
+  ideaPostId?: string;
   /** 제출 회원 (수정·삭제 권한 기준) */
   ownerId: string;
   ownerName: string;
