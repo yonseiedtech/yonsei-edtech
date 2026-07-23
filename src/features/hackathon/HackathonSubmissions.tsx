@@ -58,6 +58,8 @@ interface FormState {
   demoUrl: string;
   repoUrl: string;
   members: string;
+  /** 원본 아이디어 게시글 id — prefill 또는 수동 입력 (선택) */
+  ideaPostId?: string;
 }
 
 const EMPTY_FORM: FormState = {
@@ -79,6 +81,7 @@ function toForm(s: HackathonSubmission): FormState {
     demoUrl: s.demoUrl ?? "",
     repoUrl: s.repoUrl ?? "",
     members: (s.members ?? []).join(", "),
+    ideaPostId: s.ideaPostId,
   };
 }
 
@@ -98,16 +101,16 @@ export default function HackathonSubmissions() {
   // HackathonBoard 의 "팀 확정" 버튼이 CustomEvent + sessionStorage 로 전달하는
   // teamName/members 를 받아 제출 폼을 자동 열고 프리필한다.
   useEffect(() => {
-    function applyPrefill(teamName: string, members: string) {
-      setForm((f) => ({ ...f, teamName, members }));
+    function applyPrefill(teamName: string, members: string, ideaPostId?: string) {
+      setForm((f) => ({ ...f, teamName, members, ideaPostId }));
       setEditing(true);
     }
 
     // 1) 같은 페이지에서 CustomEvent 수신 (페이지 리로드 없는 경우)
     function handleEvent(e: Event) {
-      const detail = (e as CustomEvent<{ teamName: string; members: string }>)
+      const detail = (e as CustomEvent<{ teamName: string; members: string; ideaPostId?: string }>)
         .detail;
-      if (detail) applyPrefill(detail.teamName, detail.members);
+      if (detail) applyPrefill(detail.teamName, detail.members, detail.ideaPostId);
     }
     window.addEventListener("hackathon:prefill", handleEvent);
 
@@ -116,8 +119,8 @@ export default function HackathonSubmissions() {
     if (raw) {
       sessionStorage.removeItem("hackathon_prefill");
       try {
-        const data = JSON.parse(raw) as { teamName?: string; members?: string };
-        applyPrefill(data.teamName ?? "", data.members ?? "");
+        const data = JSON.parse(raw) as { teamName?: string; members?: string; ideaPostId?: string };
+        applyPrefill(data.teamName ?? "", data.members ?? "", data.ideaPostId);
       } catch {
         // 손상된 값 무시
       }
@@ -238,6 +241,8 @@ export default function HackathonSubmissions() {
       members,
       // v13-H2: 팀원 ID 목록 (포트폴리오 자동적재 확장용)
       memberIds: memberIdItems.map((m) => m.id),
+      // v15-H1: 원본 아이디어 게시글 연결 (선택)
+      ...(form.ideaPostId ? { ideaPostId: form.ideaPostId } : {}),
       ownerId: user.id,
       ownerName: user.name,
     };

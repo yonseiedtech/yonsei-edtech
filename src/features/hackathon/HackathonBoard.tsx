@@ -460,6 +460,7 @@ export default function HackathonBoard() {
     const prefill = {
       teamName: entry.authorName ?? "",
       members: user.name,
+      ideaPostId: entry.id,
     };
     sessionStorage.setItem("hackathon_prefill", JSON.stringify(prefill));
     window.dispatchEvent(new CustomEvent("hackathon:prefill", { detail: prefill }));
@@ -480,7 +481,7 @@ export default function HackathonBoard() {
     if (!myEntry || !user) return;
     const joiners = joinsByQuestion.get(myEntry.id) ?? [];
     const members = [user.name, ...joiners.map((j) => j.userName)].join(", ");
-    const prefill = { teamName: "", members };
+    const prefill = { teamName: "", members, ideaPostId: myEntry.id };
     sessionStorage.setItem("hackathon_prefill", JSON.stringify(prefill));
     window.dispatchEvent(
       new CustomEvent("hackathon:prefill", { detail: prefill }),
