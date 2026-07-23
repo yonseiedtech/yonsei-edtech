@@ -18,6 +18,8 @@ import GlobalSearch from "@/components/layout/GlobalSearch";
 interface NavLink {
   href: string;
   label: string;
+  /** 운영진(staff+)에게만 노출. 그룹 visibility는 "both" 유지. */
+  staffOnly?: boolean;
 }
 
 interface NavSection {
@@ -43,11 +45,6 @@ interface NavGroup {
 function getSections(group: NavGroup): NavSection[] {
   if (group.sections && group.sections.length > 0) return group.sections;
   return [{ links: group.items ?? [] }];
-}
-
-/** NavGroup 의 모든 링크를 평탄화 */
-function getAllLinks(group: NavGroup): NavLink[] {
-  return getSections(group).flatMap((s) => s.links);
 }
 
 /**
@@ -196,6 +193,7 @@ const PUBLIC_NAV: NavGroup[] = [
       { href: "/gallery", label: "포토갤러리" },
       { href: "/journal", label: "연구지 (Journal)" },
       { href: "/network", label: "회원 관계망 Map" },
+      { href: "/staff", label: "운영진 페이지", staffOnly: true },
     ],
   },
 ];
@@ -207,7 +205,7 @@ function isItemActive(pathname: string, href: string): boolean {
 }
 
 /* ── Dropdown (desktop) ── */
-function NavDropdown({ group }: { group: NavGroup }) {
+function NavDropdown({ group, isStaff }: { group: NavGroup; isStaff: boolean }) {
   const pathname = usePathname();
   const [open, setOpen] = useState(false);
   const timeout = useRef<ReturnType<typeof setTimeout>>(undefined);
@@ -215,8 +213,12 @@ function NavDropdown({ group }: { group: NavGroup }) {
   const buttonRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
-  const sections = getSections(group);
-  const allLinks = getAllLinks(group);
+  // Filter staffOnly links for non-staff users
+  const sections = getSections(group).map((s) => ({
+    ...s,
+    links: s.links.filter((l) => !l.staffOnly || isStaff),
+  })).filter((s) => s.links.length > 0);
+  const allLinks = sections.flatMap((s) => s.links);
   const isSingle = allLinks.length === 1;
   const isGroupActive = allLinks.some((item) => isItemActive(pathname, item.href));
 
@@ -428,9 +430,12 @@ function UserDropdown() {
 }
 
 /* ── Mobile group ── */
-function MobileNavGroup({ group, onClose }: { group: NavGroup; onClose: () => void }) {
+function MobileNavGroup({ group, isStaff, onClose }: { group: NavGroup; isStaff: boolean; onClose: () => void }) {
   const pathname = usePathname();
-  const sections = getSections(group);
+  const sections = getSections(group).map((s) => ({
+    ...s,
+    links: s.links.filter((l) => !l.staffOnly || isStaff),
+  })).filter((s) => s.links.length > 0);
 
   return (
     <div>
@@ -511,7 +516,7 @@ export default function Header() {
         {/* Desktop Nav */}
         <nav className="hidden items-center gap-3 md:flex">
           {navGroups.filter((group) => isGroupVisible(group, user)).map((group) => (
-            <NavDropdown key={group.label} group={group} />
+            <NavDropdown key={group.label} group={group} isStaff={showAdmin} />
           ))}
         </nav>
 
@@ -636,7 +641,7 @@ export default function Header() {
               </>
             )}
             {navGroups.filter((group) => isGroupVisible(group, user)).map((group) => (
-              <MobileNavGroup key={group.label} group={group} onClose={() => setMobileOpen(false)} />
+              <MobileNavGroup key={group.label} group={group} isStaff={showAdmin} onClose={() => setMobileOpen(false)} />
             ))}
             {user && (
               <>

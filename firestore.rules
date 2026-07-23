@@ -1660,6 +1660,54 @@ service cloud.firestore {
         && resource.data.userId == request.auth.uid;
     }
 
+    // ─── 운영진 전용 공간 (2026-07-23) — 공지·프로젝트·태스크 모두 staff+ 전용 ───
+    match /staff_notices/{docId} {
+      allow read, list: if isAuthenticated() && isStaffOrAbove();
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+    match /staff_projects/{docId} {
+      allow read, list: if isAuthenticated() && isStaffOrAbove();
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+    match /staff_tasks/{docId} {
+      allow read, list: if isAuthenticated() && isStaffOrAbove();
+      allow create, update, delete: if isAuthenticated() && isStaffOrAbove();
+    }
+
+    // ─── 다회성 모임 (2026-07-23) — 액티비티 그룹·멤버십·회차 ───
+    // 그룹: 인증 회원 read, create(leaderId==uid), 그룹장·staff update/delete
+    match /activity_groups/{groupId} {
+      allow read: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.leaderId == request.auth.uid;
+      allow update, delete: if isAuthenticated()
+        && (resource.data.leaderId == request.auth.uid || isStaffOrAbove());
+    }
+    // 멤버십: docId `${groupId}_${userId}`. 본인 가입/탈퇴, 그룹장·staff 강퇴. role 변경 불허.
+    match /activity_group_members/{memberId} {
+      allow read, list: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && request.resource.data.userId == request.auth.uid;
+      allow update: if false;
+      allow delete: if isAuthenticated()
+        && (resource.data.userId == request.auth.uid
+            || isStaffOrAbove()
+            || (exists(/databases/$(database)/documents/activity_groups/$(resource.data.groupId))
+                && get(/databases/$(database)/documents/activity_groups/$(resource.data.groupId)).data.leaderId == request.auth.uid));
+    }
+    // 회차: read 인증 회원, write 해당 그룹장·staff (create 는 request.resource, update/delete 는 resource 기준)
+    match /activity_group_sessions/{sessionId} {
+      allow read, list: if isAuthenticated();
+      allow create: if isAuthenticated()
+        && (isStaffOrAbove()
+            || (exists(/databases/$(database)/documents/activity_groups/$(request.resource.data.groupId))
+                && get(/databases/$(database)/documents/activity_groups/$(request.resource.data.groupId)).data.leaderId == request.auth.uid));
+      allow update, delete: if isAuthenticated()
+        && (isStaffOrAbove()
+            || (exists(/databases/$(database)/documents/activity_groups/$(resource.data.groupId))
+                && get(/databases/$(database)/documents/activity_groups/$(resource.data.groupId)).data.leaderId == request.auth.uid));
+    }
+
     // ─── User Notes (사용자 개인 메모) ───
     // read/write: 본인(userId 일치)만. admin 은 감사 목적으로 read 허용.
     match /user_notes/{docId} {

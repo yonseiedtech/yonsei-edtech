@@ -29,9 +29,16 @@ export interface CronRunMeta {
 async function logCronRun(meta: CronRunMeta): Promise<void> {
   try {
     const db = getAdminDb();
-    await db.collection("cron_runs").add(meta);
-  } catch {
-    // 로깅 실패는 cron 본 동작에 영향 없음 — 조용히 무시
+    // ★근본 수정(2026-07-23): Firebase Admin SDK 는 undefined 필드 값에 예외를 던진다.
+    // 성공 실행은 errorMessage 가 undefined 라 add() 가 전량 실패 → 실패 기록(errorMessage 문자열)만
+    // 남아 "성공 실행이 아예 없는 것"처럼 보였다(28개 cron 공통 관측 사각). undefined 키를 제거해 적재.
+    const clean = Object.fromEntries(
+      Object.entries(meta).filter(([, v]) => v !== undefined),
+    );
+    await db.collection("cron_runs").add(clean);
+  } catch (e) {
+    // 로깅 실패는 cron 본 동작에 영향 없음 — 진단을 위해 남기되 삼킨다
+    console.warn("[cron-observability] logCronRun 적재 실패:", e);
   }
 }
 

@@ -10,9 +10,10 @@
  */
 
 import { useEffect, useMemo, useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
-import { Users, CalendarX2, Plus, Download } from "lucide-react";
+import { Users, CalendarX2, Plus, Download, BookOpen, ChevronRight } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 import PageHeader from "@/components/ui/page-header";
 import { Button } from "@/components/ui/button";
@@ -204,6 +205,21 @@ export default function GatheringsPage() {
 
       {/* G7: 게스트 신청 확인·취소 (guest_rsvp 토큰으로 접근 시 자동 노출) */}
       <GuestRsvpBanner />
+
+      {/* 다회성 모임 진입 안내 카드 (독서·와인 모임 등) */}
+      <Link
+        href="/gatherings/groups"
+        className="mt-4 flex items-center gap-3 rounded-xl border bg-card px-4 py-3 shadow-sm transition-shadow hover:shadow-md"
+      >
+        <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
+          <BookOpen size={18} />
+        </div>
+        <div className="min-w-0 flex-1">
+          <p className="text-sm font-semibold text-foreground">다회성 모임</p>
+          <p className="text-xs text-muted-foreground">독서모임·와인모임 등 지속 운영 소모임 →</p>
+        </div>
+        <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
+      </Link>
 
       {/* 내 참여 현황 스트립 (2026-07-18) — 로그인 회원에게 참여 중인 모임·투표 중 모임을 상단 요약 */}
       {user && !isLoading && (

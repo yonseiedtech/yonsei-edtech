@@ -21,10 +21,12 @@ import {
   Images,
   ClipboardCheck,
   Rocket,
+  Shield,
   X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { isAtLeast } from "@/lib/permissions";
 
 interface NavItem {
   href: string;
@@ -32,6 +34,8 @@ interface NavItem {
   icon: React.ElementType;
   /** 활성 매칭에 쓸 프리픽스(없으면 href 자체) */
   matchPrefixes?: string[];
+  /** 운영진(staff+)에게만 노출 */
+  staffOnly?: boolean;
 }
 
 const ITEMS: NavItem[] = [
@@ -81,6 +85,7 @@ const MORE_ITEMS: NavItem[] = [
   { href: "/card-news", label: "카드뉴스", icon: Images },
   { href: "/members", label: "회원", icon: Users },
   { href: "/help", label: "도움말", icon: HelpCircle },
+  { href: "/staff", label: "운영진 페이지", icon: Shield, staffOnly: true },
 ];
 
 function isActive(pathname: string, item: NavItem): boolean {
@@ -97,7 +102,8 @@ export default function BottomNav() {
   // 현재 경로가 1차 탭에 없고 "더보기" 시트 항목(진단·아카이브·리더보드 등)에 해당하면
   // 더보기 버튼을 활성으로 표시 — 깊은 표면에서도 위치를 잃지 않게.
   // 해커톤 진입은 대내 학술대회 목록·대시보드 배너 경유 — 더보기 시트 별도 항목 없음 (2026-07-22 사용자 결정)
-  const moreItems = MORE_ITEMS;
+  const isStaff = isAtLeast(user, "staff");
+  const moreItems = MORE_ITEMS.filter((item) => !item.staffOnly || isStaff);
 
   const primaryActive = ITEMS.some((item) => isActive(pathname, item));
   const moreActive = !primaryActive && moreItems.some((item) => isActive(pathname, item));

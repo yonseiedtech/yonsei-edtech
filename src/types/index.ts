@@ -85,6 +85,9 @@ export * from "./streak-event";
 export * from "./topic-exploration";
 export * from "./graduation";
 
+// 다회성 모임 (독서·와인 등 지속 운영 그룹, 2026-07-23)
+export * from "./activity-groups";
+
 // 사용자 피드백
 export * from "./feedback";
 
