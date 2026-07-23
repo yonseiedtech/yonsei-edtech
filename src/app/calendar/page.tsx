@@ -27,7 +27,6 @@ import {
   Globe,
   GraduationCap,
   CornerDownRight,
-  AlertCircle,
   CalendarDays,
   Hourglass,
   CalendarClock,
@@ -35,7 +34,6 @@ import {
   LayoutGrid,
   PartyPopper,
 } from "lucide-react";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Separator } from "@/components/ui/separator";
 import { useAuthStore } from "@/features/auth/auth-store";

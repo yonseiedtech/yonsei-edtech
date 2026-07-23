@@ -59,7 +59,6 @@ import {
   type SemesterTerm,
 } from "@/types";
 import ProfileCourses from "@/components/profile/ProfileCourses";
-import CourseReviewBlock from "@/features/courses/CourseReviewBlock";
 import ElectiveReviewsByName from "@/features/courses/ElectiveReviewsByName";
 
 // 전기/후기만 운영

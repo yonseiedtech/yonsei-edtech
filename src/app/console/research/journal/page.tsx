@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import Link from "next/link";
 import { BookOpen, Plus, FileCheck2, Globe } from "lucide-react";
 import AuthGuard from "@/features/auth/AuthGuard";
@@ -16,10 +16,8 @@ import { Textarea } from "@/components/ui/textarea";
 import {
   useAllIssues,
   useCreateIssue,
-  useUpdateIssue,
   usePublishIssue,
   useReviewQueue,
-  usePublishArticle,
 } from "@/features/journal/api/useJournal";
 import {
   ReviewStatusBadge,
@@ -31,7 +29,6 @@ import {
 } from "@/features/journal/lib/article-status";
 import type {
   JournalIssueSeason,
-  ResearchJournalArticle,
   CreateJournalIssueInput,
 } from "@/types";
 
