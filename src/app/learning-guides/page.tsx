@@ -2,11 +2,8 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import { BookOpen, Search, Tag, ChevronRight } from "lucide-react";
-import PageHeader from "@/components/ui/page-header";
+import { Search, Lock, Users, ArrowUpRight, BookOpen } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
-import { Card, CardContent } from "@/components/ui/card";
-import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
@@ -14,6 +11,11 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { guidesApi, guideProgressApi } from "@/features/learning-guides/api";
 import type { LearningGuide, LearningGuideProgress } from "@/types/learning-guide";
 import { cn } from "@/lib/utils";
+
+const VIS_META: Record<string, { icon: React.ElementType; label: string }> = {
+  member: { icon: Users, label: "회원" },
+  staff: { icon: Lock, label: "운영진" },
+};
 
 export default function LearningGuidesPage() {
   const { user } = useAuthStore();
@@ -63,70 +65,93 @@ export default function LearningGuidesPage() {
     });
   }, [guides, q, activeCategory]);
 
+  const [featured, ...rest] = filtered;
+
   return (
     <PageContainer width="wide">
-      <PageHeader
-        icon={BookOpen}
-        title="러닝 가이드"
-        description="교육공학 핵심 주제를 단계별로 학습하세요."
-      />
+      {/* ── 편집형 마스트헤드 ── */}
+      <header className="border-b pb-8 pt-2">
+        <p className="text-[11px] font-semibold uppercase tracking-[0.2em] text-primary">
+          연세교육공학 · 서재
+        </p>
+        <h1 className="mt-3 max-w-2xl font-display text-3xl font-semibold leading-[1.15] tracking-tight text-foreground text-balance sm:text-4xl">
+          교육공학을 한 걸음씩, 러닝 가이드
+        </h1>
+        <p className="mt-3 max-w-xl text-sm leading-relaxed text-muted-foreground">
+          핵심 주제를 단계별 챕터로 엮은 학습 가이드 모음입니다. 필요한 주제를 골라 처음부터 끝까지 따라가 보세요.
+        </p>
+        {!loading && guides.length > 0 && (
+          <p className="mt-4 text-xs text-muted-foreground/70 tabular-nums">
+            {guides.length}개의 가이드
+          </p>
+        )}
+      </header>
 
-      {/* 검색 */}
-      <div className="mt-6 relative max-w-lg">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-        <Input
-          placeholder="제목·태그로 검색"
-          value={q}
-          onChange={(e) => setQ(e.target.value)}
-          className="pl-9"
-        />
-      </div>
-
-      {/* 카테고리 필터 */}
-      {categories.length > 1 && (
-        <div className="mt-4 flex flex-wrap gap-2">
-          {categories.map((cat) => (
-            <button
-              key={cat}
-              type="button"
-              onClick={() => setActiveCategory(cat)}
-              className={cn(
-                "inline-flex items-center gap-1 rounded-full border px-3 py-1 text-xs font-medium transition-colors",
-                activeCategory === cat
-                  ? "border-primary bg-primary/10 text-primary"
-                  : "border-border bg-background text-muted-foreground hover:text-foreground",
-              )}
-            >
-              <Tag size={11} />
-              {cat}
-            </button>
-          ))}
+      {/* ── 검색 · 카테고리 ── */}
+      {!loading && guides.length > 0 && (
+        <div className="mt-6 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          {categories.length > 1 ? (
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-2">
+              {categories.map((cat) => {
+                const active = activeCategory === cat;
+                return (
+                  <button
+                    key={cat}
+                    type="button"
+                    onClick={() => setActiveCategory(cat)}
+                    className={cn(
+                      "relative text-sm font-medium transition-colors",
+                      active ? "text-foreground" : "text-muted-foreground hover:text-foreground",
+                    )}
+                  >
+                    {cat}
+                    {active && (
+                      <span className="absolute -bottom-1.5 left-0 h-0.5 w-full rounded-full bg-primary" />
+                    )}
+                  </button>
+                );
+              })}
+            </div>
+          ) : <span />}
+          <div className="relative sm:w-64">
+            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              placeholder="제목·태그로 검색"
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              className="pl-9"
+            />
+          </div>
         </div>
       )}
 
-      {/* 가이드 목록 */}
+      {/* ── 콘텐츠 ── */}
       <div className="mt-8">
         {loading ? (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <Skeleton key={i} className="h-44 w-full rounded-2xl" />
-            ))}
+          <div className="space-y-4">
+            <Skeleton className="h-44 w-full rounded-2xl" />
+            <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+              {Array.from({ length: 3 }).map((_, i) => (
+                <Skeleton key={i} className="h-52 w-full rounded-2xl" />
+              ))}
+            </div>
           </div>
         ) : filtered.length === 0 ? (
           <EmptyState
             icon={BookOpen}
-            title="가이드가 없습니다."
-            description={q ? "검색어를 바꿔 보세요." : "아직 발행된 가이드가 없습니다."}
+            title={guides.length === 0 ? "아직 발행된 가이드가 없습니다." : "조건에 맞는 가이드가 없습니다."}
+            description={q || activeCategory !== "전체" ? "검색어나 카테고리를 바꿔 보세요." : "곧 새로운 가이드가 열립니다."}
           />
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-            {filtered.map((guide) => (
-              <GuideCard
-                key={guide.id}
-                guide={guide}
-                progress={progressMap[guide.id]}
-              />
-            ))}
+          <div className="space-y-8">
+            {featured && <FeaturedGuide guide={featured} progress={progressMap[featured.id]} />}
+            {rest.length > 0 && (
+              <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+                {rest.map((guide) => (
+                  <GuideCard key={guide.id} guide={guide} progress={progressMap[guide.id]} />
+                ))}
+              </div>
+            )}
           </div>
         )}
       </div>
@@ -134,74 +159,112 @@ export default function LearningGuidesPage() {
   );
 }
 
-function GuideCard({ guide, progress }: { guide: LearningGuide; progress?: LearningGuideProgress }) {
-  const totalPages = progress?.readPageIds?.length ?? 0;
-  const hasProgress = totalPages > 0;
+// ── 진행 뱃지 ──
+function ProgressLabel({ progress }: { progress?: LearningGuideProgress }) {
+  const read = progress?.readPageIds?.length ?? 0;
+  if (read === 0) return null;
+  return (
+    <span className="inline-flex items-center gap-1 text-[11px] font-medium text-success">
+      <span className="inline-block h-1.5 w-1.5 rounded-full bg-success" />
+      {read}페이지 읽음
+    </span>
+  );
+}
 
+// ── 공개범위 뱃지 ──
+function VisibilityTag({ visibility }: { visibility: string }) {
+  const meta = VIS_META[visibility];
+  if (!meta) return null;
+  const Icon = meta.icon;
+  return (
+    <span className="inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium text-muted-foreground">
+      <Icon size={10} />
+      {meta.label}
+    </span>
+  );
+}
+
+// ── 피처드 리드 카드 (편집형 가로 배치) ──
+function FeaturedGuide({ guide, progress }: { guide: LearningGuide; progress?: LearningGuideProgress }) {
   return (
     <Link href={`/learning-guides/${guide.slug}`} className="group block">
-      <Card className="h-full transition-shadow hover:shadow-md">
-        <CardContent className="flex h-full flex-col gap-3 p-5">
-          {/* 표지 이모지 */}
-          <div className="flex items-start justify-between gap-2">
-            <span className="text-3xl leading-none" role="img" aria-hidden>
-              {guide.coverEmoji ?? "📖"}
+      <article className="grid overflow-hidden rounded-2xl border bg-card transition-shadow hover:shadow-md md:grid-cols-[minmax(0,240px)_1fr]">
+        {/* 표지 패널 */}
+        <div className="flex items-center justify-center bg-primary/[0.06] p-10 md:p-8">
+          <span className="text-6xl leading-none md:text-7xl" role="img" aria-hidden>
+            {guide.coverEmoji ?? "📖"}
+          </span>
+        </div>
+        {/* 본문 */}
+        <div className="flex flex-col justify-center gap-3 p-6 md:p-8">
+          <div className="flex flex-wrap items-center gap-2">
+            <span className="text-[11px] font-semibold uppercase tracking-[0.16em] text-primary">
+              {guide.category || "가이드"}
             </span>
-            {guide.visibility !== "public" && (
-              <Badge variant="outline" className="text-[10px]">
-                {guide.visibility === "member" ? "회원" : "운영진"}
-              </Badge>
-            )}
+            <VisibilityTag visibility={guide.visibility} />
           </div>
-
-          {/* 제목 */}
-          <div className="flex-1">
-            <h2 className="font-semibold leading-snug text-foreground group-hover:text-primary transition-colors line-clamp-2">
-              {guide.title}
-            </h2>
-            {guide.subtitle && (
-              <p className="mt-0.5 text-xs text-muted-foreground line-clamp-1">
-                {guide.subtitle}
-              </p>
-            )}
-            {guide.description && (
-              <p className="mt-2 text-xs text-muted-foreground line-clamp-2 leading-relaxed">
-                {guide.description}
-              </p>
-            )}
-          </div>
-
-          {/* 하단 메타 */}
-          <div className="flex items-center justify-between">
-            <div className="flex flex-wrap gap-1">
-              {guide.tags.slice(0, 2).map((tag) => (
-                <Badge key={tag} variant="secondary" className="text-[10px]">
-                  {tag}
-                </Badge>
-              ))}
-            </div>
-            <div className="flex items-center gap-1.5">
-              {hasProgress && (
-                <span className="text-[11px] text-success font-medium">
-                  {totalPages}페이지 읽음
-                </span>
-              )}
-              <ChevronRight
-                size={15}
-                className="text-muted-foreground/50 group-hover:text-primary transition-colors"
-              />
-            </div>
-          </div>
-
-          {/* 저자 */}
-          <p className="text-[11px] text-muted-foreground border-t pt-2">
-            by {guide.authorName}
+          <h2 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground text-balance transition-colors group-hover:text-primary">
+            {guide.title}
+          </h2>
+          {(guide.subtitle || guide.description) && (
+            <p className="max-w-prose text-sm leading-relaxed text-muted-foreground line-clamp-2">
+              {guide.subtitle || guide.description}
+            </p>
+          )}
+          <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+            <span>by {guide.authorName}</span>
             {guide.chapterCount != null && guide.chapterCount > 0 && (
-              <span className="ml-1 opacity-60">· {guide.chapterCount}챕터</span>
+              <span className="opacity-70">· {guide.chapterCount}챕터</span>
             )}
-          </p>
-        </CardContent>
-      </Card>
+            <ProgressLabel progress={progress} />
+            <span className="ml-auto inline-flex items-center gap-1 font-medium text-primary opacity-0 transition-opacity group-hover:opacity-100">
+              읽기 <ArrowUpRight size={13} />
+            </span>
+          </div>
+        </div>
+      </article>
+    </Link>
+  );
+}
+
+// ── 그리드 카드 ──
+function GuideCard({ guide, progress }: { guide: LearningGuide; progress?: LearningGuideProgress }) {
+  return (
+    <Link href={`/learning-guides/${guide.slug}`} className="group block">
+      <article className="flex h-full flex-col gap-4 rounded-2xl border bg-card p-5 transition-shadow hover:shadow-md">
+        <div className="flex items-start justify-between gap-2">
+          <span className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary/[0.06] text-2xl leading-none" role="img" aria-hidden>
+            {guide.coverEmoji ?? "📖"}
+          </span>
+          <VisibilityTag visibility={guide.visibility} />
+        </div>
+
+        <div className="flex-1">
+          {guide.category && (
+            <p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-primary/80">
+              {guide.category}
+            </p>
+          )}
+          <h3 className="mt-1 font-display text-lg font-semibold leading-snug tracking-tight text-foreground text-balance transition-colors group-hover:text-primary line-clamp-2">
+            {guide.title}
+          </h3>
+          {(guide.subtitle || guide.description) && (
+            <p className="mt-1.5 text-xs leading-relaxed text-muted-foreground line-clamp-2">
+              {guide.subtitle || guide.description}
+            </p>
+          )}
+        </div>
+
+        <div className="flex items-center justify-between border-t pt-3 text-[11px] text-muted-foreground">
+          <span className="truncate">
+            {guide.authorName}
+            {guide.chapterCount != null && guide.chapterCount > 0 && (
+              <span className="opacity-70"> · {guide.chapterCount}챕터</span>
+            )}
+          </span>
+          <ProgressLabel progress={progress} />
+        </div>
+      </article>
     </Link>
   );
 }
