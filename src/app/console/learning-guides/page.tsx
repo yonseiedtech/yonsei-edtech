@@ -1,14 +1,15 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import {
-  BookMarked, Plus, Pencil, Trash2, Eye, EyeOff, Loader2, Globe, Lock, Users,
+  BookMarked, Plus, Pencil, Trash2, Eye, EyeOff, Loader2, Globe, Lock, Users, Search,
 } from "lucide-react";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
+import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -29,6 +30,15 @@ const VISIBILITY_LABEL: Record<string, string> = {
   staff: "운영진",
 };
 
+type StatusFilter = "all" | "published" | "draft";
+
+function formatDate(iso?: string): string {
+  if (!iso) return "";
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return "";
+  return d.toLocaleDateString("ko-KR", { year: "2-digit", month: "short", day: "numeric" });
+}
+
 export default function ConsolelearningGuidesPage() {
   const { user } = useAuthStore();
 
@@ -37,6 +47,11 @@ export default function ConsolelearningGuidesPage() {
   const [guides, setGuides] = useState<LearningGuide[]>([]);
   const [loading, setLoading] = useState(true);
   const [toggling, setToggling] = useState<string | null>(null);
+
+  // CMS 필터 상태
+  const [q, setQ] = useState("");
+  const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [categoryFilter, setCategoryFilter] = useState("전체");
 
   // 저자 자격 확인
   useEffect(() => {
@@ -69,6 +84,32 @@ export default function ConsolelearningGuidesPage() {
     else if (eligible === false) setLoading(false);
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [eligible]);
+
+  // ── 파생: 통계·카테고리·필터 결과 ──
+  const stats = useMemo(() => ({
+    total: guides.length,
+    published: guides.filter((g) => g.status === "published").length,
+    draft: guides.filter((g) => g.status === "draft").length,
+    categories: new Set(guides.map((g) => g.category).filter(Boolean)).size,
+  }), [guides]);
+
+  const categories = useMemo(
+    () => ["전체", ...Array.from(new Set(guides.map((g) => g.category).filter(Boolean)))],
+    [guides],
+  );
+
+  const filtered = useMemo(() => {
+    const term = q.trim().toLowerCase();
+    return guides
+      .filter((g) => statusFilter === "all" || g.status === statusFilter)
+      .filter((g) => categoryFilter === "전체" || g.category === categoryFilter)
+      .filter((g) =>
+        !term ||
+        g.title.toLowerCase().includes(term) ||
+        (g.authorName ?? "").toLowerCase().includes(term),
+      )
+      .sort((a, b) => String(b.updatedAt ?? "").localeCompare(String(a.updatedAt ?? "")));
+  }, [guides, q, statusFilter, categoryFilter]);
 
   async function handleTogglePublish(guide: LearningGuide) {
     if (toggling) return;
@@ -116,6 +157,12 @@ export default function ConsolelearningGuidesPage() {
     );
   }
 
+  const STATUS_TABS: { key: StatusFilter; label: string; count: number }[] = [
+    { key: "all", label: "전체", count: stats.total },
+    { key: "published", label: "발행됨", count: stats.published },
+    { key: "draft", label: "draft", count: stats.draft },
+  ];
+
   return (
     <div className="space-y-6">
       <ConsolePageHeader
@@ -133,6 +180,67 @@ export default function ConsolelearningGuidesPage() {
         }
       />
 
+      {/* ── 요약 통계 ── */}
+      {!loading && guides.length > 0 && (
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+          {[
+            { label: "전체", value: stats.total, cls: "text-foreground" },
+            { label: "발행됨", value: stats.published, cls: "text-success" },
+            { label: "draft", value: stats.draft, cls: "text-muted-foreground" },
+            { label: "카테고리", value: stats.categories, cls: "text-primary" },
+          ].map((s) => (
+            <div key={s.label} className="rounded-xl border bg-card px-4 py-3">
+              <p className="text-xs text-muted-foreground">{s.label}</p>
+              <p className={cn("mt-0.5 text-2xl font-bold tabular-nums", s.cls)}>{s.value}</p>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── 검색·필터 ── */}
+      {!loading && guides.length > 0 && (
+        <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex flex-wrap items-center gap-1.5">
+            {STATUS_TABS.map((t) => (
+              <button
+                key={t.key}
+                type="button"
+                onClick={() => setStatusFilter(t.key)}
+                className={cn(
+                  "rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                  statusFilter === t.key
+                    ? "bg-primary text-primary-foreground"
+                    : "border bg-card text-muted-foreground hover:text-foreground",
+                )}
+              >
+                {t.label} <span className="tabular-nums opacity-70">{t.count}</span>
+              </button>
+            ))}
+            {categories.length > 1 && (
+              <select
+                value={categoryFilter}
+                onChange={(e) => setCategoryFilter(e.target.value)}
+                className="ml-1 rounded-md border bg-background px-2 py-1 text-xs text-foreground"
+                aria-label="카테고리 필터"
+              >
+                {categories.map((c) => (
+                  <option key={c} value={c}>{c === "전체" ? "전체 카테고리" : c}</option>
+                ))}
+              </select>
+            )}
+          </div>
+          <div className="relative sm:w-64">
+            <Search className="absolute left-2.5 top-1/2 h-3.5 w-3.5 -translate-y-1/2 text-muted-foreground" />
+            <Input
+              value={q}
+              onChange={(e) => setQ(e.target.value)}
+              placeholder="제목·저자 검색"
+              className="h-8 pl-8 text-xs"
+            />
+          </div>
+        </div>
+      )}
+
       {loading ? (
         <div className="space-y-2">
           {Array.from({ length: 3 }).map((_, i) => (
@@ -141,10 +249,13 @@ export default function ConsolelearningGuidesPage() {
         </div>
       ) : guides.length === 0 ? (
         <EmptyState compact icon={BookMarked} title="작성한 가이드가 없습니다." className="mt-8" />
+      ) : filtered.length === 0 ? (
+        <EmptyState compact icon={Search} title="조건에 맞는 가이드가 없습니다." className="mt-8" />
       ) : (
         <div className="space-y-2">
-          {guides.map((guide) => {
+          {filtered.map((guide) => {
             const VisIcon = VISIBILITY_ICON[guide.visibility] ?? Globe;
+            const updated = formatDate(guide.updatedAt);
             return (
               <Card key={guide.id}>
                 <CardContent className="flex flex-col gap-3 py-3 sm:flex-row sm:items-center sm:justify-between">
@@ -179,6 +290,7 @@ export default function ConsolelearningGuidesPage() {
                       by {guide.authorName}
                       {guide.category && ` · ${guide.category}`}
                       {guide.chapterCount != null && ` · ${guide.chapterCount}챕터`}
+                      {updated && ` · 수정 ${updated}`}
                     </p>
                   </div>
                   <div className="flex items-center gap-1">
