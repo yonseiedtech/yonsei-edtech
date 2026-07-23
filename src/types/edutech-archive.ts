@@ -81,6 +81,8 @@ export interface ArchiveConcept extends ArchiveOperationalMeta {
   /** 연결된 변인 ID */
   variableIds?: string[];
   references?: string[];
+  /** 수동 지정 관련 항목 IDs (개념·변인·측정도구 혼합). 상세 페이지 하단 크로스링크 표시용. */
+  relatedIds?: string[];
   /** 이론 개념의 대표 학자 (예: ["John Sweller"]) — URL 사전 검증 시드 (사이클 47) */
   keyScholars?: string[];
   /** 원전(seminal work) — url 은 OA 직링크 또는 doi.org, 단행본은 null */
@@ -108,6 +110,8 @@ export interface ArchiveVariable extends ArchiveOperationalMeta {
   /** 이 변인을 측정할 수 있는 측정도구 ID들 */
   measurementIds?: string[];
   references?: string[];
+  /** 수동 지정 관련 항목 IDs (개념·변인·측정도구 혼합). 상세 페이지 하단 크로스링크 표시용. */
+  relatedIds?: string[];
   /** Phase 5 — 시드 멱등성 키. `variable:{slug}` 형식. */
   seedKey?: string;
   createdBy?: string;
@@ -139,6 +143,8 @@ export interface ArchiveMeasurementTool extends ArchiveOperationalMeta {
   references?: string[];
   /** 외부 자료 URL (PDF·논문 링크) */
   resourceUrl?: string;
+  /** 수동 지정 관련 항목 IDs (개념·변인·측정도구 혼합). 상세 페이지 하단 크로스링크 표시용. */
+  relatedIds?: string[];
   /** Phase 5 — 시드 멱등성 키. `measurement:{slug}` 형식. */
   seedKey?: string;
   createdBy?: string;

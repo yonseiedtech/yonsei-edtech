@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
 import ThesisLinker from "@/components/archive/ThesisLinker";
+import ArchiveRelatedLinker from "@/components/archive/ArchiveRelatedLinker";
 import { normalizeStringItems } from "@/lib/archive-normalize";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
@@ -112,6 +113,11 @@ export default function ArchiveItemForm({
   );
   const [resourceUrl, setResourceUrl] = useState(m0?.resourceUrl ?? "");
 
+  // 관련 항목 (크로스링크)
+  const [relatedIds, setRelatedIds] = useState<string[]>(
+    (initial as { relatedIds?: string[] } | null)?.relatedIds ?? [],
+  );
+
   // 학위논문 연결
   const [thesisIds, setThesisIds] = useState<string[]>(initialThesisIds);
 
@@ -183,6 +189,7 @@ export default function ArchiveItemForm({
         altNames: csvParse(altNames),
         tags: csvParse(tags),
         references: lineParse(references),
+        relatedIds: relatedIds.length > 0 ? relatedIds : undefined,
         ...opMeta,
         ...(userId && !isEdit ? { createdBy: userId } : {}),
       };
@@ -524,6 +531,19 @@ export default function ArchiveItemForm({
               placeholder={
                 "Bandura, A. (1997). Self-efficacy. W.H. Freeman.\n김아영 (2007). 학업적 자기효능감 척도 개발 및 타당화. 교육심리연구, 21(4), 1145-1167."
               }
+            />
+          </div>
+
+          <div className="border-t pt-5">
+            <h3 className="mb-2 text-sm font-semibold">관련 항목 크로스링크</h3>
+            <p className="mb-3 text-xs text-muted-foreground">
+              이 {ARCHIVE_ITEM_TYPE_LABELS[type]}과(와) 함께 살펴볼 만한 개념·변인·측정도구를 연결합니다.
+              상세 페이지 하단 &ldquo;관련 항목&rdquo; 섹션에 칩 형태로 표시됩니다.
+            </p>
+            <ArchiveRelatedLinker
+              selectedIds={relatedIds}
+              onChange={setRelatedIds}
+              excludeId={initial?.id}
             />
           </div>
 

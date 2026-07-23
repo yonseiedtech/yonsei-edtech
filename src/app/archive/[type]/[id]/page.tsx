@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { notFound, useParams } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck, Compass, Layers, Check, ArrowRight, GitFork, BarChart3, BookMarked, ClipboardCheck, WifiOff } from "lucide-react";
+import { ArrowLeft, Star, ExternalLink, BookText, Network, Tag, Pencil, GraduationCap, BookmarkPlus, BookmarkCheck, Compass, Layers, Check, ArrowRight, GitFork, BarChart3, BookMarked, ClipboardCheck, WifiOff, Link2 } from "lucide-react";
 import { JOURNEY_STAGES } from "@/features/research/ThesisJourney";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -60,6 +60,7 @@ export default function ArchiveDetailPage() {
   const [measurements, setMeasurements] = useState<ArchiveMeasurementTool[]>([]);
   const [concepts, setConcepts] = useState<ArchiveConcept[]>([]);
   const [relatedTheses, setRelatedTheses] = useState<AlumniThesis[]>([]);
+  const [relatedItems, setRelatedItems] = useState<{ id: string; name: string; type: ArchiveItemType }[]>([]);
   const [relatedConcepts, setRelatedConcepts] = useState<ArchiveConcept[]>([]);
   // H2 크로스링크: 관련 졸업논문이 자주 쓴 연구방법·통계기법 역집계 (상위 4개, 이름 해석)
   const [crossMethods, setCrossMethods] = useState<{
@@ -283,6 +284,44 @@ export default function ArchiveDetailPage() {
     };
   }, [relatedTheses]);
 
+  // M9: 수동 지정 관련 항목(relatedIds) 로드 — 아이템 확정 후 실행
+  useEffect(() => {
+    const ids = (item as { relatedIds?: string[] } | null)?.relatedIds;
+    if (!ids?.length) {
+      setRelatedItems([]);
+      return;
+    }
+    let cancelled = false;
+    (async () => {
+      try {
+        const idSet = new Set(ids);
+        const [cRes, vRes, mRes] = await Promise.all([
+          archiveConceptsApi.list(),
+          archiveVariablesApi.list(),
+          archiveMeasurementsApi.list(),
+        ]);
+        if (cancelled) return;
+        const found: { id: string; name: string; type: ArchiveItemType }[] = [
+          ...cRes.data
+            .filter((x) => idSet.has(x.id))
+            .map((x) => ({ id: x.id, name: x.name, type: "concept" as ArchiveItemType })),
+          ...vRes.data
+            .filter((x) => idSet.has(x.id))
+            .map((x) => ({ id: x.id, name: x.name, type: "variable" as ArchiveItemType })),
+          ...mRes.data
+            .filter((x) => idSet.has(x.id))
+            .map((x) => ({ id: x.id, name: x.name, type: "measurement" as ArchiveItemType })),
+        ];
+        setRelatedItems(found);
+      } catch (err) {
+        console.error("[archive-detail] related items load failed", err);
+      }
+    })();
+    return () => {
+      cancelled = true;
+    };
+  }, [item]);
+
   // 최근 본 항목 기록 (스프린트1 H3) — 데이터 로드 완료·title 확정 시점에 기록.
   // M5: 동시에 본문 스냅샷을 오프라인 캐시에 저장(오프라인 읽기용).
   useEffect(() => {
@@ -495,6 +534,8 @@ export default function ArchiveDetailPage() {
     base.push({ id: "related-theses", label: "관련 졸업생 논문" });
     if (crossMethods.research.length > 0 || crossMethods.statistical.length > 0)
       base.push({ id: "cross-methods", label: "자주 쓴 방법" });
+    if (relatedItems.length > 0)
+      base.push({ id: "related-items", label: "관련 항목" });
     if (keyScholars.length > 0 || seminalWorks.length > 0)
       base.push({ id: "seminal-works", label: "대표 학자·원전" });
     if (references.length > 0) base.push({ id: "references", label: "참고문헌" });
@@ -1019,6 +1060,41 @@ export default function ArchiveDetailPage() {
                 </div>
               </div>
             )}
+          </CardContent>
+        </Card>
+      )}
+
+      {/* M9: 수동 지정 관련 항목 크로스링크 */}
+      {relatedItems.length > 0 && (
+        <Card id="related-items" className="mt-6 scroll-mt-24">
+          <CardHeader className="pb-2">
+            <CardTitle className="text-base flex items-center gap-2">
+              <Link2 className="h-4 w-4 text-muted-foreground" />
+              관련 항목
+              <span className="text-xs font-normal text-muted-foreground">
+                · {relatedItems.length}개
+              </span>
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-wrap gap-1.5">
+              {relatedItems.map((ri) => (
+                <Link key={ri.id} href={`/archive/${ri.type}/${ri.id}`}>
+                  <Badge
+                    variant="outline"
+                    className={cn(
+                      "cursor-pointer transition-shadow hover:shadow-sm",
+                      ARCHIVE_ITEM_TYPE_COLORS[ri.type],
+                    )}
+                  >
+                    <span className="mr-1 opacity-60 text-[10px]">
+                      {ARCHIVE_ITEM_TYPE_LABELS[ri.type]}
+                    </span>
+                    {ri.name}
+                  </Badge>
+                </Link>
+              ))}
+            </div>
           </CardContent>
         </Card>
       )}
