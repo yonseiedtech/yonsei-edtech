@@ -452,7 +452,7 @@ function UpcomingSeasonCard({
                 key: "onboarding",
                 label: "온보딩 시퀀스 활성화 확인",
                 auto: onboardingAuto,
-                href: "/console/members",
+                href: "/console/cron-logs",
                 autoTooltip:
                   "cron_runs에 newcomer-activation-sequence 최근 7일 성공 실행이 있으면 자동 체크",
               },
@@ -591,13 +591,24 @@ function UpcomingSeasonCard({
                           )}
                         </span>
                       )}
-                      <span
-                        className={`flex-1 text-xs ${
-                          checked ? "text-muted-foreground line-through" : ""
-                        }`}
-                      >
-                        {item.label}
-                      </span>
+                      {item.href ? (
+                        <Link
+                          href={item.href}
+                          className={`flex-1 text-xs hover:underline ${
+                            checked ? "text-muted-foreground line-through" : ""
+                          }`}
+                        >
+                          {item.label}
+                        </Link>
+                      ) : (
+                        <span
+                          className={`flex-1 text-xs ${
+                            checked ? "text-muted-foreground line-through" : ""
+                          }`}
+                        >
+                          {item.label}
+                        </span>
+                      )}
                       <span className="ml-auto flex shrink-0 items-center gap-1">
                         {item.auto !== null && (
                           <span
