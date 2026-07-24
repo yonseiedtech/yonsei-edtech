@@ -184,6 +184,7 @@ export default function GuideViewerPage() {
 
     async function load() {
       setLoading(true);
+      setNotFound(false); // user 준비 후 재조회 시 이전(guest) 미발견 상태 초기화
       try {
         const guideRes = await guidesApi.getBySlug(slug as string);
         if (!guideRes.data) { setNotFound(true); return; }
