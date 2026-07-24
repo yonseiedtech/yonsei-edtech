@@ -10,7 +10,6 @@ import {
 } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import { Skeleton } from "@/components/ui/skeleton";
 import SimpleMarkdown from "@/features/learning-guides/SimpleMarkdown";
 import { guidesApi, guideChaptersApi, guidePagesApi, guideProgressApi } from "@/features/learning-guides/api";
@@ -324,10 +323,14 @@ export default function GuideViewerPage() {
   const readCount = readPageIds.size;
   const progressPct = totalPages > 0 ? Math.round((readCount / totalPages) * 100) : 0;
 
+  const currentChapter = currentPage
+    ? chapters.find((c) => c.id === currentPage.chapterId) ?? null
+    : null;
+
   return (
     <PageContainer width="wide" className="!py-4 sm:!py-6">
       {/* 상단 바 */}
-      <div className="mb-4 flex items-center gap-2">
+      <div className="mb-5 flex items-center gap-2">
         <Link href="/learning-guides" className="text-xs text-muted-foreground hover:text-foreground flex items-center gap-1">
           <ChevronLeft size={13} /> 러닝 가이드
         </Link>
@@ -335,10 +338,11 @@ export default function GuideViewerPage() {
         <span className="text-xs text-foreground font-medium truncate max-w-[200px]">{guide.title}</span>
       </div>
 
-      <div className="flex gap-6 lg:gap-8">
+      <div className="flex gap-6 lg:gap-10">
         {/* 목차 사이드바 (데스크톱) */}
-        <aside className="hidden w-52 shrink-0 lg:block">
-          <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto rounded-xl border bg-card p-3">
+        <aside className="hidden w-56 shrink-0 lg:block">
+          <div className="sticky top-24 max-h-[calc(100vh-8rem)] overflow-y-auto pr-1">
+            <p className="mb-3 text-[10px] font-semibold uppercase tracking-[0.18em] text-primary">목차</p>
             <TocSidebar
               chapters={chapters}
               pages={pages}
@@ -374,38 +378,54 @@ export default function GuideViewerPage() {
         )}
 
         {/* 본문 */}
-        <main className="min-w-0 flex-1">
-          {/* 가이드 제목 + 진행바 */}
-          <div className="mb-4">
-            <div className="flex items-center gap-2 flex-wrap">
-              <span className="text-2xl" role="img" aria-hidden>{guide.coverEmoji ?? "📖"}</span>
-              <h1 className="text-xl font-bold text-foreground">{guide.title}</h1>
-              <Badge variant="outline" className="text-[10px]">{guide.category}</Badge>
+        <main className="min-w-0 max-w-2xl flex-1">
+          {/* ── 편집형 마스트헤드 ── */}
+          <header className="mb-6 border-b pb-5">
+            <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-primary">
+              연세교육공학 · 러닝 가이드
+            </p>
+            <div className="mt-2.5 flex items-start gap-3">
+              <span className="text-3xl leading-none" role="img" aria-hidden>{guide.coverEmoji ?? "📖"}</span>
+              <h1 className="font-display text-2xl font-semibold leading-tight tracking-tight text-foreground text-balance sm:text-3xl">
+                {guide.title}
+              </h1>
             </div>
+            {guide.subtitle && (
+              <p className="mt-2 text-sm leading-relaxed text-muted-foreground">{guide.subtitle}</p>
+            )}
             {totalPages > 0 && (
-              <div className="mt-2 flex items-center gap-2">
+              <div className="mt-4 flex items-center gap-2">
                 <div className="h-1.5 flex-1 overflow-hidden rounded-full bg-muted">
                   <div
                     className="h-full rounded-full bg-primary transition-all"
                     style={{ width: `${progressPct}%` }}
                   />
                 </div>
-                <span className="shrink-0 text-[11px] text-muted-foreground">
-                  {readCount}/{totalPages} 페이지
+                <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">
+                  {readCount}/{totalPages} · {progressPct}%
                 </span>
               </div>
             )}
-          </div>
+          </header>
 
           {/* 현재 페이지 */}
           {currentPage ? (
-            <div className="rounded-2xl border bg-card p-5 sm:p-7">
-              <div className="mb-4 flex items-start justify-between gap-2">
-                <h2 className="text-lg font-semibold text-foreground">{currentPage.title}</h2>
+            <article>
+              <div className="mb-5 flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  {currentChapter && (
+                    <p className="text-[11px] font-semibold uppercase tracking-[0.14em] text-primary/80">
+                      {currentChapter.title}
+                    </p>
+                  )}
+                  <h2 className="mt-1 font-display text-xl font-semibold leading-snug tracking-tight text-foreground text-balance sm:text-2xl">
+                    {currentPage.title}
+                  </h2>
+                </div>
                 <button
                   type="button"
                   onClick={() => setTocOpen(true)}
-                  className="flex items-center gap-1 rounded-lg border px-2 py-1 text-xs text-muted-foreground hover:text-foreground lg:hidden"
+                  className="flex shrink-0 items-center gap-1 rounded-lg border px-2 py-1 text-xs text-muted-foreground hover:text-foreground lg:hidden"
                   aria-label="목차 열기"
                 >
                   <List size={13} /> 목차
@@ -415,14 +435,14 @@ export default function GuideViewerPage() {
               {currentPage.pageType === "native" ? (
                 <SimpleMarkdown
                   body={currentPage.body ?? ""}
-                  className="text-sm leading-relaxed"
+                  className="text-[15px] leading-7"
                 />
               ) : (
                 <EmbedRenderer page={currentPage} />
               )}
-            </div>
+            </article>
           ) : pages.length === 0 ? (
-            <div className="rounded-2xl border bg-card p-8 text-center text-muted-foreground text-sm">
+            <div className="rounded-2xl border border-dashed bg-card p-8 text-center text-muted-foreground text-sm">
               아직 페이지가 없습니다.
             </div>
           ) : null}
