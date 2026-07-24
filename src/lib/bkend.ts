@@ -4532,6 +4532,43 @@ export const commLikesApi = {
       return true;
     });
   },
+  /**
+   * 대상 문서 카운트를 건드리지 않는 일반 반응 토글 — 켜지면 true 반환.
+   * "question"/"answer" 외 임의 targetType(예: "demand-join" 참여 의사) 반응에 사용.
+   * 대상 문서(comm_questions 등)의 likeCount 를 변경하지 않으므로 comm_likes 문서만
+   * 생성/삭제한다. 집계는 countsByType 로 문서 수를 세어 계산.
+   * 결정적 doc id(userId__targetType__targetId)로 멱등 — 카운트 드리프트 없음.
+   */
+  togglePlain: async (
+    userId: string,
+    targetType: string,
+    targetId: string,
+  ): Promise<boolean> => {
+    const id = `${userId}__${targetType}__${targetId}`;
+    const ref = doc(db, "comm_likes", id);
+    const snap = await getDoc(ref);
+    if (snap.exists()) {
+      await deleteDoc(ref);
+      return false;
+    }
+    await setDoc(ref, { userId, targetType, targetId, createdAt: serverTimestamp() });
+    return true;
+  },
+  /**
+   * 특정 targetType 반응의 targetId 별 개수 집계(예: "demand-join").
+   * comm_likes 를 targetType 으로 필터해 targetId 별로 카운트한다.
+   */
+  countsByType: async (targetType: string): Promise<Record<string, number>> => {
+    const res = await dataApi.list<CommLike>("comm_likes", {
+      "filter[targetType]": targetType,
+      limit: 2000,
+    });
+    const counts: Record<string, number> = {};
+    for (const l of res.data) {
+      counts[l.targetId] = (counts[l.targetId] ?? 0) + 1;
+    }
+    return counts;
+  },
 };
 
 // ── 에듀테크 해커톤 산출물 제출·심사·수상 (v7-M1) ──

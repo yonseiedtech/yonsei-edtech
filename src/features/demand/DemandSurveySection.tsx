@@ -1,12 +1,15 @@
 "use client";
 
 /**
- * 인라인 수요 조사 섹션 (2026-07-23)
- * 스터디·세미나 페이지에서 각각 인라인으로 수요를 등록·공감할 수 있는 재사용 컴포넌트.
+ * 수요 조사 섹션 (2026-07-23, 탭·학기·참여반응 개편 2026-07-24)
+ * 스터디·세미나 페이지 상태 탭의 "수요조사" 탭 안에서 수요를 등록·반응하는 컴포넌트.
  *
  * - kind="study"  → "스터디 희망" 유형 고정, 스터디 주제 안내 문구
  * - kind="seminar" → "세미나 희망" 유형 고정, 세미나 주제 안내 문구
- * - 동일한 demand 보드(contextId="demand-2026-2")에 저장 — 콘솔 통합 집계 유지
+ * - 학기별 demand 보드(contextId="demand-{YYYY}-{1|2}")에 저장 — 지난 학기와 분리
+ * - 두 가지 반응: 관심있어요(commLikesApi.toggle "question" → likeCount)
+ *   · 참여할래요(commLikesApi.togglePlain "demand-join" → comm_likes 문서 수 집계)
+ * - 참여 의사가 많은 주제 우선 정렬 → 운영진이 개설을 검토
  * - 로그인 비회원 → 간결한 로그인 CTA 표시 (페이지 전체 대체 없음)
  */
 
@@ -14,6 +17,7 @@ import { useState, useMemo } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Heart,
+  UserPlus,
   Trash2,
   Plus,
   Inbox,
@@ -29,8 +33,14 @@ import { Input } from "@/components/ui/input";
 import EmptyState from "@/components/ui/empty-state";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { commQuestionsApi, commLikesApi } from "@/lib/bkend";
-import { ensureDemandBoard } from "./ensure-demand-board";
+import {
+  ensureDemandBoard,
+  currentDemandContextId,
+  currentDemandSemesterLabel,
+} from "./ensure-demand-board";
 import type { CommQuestion } from "@/types";
+
+const DEMAND_JOIN = "demand-join";
 
 type FormatPref = "온라인" | "오프라인" | "무관";
 const FORMAT_OPTIONS: FormatPref[] = ["온라인", "오프라인", "무관"];
@@ -60,12 +70,13 @@ interface Props {
 
 export default function DemandSurveySection({ kind }: Props) {
   const meta = KIND_META[kind];
+  const semesterLabel = currentDemandSemesterLabel();
   const { user } = useAuthStore();
   const qc = useQueryClient();
 
-  // ── 보드 프로비저닝 ────────────────────────────────────────────────────────
+  // ── 보드 프로비저닝 (학기별) ───────────────────────────────────────────────
   const { data: board, isLoading: boardLoading } = useQuery({
-    queryKey: ["demand-board"],
+    queryKey: ["demand-board", currentDemandContextId()],
     queryFn: () => ensureDemandBoard(user!.id, user!.name ?? ""),
     enabled: !!user,
   });
@@ -78,11 +89,18 @@ export default function DemandSurveySection({ kind }: Props) {
     enabled: !!board,
   });
 
-  // ── 공감 상태 ─────────────────────────────────────────────────────────────
+  // ── 내 반응 상태 (관심·참여 공통 — targetType 으로 구분) ──────────────────
   const { data: likedSet = new Set<string>() } = useQuery({
     queryKey: ["demand-liked", user?.id],
     queryFn: () => commLikesApi.listMineSet(user!.id),
     enabled: !!user,
+  });
+
+  // ── 참여할래요 집계 (targetId 별 참여 수) ─────────────────────────────────
+  const { data: joinCounts = {} } = useQuery({
+    queryKey: ["demand-joins", board?.id],
+    queryFn: () => commLikesApi.countsByType(DEMAND_JOIN),
+    enabled: !!board,
   });
 
   // ── 폼 상태 ───────────────────────────────────────────────────────────────
@@ -90,13 +108,17 @@ export default function DemandSurveySection({ kind }: Props) {
   const [formatPref, setFormatPref] = useState<FormatPref>("무관");
   const [note, setNote] = useState("");
 
-  // ── kind 유형만 필터 + 공감순 정렬 ────────────────────────────────────────
+  // ── kind 유형만 필터 + 참여순(2차 관심순) 정렬 ────────────────────────────
   const filtered = useMemo(
     () =>
       [...questions]
         .filter((q) => q.presenter === meta.demandType)
-        .sort((a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0)),
-    [questions, meta.demandType],
+        .sort((a, b) => {
+          const jd = (joinCounts[b.id] ?? 0) - (joinCounts[a.id] ?? 0);
+          if (jd !== 0) return jd;
+          return (b.likeCount ?? 0) - (a.likeCount ?? 0);
+        }),
+    [questions, meta.demandType, joinCounts],
   );
 
   // ── 등록 ──────────────────────────────────────────────────────────────────
@@ -128,8 +150,8 @@ export default function DemandSurveySection({ kind }: Props) {
       toast.error(`등록 실패: ${e instanceof Error ? e.message : "오류"}`),
   });
 
-  // ── 공감 토글 ─────────────────────────────────────────────────────────────
-  const likeMutation = useMutation({
+  // ── 관심있어요 토글 (question likeCount) ──────────────────────────────────
+  const interestMutation = useMutation({
     mutationFn: (questionId: string) =>
       commLikesApi.toggle(user!.id, "question", questionId),
     onSuccess: () => {
@@ -137,7 +159,19 @@ export default function DemandSurveySection({ kind }: Props) {
       qc.invalidateQueries({ queryKey: ["demand-liked"] });
     },
     onError: (e) =>
-      toast.error(`공감 오류: ${e instanceof Error ? e.message : "오류"}`),
+      toast.error(`관심 반응 오류: ${e instanceof Error ? e.message : "오류"}`),
+  });
+
+  // ── 참여할래요 토글 (comm_likes "demand-join" 문서) ───────────────────────
+  const joinMutation = useMutation({
+    mutationFn: (questionId: string) =>
+      commLikesApi.togglePlain(user!.id, DEMAND_JOIN, questionId),
+    onSuccess: () => {
+      qc.invalidateQueries({ queryKey: ["demand-joins"] });
+      qc.invalidateQueries({ queryKey: ["demand-liked"] });
+    },
+    onError: (e) =>
+      toast.error(`참여 반응 오류: ${e instanceof Error ? e.message : "오류"}`),
   });
 
   // ── 삭제 (본인 글만) ──────────────────────────────────────────────────────
@@ -154,19 +188,26 @@ export default function DemandSurveySection({ kind }: Props) {
   const isLoading = boardLoading || qLoading;
 
   return (
-    <section className="mt-10 border-t pt-8 pb-8">
-      <h2 className="mb-1 text-base font-semibold text-foreground">
-        {meta.sectionTitle}
-      </h2>
+    <section className="pb-8 pt-1">
+      <div className="mb-1 flex flex-wrap items-center gap-2">
+        <h2 className="text-base font-semibold text-foreground">
+          {meta.sectionTitle}
+        </h2>
+        <Badge variant="secondary" className="text-[10px]">
+          {semesterLabel}
+        </Badge>
+      </div>
       <p className="mb-5 text-sm text-muted-foreground">
-        {meta.hint} 공감이 많은 주제부터 운영진이 개설을 검토합니다.
+        {meta.hint} <span className="text-foreground">관심있어요</span>·
+        <span className="text-foreground">참여할래요</span>로 수요를 표현하면, 참여 의사가
+        많은 주제부터 운영진이 개설을 검토합니다.
       </p>
 
       {/* ── 비로그인 CTA ──────────────────────────────────────────────────── */}
       {!user ? (
         <div className="flex items-center justify-between gap-4 rounded-2xl border border-dashed bg-card px-5 py-4 text-sm">
           <p className="text-muted-foreground">
-            로그인하면 수요를 등록하고 공감할 수 있습니다.
+            로그인하면 수요를 등록하고 반응할 수 있습니다.
           </p>
           <Link href="/login">
             <Button size="sm" variant="outline">
@@ -273,7 +314,9 @@ export default function DemandSurveySection({ kind }: Props) {
               />
             ) : (
               filtered.map((q) => {
-                const isLiked = likedSet.has(`question__${q.id}`);
+                const isInterested = likedSet.has(`question__${q.id}`);
+                const isJoined = likedSet.has(`${DEMAND_JOIN}__${q.id}`);
+                const joinCount = joinCounts[q.id] ?? 0;
                 const isOwner = q.authorId === user.id;
                 const pref = q.demandPref;
                 return (
@@ -282,25 +325,43 @@ export default function DemandSurveySection({ kind }: Props) {
                     className="rounded-2xl border bg-card p-4 transition-all duration-150 hover:border-primary/30 hover:shadow-sm"
                   >
                     <div className="flex items-start gap-3">
-                      {/* 공감 버튼 */}
-                      <button
-                        type="button"
-                        onClick={() => likeMutation.mutate(q.id)}
-                        disabled={likeMutation.isPending}
-                        aria-label={isLiked ? "공감 취소" : "저도 원해요"}
-                        className={cn(
-                          "flex shrink-0 flex-col items-center gap-0.5 rounded-xl border px-3 py-2 text-xs font-semibold transition-colors",
-                          isLiked
-                            ? "border-primary bg-primary/10 text-primary"
-                            : "border-border text-muted-foreground hover:border-primary/40 hover:text-primary",
-                        )}
-                      >
-                        <Heart
-                          size={15}
-                          className={isLiked ? "fill-primary" : ""}
-                        />
-                        <span className="tabular-nums">{q.likeCount ?? 0}</span>
-                      </button>
+                      {/* 반응 버튼 (관심 · 참여) */}
+                      <div className="flex shrink-0 flex-col gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => interestMutation.mutate(q.id)}
+                          disabled={interestMutation.isPending}
+                          aria-pressed={isInterested}
+                          aria-label={isInterested ? "관심 취소" : "관심있어요"}
+                          className={cn(
+                            "flex w-14 flex-col items-center gap-0.5 rounded-xl border px-2 py-1.5 text-xs font-semibold transition-colors",
+                            isInterested
+                              ? "border-primary bg-primary/10 text-primary"
+                              : "border-border text-muted-foreground hover:border-primary/40 hover:text-primary",
+                          )}
+                        >
+                          <Heart size={14} className={isInterested ? "fill-primary" : ""} />
+                          <span className="tabular-nums">{q.likeCount ?? 0}</span>
+                          <span className="text-[9px] font-medium">관심</span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => joinMutation.mutate(q.id)}
+                          disabled={joinMutation.isPending}
+                          aria-pressed={isJoined}
+                          aria-label={isJoined ? "참여 의사 취소" : "참여할래요"}
+                          className={cn(
+                            "flex w-14 flex-col items-center gap-0.5 rounded-xl border px-2 py-1.5 text-xs font-semibold transition-colors",
+                            isJoined
+                              ? "border-success bg-success/10 text-success"
+                              : "border-border text-muted-foreground hover:border-success/40 hover:text-success",
+                          )}
+                        >
+                          <UserPlus size={14} />
+                          <span className="tabular-nums">{joinCount}</span>
+                          <span className="text-[9px] font-medium">참여</span>
+                        </button>
+                      </div>
 
                       {/* 내용 */}
                       <div className="min-w-0 flex-1">

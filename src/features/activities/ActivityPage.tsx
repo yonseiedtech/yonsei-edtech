@@ -95,11 +95,13 @@ interface Props {
   color: string;
   /** 서버 ISR 프리패치 초기 데이터. 제공 시 첫 화면 스켈레톤 없이 즉시 렌더. */
   initialActivities?: Activity[];
-  /** 목록 하단에 추가할 인라인 섹션 (예: 수요 조사). */
+  /** 목록 하단에 추가할 인라인 섹션 (하위호환 — 목록 아래 렌더). */
   footerSection?: React.ReactNode;
+  /** 상태 탭에 "수요조사" 탭을 추가해 그 안에서 렌더할 섹션 (예: 수요 조사). */
+  demandSection?: React.ReactNode;
 }
 
-export default function ActivityPage({ type, icon, title, subtitle, color, initialActivities, footerSection }: Props) {
+export default function ActivityPage({ type, icon, title, subtitle, color, initialActivities, footerSection, demandSection }: Props) {
   const { user } = useAuthStore();
   const isStaff = isAtLeast(user, "staff");
   const queryClient = useQueryClient();
@@ -241,7 +243,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
   const ongoing = activities.filter((a) => a.status === "ongoing" || a.status === "upcoming");
   const completed = activities.filter((a) => a.status === "completed");
 
-  const [statusTab, setStatusTab] = useState<"all" | "active" | "completed">("all");
+  const [statusTab, setStatusTab] = useState<"all" | "active" | "completed" | "demand">("all");
 
   // 전체 탭: 미완료(행사일 가까운 순) → 완료(최근 종료 순)
   const sortedAll = (() => {
@@ -532,10 +534,11 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
     );
   }
 
-  const TAB_META = [
-    { key: "all" as const,       label: "전체",     count: activities.length },
-    { key: "active" as const,    label: "예정·진행", count: ongoing.length },
-    { key: "completed" as const, label: "완료",     count: completed.length },
+  const TAB_META: { key: "all" | "active" | "completed" | "demand"; label: string; count?: number }[] = [
+    { key: "all",       label: "전체",     count: activities.length },
+    { key: "active",    label: "예정·진행", count: ongoing.length },
+    { key: "completed", label: "완료",     count: completed.length },
+    ...(demandSection ? [{ key: "demand" as const, label: "수요조사" }] : []),
   ];
 
   return (
@@ -579,7 +582,7 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
                   )}
                 >
                   {label}
-                  {!isLoading && (
+                  {!isLoading && count !== undefined && (
                     <span
                       className={cn(
                         "inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums",
@@ -595,8 +598,8 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
               ))}
             </div>
 
-            {/* 뷰 모드 토글 */}
-            <div className="inline-flex rounded-lg border bg-muted/40 p-0.5 shadow-sm">
+            {/* 뷰 모드 토글 — 수요조사 탭에서는 숨김 */}
+            <div className={cn("inline-flex rounded-lg border bg-muted/40 p-0.5 shadow-sm", statusTab === "demand" && "hidden")}>
               <button
                 onClick={() => setViewMode("list")}
                 aria-label="리스트 보기"
@@ -626,7 +629,9 @@ export default function ActivityPage({ type, icon, title, subtitle, color, initi
             </div>
           </div>
 
-          {isLoading ? (
+          {statusTab === "demand" ? (
+            <div className="mt-5">{demandSection}</div>
+          ) : isLoading ? (
             viewMode === "gallery" ? (
               <div className="mt-6 grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-3">
                 {[0, 1, 2].map((i) => (
