@@ -79,6 +79,16 @@ export interface CommQuestion {
     format?: "온라인" | "오프라인" | "무관";
     /** 희망 주기·수준 등 메모 (≤100자) */
     note?: string;
+    /**
+     * 수요 전환 라이프사이클 (운영진 관리). 부재 시 "collecting"(수집중)으로 간주.
+     *  - collecting: 수집중(기본)  - reviewing: 개설 검토중
+     *  - opened: 개설됨            - declined: 보류
+     */
+    status?: "collecting" | "reviewing" | "opened" | "declined";
+    /** 개설된 활동(스터디/세미나) id — opened 시 연결(선택) */
+    linkedActivityId?: string;
+    /** 운영진 상태 메모(개설 안내·보류 사유 등, ≤120자) */
+    statusNote?: string;
   };
   createdAt?: string;
   updatedAt?: string;
