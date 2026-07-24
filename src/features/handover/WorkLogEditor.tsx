@@ -8,12 +8,17 @@
 import { useRef, useState } from "react";
 import {
   Heading2, Bold, List, CheckSquare, Eye, Edit3, Columns2, Loader2,
+  Plus, Trash2, ArrowUp, ArrowDown, ListOrdered, ListChecks,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
+import { Checkbox } from "@/components/ui/checkbox";
 import { HandoverMarkdown } from "@/lib/markdown-handover";
 import { cn } from "@/lib/utils";
-import type { HandoverDocument } from "@/types";
+import type {
+  HandoverDocument, HandoverWorkflowStep, HandoverTodoItem,
+} from "@/types";
 import { HANDOVER_CATEGORY_LABELS } from "@/types";
 
 const PRIORITY_LABELS: Record<HandoverDocument["priority"], string> = {
@@ -26,8 +31,32 @@ export interface WorkLogFormValues {
   roles: string[];
   title: string;
   content: string;
+  workflow: HandoverWorkflowStep[];
+  todos: HandoverTodoItem[];
   category: HandoverDocument["category"];
   priority: HandoverDocument["priority"];
+}
+
+/** 저장 전 정리: 빈 워크플로우 단계(제목·설명 모두 공백) 제거 + 트림. */
+export function sanitizeWorkflow(steps: HandoverWorkflowStep[]): HandoverWorkflowStep[] {
+  return steps
+    .map((s) => ({ title: s.title.trim(), description: (s.description ?? "").trim() }))
+    .filter((s) => s.title || s.description)
+    .map((s) => (s.description ? s : { title: s.title }));
+}
+
+/** 저장 전 정리: 빈 할 일(내용 공백) 제거 + 선택 필드 트림. */
+export function sanitizeTodos(todos: HandoverTodoItem[]): HandoverTodoItem[] {
+  return todos
+    .map((t) => {
+      const item: HandoverTodoItem = { text: t.text.trim(), done: !!t.done };
+      const assignee = (t.assignee ?? "").trim();
+      const due = (t.due ?? "").trim();
+      if (assignee) item.assignee = assignee;
+      if (due) item.due = due;
+      return item;
+    })
+    .filter((t) => t.text);
 }
 
 interface Props {
@@ -96,6 +125,46 @@ export default function WorkLogEditor({
         roles: has ? f.roles.filter((x) => x !== r) : [...f.roles, r],
       };
     });
+  }
+
+  // ── 워크플로우 (순서 있는 단계) ──
+  function addStep() {
+    setForm((f) => ({ ...f, workflow: [...f.workflow, { title: "", description: "" }] }));
+  }
+  function updateStep(idx: number, patch: Partial<HandoverWorkflowStep>) {
+    setForm((f) => ({
+      ...f,
+      workflow: f.workflow.map((s, i) => (i === idx ? { ...s, ...patch } : s)),
+    }));
+  }
+  function removeStep(idx: number) {
+    setForm((f) => ({ ...f, workflow: f.workflow.filter((_, i) => i !== idx) }));
+  }
+  function moveStep(idx: number, dir: -1 | 1) {
+    setForm((f) => {
+      const next = [...f.workflow];
+      const to = idx + dir;
+      if (to < 0 || to >= next.length) return f;
+      [next[idx], next[to]] = [next[to], next[idx]];
+      return { ...f, workflow: next };
+    });
+  }
+
+  // ── TO-DO 리스트 ──
+  function addTodo() {
+    setForm((f) => ({
+      ...f,
+      todos: [...f.todos, { text: "", done: false, assignee: "", due: "" }],
+    }));
+  }
+  function updateTodo(idx: number, patch: Partial<HandoverTodoItem>) {
+    setForm((f) => ({
+      ...f,
+      todos: f.todos.map((t, i) => (i === idx ? { ...t, ...patch } : t)),
+    }));
+  }
+  function removeTodo(idx: number) {
+    setForm((f) => ({ ...f, todos: f.todos.filter((_, i) => i !== idx) }));
   }
 
   return (
@@ -302,6 +371,139 @@ export default function WorkLogEditor({
         <p className="mt-1 text-[11px] text-muted-foreground">
           ## 소제목 · **굵게** · - 목록 · - [ ] 체크박스 (저장 후 본문/기수 리포트에서 서식이 적용됩니다)
         </p>
+      </div>
+
+      {/* 워크플로우 — 순서가 있는 절차 단계 */}
+      <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <label className="flex items-center gap-1.5 text-sm font-medium">
+            <ListOrdered size={14} className="text-muted-foreground" /> 워크플로우
+            <span className="text-muted-foreground font-normal">(선택 · 순서 있는 진행 단계)</span>
+          </label>
+          <Button type="button" variant="outline" size="sm" onClick={addStep}>
+            <Plus size={13} className="mr-1" /> 단계 추가
+          </Button>
+        </div>
+        {form.workflow.length === 0 ? (
+          <p className="rounded-lg border border-dashed bg-muted/10 px-3 py-4 text-center text-xs text-muted-foreground">
+            절차/진행 흐름을 단계로 기록하려면 &ldquo;단계 추가&rdquo;를 누르세요.
+          </p>
+        ) : (
+          <ul className="space-y-2">
+            {form.workflow.map((step, idx) => (
+              <li key={idx} className="rounded-lg border bg-muted/10 p-3">
+                <div className="flex items-start gap-2">
+                  <span className="mt-1.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+                    {idx + 1}
+                  </span>
+                  <div className="min-w-0 flex-1 space-y-1.5">
+                    <Input
+                      value={step.title}
+                      onChange={(e) => updateStep(idx, { title: e.target.value })}
+                      placeholder="단계 제목 (예: 회비 입금 확인)"
+                    />
+                    <Textarea
+                      value={step.description ?? ""}
+                      onChange={(e) => updateStep(idx, { description: e.target.value })}
+                      placeholder="단계 설명 (선택)"
+                      rows={2}
+                      className="text-sm"
+                    />
+                  </div>
+                  <div className="flex shrink-0 flex-col gap-0.5">
+                    <button
+                      type="button"
+                      onClick={() => moveStep(idx, -1)}
+                      disabled={idx === 0}
+                      title="위로"
+                      className="rounded border p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+                    >
+                      <ArrowUp size={12} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => moveStep(idx, 1)}
+                      disabled={idx === form.workflow.length - 1}
+                      title="아래로"
+                      className="rounded border p-1 text-muted-foreground hover:bg-muted hover:text-foreground disabled:opacity-30"
+                    >
+                      <ArrowDown size={12} />
+                    </button>
+                    <button
+                      type="button"
+                      onClick={() => removeStep(idx)}
+                      title="삭제"
+                      className="rounded border p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                    >
+                      <Trash2 size={12} />
+                    </button>
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
+      {/* TO-DO 리스트 — 남은 할 일 */}
+      <div>
+        <div className="mb-1.5 flex items-center justify-between">
+          <label className="flex items-center gap-1.5 text-sm font-medium">
+            <ListChecks size={14} className="text-muted-foreground" /> TO-DO 리스트
+            <span className="text-muted-foreground font-normal">(선택 · 인수인계 시 남은 할 일)</span>
+          </label>
+          <Button type="button" variant="outline" size="sm" onClick={addTodo}>
+            <Plus size={13} className="mr-1" /> 할 일 추가
+          </Button>
+        </div>
+        {form.todos.length === 0 ? (
+          <p className="rounded-lg border border-dashed bg-muted/10 px-3 py-4 text-center text-xs text-muted-foreground">
+            차기 담당자에게 넘길 할 일을 남기려면 &ldquo;할 일 추가&rdquo;를 누르세요.
+          </p>
+        ) : (
+          <ul className="space-y-1.5">
+            {form.todos.map((todo, idx) => (
+              <li key={idx} className="flex items-start gap-2 rounded-lg border bg-muted/10 p-2.5">
+                <Checkbox
+                  checked={todo.done}
+                  onCheckedChange={(val) => updateTodo(idx, { done: val === true })}
+                  className="mt-2"
+                />
+                <div className="min-w-0 flex-1 space-y-1.5">
+                  <Input
+                    value={todo.text}
+                    onChange={(e) => updateTodo(idx, { text: e.target.value })}
+                    placeholder="할 일 내용"
+                    className={cn(todo.done && "text-muted-foreground line-through")}
+                  />
+                  <div className="grid grid-cols-2 gap-1.5">
+                    <Input
+                      value={todo.assignee ?? ""}
+                      onChange={(e) => updateTodo(idx, { assignee: e.target.value })}
+                      placeholder="담당 (선택)"
+                      className="text-sm"
+                    />
+                    <Input
+                      type="date"
+                      value={todo.due ?? ""}
+                      onChange={(e) => updateTodo(idx, { due: e.target.value })}
+                      placeholder="기한 (선택)"
+                      className="text-sm"
+                    />
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeTodo(idx)}
+                  title="삭제"
+                  className="mt-1 rounded border p-1 text-muted-foreground hover:bg-destructive/10 hover:text-destructive"
+                >
+                  <Trash2 size={12} />
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
       </div>
 
       {/* 액션 버튼 */}

@@ -7,7 +7,9 @@ import { dataApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useOrgChart } from "@/features/admin/settings/useOrgChart";
 import { toast } from "sonner";
-import WorkLogEditor, { type WorkLogFormValues } from "@/features/handover/WorkLogEditor";
+import WorkLogEditor, {
+  type WorkLogFormValues, sanitizeWorkflow, sanitizeTodos,
+} from "@/features/handover/WorkLogEditor";
 import type { HandoverDocument } from "@/types";
 
 const STAFF_ROLES = ["회장", "부회장", "총무", "학술부장", "홍보부장", "대외협력부장", "편집부장"];
@@ -44,6 +46,9 @@ function NewWorkLogInner() {
     mutationFn: async (values: WorkLogFormValues) => {
       await dataApi.create("handover_docs", {
         ...values,
+        // 빈 단계/할 일은 저장 전 제거
+        workflow: sanitizeWorkflow(values.workflow),
+        todos: sanitizeTodos(values.todos),
         // 하위호환: role = 첫 번째 태그
         role: values.roles[0] ?? "",
         term: CURRENT_TERM,
@@ -89,6 +94,8 @@ function NewWorkLogInner() {
             roles: initialRoles,
             title: "",
             content: "",
+            workflow: [],
+            todos: [],
             category: "routine",
             priority: "medium",
           }}

@@ -22,6 +22,7 @@ import { cn } from "@/lib/utils";
 import type { HandoverDocument } from "@/types";
 import { HANDOVER_CATEGORY_LABELS } from "@/types";
 import { HandoverMarkdown } from "@/lib/markdown-handover";
+import { HandoverWorkflow, HandoverTodos } from "@/features/handover/HandoverExtras";
 
 // ── M4: 직책별 온보딩 안내 자동 채움 슬롯 (신규 컬렉션 없음·기존 역할 정의 재사용) ──
 
@@ -478,6 +479,8 @@ function ReportInner() {
                     content={doc.content}
                     className="mt-2 rounded-md border bg-muted/20 p-3 text-sm leading-relaxed text-foreground"
                   />
+                  <HandoverWorkflow steps={doc.workflow} className="mt-3" />
+                  <HandoverTodos todos={doc.todos} className="mt-3" />
                 </article>
               ))}
             </div>

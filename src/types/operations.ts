@@ -6,6 +6,27 @@ import { CAT_STATUS_100, CAT_NOTE_KIND } from "@/lib/design-tokens";
 // EmailLog, Inquiry — 운영진/시스템 운영 관련 횡단 타입 모음.
 
 // ── 운영진 업무수행철 (인수인계철) ──
+
+/** 업무노트 워크플로우 단계 — 순서가 있는 절차 흐름 한 단계. */
+export interface HandoverWorkflowStep {
+  /** 단계 제목 (예: "회비 입금 확인") */
+  title: string;
+  /** 단계 상세 설명 (선택) */
+  description?: string;
+}
+
+/** 업무노트 TO-DO 항목 — 인수인계 시 남은 할 일 체크리스트 한 줄. */
+export interface HandoverTodoItem {
+  /** 할 일 내용 */
+  text: string;
+  /** 완료 여부 */
+  done: boolean;
+  /** 담당자 (선택) */
+  assignee?: string;
+  /** 기한 YYYY-MM-DD (선택) */
+  due?: string;
+}
+
 export interface HandoverDocument {
   id: string;
   role: string;          // 직책명 (회장, 부회장, 총무 등) — 하위호환용 단일 직책
@@ -16,6 +37,10 @@ export interface HandoverDocument {
   term: string;          // 임기 (예: "2026-1")
   title: string;
   content: string;       // 업무 내용 (마크다운)
+  /** 워크플로우 — 순서가 있는 절차 단계 (인수인계철 v2). 없으면 미표시(하위호환). */
+  workflow?: HandoverWorkflowStep[];
+  /** TO-DO 체크리스트 — 남은 할 일 (인수인계철 v2). 없으면 미표시(하위호환). */
+  todos?: HandoverTodoItem[];
   category: "routine" | "project" | "reference" | "caution";
   priority: "high" | "medium" | "low";
   createdAt: string;

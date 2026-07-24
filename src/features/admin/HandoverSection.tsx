@@ -18,6 +18,7 @@ import { cn } from "@/lib/utils";
 import type { HandoverDocument } from "@/types";
 import { HANDOVER_CATEGORY_LABELS } from "@/types";
 import { HandoverMarkdown } from "@/lib/markdown-handover";
+import { HandoverWorkflow, HandoverTodos } from "@/features/handover/HandoverExtras";
 
 // 기본 직책 (조직 설정에 직책이 없을 때의 하위호환 폴백)
 const STAFF_ROLES = ["회장", "부회장", "총무", "학술부장", "홍보부장", "대외협력부장", "편집부장"];
@@ -214,6 +215,8 @@ export default function HandoverSection() {
                     content={doc.content}
                     className="text-sm leading-relaxed"
                   />
+                  <HandoverWorkflow steps={doc.workflow} className="mt-4" />
+                  <HandoverTodos todos={doc.todos} className="mt-4" />
                   <div className="mt-4 flex gap-2">
                     <Link href={`/console/handover/worklog/${doc.id}/edit`}>
                       <Button variant="outline" size="sm">
