@@ -28,6 +28,9 @@ import {
   Search,
   CheckCircle2,
   PauseCircle,
+  UserCheck,
+  PencilRuler,
+  Rocket,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -44,22 +47,27 @@ import {
   currentDemandContextId,
   currentDemandSemesterLabel,
 } from "./ensure-demand-board";
+import StudyLaunchPanel from "./StudyLaunchPanel";
 import type { CommQuestion } from "@/types";
 
 const DEMAND_JOIN = "demand-join";
 /** 참여 의사 이 수 이상이면 개설 정족수 신호 */
 const JOIN_THRESHOLD = 3;
 
-type DemandStatus = "collecting" | "reviewing" | "opened" | "declined";
+type DemandStatus = "collecting" | "reviewing" | "leader" | "designing" | "opened" | "declined";
 
 const STATUS_META: Record<DemandStatus, { label: string; badge: string; icon: React.ElementType }> = {
   collecting: { label: "수집중", badge: "bg-muted text-muted-foreground border-transparent", icon: CircleDot },
   reviewing: { label: "개설 검토중", badge: "bg-primary/10 text-primary border-primary/20", icon: Search },
+  leader: { label: "모임장 선정", badge: "bg-primary/10 text-primary border-primary/20", icon: UserCheck },
+  designing: { label: "설계중", badge: "bg-primary/10 text-primary border-primary/20", icon: PencilRuler },
   opened: { label: "개설됨", badge: "bg-success/10 text-success border-success/20", icon: CheckCircle2 },
   declined: { label: "보류", badge: "bg-muted text-muted-foreground border-border", icon: PauseCircle },
 };
 
-const STATUS_RANK: Record<DemandStatus, number> = { reviewing: 0, collecting: 1, opened: 2, declined: 3 };
+const STATUS_RANK: Record<DemandStatus, number> = {
+  reviewing: 0, leader: 1, designing: 2, collecting: 3, opened: 4, declined: 5,
+};
 
 function resolveStatus(q: CommQuestion): DemandStatus {
   return (q.demandPref?.status as DemandStatus | undefined) ?? "collecting";
@@ -101,6 +109,7 @@ export default function DemandSurveySection({ kind }: Props) {
   const qc = useQueryClient();
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [pipelineTarget, setPipelineTarget] = useState<CommQuestion | null>(null);
 
   // ── 보드 프로비저닝 (학기별) ───────────────────────────────────────────────
   const { data: board, isLoading: boardLoading } = useQuery({
@@ -167,7 +176,7 @@ export default function DemandSurveySection({ kind }: Props) {
     if (statusFilter === "all") return kindItems;
     return kindItems.filter((q) => {
       const s = resolveStatus(q);
-      if (statusFilter === "active") return s === "collecting" || s === "reviewing";
+      if (statusFilter === "active") return s !== "opened" && s !== "declined";
       return s === statusFilter;
     });
   }, [kindItems, statusFilter]);
@@ -501,23 +510,38 @@ export default function DemandSurveySection({ kind }: Props) {
                           {q.authorName} · {(q.createdAt ?? "").slice(0, 10)}
                         </p>
 
-                        {/* 운영진 전환 액션 */}
-                        {isStaff && (
+                        {/* 개설 파이프라인 진입 / 운영진 액션 */}
+                        {status !== "opened" && status !== "declined" && user && (
                           <div className="mt-2 flex flex-wrap items-center gap-1 border-t pt-2">
-                            <span className="text-[10px] text-muted-foreground">운영진:</span>
-                            {(["reviewing", "opened", "declined", "collecting"] as DemandStatus[])
-                              .filter((s) => s !== status)
-                              .map((s) => (
-                                <button
-                                  key={s}
-                                  type="button"
-                                  onClick={() => changeStatus(q, s)}
-                                  disabled={statusMutation.isPending}
-                                  className="rounded-md border px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
-                                >
-                                  {STATUS_META[s].label}로
-                                </button>
-                              ))}
+                            <button
+                              type="button"
+                              onClick={() => setPipelineTarget(q)}
+                              className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary transition-colors hover:bg-primary/10"
+                            >
+                              <Rocket size={11} /> 개설 진행
+                            </button>
+                            {isStaff && (
+                              <button
+                                type="button"
+                                onClick={() => changeStatus(q, "declined")}
+                                disabled={statusMutation.isPending}
+                                className="rounded-md border px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-destructive/40 hover:text-destructive"
+                              >
+                                보류
+                              </button>
+                            )}
+                          </div>
+                        )}
+                        {isStaff && status === "declined" && (
+                          <div className="mt-2 flex items-center gap-1 border-t pt-2">
+                            <button
+                              type="button"
+                              onClick={() => changeStatus(q, "collecting")}
+                              disabled={statusMutation.isPending}
+                              className="rounded-md border px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                            >
+                              재검토로
+                            </button>
                           </div>
                         )}
                       </div>
@@ -544,6 +568,20 @@ export default function DemandSurveySection({ kind }: Props) {
             )}
           </div>
         </>
+      )}
+
+      {/* 개설 파이프라인 패널 */}
+      {pipelineTarget && (
+        <StudyLaunchPanel
+          question={pipelineTarget}
+          joinCount={joinCounts[pipelineTarget.id] ?? 0}
+          open={!!pipelineTarget}
+          onClose={() => setPipelineTarget(null)}
+          onUpdated={() => {
+            qc.invalidateQueries({ queryKey: ["demand-questions"] });
+            qc.invalidateQueries({ queryKey: ["demand-joins"] });
+          }}
+        />
       )}
     </section>
   );

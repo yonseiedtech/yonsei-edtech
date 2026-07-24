@@ -80,12 +80,29 @@ export interface CommQuestion {
     /** 희망 주기·수준 등 메모 (≤100자) */
     note?: string;
     /**
-     * 수요 전환 라이프사이클 (운영진 관리). 부재 시 "collecting"(수집중)으로 간주.
-     *  - collecting: 수집중(기본)  - reviewing: 개설 검토중
-     *  - opened: 개설됨            - declined: 보류
+     * 스터디 개설 파이프라인 단계 (운영진/모임장 관리). 부재 시 "collecting".
+     *  - collecting: 수집중(기본)   - reviewing: 개설 검토중(정족수)
+     *  - leader: 모임장 선정         - designing: 스터디 설계중
+     *  - opened: 개설됨(활동 자동생성)  - declined: 보류
      */
-    status?: "collecting" | "reviewing" | "opened" | "declined";
-    /** 개설된 활동(스터디/세미나) id — opened 시 연결(선택) */
+    status?: "collecting" | "reviewing" | "leader" | "designing" | "opened" | "declined";
+    /** 선정된 모임장 회원 id·이름 (leader 단계 이후) */
+    leaderId?: string;
+    leaderName?: string;
+    /** 스터디 설계 정보 (designing 단계 입력) */
+    design?: {
+      /** 시작 예정일 (YYYY-MM-DD) */
+      startDate?: string;
+      /** 운영 주기 (예: 격주 목요일 19시) */
+      cadence?: string;
+      /** 대상 수준 (예: 초급·논문 미경험) */
+      level?: string;
+      /** 정원 */
+      maxParticipants?: number;
+      /** 커리큘럼·운영 계획 (텍스트) */
+      plan?: string;
+    };
+    /** 개설된 활동(스터디/세미나) id — opened 시 자동 연결 */
     linkedActivityId?: string;
     /** 운영진 상태 메모(개설 안내·보류 사유 등, ≤120자) */
     statusNote?: string;
