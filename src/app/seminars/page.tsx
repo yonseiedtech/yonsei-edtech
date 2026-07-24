@@ -19,12 +19,13 @@ import DemandSurveySection from "@/features/demand/DemandSurveySection";
 import { usePageHeader } from "@/features/site-settings/useSiteContent";
 import EmptyState from "@/components/ui/empty-state";
 
-type StatusTab = "all" | "active" | "completed";
+type StatusTab = "all" | "active" | "completed" | "demand";
 
 const TAB_META: { key: StatusTab; label: string }[] = [
   { key: "all", label: "전체" },
   { key: "active", label: "예정·진행" },
   { key: "completed", label: "완료" },
+  { key: "demand", label: "수요조사" },
 ];
 
 export default function SeminarsPage() {
@@ -61,7 +62,7 @@ export default function SeminarsPage() {
     [visibleSeminars],
   );
 
-  const tabCounts: Record<StatusTab, number> = {
+  const tabCounts: Record<"all" | "active" | "completed", number> = {
     all: visibleSeminars.length,
     active: ongoingSeminars.length,
     completed: completedSeminars.length,
@@ -119,8 +120,8 @@ export default function SeminarsPage() {
 
         {/* ── 검색 + 탭 + 뷰 토글 ── */}
         <div className="mt-5 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          {/* 검색 */}
-          <div className="relative w-full sm:max-w-xs">
+          {/* 검색 — 수요조사 탭에서는 숨김 */}
+          <div className={cn("relative w-full sm:max-w-xs", statusTab === "demand" && "hidden")}>
             <Search
               size={15}
               className="pointer-events-none absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground"
@@ -167,7 +168,7 @@ export default function SeminarsPage() {
                   )}
                 >
                   {label}
-                  {!isLoading && (
+                  {!isLoading && key !== "demand" && (
                     <span
                       className={cn(
                         "inline-flex h-4 min-w-[1rem] items-center justify-center rounded-full px-1 text-[10px] font-semibold tabular-nums",
@@ -183,8 +184,8 @@ export default function SeminarsPage() {
               ))}
             </div>
 
-            {/* 뷰 모드 토글 */}
-            <div className="inline-flex rounded-lg border bg-muted/40 p-0.5 shadow-sm">
+            {/* 뷰 모드 토글 — 수요조사 탭에서는 숨김 */}
+            <div className={cn("inline-flex rounded-lg border bg-muted/40 p-0.5 shadow-sm", statusTab === "demand" && "hidden")}>
               <button
                 onClick={() => setViewMode("list")}
                 aria-label="리스트 보기"
@@ -217,7 +218,9 @@ export default function SeminarsPage() {
 
         {/* ── 본문 ── */}
         <div className="mt-5">
-          {isLoading ? (
+          {statusTab === "demand" ? (
+            <DemandSurveySection kind="seminar" />
+          ) : isLoading ? (
             <div className="grid gap-3">
               {[1, 2, 3].map((i) => (
                 <div key={i} className="rounded-2xl border bg-card p-5 shadow-sm">
@@ -288,9 +291,6 @@ export default function SeminarsPage() {
             <SeminarList seminars={sorted} viewMode={viewMode} />
           )}
         </div>
-
-        {/* ── 세미나 수요 조사 인라인 섹션 ──────────────────────────────── */}
-        <DemandSurveySection kind="seminar" />
       </div>
     </PageContainer>
   );
