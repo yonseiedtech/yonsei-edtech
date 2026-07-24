@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   Plus, ArrowLeft, Trash2, Pencil, Check, X,
   AlertTriangle, Clock, User2, ChevronRight,
@@ -16,6 +16,7 @@ import {
   useUpdateProject,
   useDeleteProject,
   useStaffTasks,
+  useAllStaffTasks,
   useCreateTask,
   useUpdateTask,
   useDeleteTask,
@@ -51,6 +52,14 @@ function diffDays(dueDate: string): number {
 function checklistProgress(checklist: TaskChecklist[] | undefined): { done: number; total: number } {
   if (!checklist || checklist.length === 0) return { done: 0, total: 0 };
   return { done: checklist.filter((c) => c.done).length, total: checklist.length };
+}
+
+function projectTaskStats(tasks: StaffTask[]): { total: number; done: number; overdue: number; pct: number } {
+  const total = tasks.length;
+  const done = tasks.filter((t) => t.status === "done").length;
+  const overdue = tasks.filter((t) => t.status !== "done" && getDueDateStatus(t.dueDate) === "overdue").length;
+  const pct = total === 0 ? 0 : Math.round((done / total) * 100);
+  return { total, done, overdue, pct };
 }
 
 // ── Project Summary Dashboard ──────────────────────────────────────────────────
@@ -540,13 +549,27 @@ function KanbanBoard({
   const { data: tasks = [], isLoading } = useStaffTasks(project.id);
 
   const [myOnly, setMyOnly] = useState(false);
+  const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
   const [modalStatus, setModalStatus] = useState<TaskStatus | null>(null);
   const [editTask, setEditTask] = useState<StaffTask | null>(null);
   const [editingName, setEditingName] = useState(false);
   const [newName, setNewName] = useState(project.name);
 
   const currentUserId = user?.id ?? "";
-  const filteredTasks = myOnly ? tasks.filter((t) => t.assigneeId === currentUserId) : tasks;
+
+  const assignees = useMemo(() => {
+    const map = new Map<string, string>();
+    tasks.forEach((t) => { if (t.assigneeId && t.assigneeName) map.set(t.assigneeId, t.assigneeName); });
+    return Array.from(map, ([id, name]) => ({ id, name }));
+  }, [tasks]);
+
+  const filteredTasks = useMemo(() => {
+    let result = myOnly ? tasks.filter((t) => t.assigneeId === currentUserId) : tasks;
+    if (assigneeFilter === "unassigned") result = result.filter((t) => !t.assigneeId);
+    else if (assigneeFilter !== "all") result = result.filter((t) => t.assigneeId === assigneeFilter);
+    return result;
+  }, [tasks, myOnly, assigneeFilter, currentUserId]);
+
   const maxOrder = tasks.reduce((m, t) => Math.max(m, t.order), 0);
 
   const handleDeleteProject = () => {
@@ -626,16 +649,30 @@ function KanbanBoard({
       <ProjectSummary tasks={tasks} />
 
       {/* Controls */}
-      <div className="flex items-center justify-between">
-        <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
-          <input
-            type="checkbox"
-            checked={myOnly}
-            onChange={(e) => setMyOnly(e.target.checked)}
-            className="accent-primary"
-          />
-          내 담당만 보기
-        </label>
+      <div className="flex items-center justify-between gap-3 flex-wrap">
+        <div className="flex items-center gap-3 flex-wrap">
+          <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
+            <input
+              type="checkbox"
+              checked={myOnly}
+              onChange={(e) => setMyOnly(e.target.checked)}
+              className="accent-primary"
+            />
+            내 담당만 보기
+          </label>
+          <select
+            value={assigneeFilter}
+            onChange={(e) => setAssigneeFilter(e.target.value)}
+            className="rounded-lg border bg-background px-2 py-1.5 text-xs outline-none focus:ring-2 focus:ring-ring"
+            aria-label="담당자 필터"
+          >
+            <option value="all">담당자 전체</option>
+            <option value="unassigned">미배정</option>
+            {assignees.map((a) => (
+              <option key={a.id} value={a.id}>{a.name}</option>
+            ))}
+          </select>
+        </div>
         <button
           type="button"
           onClick={() => setModalStatus("todo")}
@@ -778,8 +815,21 @@ function CreateProjectForm({ onClose }: { onClose: () => void }) {
 
 export default function StaffProjectsTab() {
   const { data: projects = [], isLoading } = useStaffProjects();
+  const { data: allTasks = [] } = useAllStaffTasks();
   const [selectedProject, setSelectedProject] = useState<StaffProject | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+
+  const statsByProject = useMemo(() => {
+    const grouped = new Map<string, StaffTask[]>();
+    allTasks.forEach((t) => {
+      const list = grouped.get(t.projectId);
+      if (list) list.push(t);
+      else grouped.set(t.projectId, [t]);
+    });
+    const map = new Map<string, ReturnType<typeof projectTaskStats>>();
+    grouped.forEach((list, pid) => map.set(pid, projectTaskStats(list)));
+    return map;
+  }, [allTasks]);
 
   if (selectedProject) {
     return (
@@ -817,31 +867,52 @@ export default function StaffProjectsTab() {
         </div>
       ) : (
         <div className="space-y-2">
-          {projects.map((proj) => (
-            <button
-              key={proj.id}
-              type="button"
-              onClick={() => setSelectedProject(proj)}
-              className="flex w-full items-center gap-3 rounded-xl border bg-card p-4 text-left transition-colors hover:bg-muted/30"
-            >
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2 flex-wrap">
-                  <span className="font-semibold">{proj.name}</span>
-                  <span className={cn("rounded px-1.5 py-0.5 text-[11px] font-semibold", PROJECT_STATUS_CHIP[proj.status])}>
-                    {PROJECT_STATUS_LABELS[proj.status]}
-                  </span>
+          {projects.map((proj) => {
+            const stats = statsByProject.get(proj.id) ?? { total: 0, done: 0, overdue: 0, pct: 0 };
+            return (
+              <button
+                key={proj.id}
+                type="button"
+                onClick={() => setSelectedProject(proj)}
+                className="flex w-full items-center gap-3 rounded-xl border bg-card p-4 text-left transition-colors hover:bg-muted/30"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <span className="font-semibold">{proj.name}</span>
+                    <span className={cn("rounded px-1.5 py-0.5 text-[11px] font-semibold", PROJECT_STATUS_CHIP[proj.status])}>
+                      {PROJECT_STATUS_LABELS[proj.status]}
+                    </span>
+                    {stats.overdue > 0 && (
+                      <span className="flex items-center gap-0.5 rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold text-destructive">
+                        <AlertTriangle size={9} />
+                        지연 {stats.overdue}
+                      </span>
+                    )}
+                  </div>
+                  {proj.description && (
+                    <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{proj.description}</p>
+                  )}
+                  {/* Progress */}
+                  <div className="mt-2 flex items-center gap-2">
+                    <div className="h-1.5 flex-1 rounded-full bg-muted overflow-hidden">
+                      <div
+                        className={cn("h-full rounded-full transition-all", stats.pct === 100 ? "bg-success" : "bg-primary")}
+                        style={{ width: `${stats.pct}%` }}
+                      />
+                    </div>
+                    <span className={cn("shrink-0 text-[11px] font-semibold", stats.pct === 100 ? "text-success" : "text-muted-foreground")}>
+                      {stats.pct}%
+                    </span>
+                  </div>
+                  <p className="mt-1 text-xs text-muted-foreground">
+                    할 일 {stats.done}/{stats.total} · 담당 {proj.ownerName}
+                    {proj.dueDate && ` · 마감 ${proj.dueDate}`}
+                  </p>
                 </div>
-                {proj.description && (
-                  <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">{proj.description}</p>
-                )}
-                <p className="mt-0.5 text-xs text-muted-foreground">
-                  담당: {proj.ownerName}
-                  {proj.dueDate && ` · 마감 ${proj.dueDate}`}
-                </p>
-              </div>
-              <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
-            </button>
-          ))}
+                <ChevronRight size={16} className="shrink-0 text-muted-foreground" />
+              </button>
+            );
+          })}
         </div>
       )}
     </div>

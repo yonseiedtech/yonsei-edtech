@@ -228,6 +228,17 @@ export function useStaffTasks(projectId: string | null) {
   });
 }
 
+/** All tasks across projects — used for portfolio (project list) progress. */
+export function useAllStaffTasks() {
+  return useQuery({
+    queryKey: ["staff_tasks", "__all__"],
+    queryFn: async () => {
+      const res = await dataApi.list<Record<string, unknown>>(TASKS_TABLE, { limit: 500 });
+      return res.data.map(docToTask);
+    },
+  });
+}
+
 export function useCreateTask() {
   const qc = useQueryClient();
   return useMutation({
@@ -238,7 +249,7 @@ export function useCreateTask() {
       };
       return dataApi.create<Record<string, unknown>>(TASKS_TABLE, payload as Record<string, unknown>);
     },
-    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["staff_tasks", vars.projectId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["staff_tasks"] }),
   });
 }
 
@@ -252,7 +263,7 @@ export function useUpdateTask() {
       }
       return dataApi.update<Record<string, unknown>>(TASKS_TABLE, id, payload);
     },
-    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["staff_tasks", vars.projectId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["staff_tasks"] }),
   });
 }
 
@@ -260,7 +271,7 @@ export function useDeleteTask() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: ({ id }: { id: string; projectId: string }) => dataApi.delete(TASKS_TABLE, id),
-    onSuccess: (_, vars) => qc.invalidateQueries({ queryKey: ["staff_tasks", vars.projectId] }),
+    onSuccess: () => qc.invalidateQueries({ queryKey: ["staff_tasks"] }),
   });
 }
 
