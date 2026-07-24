@@ -25,12 +25,14 @@ export default function LearningGuidesPage() {
   const [q, setQ] = useState("");
   const [activeCategory, setActiveCategory] = useState<string>("전체");
 
+  // user 준비 후 재조회 — 마운트 시점엔 Firebase 인증이 복원 전이라
+  // 토큰이 없어 guest 로 처리(회원/운영진 가이드 누락)되는 것을 방지.
   useEffect(() => {
     guidesApi.list()
       .then((res) => setGuides(res.data ?? []))
       .catch(console.error)
       .finally(() => setLoading(false));
-  }, []);
+  }, [user]);
 
   // 진행 정보 로드 (로그인 시)
   useEffect(() => {
