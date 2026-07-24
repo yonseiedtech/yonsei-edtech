@@ -23,6 +23,16 @@ async function getToken(): Promise<string> {
   return token;
 }
 
+/**
+ * 로그인 상태면 인증 헤더를 실어 주는 선택적 헬퍼.
+ * 공개 목록·단건 조회는 비로그인도 허용하되, 로그인 시 토큰을 보내
+ * 서버가 회원/운영진 공개범위(visibility)를 정확히 판별하도록 한다.
+ */
+async function optionalAuthHeaders(): Promise<Record<string, string>> {
+  const token = await auth.currentUser?.getIdToken().catch(() => null);
+  return token ? { Authorization: `Bearer ${token}` } : {};
+}
+
 async function adminFetch<T>(
   url: string,
   options: RequestInit = {},
@@ -47,23 +57,26 @@ async function adminFetch<T>(
 
 export const guidesApi = {
   /** 공개 목록 — visibility/status 는 서버에서 필터 */
-  list: (params?: { category?: string; tag?: string }) => {
+  list: async (params?: { category?: string; tag?: string }) => {
     const qs = new URLSearchParams();
     if (params?.category) qs.set("category", params.category);
     if (params?.tag) qs.set("tag", params.tag);
-    return fetch(`/api/learning-guides?${qs.toString()}`).then((r) => r.json()) as Promise<{
-      data: LearningGuide[];
-    }>;
+    const res = await fetch(`/api/learning-guides?${qs.toString()}`, {
+      headers: await optionalAuthHeaders(),
+    });
+    return res.json() as Promise<{ data: LearningGuide[] }>;
   },
 
   /** 콘솔 — 전체 (인증 필요) */
   listAll: () =>
     adminFetch<{ data: LearningGuide[] }>("/api/learning-guides?all=true"),
 
-  getBySlug: (slug: string) =>
-    fetch(`/api/learning-guides?slug=${encodeURIComponent(slug)}`).then(
-      (r) => r.json(),
-    ) as Promise<{ data: LearningGuide | null }>,
+  getBySlug: async (slug: string) => {
+    const res = await fetch(`/api/learning-guides?slug=${encodeURIComponent(slug)}`, {
+      headers: await optionalAuthHeaders(),
+    });
+    return res.json() as Promise<{ data: LearningGuide | null }>;
+  },
 
   getById: (id: string) =>
     dataApi.get<LearningGuide>("learning_guides", id),
