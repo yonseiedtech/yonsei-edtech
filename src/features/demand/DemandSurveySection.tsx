@@ -510,16 +510,33 @@ export default function DemandSurveySection({ kind }: Props) {
                           {q.authorName} · {(q.createdAt ?? "").slice(0, 10)}
                         </p>
 
-                        {/* 개설 파이프라인 진입 / 운영진 액션 */}
+                        {/* 개설 파이프라인(스터디) / 운영진 액션(세미나) */}
                         {status !== "opened" && status !== "declined" && user && (
                           <div className="mt-2 flex flex-wrap items-center gap-1 border-t pt-2">
-                            <button
-                              type="button"
-                              onClick={() => setPipelineTarget(q)}
-                              className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary transition-colors hover:bg-primary/10"
-                            >
-                              <Rocket size={11} /> 개설 진행
-                            </button>
+                            {kind === "study" ? (
+                              <button
+                                type="button"
+                                onClick={() => setPipelineTarget(q)}
+                                className="inline-flex items-center gap-1 rounded-md border border-primary/30 bg-primary/5 px-2 py-0.5 text-[10px] font-medium text-primary transition-colors hover:bg-primary/10"
+                              >
+                                <Rocket size={11} /> 개설 진행
+                              </button>
+                            ) : (
+                              isStaff &&
+                              (["reviewing", "opened"] as DemandStatus[])
+                                .filter((s) => s !== status)
+                                .map((s) => (
+                                  <button
+                                    key={s}
+                                    type="button"
+                                    onClick={() => changeStatus(q, s)}
+                                    disabled={statusMutation.isPending}
+                                    className="rounded-md border px-2 py-0.5 text-[10px] font-medium text-muted-foreground transition-colors hover:border-primary/40 hover:text-primary"
+                                  >
+                                    {STATUS_META[s].label}로
+                                  </button>
+                                ))
+                            )}
                             {isStaff && (
                               <button
                                 type="button"
