@@ -132,7 +132,7 @@ export default function StaffHomeTab({ onGoTab }: Props) {
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
             <AlertTriangle size={15} className="text-warning" /> 처리 대기
           </h3>
-          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2 lg:grid-cols-4">
             {reviewPending.map((r) => (
               <Link
                 key={r.href}
