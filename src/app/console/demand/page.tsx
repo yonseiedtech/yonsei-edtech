@@ -17,12 +17,13 @@ import {
   Inbox,
   BarChart3,
   Heart,
+  TrendingUp,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
-import { commBoardsApi, commQuestionsApi } from "@/lib/bkend";
+import { commBoardsApi, commQuestionsApi, commLikesApi, activityParticipationsApi } from "@/lib/bkend";
 import { DEMAND_CONTEXT_ID } from "@/features/demand/ensure-demand-board";
 import type { CommQuestion, CommBoard } from "@/types";
 
@@ -113,6 +114,43 @@ export default function DemandConsolePage() {
     const declined = studyItems.filter((q) => stageOf(q) === "declined").length;
     return { total, totalLikes, studyCount, seminarCount, top3, funnel, declined };
   }, [questions]);
+
+  // ── 개설 후 전환 집계 ─────────────────────────────────────────────────────
+  const openedStudies = useMemo(
+    () =>
+      questions.filter(
+        (q) =>
+          q.presenter === "스터디 희망" &&
+          stageOf(q) === "opened" &&
+          !!q.demandPref?.linkedActivityId,
+      ),
+    [questions],
+  );
+
+  const { data: conversionData } = useQuery({
+    queryKey: ["demand-conversion", openedStudies.map((q) => q.id).join(",")],
+    queryFn: async () => {
+      const results = await Promise.all(
+        openedStudies.map(async (q) => {
+          const activityId = q.demandPref!.linkedActivityId!;
+          const [responders, participations] = await Promise.all([
+            commLikesApi.respondersOf("demand-join", q.id),
+            activityParticipationsApi.listByActivity(activityId).then((r) => r.data),
+          ]);
+          const intendedIds = new Set(responders.map((r) => r.userId));
+          const actualCount = participations.filter((p) => intendedIds.has(p.userId)).length;
+          return {
+            questionId: q.id,
+            topic: q.body ?? "",
+            intendedCount: responders.length,
+            actualCount,
+          };
+        }),
+      );
+      return results;
+    },
+    enabled: openedStudies.length > 0,
+  });
 
   // ── CSV 내보내기 ──────────────────────────────────────────────────────────
   function exportCsv() {
@@ -237,6 +275,69 @@ export default function DemandConsolePage() {
           ))}
         </div>
       </div>
+
+      {/* ── 개설 후 전환 집계 ───────────────────────────────────────────────── */}
+      {openedStudies.length > 0 && (
+        <div className="rounded-2xl border bg-card p-4">
+          <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <TrendingUp size={14} className="text-primary" />
+            개설 후 전환
+          </p>
+          {!conversionData ? (
+            <div className="flex justify-center py-4">
+              <Loader2 className="animate-spin text-muted-foreground" size={18} />
+            </div>
+          ) : (
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b text-left text-xs font-semibold text-muted-foreground">
+                    <th className="pb-2 pr-3 font-semibold">주제</th>
+                    <th className="pb-2 pr-3 font-semibold">참여 의사</th>
+                    <th className="pb-2 pr-3 font-semibold">실참여</th>
+                    <th className="pb-2 font-semibold">전환율</th>
+                  </tr>
+                </thead>
+                <tbody className="divide-y">
+                  {conversionData.map((row) => {
+                    const rate =
+                      row.intendedCount === 0
+                        ? null
+                        : Math.round((row.actualCount / row.intendedCount) * 100);
+                    return (
+                      <tr key={row.questionId} className="hover:bg-muted/30">
+                        <td className="py-2.5 pr-3 font-medium text-foreground">
+                          {row.topic}
+                        </td>
+                        <td className="py-2.5 pr-3 tabular-nums text-foreground">
+                          {row.intendedCount === 0 ? "—" : `${row.intendedCount}명`}
+                        </td>
+                        <td className="py-2.5 pr-3 tabular-nums text-foreground">
+                          {row.intendedCount === 0 ? "—" : `${row.actualCount}명`}
+                        </td>
+                        <td className="py-2.5 tabular-nums">
+                          {rate === null ? (
+                            <span className="text-xs text-muted-foreground">데이터 부족</span>
+                          ) : (
+                            <span
+                              className={cn(
+                                "font-semibold",
+                                rate >= 50 ? "text-success" : "text-primary",
+                              )}
+                            >
+                              {rate}%
+                            </span>
+                          )}
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* ── 필터 탭 ────────────────────────────────────────────────────────── */}
       <div className="flex gap-0 border-b">
