@@ -77,6 +77,7 @@ import LearningEffectCard from "@/features/mypage/LearningEffectCard";
 import ReadingResearchLoopCard from "@/features/mypage/ReadingResearchLoopCard";
 import DefensePracticeTrendCard from "@/features/mypage/DefensePracticeTrendCard";
 import ContinueReadingCard from "@/features/mypage/ContinueReadingCard";
+import DemandInterestCard from "@/features/mypage/DemandInterestCard";
 import MyActivityHub from "@/components/mypage/MyActivityHub";
 import ThesisProgressWidget from "@/features/research/ThesisProgressWidget";
 import GraduationChecklistCard from "@/features/mypage/GraduationChecklistCard";
@@ -653,6 +654,9 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
 
               {/* 러닝 가이드 이어읽기 (v16 H3) — 읽던 가이드 리텐션 훅 (본인만, 진행 있을 때만) */}
               {isSelf && !readOnly && <ContinueReadingCard />}
+
+              {/* 내가 관심 밝힌 수요 (v16 H4) — question/demand-join 반응 수요 단계 추적 (본인만, 반응 있을 때만) */}
+              {isSelf && !readOnly && <DemandInterestCard userId={userId} />}
 
               {/* 내 암기카드 — 진단 오답 복습(뒤집기·간격반복). 카드가 있을 때만 노출 (본인만) */}
               {isSelf && !readOnly && flashcardTotal > 0 && (

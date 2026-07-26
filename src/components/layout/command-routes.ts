@@ -11,7 +11,7 @@
 import {
   Compass, LayoutDashboard, User, Sparkles, FlaskConical, Shield,
   GraduationCap, BookOpen, Calendar, Presentation, FolderKanban, Users,
-  Microscope, Lightbulb, ClipboardCheck, Handshake, Library, Megaphone,
+  Microscope, Lightbulb, ClipboardCheck, ClipboardList, Handshake, Library, Megaphone,
   MessageSquare, FileText, Newspaper, Images, Image as ImageIcon, Network,
   Trophy, HelpCircle, Settings, Bell, NotebookPen, Download, Target,
   Building2, FlaskRound, ScrollText, Award, BookMarked, Palette, Blocks,
@@ -97,6 +97,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
   // ── 학술 활동 ──
   { key: "r:activities", group: "학술 활동", label: "활동 소개", href: "/activities", icon: Users, keywords: "학술활동 활동 activities 소개", visibility: "both" },
   { key: "r:activities-studies", group: "학술 활동", label: "스터디", href: "/activities/studies", icon: BookOpen, keywords: "스터디 study 모임 공부", visibility: "both" },
+  { key: "r:demand-survey", group: "학술 활동", label: "스터디·세미나 수요조사", sub: "개설 희망 주제 등록·현황 확인", href: "/activities/studies?tab=demand", icon: ClipboardList, keywords: "수요조사 수요 조사 개설 희망 스터디 세미나 demand survey 관심있어요 참여할래요", visibility: "auth" },
   { key: "r:activities-projects", group: "학술 활동", label: "프로젝트", href: "/activities/projects", icon: FolderKanban, keywords: "프로젝트 project 연구 과제", visibility: "both" },
   { key: "r:activities-external", group: "학술 활동", label: "대외 학술대회", href: "/activities/external", icon: Presentation, keywords: "대외 학술대회 external 외부 컨퍼런스", visibility: "both" },
   { key: "r:seminars", group: "학술 활동", label: "세미나", href: "/seminars", icon: Presentation, keywords: "세미나 seminar 강연 특강", visibility: "both" },
@@ -111,6 +112,7 @@ export const COMMAND_ROUTES: CommandRoute[] = [
   { key: "r:progress-meetings", group: "학술 활동", label: "진도 미팅", sub: "스터디·프로젝트 진도", href: "/progress-meetings", icon: Target, keywords: "진도 미팅 progress meeting 면담 지도 스터디 프로젝트", visibility: "auth" },
   { key: "r:research", group: "연구 · 아카이브", label: "연세교육공학 연구 분석", href: "/research", icon: Microscope, keywords: "연구 분석 키워드 계보 트렌드 research analysis", visibility: "both" },
   { key: "r:alumni-thesis", group: "연구 · 아카이브", label: "졸업생 학위논문", href: "/alumni/thesis", icon: GraduationCap, keywords: "졸업생 학위논문 alumni thesis 선배 논문", visibility: "both" },
+  { key: "r:learning-guides", group: "연구 · 아카이브", label: "러닝 가이드", sub: "학습 경로 가이드 북", href: "/learning-guides", icon: BookOpen, keywords: "러닝 가이드 learning guide 학습 가이드 북 경로 컬렉션", visibility: "auth" },
   { key: "r:archive", group: "연구 · 아카이브", label: "교육공학 아카이브", href: "/archive", icon: Library, keywords: "아카이브 개념 변인 측정도구 archive 이론", visibility: "both" },
   { key: "r:archive-concept", group: "연구 · 아카이브", label: "개념 라이브러리", sub: "이론·구성개념", href: "/archive/concept", icon: Lightbulb, keywords: "개념 concept 이론 구성개념 자기효능감 학습몰입 라이브러리", visibility: "both" },
   { key: "r:archive-variable", group: "연구 · 아카이브", label: "변인 라이브러리", sub: "측정 가능한 단위", href: "/archive/variable", icon: Target, keywords: "변인 variable 독립변인 종속변인 인지적 정의적 행동적 라이브러리", visibility: "both" },
