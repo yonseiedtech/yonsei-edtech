@@ -36,6 +36,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { commQuestionsApi, activitiesApi, commLikesApi } from "@/lib/bkend";
+import { notifyStudyOpened } from "@/features/notifications/notify";
 import type { CommQuestion } from "@/types";
 
 type Stage = "reviewing" | "leader" | "designing" | "opened";
@@ -163,14 +164,24 @@ export default function StudyLaunchPanel({ question, joinCount, open, onClose, o
         createdAt: nowIso,
         updatedAt: nowIso,
       });
+      const activityId = (created as { id: string }).id;
       await commQuestionsApi.update(question.id, {
         demandPref: {
           ...pref,
           status: "opened",
-          linkedActivityId: (created as { id: string }).id,
+          linkedActivityId: activityId,
           statusNote: "수요조사에서 스터디로 개설되었습니다. 참가자 모집이 시작됩니다.",
         },
       });
+      // 참여 희망 회원에게 개설 알림 (자동 등록 아님 — 신청 유도) · 개설 흐름 비블로킹
+      try {
+        const title = question.body.slice(0, 40);
+        await Promise.all(
+          responders.map((r) => notifyStudyOpened(r.userId, title, activityId)),
+        );
+      } catch {
+        // 알림 실패는 개설을 막지 않는다
+      }
     },
     onSuccess: () => {
       toast.success("스터디를 개설했습니다! 참가자 모집이 시작됩니다.");

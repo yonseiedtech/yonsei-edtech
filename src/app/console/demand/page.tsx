@@ -33,6 +33,29 @@ const FILTER_TABS: { key: FilterTab; label: string }[] = [
   { key: "세미나 희망", label: "세미나" },
 ];
 
+type DemandStage = "collecting" | "reviewing" | "leader" | "designing" | "opened" | "declined";
+const STAGE_LABELS: Record<DemandStage, string> = {
+  collecting: "수집중",
+  reviewing: "검토중",
+  leader: "모임장",
+  designing: "설계중",
+  opened: "개설됨",
+  declined: "보류",
+};
+/** 개설 퍼널 순서(보류 제외) */
+const FUNNEL_ORDER: DemandStage[] = ["collecting", "reviewing", "leader", "designing", "opened"];
+function stageOf(q: CommQuestion): DemandStage {
+  return (q.demandPref?.status as DemandStage | undefined) ?? "collecting";
+}
+const STAGE_BADGE: Record<DemandStage, string> = {
+  collecting: "bg-muted text-muted-foreground",
+  reviewing: "bg-primary/10 text-primary",
+  leader: "bg-primary/10 text-primary",
+  designing: "bg-primary/10 text-primary",
+  opened: "bg-success/10 text-success",
+  declined: "bg-muted text-muted-foreground",
+};
+
 /** 수식 인젝션 방어 — HackathonDdayConsole 패턴 동일 */
 function escapeCell(v: string): string {
   const flat = v.replace(/\r?\n/g, " ");
@@ -78,7 +101,17 @@ export default function DemandConsolePage() {
     const top3 = [...questions]
       .sort((a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0))
       .slice(0, 3);
-    return { total, totalLikes, studyCount, seminarCount, top3 };
+    // 스터디 개설 퍼널 단계별 카운트
+    const studyItems = questions.filter((q) => q.presenter === "스터디 희망");
+    const funnel = FUNNEL_ORDER.reduce(
+      (acc, s) => {
+        acc[s] = studyItems.filter((q) => stageOf(q) === s).length;
+        return acc;
+      },
+      {} as Record<DemandStage, number>,
+    );
+    const declined = studyItems.filter((q) => stageOf(q) === "declined").length;
+    return { total, totalLikes, studyCount, seminarCount, top3, funnel, declined };
   }, [questions]);
 
   // ── CSV 내보내기 ──────────────────────────────────────────────────────────
@@ -172,6 +205,39 @@ export default function DemandConsolePage() {
         )}
       </div>
 
+      {/* ── 스터디 개설 퍼널 ──────────────────────────────────────────────── */}
+      <div className="rounded-2xl border bg-card p-4">
+        <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
+          <BarChart3 size={14} className="text-primary" />
+          스터디 개설 퍼널
+          {summary.declined > 0 && (
+            <span className="ml-1 text-[11px] font-normal text-muted-foreground">
+              · 보류 {summary.declined}
+            </span>
+          )}
+        </p>
+        <div className="flex items-stretch gap-1.5 overflow-x-auto">
+          {FUNNEL_ORDER.map((s, i) => (
+            <div key={s} className="flex items-center gap-1.5">
+              <div
+                className={cn(
+                  "flex min-w-[68px] flex-col items-center rounded-xl border px-3 py-2",
+                  s === "opened" && "border-success/30",
+                )}
+              >
+                <span className={cn("text-xl font-bold tabular-nums", s === "opened" ? "text-success" : "text-foreground")}>
+                  {summary.funnel[s] || 0}
+                </span>
+                <span className="text-[10px] text-muted-foreground">{STAGE_LABELS[s]}</span>
+              </div>
+              {i < FUNNEL_ORDER.length - 1 && (
+                <span className="text-muted-foreground/40" aria-hidden>›</span>
+              )}
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* ── 필터 탭 ────────────────────────────────────────────────────────── */}
       <div className="flex gap-0 border-b">
         {FILTER_TABS.map(({ key, label }) => (
@@ -221,6 +287,7 @@ export default function DemandConsolePage() {
                 <th className="pb-2 pr-3 font-semibold">공감</th>
                 <th className="pb-2 pr-3 font-semibold">주제</th>
                 <th className="pb-2 pr-3 font-semibold">유형</th>
+                <th className="pb-2 pr-3 font-semibold">단계</th>
                 <th className="pb-2 pr-3 font-semibold">형태</th>
                 <th className="pb-2 pr-3 font-semibold">메모</th>
                 <th className="pb-2 pr-3 font-semibold">작성자</th>
@@ -245,6 +312,11 @@ export default function DemandConsolePage() {
                       <Badge variant="secondary" className="text-[10px]">
                         {q.presenter ?? "기타"}
                       </Badge>
+                    </td>
+                    <td className="py-2.5 pr-3">
+                      <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium", STAGE_BADGE[stageOf(q)])}>
+                        {STAGE_LABELS[stageOf(q)]}
+                      </span>
                     </td>
                     <td className="py-2.5 pr-3 text-muted-foreground">
                       {pref?.format ?? "—"}

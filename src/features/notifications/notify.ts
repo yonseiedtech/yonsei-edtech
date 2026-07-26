@@ -262,6 +262,21 @@ export function notifyTimelineAssigned(
   );
 }
 
+/**
+ * 스터디 개설 알림 — 수요조사 파이프라인에서 스터디가 개설된 시점,
+ * "참여할래요"로 의사를 밝힌 회원에게 발송. networking_reminder 타입 재사용(최소 diff).
+ * 자동 등록이 아니라 안내이므로, 회원이 직접 활동 페이지에서 신청하도록 링크로 연결한다.
+ */
+export function notifyStudyOpened(userId: string, studyTitle: string, activityId: string) {
+  return create(
+    userId,
+    "networking_reminder",
+    "관심 스터디가 개설되었습니다 🎉",
+    `참여를 희망하신 "${studyTitle}" 스터디가 개설되었습니다. 지금 참가 신청할 수 있어요.`,
+    `/activities/studies/${activityId}`,
+  );
+}
+
 export function notifySeminarReminder(
   userId: string,
   seminarTitle: string,
