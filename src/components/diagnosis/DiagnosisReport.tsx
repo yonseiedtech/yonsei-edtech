@@ -27,6 +27,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { flashcardsApi } from "@/lib/bkend";
 import DiagnosisLoopSteps from "@/components/diagnosis/DiagnosisLoopSteps";
+import DiagnosisGuideBridge from "@/components/diagnosis/DiagnosisGuideBridge";
 import {
   conceptDetailHref,
   conceptMatchesTheory,
@@ -436,6 +437,9 @@ export default function DiagnosisReport({
           </CardContent>
         </Card>
       )}
+
+      {/* 약점 영역 → 러닝 가이드/스터디 후속 학습 브릿지 (H2) */}
+      <DiagnosisGuideBridge areaScores={areaScores} />
 
       {/* 진단↔학습↔증명 순환 안내 — 약점 학습 자산이 '학습' 단계에 편입됨을 시각화 */}
       <DiagnosisLoopSteps active="learn" className="mt-6" />
