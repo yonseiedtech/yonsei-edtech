@@ -196,4 +196,20 @@ export const guideProgressApi = {
       method: "POST",
       body: JSON.stringify({ guideId, lastPageId }),
     }),
+
+  /** 내 전체 진행 목록 — 마이페이지 "이어읽기" 위젯용 */
+  listMine: async (): Promise<
+    { guideId: string; readPageIds: string[]; lastPageId: string | null; updatedAt: string }[]
+  > => {
+    const token = await getToken().catch(() => null);
+    if (!token) return [];
+    const res = await fetch("/api/guide-progress?mine=true", {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (!res.ok) return [];
+    const json = (await res.json()) as {
+      data?: { guideId: string; readPageIds: string[]; lastPageId: string | null; updatedAt: string }[];
+    };
+    return json.data ?? [];
+  },
 };

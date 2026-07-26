@@ -76,6 +76,7 @@ import DiagnosticWeakConceptPath from "@/components/mypage/DiagnosticWeakConcept
 import LearningEffectCard from "@/features/mypage/LearningEffectCard";
 import ReadingResearchLoopCard from "@/features/mypage/ReadingResearchLoopCard";
 import DefensePracticeTrendCard from "@/features/mypage/DefensePracticeTrendCard";
+import ContinueReadingCard from "@/features/mypage/ContinueReadingCard";
 import MyActivityHub from "@/components/mypage/MyActivityHub";
 import ThesisProgressWidget from "@/features/research/ThesisProgressWidget";
 import GraduationChecklistCard from "@/features/mypage/GraduationChecklistCard";
@@ -649,6 +650,9 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
 
               {/* 심사 연습 추세 (M5) — 논문 심사 연습 회차별 평균 점수 시계열 (본인만) */}
               {isSelf && !readOnly && <DefensePracticeTrendCard userId={userId} />}
+
+              {/* 러닝 가이드 이어읽기 (v16 H3) — 읽던 가이드 리텐션 훅 (본인만, 진행 있을 때만) */}
+              {isSelf && !readOnly && <ContinueReadingCard />}
 
               {/* 내 암기카드 — 진단 오답 복습(뒤집기·간격반복). 카드가 있을 때만 노출 (본인만) */}
               {isSelf && !readOnly && flashcardTotal > 0 && (
