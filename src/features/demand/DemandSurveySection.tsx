@@ -222,7 +222,7 @@ export default function DemandSurveySection({ kind }: Props) {
 
   const joinMutation = useMutation({
     mutationFn: (questionId: string) =>
-      commLikesApi.togglePlain(user!.id, DEMAND_JOIN, questionId),
+      commLikesApi.togglePlain(user!.id, DEMAND_JOIN, questionId, user!.name ?? ""),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["demand-joins"] });
       qc.invalidateQueries({ queryKey: ["demand-liked"] });

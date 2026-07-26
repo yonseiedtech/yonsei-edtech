@@ -10,7 +10,7 @@
  */
 
 import { useState } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   UserCheck,
   PencilRuler,
@@ -18,6 +18,7 @@ import {
   Check,
   Loader2,
   ArrowRight,
+  Users,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -34,7 +35,7 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
-import { commQuestionsApi, activitiesApi } from "@/lib/bkend";
+import { commQuestionsApi, activitiesApi, commLikesApi } from "@/lib/bkend";
 import type { CommQuestion } from "@/types";
 
 type Stage = "reviewing" | "leader" | "designing" | "opened";
@@ -71,6 +72,13 @@ export default function StudyLaunchPanel({ question, joinCount, open, onClose, o
   const stageIdx = STAGE_INDEX[status] ?? 0;
   const isLeader = !!user && pref.leaderId === user.id;
   const canManage = isStaff || isLeader;
+
+  // 참여 의사 회원 명단 (모임장·운영진이 초대 대상으로 확인) — 자동 등록 아님
+  const { data: responders = [] } = useQuery({
+    queryKey: ["demand-responders", question.id],
+    queryFn: () => commLikesApi.respondersOf("demand-join", question.id),
+    enabled: open && canManage,
+  });
 
   // 설계 폼 상태
   const [startDate, setStartDate] = useState(pref.design?.startDate ?? "");
@@ -220,6 +228,28 @@ export default function StudyLaunchPanel({ question, joinCount, open, onClose, o
               <> · 모임장 <span className="font-semibold text-foreground">{pref.leaderName}</span></>
             )}
           </div>
+
+          {/* 참여 의사 회원 명단 (모임장·운영진 전용 — 초대 대상, 자동 등록 아님) */}
+          {canManage && responders.length > 0 && (
+            <div className="rounded-lg border p-3">
+              <p className="mb-1.5 flex items-center gap-1 text-xs font-medium text-foreground">
+                <Users size={12} /> 참여 희망 명단 <span className="text-muted-foreground">({responders.length})</span>
+              </p>
+              <div className="flex flex-wrap gap-1.5">
+                {responders.map((r) => (
+                  <span
+                    key={r.userId}
+                    className="rounded-full border bg-card px-2 py-0.5 text-[11px] text-foreground"
+                  >
+                    {r.userName || "회원"}
+                  </span>
+                ))}
+              </div>
+              <p className="mt-1.5 text-[10px] text-muted-foreground">
+                개설 후 이 회원들에게 참여를 안내하세요. 자동 등록되지 않습니다.
+              </p>
+            </div>
+          )}
 
           {/* 단계별 액션 */}
           {status === "opened" ? (

@@ -129,6 +129,8 @@ export interface CommLike {
   userId: string;
   targetType: CommLikeTarget;
   targetId: string;
+  /** 일반 반응(togglePlain, 예: demand-join)에서 명단 표시용으로 저장 */
+  userName?: string;
   createdAt?: string;
 }
 

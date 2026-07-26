@@ -4543,6 +4543,7 @@ export const commLikesApi = {
     userId: string,
     targetType: string,
     targetId: string,
+    userName?: string,
   ): Promise<boolean> => {
     const id = `${userId}__${targetType}__${targetId}`;
     const ref = doc(db, "comm_likes", id);
@@ -4551,7 +4552,13 @@ export const commLikesApi = {
       await deleteDoc(ref);
       return false;
     }
-    await setDoc(ref, { userId, targetType, targetId, createdAt: serverTimestamp() });
+    await setDoc(ref, {
+      userId,
+      targetType,
+      targetId,
+      ...(userName ? { userName } : {}),
+      createdAt: serverTimestamp(),
+    });
     return true;
   },
   /**
@@ -4568,6 +4575,21 @@ export const commLikesApi = {
       counts[l.targetId] = (counts[l.targetId] ?? 0) + 1;
     }
     return counts;
+  },
+  /**
+   * 특정 targetType·targetId 반응자 명단(userId·userName).
+   * 예: "demand-join" 스터디 수요의 참여 의사 회원 명단.
+   */
+  respondersOf: async (
+    targetType: string,
+    targetId: string,
+  ): Promise<{ userId: string; userName?: string }[]> => {
+    const res = await dataApi.list<CommLike>("comm_likes", {
+      "filter[targetType]": targetType,
+      "filter[targetId]": targetId,
+      limit: 500,
+    });
+    return res.data.map((l) => ({ userId: l.userId, userName: l.userName }));
   },
 };
 
