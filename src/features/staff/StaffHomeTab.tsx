@@ -17,6 +17,7 @@ import {
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
+import Link from "next/link";
 import {
   useStaffProjects,
   useAllStaffTasks,
@@ -26,6 +27,7 @@ import {
   TASK_STATUS_CHIP,
   type StaffTask,
 } from "./staff-store";
+import { useStaffReviewQueue } from "./useStaffReviewQueue";
 
 interface Props {
   onGoTab: (tab: string) => void;
@@ -43,6 +45,8 @@ export default function StaffHomeTab({ onGoTab }: Props) {
   const { data: projects = [] } = useStaffProjects();
   const { data: allTasks = [] } = useAllStaffTasks();
   const { data: notices = [] } = useStaffNotices();
+  const reviewItems = useStaffReviewQueue(!!user);
+  const reviewPending = reviewItems.filter((r) => r.count > 0);
 
   const projectName = useMemo(() => {
     const m: Record<string, string> = {};
@@ -120,6 +124,34 @@ export default function StaffHomeTab({ onGoTab }: Props) {
             <div className="h-full rounded-full bg-primary transition-all" style={{ width: `${snapshot.pct}%` }} />
           </div>
         </div>
+      )}
+
+      {/* ── 처리 대기 (콘솔 검수 큐 실데이터) ── */}
+      {reviewPending.length > 0 && (
+        <section>
+          <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <AlertTriangle size={15} className="text-warning" /> 처리 대기
+          </h3>
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-3">
+            {reviewPending.map((r) => (
+              <Link
+                key={r.href}
+                href={r.href}
+                className="flex items-center justify-between rounded-xl border border-warning/25 bg-warning/5 px-3 py-3 transition-colors hover:bg-warning/10"
+              >
+                <span className="min-w-0">
+                  <span className="block truncate text-sm font-medium text-foreground">{r.label}</span>
+                  <span className="flex items-center gap-0.5 text-[11px] text-muted-foreground">
+                    처리하기 <ArrowRight size={11} />
+                  </span>
+                </span>
+                <span className="ml-2 shrink-0 rounded-full bg-warning/15 px-2 py-0.5 text-sm font-bold tabular-nums text-warning">
+                  {r.count}
+                </span>
+              </Link>
+            ))}
+          </div>
+        </section>
       )}
 
       {/* ── 내 할당 업무 ── */}
