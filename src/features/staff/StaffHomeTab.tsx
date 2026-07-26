@@ -22,6 +22,7 @@ import {
   useStaffProjects,
   useAllStaffTasks,
   useStaffNotices,
+  useStaffUiStore,
   getDueDateStatus,
   TASK_STATUS_LABELS,
   TASK_STATUS_CHIP,
@@ -42,6 +43,7 @@ function formatDate(iso: string): string {
 
 export default function StaffHomeTab({ onGoTab }: Props) {
   const { user } = useAuthStore();
+  const { setFocusProjectId } = useStaffUiStore();
   const { data: projects = [] } = useStaffProjects();
   const { data: allTasks = [] } = useAllStaffTasks();
   const { data: notices = [] } = useStaffNotices();
@@ -180,7 +182,10 @@ export default function StaffHomeTab({ onGoTab }: Props) {
                 <li key={t.id}>
                   <button
                     type="button"
-                    onClick={() => onGoTab("projects")}
+                    onClick={() => {
+                      setFocusProjectId(t.projectId);
+                      onGoTab("projects");
+                    }}
                     className="flex w-full items-center gap-3 rounded-xl border bg-card px-3 py-2.5 text-left transition-colors hover:bg-muted/30"
                   >
                     <span className={cn("rounded-full px-2 py-0.5 text-[10px] font-medium shrink-0", TASK_STATUS_CHIP[t.status])}>

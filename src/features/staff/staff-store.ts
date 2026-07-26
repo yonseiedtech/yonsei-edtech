@@ -1,5 +1,6 @@
 "use client";
 
+import { create } from "zustand";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dataApi } from "@/lib/bkend";
 
@@ -318,3 +319,15 @@ export const PROJECT_STATUS_CHIP: Record<ProjectStatus, string> = {
 };
 
 export const TASK_STATUS_ORDER: TaskStatus[] = ["todo", "doing", "review", "done"];
+
+// ── UI State (딥링크용 경량 공유 상태) ─────────────────────────────────────────
+
+interface StaffUiState {
+  focusProjectId: string | null;
+  setFocusProjectId: (id: string | null) => void;
+}
+
+export const useStaffUiStore = create<StaffUiState>((set) => ({
+  focusProjectId: null,
+  setFocusProjectId: (focusProjectId) => set({ focusProjectId }),
+}));

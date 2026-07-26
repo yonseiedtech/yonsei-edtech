@@ -20,6 +20,7 @@ import {
   useCreateTask,
   useUpdateTask,
   useDeleteTask,
+  useStaffUiStore,
   getDueDateStatus,
   TASK_STATUS_LABELS,
   TASK_STATUS_CHIP,
@@ -818,6 +819,15 @@ export default function StaffProjectsTab() {
   const { data: allTasks = [] } = useAllStaffTasks();
   const [selectedProject, setSelectedProject] = useState<StaffProject | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
+  const { focusProjectId, setFocusProjectId } = useStaffUiStore();
+
+  // 홈 탭 딥링크: focusProjectId가 있으면 해당 프로젝트를 우선 표시 (순수 파생, setState-in-effect 회피)
+  const effectiveProject = useMemo(() => {
+    if (focusProjectId && !isLoading) {
+      return projects.find((p) => p.id === focusProjectId) ?? selectedProject;
+    }
+    return selectedProject;
+  }, [focusProjectId, isLoading, projects, selectedProject]);
 
   const statsByProject = useMemo(() => {
     const grouped = new Map<string, StaffTask[]>();
@@ -831,11 +841,14 @@ export default function StaffProjectsTab() {
     return map;
   }, [allTasks]);
 
-  if (selectedProject) {
+  if (effectiveProject) {
     return (
       <KanbanBoard
-        project={selectedProject}
-        onBack={() => setSelectedProject(null)}
+        project={effectiveProject}
+        onBack={() => {
+          setSelectedProject(null);
+          setFocusProjectId(null);
+        }}
       />
     );
   }
