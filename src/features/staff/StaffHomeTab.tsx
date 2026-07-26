@@ -14,6 +14,8 @@ import {
   AlertTriangle,
   CircleCheck,
   ArrowRight,
+  TrendingUp,
+  Heart,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -29,6 +31,21 @@ import {
   type StaffTask,
 } from "./staff-store";
 import { useStaffReviewQueue } from "./useStaffReviewQueue";
+import { useOpeningDemands, type OpeningDemandStage } from "./useOpeningDemands";
+
+/** 개설 대기 단계 라벨 — demand/page.tsx 에서 로컬 복사 */
+const OPENING_STAGE_LABELS: Record<OpeningDemandStage, string> = {
+  reviewing: "검토중",
+  leader: "모임장",
+  designing: "설계중",
+};
+
+/** 개설 대기 단계 뱃지 — 브랜드 시맨틱 토큰만 사용 */
+const OPENING_STAGE_BADGE: Record<OpeningDemandStage, string> = {
+  reviewing: "bg-primary/10 text-primary",
+  leader: "bg-primary/10 text-primary",
+  designing: "bg-primary/10 text-primary",
+};
 
 interface Props {
   onGoTab: (tab: string) => void;
@@ -49,6 +66,7 @@ export default function StaffHomeTab({ onGoTab }: Props) {
   const { data: notices = [] } = useStaffNotices();
   const reviewItems = useStaffReviewQueue(!!user);
   const reviewPending = reviewItems.filter((r) => r.count > 0);
+  const openingDemands = useOpeningDemands(!!user);
 
   const projectName = useMemo(() => {
     const m: Record<string, string> = {};
@@ -153,6 +171,49 @@ export default function StaffHomeTab({ onGoTab }: Props) {
               </Link>
             ))}
           </div>
+        </section>
+      )}
+
+      {/* ── 개설 대기 수요 미니 리스트 ── */}
+      {openingDemands.length > 0 && (
+        <section>
+          <div className="mb-2 flex items-center justify-between">
+            <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+              <TrendingUp size={15} className="text-primary" /> 개설 대기 수요
+            </h3>
+            <Link
+              href="/console/demand"
+              className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground"
+            >
+              전체 보기 <ArrowRight size={12} />
+            </Link>
+          </div>
+          <ul className="space-y-1.5">
+            {openingDemands.slice(0, 3).map((item) => (
+              <li key={item.id}>
+                <Link
+                  href="/console/demand"
+                  className="flex w-full items-center gap-3 rounded-xl border bg-card px-3 py-2.5 transition-colors hover:bg-muted/30"
+                >
+                  <span
+                    className={cn(
+                      "shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                      OPENING_STAGE_BADGE[item.status],
+                    )}
+                  >
+                    {OPENING_STAGE_LABELS[item.status]}
+                  </span>
+                  <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">
+                    {item.body}
+                  </span>
+                  <span className="flex shrink-0 items-center gap-0.5 text-[11px] text-muted-foreground">
+                    <Heart size={11} />
+                    {item.likeCount}
+                  </span>
+                </Link>
+              </li>
+            ))}
+          </ul>
         </section>
       )}
 
