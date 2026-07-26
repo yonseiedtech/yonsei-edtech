@@ -1,12 +1,18 @@
 "use client";
 
-import { Megaphone, FolderKanban, LayoutDashboard } from "lucide-react";
+"use client";
+
+import { useState } from "react";
+import { Home, Megaphone, FolderKanban, LayoutDashboard } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import StaffHomeTab from "@/features/staff/StaffHomeTab";
 import StaffNoticesTab from "@/features/staff/StaffNoticesTab";
 import StaffProjectsTab from "@/features/staff/StaffProjectsTab";
 import StaffConsoleTab from "@/features/staff/StaffConsoleTab";
 
 export default function StaffPage() {
+  const [tab, setTab] = useState("home");
+
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
       <div className="mb-6">
@@ -16,8 +22,12 @@ export default function StaffPage() {
         </p>
       </div>
 
-      <Tabs defaultValue="notices">
+      <Tabs value={tab} onValueChange={setTab}>
         <TabsList className="mb-6 w-full">
+          <TabsTrigger value="home" className="flex items-center gap-1.5">
+            <Home size={15} />
+            홈
+          </TabsTrigger>
           <TabsTrigger value="notices" className="flex items-center gap-1.5">
             <Megaphone size={15} />
             운영진 공지
@@ -31,6 +41,10 @@ export default function StaffPage() {
             콘솔 바로가기
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent value="home" className="pt-2">
+          <StaffHomeTab onGoTab={setTab} />
+        </TabsContent>
 
         <TabsContent value="notices" className="pt-2">
           <StaffNoticesTab />
