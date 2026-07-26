@@ -12,6 +12,7 @@ import PageContainer from "@/components/ui/page-container";
 import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import SimpleMarkdown from "@/features/learning-guides/SimpleMarkdown";
+import GuideRelated from "@/features/learning-guides/GuideRelated";
 import { guidesApi, guideChaptersApi, guidePagesApi, guideProgressApi } from "@/features/learning-guides/api";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type { LearningGuide, GuideChapter, GuidePage, LearningGuideProgress } from "@/types/learning-guide";
@@ -494,6 +495,11 @@ export default function GuideViewerPage() {
                 </Button>
               </Link>
             </div>
+          )}
+
+          {/* M6: 관련 학습 — 태그 매칭 아카이브 개념 + 스터디 칩 */}
+          {guide.tags.length > 0 && (
+            <GuideRelated tags={guide.tags} category={guide.category} />
           )}
         </main>
       </div>
