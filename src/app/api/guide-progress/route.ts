@@ -14,9 +14,39 @@ function tsToIso(v: unknown): string {
   return "";
 }
 
-// ── GET /api/guide-progress?guideId=xxx ──────────────────────────────────────
+// ── GET /api/guide-progress?guideId=xxx | ?mine=true ─────────────────────────
 export async function GET(req: NextRequest) {
   const guideId = req.nextUrl.searchParams.get("guideId");
+  const mine = req.nextUrl.searchParams.get("mine");
+
+  // 내 전체 진행 목록 — 마이페이지 "이어읽기" 위젯용 (복합 인덱스 회피: where 단일 필드 + 메모리 정렬)
+  if (mine) {
+    const user = await verifyAuth(req);
+    if (!user) return Response.json({ data: [] });
+    try {
+      const db = getAdminDb();
+      const snap = await db
+        .collection("learning_guide_progress")
+        .where("userId", "==", user.uid)
+        .get();
+      const list = snap.docs
+        .map((d) => {
+          const raw = d.data() as Record<string, unknown>;
+          return {
+            guideId: (raw.guideId as string) ?? "",
+            readPageIds: Array.isArray(raw.readPageIds) ? (raw.readPageIds as string[]) : [],
+            lastPageId: (raw.lastPageId as string | undefined) ?? null,
+            updatedAt: tsToIso(raw.updatedAt) || String(raw.updatedAt ?? ""),
+          };
+        })
+        .sort((a, b) => b.updatedAt.localeCompare(a.updatedAt));
+      return Response.json({ data: list });
+    } catch (err) {
+      console.error("[guide-progress GET mine]", err);
+      return Response.json({ error: "조회에 실패했습니다." }, { status: 500 });
+    }
+  }
+
   if (!guideId) return Response.json({ error: "guideId가 필요합니다." }, { status: 400 });
 
   const user = await verifyAuth(req);
