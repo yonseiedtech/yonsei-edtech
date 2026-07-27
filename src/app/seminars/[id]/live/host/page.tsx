@@ -34,7 +34,7 @@ export default function SeminarLiveHostPage() {
   const params = useParams();
   const seminarId = String(params.id);
   const { user } = useAuthStore();
-  const { session, loading, startLive, setStatus, gotoSlide, setDeck, setActivePoll } = useLiveSession(seminarId);
+  const { session, startLive, setStatus, gotoSlide, setDeck, setActivePoll } = useLiveSession(seminarId);
 
   const [seminar, setSeminar] = useState<Seminar | null>(null);
   const [decks, setDecks] = useState<SeminarSlideDeck[]>([]);

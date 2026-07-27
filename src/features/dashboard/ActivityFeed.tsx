@@ -71,7 +71,7 @@ export default function ActivityFeed({
       {/* 세로 타임라인 점선 */}
       <div className="absolute left-3.5 top-2 bottom-2 w-px border-l border-dashed border-muted-foreground/30" />
 
-      {recentComments.map((c, idx) => {
+      {recentComments.map((c) => {
         const post = postMap.get(c.postId);
         return (
           <Link

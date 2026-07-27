@@ -211,7 +211,7 @@ function QuestionResultBar({
   );
 }
 
-function AggregationView({ q, agg }: { q: PollQuestion; agg: QuestionAggregation }) {
+function AggregationView({ agg }: { q: PollQuestion; agg: QuestionAggregation }) {
   if (agg.type === "single" || agg.type === "multiple") {
     const max = Math.max(1, ...agg.tally.map((t) => t.count));
     const total = agg.tally.reduce((s, t) => s + t.count, 0);

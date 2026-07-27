@@ -223,7 +223,6 @@ function TaskFormDialog({
 
 function TaskSubmissions({
   taskId,
-  activityId,
 }: {
   taskId: string;
   activityId: string;

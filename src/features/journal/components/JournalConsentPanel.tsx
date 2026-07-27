@@ -21,7 +21,6 @@ export default function JournalConsentPanel({
   article,
   currentUserId,
   isLeader,
-  userMap,
 }: Props) {
   const gate = evaluateConsentGate(article);
   const requestMut = useRequestConsent(article.id);

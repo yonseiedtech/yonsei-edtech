@@ -278,8 +278,8 @@ function IssueRow({ issue }: { issue: import("@/types").ResearchJournalIssue }) 
 }
 
 function AcceptedArticlesSection() {
-  const { data: queue = [] } = useReviewQueue();
-  const { data: issues = [] } = useAllIssues();
+  useReviewQueue();
+  useAllIssues();
   // accepted 상태만 — 호수 배정 대기
   // listForReview 는 submitted + under_review 만 반환하므로 별도 fetch 필요
   // 단순화: queue 에는 accepted 없으므로, 호수에 직접 배정 UI 는 article 페이지에서 처리

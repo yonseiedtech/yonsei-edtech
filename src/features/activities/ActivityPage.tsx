@@ -101,7 +101,7 @@ interface Props {
   demandSection?: React.ReactNode;
 }
 
-export default function ActivityPage({ type, icon, title, subtitle, color, initialActivities, footerSection, demandSection }: Props) {
+export default function ActivityPage({ type, icon, title, subtitle, initialActivities, footerSection, demandSection }: Props) {
   const { user } = useAuthStore();
   const isStaff = isAtLeast(user, "staff");
   const queryClient = useQueryClient();

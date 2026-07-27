@@ -12,7 +12,7 @@ import {
   AlertTriangle, Save, Plus,
 } from "lucide-react";
 import { toast } from "sonner";
-import { useCreateSeminar, useUpdateSeminar, useSeminars } from "./useSeminar";
+import { useCreateSeminar, useSeminars } from "./useSeminar";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useAllMembers } from "@/features/member/useMembers";
 import { createTimeline } from "@/features/seminar-admin/timeline-template";
@@ -59,7 +59,6 @@ export default function SeminarForm() {
   const router = useRouter();
   const { user } = useAuthStore();
   const { createSeminar } = useCreateSeminar();
-  const { updateSeminar: _updateSeminar } = useUpdateSeminar();
   const { seminars: allSeminars } = useSeminars();
   const { members } = useAllMembers();
   const [isOnline, setIsOnline] = useState(false);

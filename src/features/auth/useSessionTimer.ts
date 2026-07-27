@@ -32,7 +32,6 @@ const LOGIN_GRACE_MS = 5000;
 
 export function useSessionTimer() {
   const user = useAuthStore((s) => s.user);
-  const logoutStore = useAuthStore((s) => s.logout);
 
   const [lastActivity, setLastActivity] = useState<number>(() => {
     if (typeof window === "undefined") return Date.now();

@@ -134,12 +134,10 @@ ${activityList || "(없음)"}
 
     const textStream = result.textStream;
     const encoder = new TextEncoder();
-    let fullText = "";
     const dataStream = new ReadableStream({
       async start(controller) {
         try {
           for await (const chunk of textStream) {
-            fullText += chunk;
             controller.enqueue(encoder.encode(`0:${JSON.stringify(chunk)}\n`));
           }
           controller.enqueue(encoder.encode(`e:{"finishReason":"stop","usage":{"promptTokens":0,"completionTokens":0},"isContinued":false}\n`));

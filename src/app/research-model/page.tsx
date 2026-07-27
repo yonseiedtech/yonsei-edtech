@@ -35,7 +35,7 @@ function ResearchModelContent() {
   const queryClient = useQueryClient();
   const [model, setModel] = useState<ResearchModelData>(EMPTY_RESEARCH_MODEL);
   const [saving, setSaving] = useState(false);
-  const [dirty, setDirty] = useState(false);
+  const [, setDirty] = useState(false);
   const [wizardOpen, setWizardOpen] = useState(false);
   const ensureReport = useEnsureResearchReport();
   const updateReport = useUpdateResearchReport();

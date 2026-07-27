@@ -104,12 +104,9 @@ export default function FeesPage() {
   const [paymentFilter, setPaymentFilter] = useState<PaymentFilter>("all");
 
   // 설정 다이얼로그
-  const [showSettings, setShowSettings] = useState(false);
+  const [, setShowSettings] = useState(false);
   const [settingAmount, setSettingAmount] = useState("");
   const [settingDueDate, setSettingDueDate] = useState("");
-
-  // 메모 다이얼로그
-  const [memoDialog, setMemoDialog] = useState<{ paymentId: string; memo: string } | null>(null);
 
   // 엑셀 대조 상태
   const [reconcileExpanded, setReconcileExpanded] = useState(false);

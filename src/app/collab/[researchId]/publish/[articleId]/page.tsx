@@ -1,6 +1,6 @@
 "use client";
 
-import { use, useMemo, useState } from "react";
+import { use, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
 import {
@@ -40,7 +40,6 @@ import JournalConsentPanel from "@/features/journal/components/JournalConsentPan
 import JournalReviewCommentSection from "@/features/journal/components/JournalReviewCommentSection";
 import JournalArticleContentEditor from "@/features/journal/components/JournalArticleContentEditor";
 import { evaluateConsentGate } from "@/features/journal/lib/consent-gate";
-import { canTransitionReviewStatus } from "@/features/journal/lib/article-status";
 import type { ArticleVisibility, User } from "@/types";
 
 interface PageProps {
@@ -129,19 +128,6 @@ function ArticleEditContent({
       return;
     }
     await submitMut.mutateAsync();
-  };
-
-  const handlePublish = async (visibility: ArticleVisibility) => {
-    if (!canTransitionReviewStatus(article.reviewStatus, "published")) {
-      alert("현재 상태에서 발간 전이가 불가합니다 (accepted 상태 필요).");
-      return;
-    }
-    if (article.publicationType !== "journal") {
-      // 워킹 페이퍼·노트 — 호수 없이 자율 publish
-      await publishMut.mutateAsync({ visibility });
-    } else {
-      alert("정식 연구지는 운영진 콘솔에서 호수 배정 후 발간하세요.");
-    }
   };
 
   const handleWorkingPublishShortcut = async (visibility: ArticleVisibility) => {

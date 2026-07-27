@@ -22,7 +22,6 @@ import { parseExcelFile, parseCSVText, extractSheetId, getSheetCsvUrl } from "@/
 import { attendeesApi, profilesApi, registrationsApi } from "@/lib/bkend";
 import { logAudit } from "@/lib/audit";
 import { useAuthStore } from "@/features/auth/auth-store";
-import { useQueryClient } from "@tanstack/react-query";
 import type { SeminarAttendee } from "@/types";
 
 const FORM_COLUMNS = ["이름", "학번", "누적학기", "이메일", "전화번호", "관심분야", "기타 질문사항"];
@@ -288,7 +287,6 @@ function AttendeeRow({ a, onToggleCheckin }: { a: SeminarAttendee; onToggleCheck
 export function SeminarReport({ seminarId, seminarTitle, seminarDate }: { seminarId: string; seminarTitle: string; seminarDate?: string }) {
   const { attendees, refetch: refetchAttendees } = useAttendees(seminarId);
   const { user: currentUser } = useAuthStore();
-  const qc = useQueryClient();
   const excelRef = useRef<HTMLInputElement>(null);
   const [sheetOpen, setSheetOpen] = useState(false);
   const [sheetUrl, setSheetUrl] = useState("");

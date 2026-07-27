@@ -105,7 +105,8 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
     const next = drafts[k];
     if (next.trim() === (p[col] ?? "").trim()) {
       setDrafts((d) => {
-        const { [k]: _omit, ...rest } = d;
+        const rest = { ...d };
+        delete rest[k];
         return rest;
       });
       return;
@@ -128,7 +129,8 @@ export default function LiteratureMatrix({ user, readOnly }: { user: User; readO
       );
       // 성공 후에만 draft 제거 — 실패 시 입력 유지 (QA-v2)
       setDrafts((d) => {
-        const { [k]: _omit, ...rest } = d;
+        const rest = { ...d };
+        delete rest[k];
         return rest;
       });
     } catch {

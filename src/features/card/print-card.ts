@@ -17,7 +17,6 @@ import { BRAND_PALETTE } from "@/features/studio/brand-kit";
 
 /** 1mm → PDF 포인트(pt). @react-pdf Page size 는 pt 단위. */
 export const MM_TO_PT = 2.834645669;
-const mm = (v: number) => v * MM_TO_PT;
 
 /** 인쇄 규격 (mm) */
 export const PRINT_SPEC = {

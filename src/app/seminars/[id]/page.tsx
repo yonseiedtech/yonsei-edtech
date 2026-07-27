@@ -2,7 +2,6 @@
 
 import { use, useState, useCallback } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { useSeminar, useUpdateSeminar, useToggleAttendance, useAttendee, useCheckinStats, useWaitlist, useJoinWaitlist, useCancelWaitlist } from "@/features/seminar/useSeminar";
 import { registrationsApi } from "@/lib/bkend";
@@ -236,7 +235,6 @@ ${seminar.description}
 }
 
 function SeminarDetail({ id }: { id: string }) {
-  const router = useRouter();
   const { user } = useAuthStore();
   const seminar = useSeminar(id);
   const { updateSeminar } = useUpdateSeminar();

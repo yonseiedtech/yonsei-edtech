@@ -75,11 +75,6 @@ const CATEGORIES: CourseCategory[] = [
   "other",
 ];
 const MAJOR_CATS = new Set<CourseCategory>(["major_required", "major_elective"]);
-const ELECTIVE_CATS = new Set<CourseCategory>([
-  "teaching_general",
-  "other_major",
-  "general",
-]);
 
 function categoryRank(c: CourseCategory): number {
   const i = CATEGORIES.indexOf(c);

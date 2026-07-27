@@ -34,7 +34,6 @@ export default function JournalArticleView({
   article,
   issue,
   isAuthenticated,
-  currentUserId,
 }: Props) {
   const isPublished = article.reviewStatus === "published";
   const isPublic = article.visibility === "public" && isPublished;

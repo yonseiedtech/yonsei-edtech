@@ -29,8 +29,9 @@ import { execSync } from "node:child_process";
 // 2026-07-21 no-unescaped-entities 13파일 수정 후: 392 → 360
 // 2026-07-23 hang 에이전트 정리(M7 되돌림)·러닝 가이드 경고 해소 후: 273 → 270
 // 2026-07-23 M1 미사용 import 정리(calendar·journal·courses) 후: 270 → 263
+// 2026-07-27 v17-H4 미사용 코드 정리(no-unused-vars 49→4·33파일) 후: 212 → 167
 // ─────────────────────────────────────────────────────────────
-const CEILING = 212;
+const CEILING = 167;
 
 // ── 1. ESLint 실행 (JSON 포맷) ───────────────────────────────
 // execSync 사용 — ESLint 가 error 시 exit 1 을 던지므로 catch 로 stdout 수집.

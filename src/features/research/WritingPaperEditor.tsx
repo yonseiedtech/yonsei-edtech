@@ -3009,7 +3009,7 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
               </span>
             </div>
             <div className="mt-2 space-y-2">
-              {overviewSection.paragraphs.map((p, pi) => (
+              {overviewSection.paragraphs.map((p) => (
                 <div key={p.id} className="group relative">
                   <Textarea
                     className="min-h-[64px] font-sans text-base leading-relaxed"

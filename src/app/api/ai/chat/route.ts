@@ -7,8 +7,6 @@ import { checkRateLimit, getClientId } from "@/lib/rate-limit";
 
 export const maxDuration = 30;
 
-const DEFAULT_GREETING = "안녕하세요! 연세교육공학회 챗봇입니다. 궁금한 점이 있으시면 편하게 질문해 주세요! 😊";
-
 export async function POST(req: NextRequest) {
   // QA-v3 보류건 결정(2026-07-05): 비로그인 차단 — 익명 LLM 비용 남용 벡터 제거
   const authUser = await verifyAuth(req).catch(() => null);

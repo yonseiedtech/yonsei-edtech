@@ -61,7 +61,7 @@ function ReviewForm({ seminarId }: { seminarId: string }) {
 
   // 가입 권장 팝업
   const [showSignupDialog, setShowSignupDialog] = useState(false);
-  const [isGuest, setIsGuest] = useState(false);
+  const [, setIsGuest] = useState(false);
 
   // Step 1: 인증
   const [name, setName] = useState("");

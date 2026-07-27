@@ -85,8 +85,6 @@ function seedToQuestion(
 /** 영역별 랜덤 출제 문항 수 (단일 영역 진단). 풀이 적으면 가용분만 출제. */
 const QUESTIONS_PER_AREA = 6;
 
-/** 전체 진단 1회 출제 총 문항 수(10문제 단위). 영역·유형·인지수준이 고루 섞이게 가중 추출. */
-const TOTAL_QUESTIONS_ALL = 10;
 /**
  * 전체 진단 시 영역별 출제 수 — 합 TOTAL_QUESTIONS_ALL.
  * 통계 4 · 연구방법 4 · 핵심개념 2.

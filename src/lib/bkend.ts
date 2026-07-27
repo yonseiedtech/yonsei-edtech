@@ -252,13 +252,13 @@ export const authApi = {
     return { accessToken: token, refreshToken: token, tokenType: "Bearer", expiresIn: 3600 };
   },
 
-  me: async (_token?: string): Promise<BkendAuthUser> => {
+  me: async (): Promise<BkendAuthUser> => {
     const user = auth.currentUser;
     if (!user) throw new Error("인증되지 않았습니다.");
     return { id: user.uid, email: user.email || "", name: user.displayName || "" };
   },
 
-  refresh: async (_refreshToken: string): Promise<AuthTokens> => {
+  refresh: async (): Promise<AuthTokens> => {
     const user = auth.currentUser;
     if (!user) throw new Error("인증되지 않았습니다.");
     const token = await user.getIdToken(true);

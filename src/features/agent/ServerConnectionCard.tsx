@@ -13,7 +13,7 @@ export default function ServerConnectionCard() {
   const [showSetup, setShowSetup] = useState(false);
   const [copied, setCopied] = useState(false);
   const { data: health } = useServerHealth();
-  const { mutate: testConnection, isPending: isTesting, data: testResult, error: testError, reset } = useTestConnection();
+  const { mutate: testConnection, isPending: isTesting, error: testError, reset } = useTestConnection();
 
   const connected = !!health?.status;
 

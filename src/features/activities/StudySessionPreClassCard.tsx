@@ -50,7 +50,6 @@ export default function StudySessionPreClassCard({
   progress,
   week,
   canManage,
-  participantIds,
 }: Props) {
   const queryClient = useQueryClient();
   const presenterIds = useMemo(

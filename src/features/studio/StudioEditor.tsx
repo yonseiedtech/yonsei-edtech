@@ -114,7 +114,7 @@ export default function StudioEditor({ docId }: { docId: string }) {
   const undoStack = useRef<DesignPage[][]>([]);
   const redoStack = useRef<DesignPage[][]>([]);
   const lastPushRef = useRef(0);
-  const [historyTick, setHistoryTick] = useState(0); // 버튼 활성화 리렌더 트리거
+  const [, setHistoryTick] = useState(0); // 버튼 활성화 리렌더 트리거
 
   const size = resolveCanvasSize(doc);
   // 컨테이너 실측 스케일 — 모바일에서 캔버스가 잘리지 않도록 (Batch-3)

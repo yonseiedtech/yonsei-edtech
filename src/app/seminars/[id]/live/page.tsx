@@ -42,7 +42,6 @@ export default function SeminarLivePage() {
     if (follow && session) setLocalSlide(session.currentSlide);
   }, [follow, session?.currentSlide, session]);
 
-  const live = session?.status === "live" || session?.status === "paused";
   const shownSlide = follow ? (session?.currentSlide ?? 0) : localSlide;
   const total = deck?.pageCount ?? session?.totalSlides ?? 0;
   const lectureNote = deck?.lectureNotes?.[shownSlide];

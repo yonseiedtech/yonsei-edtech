@@ -10,12 +10,9 @@ import type {
   CollaborationType,
   CollabMemberRole,
   CollaborativeResearchStatus,
-  CollabInviteStatus,
   IrbStatus,
   MethodologyKind,
   MethodologyDesign,
-  HypothesisType,
-  HypothesisStatus,
 } from "@/types";
 
 export const COLLABORATION_TYPE_LABELS: Record<CollaborationType, string> = {
