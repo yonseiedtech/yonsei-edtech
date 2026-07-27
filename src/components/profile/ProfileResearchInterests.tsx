@@ -4,7 +4,11 @@ interface Props {
 }
 
 function splitByComma(arr: string[]): string[] {
-  return arr.flatMap((s) => s.split(/[,，]/)).map((s) => s.trim()).filter(Boolean);
+  // String() 강제: 레거시 문서에 문자열 아닌 원소가 섞여도 .split throw 방어
+  return arr
+    .flatMap((s) => String(s ?? "").split(/[,，]/))
+    .map((s) => s.trim())
+    .filter(Boolean);
 }
 
 export default function ProfileResearchInterests({ interests, field }: Props) {

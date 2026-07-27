@@ -122,12 +122,46 @@ export function isAlwaysPublicForStaff(
   ].includes(field);
 }
 
-/** 사용자 입력값 안전 처리: 기본값 채움 */
+const isStr = (x: unknown): x is string => typeof x === "string";
+const isObj = (x: unknown): x is Record<string, unknown> =>
+  typeof x === "object" && x !== null;
+
+/** 배열이 아니면 [], 배열이면 술어를 통과하는 원소만 유지. 레거시/손상 문서 방어. */
+function safeArray<T>(v: unknown, keep: (x: unknown) => x is T): T[] {
+  return Array.isArray(v) ? v.filter(keep) : [];
+}
+
+/**
+ * 사용자 입력값 안전 처리: 기본값 채움 + 프로필 렌더 크래시 방어.
+ *
+ * 레거시/부분 저장 문서에서 배열·문자열 필드가 누락되거나 잘못된 타입(예: 문자열
+ * 배열 자리에 객체, 문자열 자리에 숫자·Timestamp)으로 들어오면, 프로필 자식
+ * 컴포넌트의 `.map`/`.split`/`.trim`/`.length` 접근이 SSR/CSR 렌더 중 throw →
+ * 라우트 error 경계가 트립되어 프로필 페이지 전체가 붕괴한다.
+ * owner 는 SSR initialOwner 와 CSR refetch 양쪽에서 이 함수를 거치므로, 여기서
+ * 타입을 한 번에 정규화해 모든 소비 컴포넌트를 보호한다. (seminar-normalize 선례)
+ */
 export function withGraduateDefaults(user: User): User {
   return {
     ...user,
     university: user.university || "연세대학교",
     graduateSchool: user.graduateSchool || "교육대학원",
     graduateMajor: user.graduateMajor || "교육공학전공",
+    // 문자열 배열 필드 — 배열 + 원소까지 문자열 보장 (element-level .split/.map 방어)
+    researchInterests: safeArray(user.researchInterests, isStr),
+    interestKeywords: safeArray(user.interestKeywords, isStr),
+    researchTopics: safeArray(user.researchTopics, isStr),
+    mentorTopics: safeArray(user.mentorTopics, isStr),
+    thesisReadingList: safeArray(user.thesisReadingList, isStr),
+    onboardingBadges: safeArray(
+      user.onboardingBadges,
+      isStr,
+    ) as User["onboardingBadges"],
+    // 객체 배열 필드 — 배열 보장 (.map/.length 방어)
+    socials: safeArray(user.socials, isObj) as unknown as User["socials"],
+    recentPapers: safeArray(user.recentPapers, isObj) as unknown as User["recentPapers"],
+    // 문자열 필드 — 문자열 아니면 안전값으로 (.trim/.slice 방어)
+    bio: isStr(user.bio) ? user.bio : undefined,
+    field: isStr(user.field) ? user.field : "",
   };
 }
