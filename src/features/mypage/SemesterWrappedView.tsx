@@ -1,11 +1,12 @@
 "use client";
 
 /**
- * SemesterWrappedView — 회원 본인 "이번 학기 학회 발자취"(Wrapped) 리포트 (v6-H2).
+ * SemesterWrappedView — 회원 본인 "이번 학기 학회 발자취"(Wrapped) 리포트.
  *
  * 축적된 활동 데이터를 따뜻한 성장 서사로 되돌려준다. 비교·등수 없이 개인 성장만.
- * 6~8장의 하이라이트 카드 스크롤 + 요약 1장 공유 이미지(캔버스) 다운로드.
- * 데이터 읽기는 useSemesterWrapped(대부분 캐시 재사용)에 위임.
+ * v-rework(2026-07-27): 집필·준비도 카드를 걷어내고 ① 학술활동 ② 연구활동
+ *  ③ 대학원 생활 ④ 운영진 활동 4개 카테고리 StoryCard 로 재구성.
+ *  데이터 읽기는 useSemesterWrapped(대부분 캐시 재사용)에 위임.
  */
 
 import { useRef, useState } from "react";
@@ -14,11 +15,11 @@ import {
   Sparkles,
   Flame,
   CalendarCheck,
-  BookOpen,
-  PenLine,
-  ClipboardCheck,
-  Layers,
   Users,
+  FlaskConical,
+  GraduationCap,
+  Shield,
+  Layers,
   ArrowRight,
   Download,
   Trophy,
@@ -26,14 +27,29 @@ import {
 import PageContainer from "@/components/ui/page-container";
 import { Button } from "@/components/ui/button";
 import { BRAND } from "@/lib/brand";
-import { useSemesterWrapped, type WrappedMetrics } from "./useSemesterWrapped";
+import { useAuthStore } from "@/features/auth/auth-store";
+import {
+  useSemesterWrapped,
+  type WrappedMetrics,
+  type WrappedCategory,
+  type CategoryKey,
+} from "./useSemesterWrapped";
 
 interface Props {
   userId: string;
 }
 
+/** 카테고리 아이콘 이름 → lucide 컴포넌트 (2개 조합: 대표/보조). */
+const CATEGORY_ICON: Record<CategoryKey, React.ElementType> = {
+  academic: Users,
+  research: FlaskConical,
+  grad: GraduationCap,
+  staff: Shield,
+};
+
 export default function SemesterWrappedView({ userId }: Props) {
-  const m = useSemesterWrapped(userId);
+  const role = useAuthStore((s) => s.user?.role);
+  const m = useSemesterWrapped(userId, role);
 
   if (m.isLoading) {
     return (
@@ -56,12 +72,12 @@ export default function SemesterWrappedView({ userId }: Props) {
           </div>
           <h1 className="text-lg font-bold">{m.semesterLabel} 발자취를 모으는 중이에요</h1>
           <p className="mx-auto mt-2 max-w-md text-sm text-muted-foreground">
-            세미나 참석·논문 읽기·진단평가·집필을 조금씩 쌓아가면, 이번 학기의
+            세미나 참석·연구 활동·대학원 생활을 조금씩 쌓아가면, 이번 학기의
             성장 이야기를 이곳에서 되돌려 드릴게요.
           </p>
           <div className="mt-5 flex flex-wrap justify-center gap-2">
-            <Link href="/diagnosis">
-              <Button size="sm" variant="outline">연구 준비도 진단하기</Button>
+            <Link href="/activities">
+              <Button size="sm" variant="outline">학술활동 둘러보기</Button>
             </Link>
             <Link href="/mypage">
               <Button size="sm" variant="ghost">마이페이지로</Button>
@@ -87,93 +103,14 @@ export default function SemesterWrappedView({ userId }: Props) {
               : "하루하루 남긴 발자국이 이번 학기의 리듬이 되었어요."
           }
           stats={[
-            { label: "학습한 날", value: `${m.totalStudyDays}일` },
+            { label: "활동한 날", value: `${m.totalStudyDays}일` },
             { label: "최장 연속", value: `${m.longestStreak}일`, icon: Flame },
           ]}
         />
 
-        {m.papersRead > 0 && (
-          <StoryCard
-            icon={BookOpen}
-            eyebrow="읽기"
-            title={`논문 ${m.papersRead}편을 읽어냈어요`}
-            body={
-              m.longestReadPaper
-                ? `가장 오래 머문 논문은 「${truncate(m.longestReadPaper.title, 40)}」 — ${m.longestReadPaper.durationMin}분 동안 정독했어요.`
-                : "한 편 한 편이 다음 연구의 밑거름이 됩니다."
-            }
-            stats={[{ label: "완독한 논문", value: `${m.papersRead}편` }]}
-          />
-        )}
-
-        {m.writingPeakChars > 0 && (
-          <StoryCard
-            icon={PenLine}
-            eyebrow="집필"
-            title={`${m.writingPeakChars.toLocaleString()}자를 써 내려갔어요`}
-            body={
-              m.writingDelta > 0
-                ? `이번 학기에만 ${m.writingDelta.toLocaleString()}자가 늘었어요. 문장이 쌓여 논문이 되어갑니다.`
-                : "한 글자 한 글자, 생각을 글로 옮긴 시간이었어요."
-            }
-            stats={[
-              { label: "도달 분량", value: `${m.writingPeakChars.toLocaleString()}자` },
-              ...(m.writingDelta > 0
-                ? [{ label: "이번 학기 증가", value: `+${m.writingDelta.toLocaleString()}자` }]
-                : []),
-            ]}
-          />
-        )}
-
-        {(m.diagnosticCount > 0 || m.latestPaperReadiness != null) && (
-          <StoryCard
-            icon={ClipboardCheck}
-            eyebrow="준비도"
-            title={
-              m.diagnosticCount > 0
-                ? `연구 준비도를 ${m.diagnosticCount}번 점검했어요`
-                : "연구 준비도를 확인했어요"
-            }
-            body={readinessBody(m)}
-            stats={[
-              ...(m.latestPaperReadiness != null
-                ? [{ label: "논문 작성 준비도", value: `${m.latestPaperReadiness}` }]
-                : []),
-              ...(m.latestAnalysisReadiness != null
-                ? [{ label: "연구 분석 준비도", value: `${m.latestAnalysisReadiness}` }]
-                : []),
-            ]}
-          />
-        )}
-
-        {m.flashcardTotal > 0 && (
-          <StoryCard
-            icon={Layers}
-            eyebrow="복습"
-            title={`암기카드 ${m.flashcardTotal}장을 쌓았어요`}
-            body={
-              m.flashcardCorrectRate != null
-                ? `복습 정답률 ${m.flashcardCorrectRate}%. 틀린 개념을 되짚으며 약점을 채워갔어요.`
-                : "약점 개념을 카드로 만들어 두었어요. 틈틈이 뒤집어 보세요."
-            }
-            stats={[
-              { label: "만든 카드", value: `${m.flashcardTotal}장` },
-              ...(m.flashcardCorrectRate != null
-                ? [{ label: "정답률", value: `${m.flashcardCorrectRate}%` }]
-                : []),
-            ]}
-          />
-        )}
-
-        {m.seminarsAttended > 0 && (
-          <StoryCard
-            icon={Users}
-            eyebrow="함께"
-            title={`세미나 ${m.seminarsAttended}회에 참석했어요`}
-            body="같은 길을 걷는 동료들과 나눈 시간이 연구의 시야를 넓혀 주었어요."
-            stats={[{ label: "참석 세미나", value: `${m.seminarsAttended}회` }]}
-          />
-        )}
+        {m.categories.map((c) => (
+          <CategoryCard key={c.key} c={c} m={m} />
+        ))}
 
         <SummaryCard m={m} />
       </div>
@@ -184,6 +121,7 @@ export default function SemesterWrappedView({ userId }: Props) {
 // ── 하위 컴포넌트 ─────────────────────────────────────────
 
 function HeroCard({ m }: { m: WrappedMetrics }) {
+  const top = m.categories[0];
   return (
     <div className="relative overflow-hidden rounded-3xl bg-primary p-8 text-primary-foreground shadow-sm">
       <div
@@ -202,13 +140,13 @@ function HeroCard({ m }: { m: WrappedMetrics }) {
         </h1>
         <p className="mt-3 max-w-md text-sm text-primary-foreground/80">
           비교도 등수도 없어요. 오직 당신이 쌓아 올린 이번 학기의 발자취예요.
-          아래로 넘기며 하나씩 되돌아 보세요.
+          {top && ` 이번 학기 가장 자주 남긴 흔적은 ${top.label}이었어요.`}
         </p>
         <div className="mt-6 flex flex-wrap gap-2 text-sm">
-          <HeroChip value={`${m.totalStudyDays}일`} label="학습" />
-          {m.papersRead > 0 && <HeroChip value={`${m.papersRead}편`} label="논문" />}
-          {m.seminarsAttended > 0 && <HeroChip value={`${m.seminarsAttended}회`} label="세미나" />}
-          {m.flashcardTotal > 0 && <HeroChip value={`${m.flashcardTotal}장`} label="암기카드" />}
+          <HeroChip value={`${m.totalStudyDays}일`} label="활동" />
+          {m.categories.slice(0, 3).map((c) => (
+            <HeroChip key={c.key} value={`${c.days}일`} label={c.label} />
+          ))}
         </div>
       </div>
     </div>
@@ -221,6 +159,52 @@ function HeroChip({ value, label }: { value: string; label: string }) {
       <span className="font-bold tabular-nums">{value}</span>
       <span className="text-xs text-primary-foreground/70">{label}</span>
     </span>
+  );
+}
+
+/** 카테고리별 서사 본문 — 대표 활동을 엮어 따뜻하게. */
+function categoryBody(c: WrappedCategory, m: WrappedMetrics): string {
+  const labels = (c.topLabels ?? []).join(" · ");
+  switch (c.key) {
+    case "academic":
+      return m.seminarsAttended > 0
+        ? `세미나 ${m.seminarsAttended}회를 비롯해 ${labels || "여러 배움"}으로 시야를 넓힌 학기였어요.`
+        : `${labels || "배움의 자리"}로 한 걸음씩 나아간 학기였어요.`;
+    case "research":
+      return m.papersRead > 0
+        ? `논문 ${m.papersRead}편을 읽어내고 ${labels || "연구"}에 몰입했어요. 한 편 한 편이 다음 연구의 밑거름이 됩니다.`
+        : `${labels || "연구 활동"}에 시간을 쏟았어요. 쌓인 기록이 곧 결실이 됩니다.`;
+    case "grad":
+      return m.flashcardTotal > 0 && m.flashcardCorrectRate != null
+        ? `${labels || "소소한 기록"}과 암기카드 복습(정답률 ${m.flashcardCorrectRate}%)까지, 대학원 일상을 촘촘히 채웠어요.`
+        : `${labels || "대학원 일상"} 속 작은 실천들이 모여 이번 학기가 되었어요.`;
+    case "staff":
+      return `완료한 운영 업무 ${m.staffTasksDone}건, 남긴 업무수행철 ${m.handoverAuthored}건. 보이지 않는 곳에서 학회를 지탱한 헌신이었어요.`;
+    default:
+      return `${labels}로 이어간 학기였어요.`;
+  }
+}
+
+function CategoryCard({ c, m }: { c: WrappedCategory; m: WrappedMetrics }) {
+  const Icon = CATEGORY_ICON[c.key] ?? Layers;
+  const stats: Stat[] = [
+    { label: "활동한 날", value: `${c.days}일` },
+    { label: "활동 수", value: `${c.count}회` },
+  ];
+  if (c.key === "staff") {
+    stats.length = 0;
+    if (m.staffTasksDone > 0) stats.push({ label: "완료 업무", value: `${m.staffTasksDone}건` });
+    if (m.handoverAuthored > 0) stats.push({ label: "업무수행철", value: `${m.handoverAuthored}건` });
+    stats.push({ label: "활동한 날", value: `${c.days}일` });
+  }
+  return (
+    <StoryCard
+      icon={Icon}
+      eyebrow={c.eyebrow}
+      title={`${c.label}, ${c.days}일의 발자취`}
+      body={categoryBody(c, m)}
+      stats={stats}
+    />
   );
 }
 
@@ -305,8 +289,8 @@ function SummaryCard({ m }: { m: WrappedMetrics }) {
       </h2>
       <p className="mt-1.5 text-sm text-muted-foreground">
         이번 학기 활동 점수 {m.activityScore.toLocaleString()}점.
-        {m.topLabels.length > 0 && (
-          <> 가장 자주 남긴 활동은 {m.topLabels.map((t) => t.label).join(" · ")}였어요.</>
+        {m.categories.length > 0 && (
+          <> 학술·연구·대학원·운영을 아우른 {m.categories.map((c) => c.label).join(" · ")}의 기록이었어요.</>
         )}
       </p>
 
@@ -332,26 +316,6 @@ function SummaryCard({ m }: { m: WrappedMetrics }) {
 }
 
 // ── 유틸 ──────────────────────────────────────────────────
-
-function truncate(s: string, n: number): string {
-  return s.length > n ? `${s.slice(0, n)}…` : s;
-}
-
-function readinessBody(m: WrappedMetrics): string {
-  if (m.paperReadinessDelta != null && (m.paperReadinessDelta !== 0 || m.analysisReadinessDelta !== 0)) {
-    const parts: string[] = [];
-    if (m.paperReadinessDelta !== 0) {
-      const s = m.paperReadinessDelta > 0 ? `+${m.paperReadinessDelta}` : `${m.paperReadinessDelta}`;
-      parts.push(`논문 작성 ${s}`);
-    }
-    if (m.analysisReadinessDelta != null && m.analysisReadinessDelta !== 0) {
-      const s = m.analysisReadinessDelta > 0 ? `+${m.analysisReadinessDelta}` : `${m.analysisReadinessDelta}`;
-      parts.push(`연구 분석 ${s}`);
-    }
-    return `학기 초 대비 준비도가 ${parts.join(", ")}만큼 움직였어요. 진단이 성장의 좌표가 되었네요.`;
-  }
-  return "약점을 마주하고 다시 진단한 그 용기가 이미 준비의 절반이에요.";
-}
 
 /** 요약 공유 이미지(1080x1080) — 브랜드 네이비 카드. 외부 의존 없이 캔버스로 렌더. */
 function drawShareImage(canvas: HTMLCanvasElement, m: WrappedMetrics) {
@@ -379,29 +343,27 @@ function drawShareImage(canvas: HTMLCanvasElement, m: WrappedMetrics) {
   ctx.font = "700 76px system-ui, sans-serif";
   ctx.fillText("나의 학회 발자취", 90, 250);
 
-  // 통계 그리드 (2열)
+  // 통계 그리드 (2열) — 총 활동일·최장 연속 + 카테고리별 활동일 상위 4종
   const items: { value: string; label: string }[] = [
-    { value: `${m.totalStudyDays}일`, label: "학습한 날" },
+    { value: `${m.totalStudyDays}일`, label: "활동한 날" },
     { value: `${m.longestStreak}일`, label: "최장 연속" },
-    { value: `${m.papersRead}편`, label: "읽은 논문" },
-    { value: `${m.seminarsAttended}회`, label: "참석 세미나" },
-    {
-      value: m.flashcardCorrectRate != null ? `${m.flashcardCorrectRate}%` : `${m.flashcardTotal}장`,
-      label: m.flashcardCorrectRate != null ? "암기카드 정답률" : "암기카드",
-    },
-    {
-      value:
-        m.writingPeakChars > 0
-          ? `${Math.round(m.writingPeakChars / 1000)}k자`
-          : `${m.activityScore.toLocaleString()}`,
-      label: m.writingPeakChars > 0 ? "집필 분량" : "활동 점수",
-    },
   ];
+  for (const c of m.categories.slice(0, 4)) {
+    items.push({ value: `${c.days}일`, label: c.label });
+  }
+  // 6칸을 채우지 못하면 요약 지표로 보충
+  if (items.length < 6 && m.papersRead > 0) {
+    items.push({ value: `${m.papersRead}편`, label: "읽은 논문" });
+  }
+  if (items.length < 6) {
+    items.push({ value: `${m.activityScore.toLocaleString()}`, label: "활동 점수" });
+  }
+  const shown = items.slice(0, 6);
 
   const startY = 400;
   const rowH = 195;
   const colX = [90, 570];
-  items.forEach((it, i) => {
+  shown.forEach((it, i) => {
     const x = colX[i % 2];
     const y = startY + Math.floor(i / 2) * rowH;
     ctx.fillStyle = "rgba(255,255,255,0.06)";
