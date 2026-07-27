@@ -8,6 +8,7 @@
 
 import { dataApi } from "@/lib/bkend";
 import { auth } from "@/lib/firebase";
+import { normalizeGuide } from "./normalize";
 import type {
   LearningGuide,
   GuideChapter,
@@ -64,22 +65,26 @@ export const guidesApi = {
     const res = await fetch(`/api/learning-guides?${qs.toString()}`, {
       headers: await optionalAuthHeaders(),
     });
-    return res.json() as Promise<{ data: LearningGuide[] }>;
+    const json = (await res.json()) as { data?: LearningGuide[] };
+    return { data: (json.data ?? []).map(normalizeGuide) };
   },
 
   /** 콘솔 — 전체 (인증 필요) */
-  listAll: () =>
-    adminFetch<{ data: LearningGuide[] }>("/api/learning-guides?all=true"),
+  listAll: async () => {
+    const json = await adminFetch<{ data?: LearningGuide[] }>("/api/learning-guides?all=true");
+    return { data: (json.data ?? []).map(normalizeGuide) };
+  },
 
   getBySlug: async (slug: string) => {
     const res = await fetch(`/api/learning-guides?slug=${encodeURIComponent(slug)}`, {
       headers: await optionalAuthHeaders(),
     });
-    return res.json() as Promise<{ data: LearningGuide | null }>;
+    const json = (await res.json()) as { data: LearningGuide | null };
+    return { data: json.data ? normalizeGuide(json.data) : null };
   },
 
-  getById: (id: string) =>
-    dataApi.get<LearningGuide>("learning_guides", id),
+  getById: async (id: string) =>
+    normalizeGuide(await dataApi.get<LearningGuide>("learning_guides", id)),
 
   create: (data: Partial<LearningGuide>) =>
     adminFetch<{ data: LearningGuide }>("/api/learning-guides", {
