@@ -24,7 +24,7 @@ interface Props {
  */
 function ParticipantCount({ seminar }: { seminar: Seminar }) {
   const { attendees } = useAttendees(seminar.id);
-  const count = attendees.length > 0 ? attendees.length : seminar.attendeeIds.length;
+  const count = attendees.length > 0 ? attendees.length : (seminar.attendeeIds ?? []).length;
   return (
     <>
       {count}

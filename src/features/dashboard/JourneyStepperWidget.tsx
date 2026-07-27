@@ -120,7 +120,7 @@ export default function JourneyStepperWidget() {
   const activityDone = useMemo(() => {
     if (activityReactions > 0) return true;
     if (positions.length > 0) return true;
-    return userId ? seminars.some((s) => s.attendeeIds.includes(userId)) : false;
+    return userId ? seminars.some((s) => Array.isArray(s.attendeeIds) && s.attendeeIds.includes(userId)) : false;
   }, [activityReactions, positions, seminars, userId]);
 
   const steps = useMemo<JourneyStep[]>(() => {

@@ -252,7 +252,7 @@ function DashboardContent() {
   if (!user) return null;
 
   const myPosts = posts.filter((p) => p.authorId === user.id);
-  const mySeminars = seminars.filter((s) => s.attendeeIds.includes(user.id));
+  const mySeminars = seminars.filter((s) => Array.isArray(s.attendeeIds) && s.attendeeIds.includes(user.id));
   const upcomingSeminars = seminars.filter((s) => s.status === "upcoming");
   const notices = posts
     .filter((p) => p.category === "notice")

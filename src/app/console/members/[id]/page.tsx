@@ -413,7 +413,7 @@ function MemberActivityHistory({ memberId }: { memberId: string }) {
     queryFn: async () => {
       const res = await seminarsApi.list({ limit: 200 });
       const all = res.data as unknown as Seminar[];
-      return all.filter((s) => s.attendeeIds.includes(memberId));
+      return all.filter((s) => Array.isArray(s.attendeeIds) && s.attendeeIds.includes(memberId));
     },
   });
 

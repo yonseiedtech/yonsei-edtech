@@ -66,7 +66,7 @@ export default function SeminarReviews({ seminar }: Props) {
   const [submitting, setSubmitting] = useState(false);
 
   const isStaff = isAtLeast(user, "staff");
-  const isAttendee = user ? seminar.attendeeIds.includes(user.id) : false;
+  const isAttendee = user ? (seminar.attendeeIds ?? []).includes(user.id) : false;
 
   const { data: allReviews = [] } = useQuery({
     queryKey: ["reviews", seminar.id],

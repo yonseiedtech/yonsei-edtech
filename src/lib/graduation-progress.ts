@@ -58,7 +58,7 @@ export function computeGraduationProgress(
     if (o) taken.push(o);
   }
 
-  const creditRules: CreditRuleProgress[] = req.creditRules.map((rule) => {
+  const creditRules: CreditRuleProgress[] = (req.creditRules ?? []).map((rule) => {
     const cats = new Set(rule.categories);
     const courses = taken
       .filter((o) => cats.has(o.category))
@@ -72,7 +72,7 @@ export function computeGraduationProgress(
 
   const hasPassedExam = examRecords.some((r) => r.status === "passed");
   const checks = progress?.milestoneChecks ?? {};
-  const milestones: MilestoneProgress[] = req.milestones.map((m) => {
+  const milestones: MilestoneProgress[] = (req.milestones ?? []).map((m) => {
     if (m.autoSource === "comprehensive_exam") {
       const done = hasPassedExam || !!checks[m.key]?.done;
       return { key: m.key, label: m.label, hint: m.hint, done, auto: true, note: checks[m.key]?.note };

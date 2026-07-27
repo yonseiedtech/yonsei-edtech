@@ -435,11 +435,13 @@ function HackathonEventSettingsTab() {
 
   const [form, setForm] = useState<EventSettingsForm>(() => buildEventSettingsForm(selConf));
 
-  // 행사 선택 변경 시 폼 초기화 (selCtxId 변경 시에만 실행 — selConf 는 파생값이므로 의존 제외)
+  // 행사 선택 변경 시 폼 초기화 + 콜드로드 시 conferences 가 비동기로 뒤늦게 도착하면 재populate.
+  // selConf?.contextId 를 의존에 포함 — null→데이터 전이를 감지(과거: [selCtxId] 뿐이라 콜드로드 시
+  // 빈 폼으로 고정되어 저장 시 기존 설정을 공란으로 덮어쓸 위험이 있었음). 안정 식별자라 무한루프 없음.
   useEffect(() => {
     // eslint-disable-next-line react-hooks/set-state-in-effect
     setForm(buildEventSettingsForm(selConf));
-  }, [selCtxId]); // eslint-disable-line react-hooks/exhaustive-deps
+  }, [selCtxId, selConf?.contextId]); // eslint-disable-line react-hooks/exhaustive-deps
 
   function setField<K extends keyof EventSettingsForm>(k: K, v: EventSettingsForm[K]) {
     setForm((prev) => ({ ...prev, [k]: v }));

@@ -288,8 +288,10 @@ export default function GuideViewerPage() {
     }));
     void guideProgressApi.markRead(guide.id, currentPage.id);
     void guideProgressApi.updateLastPage(guide.id, currentPage.id);
+    // user/guide 가 인증·fetch 로 뒤늦게 채워져도 첫 페이지 진도를 기록하도록 의존에 포함
+    // (progressSavedRef 가드로 중복 저장 없음). 과거: [currentPage?.id] 뿐이라 콜드 진입 시 유실.
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [currentPage?.id]);
+  }, [currentPage?.id, user?.id, guide?.id]);
 
   // ── 렌더 ──────────────────────────────────────────────────────────────────────
   if (loading) {

@@ -64,7 +64,7 @@ export default function AcademicDashboard() {
     upcoming: seminars.filter((s) => getComputedStatus(s) === "upcoming").length,
     ongoing: seminars.filter((s) => getComputedStatus(s) === "ongoing").length,
     completed: seminars.filter((s) => getComputedStatus(s) === "completed").length,
-    totalAttendees: seminars.reduce((sum, s) => sum + s.attendeeIds.length, 0),
+    totalAttendees: seminars.reduce((sum, s) => sum + (s.attendeeIds ?? []).length, 0),
   };
 
   const activityStats = (list: Activity[]) => ({

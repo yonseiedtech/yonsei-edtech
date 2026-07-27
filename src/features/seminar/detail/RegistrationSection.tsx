@@ -129,7 +129,7 @@ export default function RegistrationSection({
           {isFull && !isAttending && !myWaitlistEntry && (
             <div className="mt-3">
               <p className="text-xs text-destructive mb-2">
-                정원이 마감되었습니다. {seminar.maxAttendees && `(${seminar.attendeeIds.length}/${seminar.maxAttendees}명)`}
+                정원이 마감되었습니다. {seminar.maxAttendees && `(${(seminar.attendeeIds ?? []).length}/${seminar.maxAttendees}명)`}
               </p>
               {onJoinWaitlist && (
                 <Button

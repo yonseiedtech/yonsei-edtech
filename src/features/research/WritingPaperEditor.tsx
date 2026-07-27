@@ -959,17 +959,20 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
   }, [dirty, readOnly]);
 
   // L1: Ctrl/Cmd+S 단축키 저장
+  // 최신 handleSave 를 ref 로 유지 — effect 를 [readOnly] 로만 구독하되(재구독 없음)
+  // 항상 최신 form/paper 를 캡처한 handleSave 를 호출한다. (과거: 마운트 시점의 stale
+  // 클로저를 참조해 빈 폼 저장/무동작으로 데이터 유실 위험이 있었음)
+  const handleSaveRef = useRef<(showToast?: boolean) => void>(() => {});
   useEffect(() => {
     if (readOnly) return;
     const handler = (e: KeyboardEvent) => {
       if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === "s") {
         e.preventDefault();
-        handleSave();
+        handleSaveRef.current();
       }
     };
     window.addEventListener("keydown", handler);
     return () => window.removeEventListener("keydown", handler);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [readOnly]);
 
   // 첫 작성자 온보딩: 프로파일 미설정 + 본문 거의 없음 → 연구 방향 선택 유도
@@ -1187,6 +1190,8 @@ export default function WritingPaperEditor({ user, readOnly = false }: Props) {
 
   // ── 저장 ──
 
+  // 렌더마다 최신 handleSave 를 ref 에 반영(위 Ctrl+S effect 가 stale 클로저 대신 이 값을 호출)
+  handleSaveRef.current = handleSave;
   async function handleSave(showToast = true) {
     if (!paper || readOnly) return;
     setSaving(true);

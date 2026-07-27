@@ -70,7 +70,7 @@ function OverviewSection({ seminar }: { seminar: NonNullable<ReturnType<typeof u
     // QA-v3 M: 룰상 staff/호스트/본인 전용 — 권한 없는 사용자의 반복 permission-denied 차단
     enabled: canSeeRegistrations,
   });
-  const totalAttendees = seminar.attendeeIds.length + (registrations?.length ?? 0);
+  const totalAttendees = (seminar.attendeeIds ?? []).length + (registrations?.length ?? 0);
 
   return (
     <div className="space-y-4">

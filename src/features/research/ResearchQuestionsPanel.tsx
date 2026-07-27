@@ -318,7 +318,7 @@ export default function ResearchQuestionsPanel({
                 selectedIds={q.researchMethodIds}
                 readOnly={readOnly}
                 onAdd={(id) => patch(q.id, (cur) => ({ ...cur, researchMethodIds: [...cur.researchMethodIds, id] }))}
-                onRemove={(id) => patch(q.id, (cur) => ({ ...cur, researchMethodIds: cur.researchMethodIds.filter((x) => x !== id) }))}
+                onRemove={(id) => patch(q.id, (cur) => ({ ...cur, researchMethodIds: (cur.researchMethodIds ?? []).filter((x) => x !== id) }))}
               />
               <TagPicker
                 icon={BarChart3}

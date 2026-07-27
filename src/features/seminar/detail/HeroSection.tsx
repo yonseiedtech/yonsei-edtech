@@ -32,7 +32,7 @@ interface Props {
 
 export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
   const { attendees } = useAttendees(seminar.id);
-  const attendeeCount = attendees.length > 0 ? attendees.length : seminar.attendeeIds.length;
+  const attendeeCount = attendees.length > 0 ? attendees.length : (seminar.attendeeIds ?? []).length;
   const computedStatus = getComputedStatus(seminar);
   const badge = {
     label: SEMINAR_STATUS_LABELS[computedStatus],

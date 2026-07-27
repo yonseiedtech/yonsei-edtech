@@ -239,7 +239,7 @@ export default function AdminSeminarTab() {
       else if (c === "upcoming") upcoming++;
       else if (c === "ongoing") ongoing++;
       else if (c === "completed") completed++;
-      totalAttendees += s.attendeeIds.length;
+      totalAttendees += (s.attendeeIds ?? []).length;
     }
     return { draft, upcoming, ongoing, completed, totalAttendees };
   })();
@@ -304,7 +304,7 @@ export default function AdminSeminarTab() {
                     <span className="ml-2 text-xs text-muted-foreground">{s.speaker} | {s.date} {s.time}</span>
                   </div>
                   <div className="flex items-center gap-2 shrink-0">
-                    <span className="text-xs text-muted-foreground">{s.attendeeIds.length}명</span>
+                    <span className="text-xs text-muted-foreground">{(s.attendeeIds ?? []).length}명</span>
                     {total > 0 && (
                       <div className="flex items-center gap-1">
                         <div className="h-1.5 w-16 rounded-full bg-muted">
@@ -367,7 +367,7 @@ export default function AdminSeminarTab() {
             </div>
             <span className="line-clamp-1 text-muted-foreground">{s.speaker}</span>
             <span className="text-muted-foreground">{formatDate(s.date)} {s.time}</span>
-            <span>{s.attendeeIds.length}{s.maxAttendees ? `/${s.maxAttendees}` : ""}명</span>
+            <span>{(s.attendeeIds ?? []).length}{s.maxAttendees ? `/${s.maxAttendees}` : ""}명</span>
             {progressPct >= 0 ? (
               <div className="flex flex-col gap-0.5" title={`${doneTasks}/${totalTasks} 완료${overdue.length > 0 ? ` (지연 ${overdue.length}건)` : ""}`}>
                 <div className="h-1.5 w-full rounded-full bg-muted">
@@ -412,7 +412,7 @@ export default function AdminSeminarTab() {
               <div className="mt-1 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
                 <span>{s.speaker}</span>
                 <span>{formatDate(s.date)} {s.time}</span>
-                <span>{s.attendeeIds.length}{s.maxAttendees ? `/${s.maxAttendees}` : ""}명</span>
+                <span>{(s.attendeeIds ?? []).length}{s.maxAttendees ? `/${s.maxAttendees}` : ""}명</span>
               </div>
               {progressPct >= 0 && (
                 <div className="mt-1.5 flex items-center gap-2">
