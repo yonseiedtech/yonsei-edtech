@@ -286,11 +286,13 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
   const flashcardDueToday = flashcardSummary?.dueToday ?? 0;
 
   // 재진단 넛지 — 마지막 진단 후 14일 이상 경과 시 은은히 권장 (신규 점수 가산 없음, 표시만)
+  // now 는 마운트 시 1회만 캡처(lazy initializer) — render 중 Date.now() 직접 호출(불순) 회피
+  const [nowMs] = useState(() => Date.now());
   const needsRediagnosis = (() => {
     if (!latestDiagnostic?.createdAt) return false;
     const last = new Date(latestDiagnostic.createdAt).getTime();
     if (Number.isNaN(last)) return false;
-    return Date.now() - last >= 14 * 24 * 60 * 60 * 1000;
+    return nowMs - last >= 14 * 24 * 60 * 60 * 1000;
   })();
 
   if (!user) return null;
