@@ -116,9 +116,12 @@ nav.overflow-x-auto > button {
   --radius-2xl: calc(var(--radius) + 8px);
   --font-sans: var(--font-pretendard), "Pretendard", system-ui, sans-serif;
   /* 학술 콘텐츠(아카이브 논문 가이드 제목·인용) 한정 세리프 토큰.
-     상단 @import 로 로드되는 한글 세리프 폰트를 절제 적용한다. */
-  --font-display: var(--font-hahmlet), "Hahmlet", var(--font-noto-serif-kr), "Noto Serif KR", "Nanum Myeongjo", serif;
-  --font-serif: var(--font-noto-serif-kr), "Noto Serif KR", "Nanum Myeongjo", serif;
+     상단 @import 로 로드되는 한글 세리프 폰트를 절제 적용한다.
+     --font-noto-serif-kr: 2026-07-27 Vercel 빌드에서 next/font/google Noto Serif KR
+     페칭이 지속 실패해 빌드 의존을 제거. 시스템·웹 설치 한글 세리프로 폴백(감사장 렌더 유지). */
+  --font-noto-serif-kr: "Noto Serif KR", "Nanum Myeongjo", "Batang", serif;
+  --font-display: var(--font-hahmlet), "Hahmlet", var(--font-noto-serif-kr), "Nanum Myeongjo", serif;
+  --font-serif: var(--font-noto-serif-kr), "Nanum Myeongjo", serif;
 }
 
 .dark {

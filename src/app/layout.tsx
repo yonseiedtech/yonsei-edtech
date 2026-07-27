@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
-import { Noto_Serif_KR, Hahmlet } from "next/font/google";
+import { Hahmlet } from "next/font/google";
 // Inter font removed — Pretendard only
 import Header from "@/components/layout/Header";
 import Footer from "@/components/layout/Footer";
@@ -31,14 +31,9 @@ const pretendard = localFont({
   fallback: ["system-ui", "sans-serif"],
 });
 
-// 감사장/수료증 PDF용 한글 세리프 웹폰트 (self-host, CORS·unicode-range 이슈 회피)
-const notoSerifKR = Noto_Serif_KR({
-  subsets: ["latin"],
-  weight: ["400", "600", "700", "900"],
-  variable: "--font-noto-serif-kr",
-  display: "swap",
-  preload: false,
-});
+// 감사장/수료증 PDF용 한글 세리프: 2026-07-27 Vercel 빌드에서 next/font/google
+// Noto Serif KR 페칭이 지속 실패(module-not-found)해 빌드 의존 제거.
+// --font-noto-serif-kr 는 globals.css 에서 시스템·웹 설치 한글 세리프로 폴백 정의.
 const hahmlet = Hahmlet({
   subsets: ["latin"],
   weight: ["400", "600", "700", "900"],
@@ -153,7 +148,7 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${pretendard.variable} ${notoSerifKR.variable} ${hahmlet.variable} font-sans antialiased`}
+        className={`${pretendard.variable} ${hahmlet.variable} font-sans antialiased`}
       >
         <MotionProvider>
         <QueryProvider>
