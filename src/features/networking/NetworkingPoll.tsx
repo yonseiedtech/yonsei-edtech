@@ -93,6 +93,10 @@ function buildMonthCells(view: Date): { date: string; day: number; inMonth: bool
 export default function NetworkingPoll({ event, canEdit }: Props) {
   const qc = useQueryClient();
   const { user } = useAuthStore();
+  // 운영진 내부 일정조율(internal) — 게스트/회원 투표 없이 로그인 운영진끼리만 조율.
+  // 공개 공유·비로그인 진입을 숨기고 안내 문구를 "운영진" 기준으로 바꾼다.
+  const internal = event.internal === true;
+  const audienceWord = internal ? "운영진" : "회원";
   const [busy, setBusy] = useState(false);
   const [confirming, setConfirming] = useState(false);
   const [pickedSlot, setPickedSlot] = useState<string | null>(null);
@@ -530,14 +534,16 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
         {pollClosed
           ? "투표가 마감되었습니다."
           : user
-            ? "날짜를 눌러 가능한 시간대를 선택하세요. 진하게 칠해질수록 많은 회원이 가능합니다."
-            : isGuestVoting
-              ? "날짜를 눌러 가능한 시간대를 선택하세요. 전체 집계는 공유 페이지에서 확인할 수 있습니다."
-              : "가능한 일정을 투표해 주세요. 로그인 또는 비로그인으로 참여할 수 있습니다."}
+            ? `날짜를 눌러 가능한 시간대를 선택하세요. 진하게 칠해질수록 많은 ${audienceWord}이 가능합니다.`
+            : internal
+              ? "운영진 전용 일정조율입니다. 운영진 계정으로 로그인 후 참여하세요."
+              : isGuestVoting
+                ? "날짜를 눌러 가능한 시간대를 선택하세요. 전체 집계는 공유 페이지에서 확인할 수 있습니다."
+                : "가능한 일정을 투표해 주세요. 로그인 또는 비로그인으로 참여할 수 있습니다."}
       </p>
 
-      {/* 비로그인 투표 진입 (미로그인 & 아직 게스트 등록 전) */}
-      {!user && !guestVoter && !pollClosed && (
+      {/* 비로그인 투표 진입 (미로그인 & 아직 게스트 등록 전) — 운영진 내부 조율은 게스트 진입 차단 */}
+      {!user && !guestVoter && !pollClosed && !internal && (
         <div className="mb-3 rounded-xl border border-dashed bg-muted/30 p-3">
           {!guestFormOpen ? (
             <div className="space-y-2">
@@ -691,7 +697,7 @@ export default function NetworkingPoll({ event, canEdit }: Props) {
                 ? "투표가 마감되었습니다."
                 : canVote
                   ? user
-                    ? "시간대를 눌러 내 가능 여부를 저장하세요. 진할수록 많은 회원이 가능합니다."
+                    ? `시간대를 눌러 내 가능 여부를 저장하세요. 진할수록 많은 ${audienceWord}이 가능합니다.`
                     : "시간대를 눌러 가능 여부를 저장하세요. 선택은 자동 저장됩니다."
                   : "로그인 또는 비로그인 투표를 시작하면 시간대를 선택할 수 있습니다."}
             </p>

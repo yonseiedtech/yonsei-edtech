@@ -36,8 +36,8 @@ const getPollData = cache(async (id: string): Promise<PollData | null> => {
     const doc = await db.collection("networking_events").doc(id).get();
     if (!doc.exists) return null;
     const event = { ...doc.data(), id: doc.id } as NetworkingEvent;
-    // 비공개·미게시 이벤트는 id 라우트로 열람 불가
-    if (event.published === false || event.visibility === "private") return null;
+    // 비공개·미게시·운영진 내부(internal) 이벤트는 id 라우트로 열람 불가
+    if (event.published === false || event.visibility === "private" || event.internal === true) return null;
     const availSnap = await db
       .collection("networking_availability")
       .where("eventId", "==", id)

@@ -10,7 +10,7 @@
 
 import { useState } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { CalendarClock, Plus, X, ExternalLink, ChevronDown, ChevronUp } from "lucide-react";
+import { CalendarClock, Plus, X, Lock, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -145,10 +145,10 @@ export default function StaffMeetingPollTab() {
         <div>
           <h2 className="flex items-center gap-1.5 text-base font-bold">
             <CalendarClock size={16} className="text-primary" />
-            모임 일정 조율
+            운영진 회의·모임 일정 조율
           </h2>
           <p className="mt-0.5 text-xs text-muted-foreground">
-            다음 모임·스터디·세미나의 가능 일정을 회원 대상 캘린더 투표로 수집합니다.
+            운영진끼리 다음 회의·모임의 가능 일정을 캘린더 투표로 조율합니다. 회원에게는 공개되지 않습니다.
           </p>
         </div>
         {canEdit && (
@@ -174,7 +174,7 @@ export default function StaffMeetingPollTab() {
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="예) 2026년 2학기 정기모임 날짜 조율"
+              placeholder="예) 운영진 2학기 정기회의 날짜 조율"
               className="h-8 text-sm"
               maxLength={60}
             />
@@ -289,7 +289,7 @@ export default function StaffMeetingPollTab() {
       ) : polls.length === 0 ? (
         <EmptyState
           title="아직 일정조율이 없습니다"
-          description="'새 일정조율' 버튼으로 회원 가능일 투표를 시작해보세요."
+          description="'새 일정조율' 버튼으로 운영진 회의·모임 일정 조율을 시작해보세요."
         />
       ) : (
         <div className="space-y-3">
@@ -334,18 +334,12 @@ export default function StaffMeetingPollTab() {
                 {/* 펼쳐진 상세 */}
                 {isSelected && (
                   <div className="space-y-3 border-t px-4 pb-4 pt-3">
-                    {/* 공유 링크 */}
+                    {/* 운영진 전용 안내 — 공개 공유 없음. 다른 운영진은 이 콘솔에서 직접 투표한다. */}
                     <div className="flex flex-wrap items-center gap-2 rounded-xl border border-primary/20 bg-primary/5 px-3 py-2">
-                      <ExternalLink size={13} className="shrink-0 text-primary" />
-                      <span className="text-[11px] font-medium text-primary">회원 공유 링크</span>
-                      <a
-                        href={`/gatherings/poll/${ev.id}`}
-                        target="_blank"
-                        rel="noreferrer"
-                        className="break-all text-[11px] text-primary underline-offset-2 hover:underline"
-                      >
-                        /gatherings/poll/{ev.id}
-                      </a>
+                      <Lock size={13} className="shrink-0 text-primary" />
+                      <span className="text-[11px] text-primary">
+                        운영진 전용 조율입니다. 다른 운영진은 <b>운영진 페이지 → 모임 일정</b> 탭에서 직접 투표합니다.
+                      </span>
                     </div>
 
                     {/* 투표 UI 임베드 */}
