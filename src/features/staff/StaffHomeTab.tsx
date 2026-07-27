@@ -16,6 +16,7 @@ import {
   ArrowRight,
   TrendingUp,
   Heart,
+  Rocket,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
@@ -90,6 +91,17 @@ export default function StaffHomeTab({ onGoTab }: Props) {
         return (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999");
       });
   }, [allTasks, user]);
+
+  // 준비 중인 프로젝트 (planning) — 운영진이 지금 기획·준비 중인 프로젝트를 한눈에.
+  // 각 프로젝트의 태스크 진척(있으면)을 함께 요약.
+  const preparingProjects = useMemo(() => {
+    const planning = projects.filter((p) => p.status === "planning");
+    return planning.map((p) => {
+      const tasks = allTasks.filter((t) => t.projectId === p.id);
+      const done = tasks.filter((t) => t.status === "done").length;
+      return { project: p, taskTotal: tasks.length, taskDone: done };
+    });
+  }, [projects, allTasks]);
 
   // 팀 스냅샷
   const snapshot = useMemo(() => {
@@ -224,6 +236,70 @@ export default function StaffHomeTab({ onGoTab }: Props) {
           </ul>
         </section>
       )}
+      </WidgetBoundary>
+
+      {/* ── 준비 중인 프로젝트 (planning) ── */}
+      <WidgetBoundary label="staff-preparing-projects">
+      <section>
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <Rocket size={15} className="text-primary" /> 준비 중인 프로젝트
+          </h3>
+          <button
+            type="button"
+            onClick={() => onGoTab("projects")}
+            className="flex items-center gap-0.5 text-xs text-muted-foreground hover:text-foreground"
+          >
+            프로젝트 운영 <ArrowRight size={12} />
+          </button>
+        </div>
+        {preparingProjects.length === 0 ? (
+          <div className="rounded-xl border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
+            지금 준비 중인 프로젝트가 없습니다.
+          </div>
+        ) : (
+          <ul className="space-y-1.5">
+            {preparingProjects.map(({ project: p, taskTotal, taskDone }) => (
+              <li key={p.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFocusProjectId(p.id);
+                    onGoTab("projects");
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl border bg-card px-3 py-2.5 text-left transition-colors hover:bg-muted/30"
+                >
+                  <span className="shrink-0 rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-medium text-primary">
+                    기획 중
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="block truncate text-sm font-medium text-foreground">{p.name}</span>
+                    <span className="block truncate text-[11px] text-muted-foreground">
+                      {p.ownerName || "담당 미정"}
+                      {taskTotal > 0 && ` · 준비 업무 ${taskDone}/${taskTotal}`}
+                    </span>
+                  </span>
+                  {p.dueDate && (
+                    <span
+                      className={cn(
+                        "flex shrink-0 items-center gap-0.5 text-[11px] tabular-nums",
+                        getDueDateStatus(p.dueDate) === "overdue"
+                          ? "text-destructive"
+                          : getDueDateStatus(p.dueDate) === "warn"
+                            ? "text-warning"
+                            : "text-muted-foreground",
+                      )}
+                    >
+                      {getDueDateStatus(p.dueDate) && <AlertTriangle size={11} />}
+                      {formatDate(p.dueDate)}
+                    </span>
+                  )}
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </section>
       </WidgetBoundary>
 
       {/* ── 내 할당 업무 ── */}
