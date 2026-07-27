@@ -135,9 +135,12 @@ export default function DraggableWidget({
         </button>
       </div>
 
-      {/* 위젯 본문 — visible=false 면 흐리게 + 인터랙션 차단 */}
+      {/* 위젯 본문 — visible=false 면 흐리게 + 인터랙션 차단.
+       *  편집 모드에선 위젯이 죽어도 순서 변경/토글을 이어갈 수 있게 재시도 카드를 노출. */}
       <div className={cn("relative z-[2]", !visible && "pointer-events-none opacity-30")}>
-        <WidgetBoundary label={widgetKey}>{children}</WidgetBoundary>
+        <WidgetBoundary label={widgetKey} retryable title={meta.label}>
+          {children}
+        </WidgetBoundary>
       </div>
     </div>
   );
