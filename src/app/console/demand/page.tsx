@@ -10,6 +10,7 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
+import Link from "next/link";
 import {
   ClipboardList,
   Download,
@@ -18,6 +19,9 @@ import {
   BarChart3,
   Heart,
   TrendingUp,
+  Lightbulb,
+  BookOpen,
+  PlusCircle,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -152,6 +156,16 @@ export default function DemandConsolePage() {
     enabled: openedStudies.length > 0,
   });
 
+  // ── 세미나 수요 상위 5개 (M7) ─────────────────────────────────────────────
+  const topSeminarDemands = useMemo(
+    () =>
+      [...questions]
+        .filter((q) => q.presenter === "세미나 희망")
+        .sort((a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0))
+        .slice(0, 5),
+    [questions],
+  );
+
   // ── CSV 내보내기 ──────────────────────────────────────────────────────────
   function exportCsv() {
     const header = "주제,유형,형태,메모,공감수,작성자,작성일";
@@ -275,6 +289,52 @@ export default function DemandConsolePage() {
           ))}
         </div>
       </div>
+
+      {/* ── 세미나 수요 상위 주제 → 콘텐츠 전환 힌트 (M7) ──────────────────── */}
+      {topSeminarDemands.length > 0 && (
+        <div className="rounded-2xl border bg-card p-4">
+          <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
+            <Lightbulb size={14} className="text-primary" />
+            세미나 수요 상위 주제
+            <span className="text-[11px] font-normal text-muted-foreground">· 콘텐츠 전환 힌트</span>
+          </p>
+          <ol className="space-y-2">
+            {topSeminarDemands.map((q, i) => (
+              <li
+                key={q.id}
+                className="flex flex-col gap-1.5 rounded-xl border bg-muted/20 px-3 py-2.5"
+              >
+                <div className="flex items-start gap-2">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+                    {i + 1}
+                  </span>
+                  <span className="flex-1 text-sm font-medium text-foreground">{q.body}</span>
+                  <span className="flex shrink-0 items-center gap-0.5 text-xs text-muted-foreground">
+                    <Heart size={11} className="text-primary" />
+                    {q.likeCount ?? 0}
+                  </span>
+                </div>
+                <div className="flex flex-wrap gap-2 pl-7">
+                  <Link
+                    href={`/console/learning-guides?draftTitle=${encodeURIComponent(q.body ?? "")}`}
+                    className="flex items-center gap-1 rounded-lg border bg-background px-2.5 py-1 text-xs font-medium text-primary transition-colors hover:bg-primary/5"
+                  >
+                    <BookOpen size={11} />
+                    러닝 가이드 초안 만들기
+                  </Link>
+                  <Link
+                    href="/console/academic/seminars/create"
+                    className="flex items-center gap-1 rounded-lg border bg-background px-2.5 py-1 text-xs font-medium text-muted-foreground transition-colors hover:bg-muted/50 hover:text-foreground"
+                  >
+                    <PlusCircle size={11} />
+                    세미나 개설 검토
+                  </Link>
+                </div>
+              </li>
+            ))}
+          </ol>
+        </div>
+      )}
 
       {/* ── 개설 후 전환 집계 ───────────────────────────────────────────────── */}
       {openedStudies.length > 0 && (
