@@ -32,6 +32,7 @@ import {
 } from "./staff-store";
 import { useStaffReviewQueue } from "./useStaffReviewQueue";
 import { useOpeningDemands, type OpeningDemandStage } from "./useOpeningDemands";
+import WidgetBoundary from "@/components/ui/widget-boundary";
 
 /** 개설 대기 단계 라벨 — demand/page.tsx 에서 로컬 복사 */
 const OPENING_STAGE_LABELS: Record<OpeningDemandStage, string> = {
@@ -116,6 +117,7 @@ export default function StaffHomeTab({ onGoTab }: Props) {
       </div>
 
       {/* ── 팀 스냅샷 ── */}
+      <WidgetBoundary label="staff-snapshot">
       <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
         {[
           { label: "프로젝트", value: `${snapshot.projectCount}`, sub: `진행중 ${snapshot.active}`, cls: "text-foreground" },
@@ -130,8 +132,10 @@ export default function StaffHomeTab({ onGoTab }: Props) {
           </div>
         ))}
       </div>
+      </WidgetBoundary>
 
       {/* 전체 완료율 바 */}
+      <WidgetBoundary label="staff-progress">
       {snapshot.total > 0 && (
         <div className="rounded-xl border bg-card p-4">
           <div className="mb-2 flex items-center justify-between text-xs">
@@ -145,8 +149,10 @@ export default function StaffHomeTab({ onGoTab }: Props) {
           </div>
         </div>
       )}
+      </WidgetBoundary>
 
       {/* ── 처리 대기 (콘솔 검수 큐 실데이터) ── */}
+      <WidgetBoundary label="staff-review-queue">
       {reviewPending.length > 0 && (
         <section>
           <h3 className="mb-2 flex items-center gap-1.5 text-sm font-semibold text-foreground">
@@ -173,8 +179,10 @@ export default function StaffHomeTab({ onGoTab }: Props) {
           </div>
         </section>
       )}
+      </WidgetBoundary>
 
       {/* ── 개설 대기 수요 미니 리스트 ── */}
+      <WidgetBoundary label="staff-opening-demands">
       {openingDemands.length > 0 && (
         <section>
           <div className="mb-2 flex items-center justify-between">
@@ -216,8 +224,10 @@ export default function StaffHomeTab({ onGoTab }: Props) {
           </ul>
         </section>
       )}
+      </WidgetBoundary>
 
       {/* ── 내 할당 업무 ── */}
+      <WidgetBoundary label="staff-my-tasks">
       <section>
         <div className="mb-2 flex items-center justify-between">
           <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
@@ -276,8 +286,10 @@ export default function StaffHomeTab({ onGoTab }: Props) {
           </ul>
         )}
       </section>
+      </WidgetBoundary>
 
       {/* ── 고정 공지 ── */}
+      <WidgetBoundary label="staff-notices">
       {pinned.length > 0 && (
         <section>
           <div className="mb-2 flex items-center justify-between">
@@ -308,6 +320,7 @@ export default function StaffHomeTab({ onGoTab }: Props) {
           </ul>
         </section>
       )}
+      </WidgetBoundary>
 
       {/* ── 빠른 이동 ── */}
       <section>

@@ -25,6 +25,7 @@ import {
   type DashboardWidgetKey,
 } from "@/types/dashboard-layout";
 import { cn } from "@/lib/utils";
+import WidgetBoundary from "@/components/ui/widget-boundary";
 
 interface DraggableWidgetProps {
   widgetKey: DashboardWidgetKey;
@@ -52,9 +53,9 @@ export default function DraggableWidget({
     isDragging,
   } = useSortable({ id: widgetKey, disabled: !editMode });
 
-  // 편집 모드 OFF: children 그대로 (오버레이/wrapper 없음)
+  // 편집 모드 OFF: children 그대로 (오버레이/wrapper 없음) — WidgetBoundary 로 위젯 단위 격리
   if (!editMode) {
-    return <>{children}</>;
+    return <WidgetBoundary label={widgetKey}>{children}</WidgetBoundary>;
   }
 
   const meta = DASHBOARD_WIDGET_META[widgetKey];
@@ -136,7 +137,7 @@ export default function DraggableWidget({
 
       {/* 위젯 본문 — visible=false 면 흐리게 + 인터랙션 차단 */}
       <div className={cn("relative z-[2]", !visible && "pointer-events-none opacity-30")}>
-        {children}
+        <WidgetBoundary label={widgetKey}>{children}</WidgetBoundary>
       </div>
     </div>
   );

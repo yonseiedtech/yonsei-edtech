@@ -81,6 +81,7 @@ import EmptyState from "@/components/ui/empty-state";
 import NewcomerProgressWidget from "@/features/dashboard/NewcomerProgressWidget";
 import JourneyStepperWidget from "@/features/dashboard/JourneyStepperWidget";
 import KudosWidget from "@/features/dashboard/KudosWidget";
+import WidgetBoundary from "@/components/ui/widget-boundary";
 import {
   useDashboardLayout,
   isWidgetVisible,
@@ -581,13 +582,17 @@ function DashboardContent() {
         {/* B4(신입 워크스루): 신입 첫 2주 진행 위젯을 상단(TodayCard 직후)으로 승격.
             현재 학기 코호트·가입 14일 이내에만 노출, 그 외엔 null 렌더로 자동 숨김(비신입 미영향). */}
         <div className="mt-6 empty:hidden">
-          <NewcomerProgressWidget />
+          <WidgetBoundary label="newcomer-progress">
+            <NewcomerProgressWidget />
+          </WidgetBoundary>
         </div>
 
         {/* v17 H3: 회원 여정 완주 스텝퍼 — 가입→진단→학습→활동 통합 오케스트레이션.
             신입 창(NewcomerProgressWidget 담당)에는 null 렌더로 양보, 그 외 회원에게만 노출. */}
         <div className="mt-6 empty:hidden">
-          <JourneyStepperWidget />
+          <WidgetBoundary label="journey-stepper">
+            <JourneyStepperWidget />
+          </WidgetBoundary>
         </div>
 
         {/* 사이클 104: F-패턴·정보 빈도 기반 상단 재편 (사용자 요청 — Mayer 멀티미디어/마케팅 시선흐름).
@@ -623,19 +628,25 @@ function DashboardContent() {
             최근 14일 멈춘 연구 습관 1개만 가벼운 다음 한 걸음으로 제안.
             신입·활동 고른 회원·해당 없음이면 컴포넌트가 null 렌더로 자동 숨김. */}
         <div className="mb-6 empty:hidden">
-          <InactivityCoachingCard />
+          <WidgetBoundary label="inactivity-coaching">
+            <InactivityCoachingCard />
+          </WidgetBoundary>
         </div>
 
         {/* M1(v5): 주간 학습 목표 설정·달성 루프 — 코칭 카드 형제.
             목표 설정 시 진행 바·달성 축하, 미설정 시 프리셋 3종 CTA + 지난주 회고. */}
         <div className="mb-6 empty:hidden">
-          <WeeklyGoalCard />
+          <WidgetBoundary label="weekly-goal">
+            <WeeklyGoalCard />
+          </WidgetBoundary>
         </div>
 
         {/* v8-H2: 응원(kudos) 위젯 — 이번 주 받은 응원 + 코호트 동기에게 응원 보내기.
             받은 응원·보낼 대상 모두 없으면 null 렌더로 자동 숨김. */}
         <div className="mb-6 empty:hidden">
-          <KudosWidget />
+          <WidgetBoundary label="kudos">
+            <KudosWidget />
+          </WidgetBoundary>
         </div>
 
         {/* C-1: 개강 주간(D-7~D+14) 자동 노출 재활성화 배너 */}
@@ -655,7 +666,9 @@ function DashboardContent() {
         {/* 사이클 85: 이번 학기 추천 한 걸음 — 커맨드센터 아래, JOURNEY_STAGES 현재 학기 추천 행동 (여정 문서 High ②).
             학기 미설정자는 JourneyGreetingHeader 가 유도하므로 패널 내부에서 null 렌더. */}
         <div className="mb-6 empty:hidden">
-          <StageRecommendationPanel user={user} />
+          <WidgetBoundary label="stage-recommendation">
+            <StageRecommendationPanel user={user} />
+          </WidgetBoundary>
         </div>
 
         {/* 스프린트3 H4: 신입 온보딩 표면 통합 — 기존 WelcomeBanner·ChecklistWidget 2종을
@@ -666,7 +679,11 @@ function DashboardContent() {
         <TermBriefHero
           user={user}
           academicCalendarSlot={
-            canShowWidget(user.role, "academicCalendar") ? <AcademicCalendarProgress /> : null
+            canShowWidget(user.role, "academicCalendar") ? (
+              <WidgetBoundary label="academic-calendar-progress">
+                <AcademicCalendarProgress />
+              </WidgetBoundary>
+            ) : null
           }
         />
       </section>
@@ -675,7 +692,9 @@ function DashboardContent() {
       <div className="mx-auto mt-4 max-w-6xl px-4 space-y-3">
         {/* Codex Phase B: 운영진 홈 모드 — 상단 우선순위 패널 (isStaff 분기, 사용자 토글 적용) */}
         {isStaff && isWidgetVisible(layout, "staffAlerts") && (
-          <StaffPriorityPanel muted={staffAlertsMuted} />
+          <WidgetBoundary label="staff-priority">
+            <StaffPriorityPanel muted={staffAlertsMuted} />
+          </WidgetBoundary>
         )}
       </div>
 

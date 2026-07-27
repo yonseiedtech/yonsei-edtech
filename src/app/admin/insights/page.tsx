@@ -134,6 +134,18 @@ const WeaveKpiSection = dynamic(
   },
 );
 
+const JourneyCohortFunnelSection = dynamic(
+  () => import("@/features/insights/JourneyCohortFunnelSection"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 size={24} className="animate-spin text-muted-foreground" />
+      </div>
+    ),
+  },
+);
+
 type SubTab =
   | "summary"
   | "actions"
@@ -211,9 +223,11 @@ function InsightsInner() {
           {/* H1(2026-07-20): web_vitals 성능 관측 — 라우트별 LCP/CLS/INP p75 */}
           <WebVitalsSection />
         </TabsContent>
-        <TabsContent value="weave" className="mt-4">
+        <TabsContent value="weave" className="mt-4 space-y-6">
           {/* v17-H2: v16 연결고리 전환·리텐션 측정 — 가이드 완독률·수요 개설 전환·진단 후속 */}
           <WeaveKpiSection />
+          {/* v18-M3: 회원 여정 완주율 코호트 퍼널 — 개인 스텝퍼 단계 정의 재사용, 최대 이탈 단계 강조 */}
+          <JourneyCohortFunnelSection />
         </TabsContent>
         <TabsContent value="dashboard" className="mt-4">
           <AnalyticsView />

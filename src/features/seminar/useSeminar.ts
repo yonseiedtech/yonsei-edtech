@@ -8,6 +8,7 @@ import { getComputedStatus } from "@/lib/seminar-utils";
 import { notifyWaitlistPromoted } from "@/features/notifications/notify";
 import type { WaitlistEntry } from "@/types";
 import type { Seminar, SeminarSession, SeminarAttendee, User } from "@/types";
+import { normalizeSeminar } from "@/lib/seminar-normalize";
 
 // ── List ──
 
@@ -20,7 +21,7 @@ export function useSeminars(
     queryFn: async () => {
       // 전체 조회 후 getComputedStatus로 클라이언트 필터링 (DB status는 날짜 기반 자동 계산과 불일치 가능)
       const res = await seminarsApi.list({ limit: 200 });
-      const all = res.data as unknown as Seminar[];
+      const all = (res.data as unknown as Seminar[]).map(normalizeSeminar);
       if (!status) return all;
       return all.filter((s) => getComputedStatus(s) === status);
     },
@@ -38,7 +39,7 @@ export function useSeminar(id: string) {
     queryKey: ["seminars", id],
     queryFn: async () => {
       const res = await seminarsApi.get(id);
-      return res as unknown as Seminar;
+      return normalizeSeminar(res as unknown as Seminar);
     },
     retry: false,
     enabled: !!id,

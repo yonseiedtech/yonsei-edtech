@@ -26,6 +26,7 @@ import { CheckCircle2, Circle, Compass, ArrowRight, Trophy } from "lucide-react"
 import WidgetCard from "@/components/ui/widget-card";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useUserDiagnostics } from "@/features/dashboard/useUserDiagnostics";
+import { hasGuideStarted } from "@/features/dashboard/journey-stages";
 import { getUserPersona } from "@/features/dashboard/widget-visibility";
 import { isNewcomerWindow, isProfileComplete } from "@/lib/newcomer-sequence";
 import { cohortKeyOf, currentSemesterKey } from "@/lib/semester";
@@ -87,7 +88,7 @@ export default function JourneyStepperWidget() {
     queryKey: ["journey-guide-started", userId],
     queryFn: async () => {
       const docs = await guideProgressApi.listByUser(userId as string);
-      return docs.some((d) => Object.keys(d.completedItems ?? {}).length > 0);
+      return docs.some((d) => hasGuideStarted(d));
     },
     enabled: researchActive,
     staleTime: 5 * 60_000,
