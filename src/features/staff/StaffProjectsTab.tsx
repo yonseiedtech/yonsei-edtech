@@ -4,12 +4,13 @@ import { useState, useMemo } from "react";
 import {
   Plus, ArrowLeft, Trash2, Pencil, Check, X,
   AlertTriangle, Clock, User2, ChevronRight,
+  LayoutGrid, CalendarRange, CalendarOff, StickyNote,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAdminOrSysadmin } from "@/lib/permissions";
-import MemberAutocomplete, { type SelectedMember } from "@/components/ui/MemberAutocomplete";
+import { useAllMembers } from "@/features/member/useMembers";
 import {
   useStaffProjects,
   useCreateProject,
@@ -62,6 +63,38 @@ function projectTaskStats(tasks: StaffTask[]): { total: number; done: number; ov
   const pct = total === 0 ? 0 : Math.round((done / total) * 100);
   return { total, done, overdue, pct };
 }
+
+/** 마감일까지 남은 일수를 D-day 라벨로 (D-DAY / D-3 / D+2) */
+function ddayLabel(dueDate: string): string {
+  const d = diffDays(dueDate);
+  if (d === 0) return "D-DAY";
+  return d > 0 ? `D-${d}` : `D+${-d}`;
+}
+
+// ── Timeline (날짜 기준 뷰) ─────────────────────────────────────────────────────
+
+type TimelineBucketKey = "overdue" | "thisWeek" | "thisMonth" | "later" | "none";
+
+const TIMELINE_BUCKET_LABELS: Record<TimelineBucketKey, string> = {
+  overdue: "기한 지남",
+  thisWeek: "이번 주 (7일 내)",
+  thisMonth: "이번 달",
+  later: "이후",
+  none: "마감일 미설정",
+};
+
+const TIMELINE_BUCKET_ORDER: TimelineBucketKey[] = ["overdue", "thisWeek", "thisMonth", "later", "none"];
+
+function timelineBucket(dueDate: string | undefined): TimelineBucketKey {
+  if (!dueDate) return "none";
+  const d = diffDays(dueDate);
+  if (d < 0) return "overdue";
+  if (d <= 7) return "thisWeek";
+  if (d <= 31) return "thisMonth";
+  return "later";
+}
+
+const STAFF_ROLES = new Set(["staff", "president", "admin", "sysadmin"]);
 
 // ── Project Summary Dashboard ──────────────────────────────────────────────────
 
@@ -166,6 +199,14 @@ function TaskCard({
         </button>
       </div>
 
+      {/* Memo */}
+      {task.description && (
+        <p className="flex items-start gap-1 text-xs text-muted-foreground">
+          <StickyNote size={11} className="mt-0.5 shrink-0" />
+          <span className="line-clamp-2 leading-snug">{task.description}</span>
+        </p>
+      )}
+
       {/* Assignee */}
       <div className="flex items-center gap-1 text-xs text-muted-foreground">
         <User2 size={11} />
@@ -177,7 +218,7 @@ function TaskCard({
       </div>
 
       {/* Due date */}
-      {task.dueDate && (
+      {task.dueDate ? (
         <div
           className={cn(
             "flex items-center gap-1 text-xs",
@@ -193,6 +234,11 @@ function TaskCard({
             {dueSt === "overdue" && " (기한 초과)"}
             {dueSt === "warn" && ` (D-${diffDays(task.dueDate)})`}
           </span>
+        </div>
+      ) : (
+        <div className="flex items-center gap-1 text-xs text-muted-foreground">
+          <CalendarOff size={11} />
+          <span>마감일 미설정</span>
         </div>
       )}
 
@@ -266,14 +312,33 @@ function TaskModal({
   const [checklist, setChecklist] = useState<TaskChecklist[]>(task?.checklist ?? []);
   const [newCheckItem, setNewCheckItem] = useState("");
 
-  const handleAssignee = (m: SelectedMember) => {
-    setAssigneeId(m.id);
-    setAssigneeName(m.name);
-  };
+  const { members } = useAllMembers();
 
-  const handleClearAssignee = () => {
-    setAssigneeId("");
-    setAssigneeName("");
+  // 운영진(staff/president/admin/sysadmin) 목록을 담당자 후보로 — 전체 회원에서 role 필터로 파생.
+  const staffMembers = useMemo(() => {
+    return (members ?? [])
+      .filter((m) => STAFF_ROLES.has(m.role))
+      .map((m) => ({ id: m.id, name: m.name ?? "" }))
+      .sort((a, b) => a.name.localeCompare(b.name));
+  }, [members]);
+
+  // 편집 대상이 운영진 목록에 없는(예: 역할 변경·비운영진) 기존 담당자도 옵션으로 유지.
+  const assigneeOptions = useMemo(() => {
+    if (assigneeId && !staffMembers.some((m) => m.id === assigneeId)) {
+      return [{ id: assigneeId, name: assigneeName || "기존 담당자" }, ...staffMembers];
+    }
+    return staffMembers;
+  }, [staffMembers, assigneeId, assigneeName]);
+
+  const handleAssigneeSelect = (id: string) => {
+    if (!id) {
+      setAssigneeId("");
+      setAssigneeName("");
+      return;
+    }
+    const m = assigneeOptions.find((x) => x.id === id);
+    setAssigneeId(id);
+    setAssigneeName(m?.name ?? assigneeName);
   };
 
   const addCheckItem = () => {
@@ -363,13 +428,13 @@ function TaskModal({
             />
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-muted-foreground">설명</label>
+            <label className="mb-1 block text-xs font-semibold text-muted-foreground">메모</label>
             <textarea
               className="w-full resize-none rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               rows={2}
-              placeholder="상세 내용 (선택)"
+              placeholder="업무 메모·참고 사항 (선택)"
             />
           </div>
           <div className="grid grid-cols-2 gap-3">
@@ -396,15 +461,17 @@ function TaskModal({
             </div>
           </div>
           <div>
-            <label className="mb-1 block text-xs font-semibold text-muted-foreground">담당자</label>
-            <MemberAutocomplete
+            <label className="mb-1 block text-xs font-semibold text-muted-foreground">담당자 (운영진)</label>
+            <select
+              className="w-full rounded-lg border bg-background px-3 py-2 text-sm outline-none focus:ring-2 focus:ring-ring"
               value={assigneeId}
-              displayName={assigneeName || undefined}
-              onSelect={handleAssignee}
-              onClear={handleClearAssignee}
-              approvedOnly
-              placeholder="회원 이름을 입력하세요"
-            />
+              onChange={(e) => handleAssigneeSelect(e.target.value)}
+            >
+              <option value="">담당자 없음</option>
+              {assigneeOptions.map((m) => (
+                <option key={m.id} value={m.id}>{m.name}</option>
+              ))}
+            </select>
           </div>
           <div>
             <label className="mb-1 block text-xs font-semibold text-muted-foreground">체크리스트</label>
@@ -534,6 +601,113 @@ function KanbanColumn({
   );
 }
 
+// ── Timeline View (날짜 기준) ───────────────────────────────────────────────────
+
+function TimelineRow({
+  task,
+  onEdit,
+}: {
+  task: StaffTask;
+  onEdit: (task: StaffTask) => void;
+}) {
+  const dueSt = getDueDateStatus(task.dueDate);
+  return (
+    <button
+      type="button"
+      onClick={() => onEdit(task)}
+      className="flex w-full items-center gap-3 rounded-xl border bg-card px-3 py-2.5 text-left transition-colors hover:bg-muted/30"
+    >
+      <span className={cn("shrink-0 rounded px-2 py-0.5 text-[11px] font-semibold", TASK_STATUS_CHIP[task.status])}>
+        {TASK_STATUS_LABELS[task.status]}
+      </span>
+      <span className="min-w-0 flex-1">
+        <span className="block truncate text-sm font-medium text-foreground">{task.title}</span>
+        <span className="flex items-center gap-2 text-[11px] text-muted-foreground">
+          <span className="flex items-center gap-0.5">
+            <User2 size={10} />
+            {task.assigneeName ? task.assigneeName : <span className="text-warning">미배정</span>}
+          </span>
+          {task.description && <span className="truncate">· {task.description}</span>}
+        </span>
+      </span>
+      {task.dueDate ? (
+        <span
+          className={cn(
+            "flex shrink-0 items-center gap-1 text-[11px] tabular-nums",
+            dueSt === "overdue" ? "text-destructive" : dueSt === "warn" ? "text-warning" : "text-muted-foreground",
+          )}
+        >
+          {dueSt === "overdue" && <AlertTriangle size={10} />}
+          {dueSt === "warn" && <Clock size={10} />}
+          {formatDateShort(task.dueDate)} · {ddayLabel(task.dueDate)}
+        </span>
+      ) : (
+        <span className="flex shrink-0 items-center gap-1 text-[11px] text-muted-foreground">
+          <CalendarOff size={10} /> 미설정
+        </span>
+      )}
+    </button>
+  );
+}
+
+function TimelineView({
+  tasks,
+  onEditTask,
+}: {
+  tasks: StaffTask[];
+  onEditTask: (task: StaffTask) => void;
+}) {
+  const grouped = useMemo(() => {
+    const map: Record<TimelineBucketKey, StaffTask[]> = {
+      overdue: [], thisWeek: [], thisMonth: [], later: [], none: [],
+    };
+    (tasks ?? []).forEach((t) => { map[timelineBucket(t.dueDate)].push(t); });
+    TIMELINE_BUCKET_ORDER.forEach((k) => {
+      map[k].sort((a, b) => (a.dueDate ?? "9999").localeCompare(b.dueDate ?? "9999"));
+    });
+    return map;
+  }, [tasks]);
+
+  if ((tasks ?? []).length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center">
+        <p className="text-sm text-muted-foreground">표시할 태스크가 없습니다.</p>
+      </div>
+    );
+  }
+
+  return (
+    <div className="space-y-4">
+      {TIMELINE_BUCKET_ORDER.map((k) => {
+        const items = grouped[k];
+        if (items.length === 0) return null;
+        return (
+          <div key={k}>
+            <div className="mb-1.5 flex items-center gap-2">
+              <h4
+                className={cn(
+                  "text-xs font-semibold",
+                  k === "overdue" ? "text-destructive" : k === "thisWeek" ? "text-warning" : "text-muted-foreground",
+                )}
+              >
+                {TIMELINE_BUCKET_LABELS[k]}
+              </h4>
+              <span className="text-[11px] text-muted-foreground">{items.length}</span>
+            </div>
+            <ul className="space-y-1.5">
+              {items.map((t) => (
+                <li key={t.id}>
+                  <TimelineRow task={t} onEdit={onEditTask} />
+                </li>
+              ))}
+            </ul>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 // ── Kanban Board (project detail) ──────────────────────────────────────────────
 
 function KanbanBoard({
@@ -549,6 +723,7 @@ function KanbanBoard({
   const deleteProject = useDeleteProject();
   const { data: tasks = [], isLoading } = useStaffTasks(project.id);
 
+  const [view, setView] = useState<"kanban" | "timeline">("kanban");
   const [myOnly, setMyOnly] = useState(false);
   const [assigneeFilter, setAssigneeFilter] = useState<string>("all");
   const [modalStatus, setModalStatus] = useState<TaskStatus | null>(null);
@@ -652,6 +827,31 @@ function KanbanBoard({
       {/* Controls */}
       <div className="flex items-center justify-between gap-3 flex-wrap">
         <div className="flex items-center gap-3 flex-wrap">
+          {/* View toggle */}
+          <div className="inline-flex rounded-lg border p-0.5">
+            <button
+              type="button"
+              onClick={() => setView("kanban")}
+              className={cn(
+                "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                view === "kanban" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted",
+              )}
+              aria-pressed={view === "kanban"}
+            >
+              <LayoutGrid size={13} /> 칸반
+            </button>
+            <button
+              type="button"
+              onClick={() => setView("timeline")}
+              className={cn(
+                "flex items-center gap-1 rounded-md px-2.5 py-1 text-xs font-medium transition-colors",
+                view === "timeline" ? "bg-primary text-white" : "text-muted-foreground hover:bg-muted",
+              )}
+              aria-pressed={view === "timeline"}
+            >
+              <CalendarRange size={13} /> 타임라인
+            </button>
+          </div>
           <label className="flex items-center gap-2 text-sm cursor-pointer select-none">
             <input
               type="checkbox"
@@ -684,14 +884,14 @@ function KanbanBoard({
         </button>
       </div>
 
-      {/* Kanban */}
+      {/* Board */}
       {isLoading ? (
         <div className="flex gap-3">
           {[1, 2, 3, 4].map((i) => (
             <div key={i} className="h-48 flex-1 animate-pulse rounded-xl bg-muted" />
           ))}
         </div>
-      ) : (
+      ) : view === "kanban" ? (
         <div className="flex gap-3 overflow-x-auto pb-2">
           {TASK_STATUS_ORDER.map((s) => (
             <KanbanColumn
@@ -704,6 +904,8 @@ function KanbanBoard({
             />
           ))}
         </div>
+      ) : (
+        <TimelineView tasks={filteredTasks} onEditTask={(t) => setEditTask(t)} />
       )}
 
       {/* Assignee load breakdown */}
