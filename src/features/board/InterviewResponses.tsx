@@ -139,7 +139,7 @@ export default function InterviewResponses({ postId, meta, storedResponseCount }
           <span key={i}>
             {p}
             {i < parts.length - 1 && (
-              <span className="mx-1 inline-block border-b-2 border-[#003876] px-2 font-bold text-[#003876]">
+              <span className="mx-1 inline-block border-b-2 border-primary px-2 font-bold text-primary">
                 {text || "____"}
               </span>
             )}
@@ -251,7 +251,7 @@ export default function InterviewResponses({ postId, meta, storedResponseCount }
                     const fillBlankNode = isFillBlank ? renderFillBlankFilled(q.prompt, a.text) : null;
                     return (
                       <div key={a.questionId} className="rounded-lg bg-muted/40 p-3">
-                        <p className="text-xs font-semibold text-[#003876]">
+                        <p className="text-xs font-semibold text-primary">
                           Q{q.order}. {isFillBlank && fillBlankNode ? "" : q.prompt}
                         </p>
                         {q.description && (
@@ -272,7 +272,7 @@ export default function InterviewResponses({ postId, meta, storedResponseCount }
                               .map((t, i) => (
                                 <span
                                   key={i}
-                                  className="rounded-full bg-[#003876]/10 px-2.5 py-1 text-xs font-medium text-[#003876]"
+                                  className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
                                 >
                                   {t}
                                 </span>

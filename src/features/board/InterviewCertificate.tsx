@@ -85,7 +85,7 @@ export default function InterviewCertificate({ post, respondentName, answerCount
           {/* 콘텐츠 */}
           <div className="relative flex h-full flex-col items-center justify-between p-8 text-white">
             <div className="flex flex-col items-center">
-              <div className="flex items-center gap-2 rounded-xl bg-card/95 px-4 py-2 text-sm font-bold text-[#003876] shadow">
+              <div className="flex items-center gap-2 rounded-xl bg-card/95 px-4 py-2 text-sm font-bold text-primary shadow">
                 <img
                   src="/yonsei-emblem.svg"
                   alt="연세대학교"

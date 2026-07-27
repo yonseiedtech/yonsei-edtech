@@ -147,7 +147,7 @@ export default function InterviewResponseComments({
                   <span className="font-semibold text-foreground">{c.authorName}</span>
                   {isInterviewee && (
                     <span
-                      className="inline-flex items-center gap-0.5 rounded-full bg-[#003876] px-1.5 py-0.5 text-[10px] font-semibold text-white"
+                      className="inline-flex items-center gap-0.5 rounded-full bg-primary px-1.5 py-0.5 text-[10px] font-semibold text-white"
                       title="이 인터뷰에 응답한 본인이 남긴 댓글"
                     >
                       <Mic size={10} />

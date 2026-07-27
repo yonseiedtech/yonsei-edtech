@@ -60,7 +60,7 @@ function renderFillBlankInline(
               value={value}
               onChange={(e) => patch({ text: e.target.value })}
               placeholder="답변"
-              className="inline-block min-w-[80px] max-w-[240px] border-b-2 border-[#003876] bg-transparent px-2 text-center text-[#003876] outline-none placeholder:text-[#003876]/30 focus:border-[#1a5fa0]"
+              className="inline-block min-w-[80px] max-w-[240px] border-b-2 border-primary bg-transparent px-2 text-center text-primary outline-none placeholder:text-primary/30 focus:border-[#1a5fa0]"
               style={{ fontSize: "inherit", fontWeight: "inherit" }}
             />
           )}
@@ -420,11 +420,11 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                   alt="연세대학교"
                   className="h-12 w-12 opacity-90"
                 />
-                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-[#003876]/70">
+                <p className="text-[10px] font-semibold uppercase tracking-[0.18em] text-primary/70">
                   YONSEI UNIV. Educational Technology
                 </p>
               </div>
-              <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-[#003876]">
+              <p className="mt-6 text-xs font-semibold uppercase tracking-wider text-primary">
                 {post.authorName} · 인터뷰어
               </p>
               <h2 className="mt-2 text-2xl font-bold leading-snug sm:text-4xl">{post.title}</h2>
@@ -460,7 +460,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                   initial={{ opacity: 0, y: 6 }}
                   animate={{ opacity: 1, y: 0 }}
                   transition={{ delay: 0.3 }}
-                  className="mt-4 text-sm font-medium text-[#003876]"
+                  className="mt-4 text-sm font-medium text-primary"
                 >
                   첫번째 참여자이세요! 잘 부탁드립니다💗
                 </motion.p>
@@ -475,7 +475,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
               transition={{ duration: 0.32, ease: "easeOut" }}
               className="mx-auto w-full max-w-2xl"
             >
-              <p className="text-center text-xs font-semibold uppercase tracking-wider text-[#003876]">
+              <p className="text-center text-xs font-semibold uppercase tracking-wider text-primary">
                 Q{index + 1} / {total}
               </p>
               <p className="mt-1 text-center font-mono text-[11px] text-muted-foreground sm:text-xs">
@@ -538,12 +538,12 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                           onClick={() => patchAnswer({ selectedOptionId: opt.id, text: undefined })}
                           className={`block w-full rounded-2xl border-2 px-4 py-3 text-left text-base transition-all ${
                             selected
-                              ? "border-[#003876] bg-[#003876]/5 font-semibold text-[#003876] shadow-sm"
-                              : "border-muted bg-card hover:border-[#003876]/40 hover:bg-cat-1/5"
+                              ? "border-primary bg-primary/5 font-semibold text-primary shadow-sm"
+                              : "border-muted bg-card hover:border-primary/40 hover:bg-cat-1/5"
                           }`}
                         >
-                          <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 align-middle" style={{ borderColor: selected ? "#003876" : "#cbd5e1" }}>
-                            {selected && <span className="h-2.5 w-2.5 rounded-full bg-[#003876]" />}
+                          <span className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-full border-2 align-middle" style={{ borderColor: selected ? "hsl(var(--primary))" : "#cbd5e1" }}>
+                            {selected && <span className="h-2.5 w-2.5 rounded-full bg-primary" />}
                           </span>
                           {opt.label || <span className="text-muted-foreground">(선택지 미입력)</span>}
                         </button>
@@ -553,8 +553,8 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                       <div
                         className={`rounded-2xl border-2 px-4 py-3 transition-all ${
                           currentAnswer?.selectedOptionId === CUSTOM_OPTION_ID
-                            ? "border-[#003876] bg-[#003876]/5 shadow-sm"
-                            : "border-dashed border-muted bg-card hover:border-[#003876]/40"
+                            ? "border-primary bg-primary/5 shadow-sm"
+                            : "border-dashed border-muted bg-card hover:border-primary/40"
                         }`}
                       >
                         <button
@@ -569,15 +569,15 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                             style={{
                               borderColor:
                                 currentAnswer?.selectedOptionId === CUSTOM_OPTION_ID
-                                  ? "#003876"
+                                  ? "hsl(var(--primary))"
                                   : "#cbd5e1",
                             }}
                           >
                             {currentAnswer?.selectedOptionId === CUSTOM_OPTION_ID && (
-                              <span className="h-2.5 w-2.5 rounded-full bg-[#003876]" />
+                              <span className="h-2.5 w-2.5 rounded-full bg-primary" />
                             )}
                           </span>
-                          <span className="font-semibold text-[#003876]">+ 직접 입력</span>
+                          <span className="font-semibold text-primary">+ 직접 입력</span>
                         </button>
                         {currentAnswer?.selectedOptionId === CUSTOM_OPTION_ID && (
                           <Input
@@ -627,15 +627,15 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                             onClick={() => toggle(opt.id)}
                             className={`block w-full rounded-2xl border-2 px-4 py-3 text-left text-base transition-all ${
                               selected
-                                ? "border-[#003876] bg-[#003876]/5 font-semibold text-[#003876] shadow-sm"
-                                : "border-muted bg-card hover:border-[#003876]/40 hover:bg-cat-1/5"
+                                ? "border-primary bg-primary/5 font-semibold text-primary shadow-sm"
+                                : "border-muted bg-card hover:border-primary/40 hover:bg-cat-1/5"
                             }`}
                           >
                             <span
                               className="mr-2 inline-flex h-5 w-5 items-center justify-center rounded-md border-2 align-middle"
                               style={{
-                                borderColor: selected ? "#003876" : "#cbd5e1",
-                                backgroundColor: selected ? "#003876" : "transparent",
+                                borderColor: selected ? "hsl(var(--primary))" : "#cbd5e1",
+                                backgroundColor: selected ? "hsl(var(--primary))" : "transparent",
                               }}
                             >
                               {selected && <span className="text-[12px] font-bold leading-none text-white">✓</span>}
@@ -650,8 +650,8 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                           <div
                             className={`rounded-2xl border-2 px-4 py-3 transition-all ${
                               selected
-                                ? "border-[#003876] bg-[#003876]/5 shadow-sm"
-                                : "border-dashed border-muted bg-card hover:border-[#003876]/40"
+                                ? "border-primary bg-primary/5 shadow-sm"
+                                : "border-dashed border-muted bg-card hover:border-primary/40"
                             }`}
                           >
                             <button
@@ -662,13 +662,13 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                               <span
                                 className="inline-flex h-5 w-5 items-center justify-center rounded-md border-2 align-middle"
                                 style={{
-                                  borderColor: selected ? "#003876" : "#cbd5e1",
-                                  backgroundColor: selected ? "#003876" : "transparent",
+                                  borderColor: selected ? "hsl(var(--primary))" : "#cbd5e1",
+                                  backgroundColor: selected ? "hsl(var(--primary))" : "transparent",
                                 }}
                               >
                                 {selected && <span className="text-[12px] font-bold leading-none text-white">✓</span>}
                               </span>
-                              <span className="font-semibold text-[#003876]">+ 직접 입력</span>
+                              <span className="font-semibold text-primary">+ 직접 입력</span>
                             </button>
                             {selected && (
                               <Input
@@ -774,7 +774,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                               ? isO
                                 ? "border-success bg-success/10 text-success shadow-lg"
                                 : "border-destructive bg-destructive/10 text-destructive shadow-lg"
-                              : "border-muted bg-card text-muted-foreground hover:border-[#003876]/40 hover:bg-cat-1/5"
+                              : "border-muted bg-card text-muted-foreground hover:border-primary/40 hover:bg-cat-1/5"
                           }`}
                         >
                           {isO ? "⭕" : "❌"}

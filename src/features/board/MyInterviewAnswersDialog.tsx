@@ -99,7 +99,7 @@ export default function MyInterviewAnswersDialog({
           <span key={i}>
             {p}
             {i < parts.length - 1 && (
-              <span className="mx-1 inline-block border-b-2 border-[#003876] px-2 font-bold text-[#003876]">
+              <span className="mx-1 inline-block border-b-2 border-primary px-2 font-bold text-primary">
                 {text || "____"}
               </span>
             )}
@@ -166,7 +166,7 @@ export default function MyInterviewAnswersDialog({
                 multiChoiceLabels.length > 0;
               return (
                 <div key={a.questionId} className="rounded-lg bg-muted/40 p-3">
-                  <p className="text-xs font-semibold text-[#003876]">
+                  <p className="text-xs font-semibold text-primary">
                     Q{q.order}. {isFillBlank && fillBlankNode ? "" : q.prompt}
                   </p>
                   {q.description && (
@@ -185,7 +185,7 @@ export default function MyInterviewAnswersDialog({
                       {multiTextItems.map((t, i) => (
                         <span
                           key={i}
-                          className="rounded-full bg-[#003876]/10 px-2.5 py-1 text-xs font-medium text-[#003876]"
+                          className="rounded-full bg-primary/10 px-2.5 py-1 text-xs font-medium text-primary"
                         >
                           {t}
                         </span>
