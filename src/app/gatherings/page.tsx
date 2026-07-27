@@ -95,9 +95,13 @@ export default function GatheringsPage() {
     staleTime: 60_000,
   });
 
-  // 비공개(private) 모임은 공개 목록에서 제외 — 단 staff 이상에게는 배지와 함께 노출
+  // 비공개(private) 모임은 공개 목록에서 제외 — 단 staff 이상에게는 배지와 함께 노출.
+  // internal:true(운영진 내부 일정조율)는 모든 사용자에게 항상 제외 — /staff 탭에서만 관리.
   const visibleEvents = useMemo(
-    () => (canCreate ? events : events.filter((e) => e.visibility !== "private")),
+    () =>
+      (canCreate ? events : events.filter((e) => e.visibility !== "private")).filter(
+        (e) => !e.internal,
+      ),
     [events, canCreate],
   );
 

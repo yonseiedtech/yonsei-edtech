@@ -3,12 +3,13 @@
 "use client";
 
 import { useState } from "react";
-import { Home, Megaphone, FolderKanban, LayoutDashboard } from "lucide-react";
+import { Home, Megaphone, FolderKanban, LayoutDashboard, CalendarClock } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import StaffHomeTab from "@/features/staff/StaffHomeTab";
 import StaffNoticesTab from "@/features/staff/StaffNoticesTab";
 import StaffProjectsTab from "@/features/staff/StaffProjectsTab";
 import StaffConsoleTab from "@/features/staff/StaffConsoleTab";
+import StaffMeetingPollTab from "@/features/staff/StaffMeetingPollTab";
 
 export default function StaffPage() {
   const [tab, setTab] = useState("home");
@@ -40,6 +41,10 @@ export default function StaffPage() {
             <LayoutDashboard size={15} />
             콘솔 바로가기
           </TabsTrigger>
+          <TabsTrigger value="meeting-poll" className="flex items-center gap-1.5">
+            <CalendarClock size={15} />
+            모임 일정
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent value="home" className="pt-2">
@@ -56,6 +61,10 @@ export default function StaffPage() {
 
         <TabsContent value="console" className="pt-2">
           <StaffConsoleTab />
+        </TabsContent>
+
+        <TabsContent value="meeting-poll" className="pt-2">
+          <StaffMeetingPollTab />
         </TabsContent>
       </Tabs>
     </div>

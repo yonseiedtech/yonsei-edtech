@@ -81,6 +81,12 @@ export interface NetworkingEvent {
    */
   semester?: string;
   /**
+   * 운영진 내부 일정조율 플래그 — 공개 목록(모임/캘린더)에서 제외하고 /staff 탭에서만 표시.
+   * 하위호환: 미설정(undefined/false) = 일반 사교행사.
+   * firestore.rules 변경 없음 — 노출 차단은 클라이언트 읽기 측 필터.
+   */
+  internal?: boolean;
+  /**
    * 공개 범위 — 미지정=public(기존 데이터 호환).
    * private: 공개 목록(모임/캘린더/갤러리)에서 숨기고 공유 링크(토큰)로만 접근.
    * firestore.rules read 는 공개(if true) 유지 — 노출 제어는 클라이언트 필터 + 토큰 URL.
