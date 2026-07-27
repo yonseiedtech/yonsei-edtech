@@ -122,6 +122,18 @@ const WebVitalsSection = dynamic(
   { ssr: false },
 );
 
+const WeaveKpiSection = dynamic(
+  () => import("@/features/insights/WeaveKpiSection"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="flex items-center justify-center py-16">
+        <Loader2 size={24} className="animate-spin text-muted-foreground" />
+      </div>
+    ),
+  },
+);
+
 type SubTab =
   | "summary"
   | "actions"
@@ -130,6 +142,7 @@ type SubTab =
   | "members"
   | "activity"
   | "opkpi"
+  | "weave"
   | "diagnostic";
 
 function InsightsInner() {
@@ -159,6 +172,7 @@ function InsightsInner() {
           <TabsTrigger value="summary">운영 요약</TabsTrigger>
           <TabsTrigger value="actions">액션 센터</TabsTrigger>
           <TabsTrigger value="opkpi">운영 KPI</TabsTrigger>
+          <TabsTrigger value="weave">연결 지표</TabsTrigger>
           <TabsTrigger value="dashboard">실시간 대시보드</TabsTrigger>
           <TabsTrigger value="report">학기 보고서</TabsTrigger>
           <TabsTrigger value="members">회원 보고서</TabsTrigger>
@@ -196,6 +210,10 @@ function InsightsInner() {
 
           {/* H1(2026-07-20): web_vitals 성능 관측 — 라우트별 LCP/CLS/INP p75 */}
           <WebVitalsSection />
+        </TabsContent>
+        <TabsContent value="weave" className="mt-4">
+          {/* v17-H2: v16 연결고리 전환·리텐션 측정 — 가이드 완독률·수요 개설 전환·진단 후속 */}
+          <WeaveKpiSection />
         </TabsContent>
         <TabsContent value="dashboard" className="mt-4">
           <AnalyticsView />

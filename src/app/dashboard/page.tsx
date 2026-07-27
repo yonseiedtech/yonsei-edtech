@@ -79,6 +79,7 @@ import WeeklyGoalCard from "@/features/dashboard/WeeklyGoalCard";
 import StageRecommendationPanel from "@/features/dashboard/StageRecommendationPanel";
 import EmptyState from "@/components/ui/empty-state";
 import NewcomerProgressWidget from "@/features/dashboard/NewcomerProgressWidget";
+import JourneyStepperWidget from "@/features/dashboard/JourneyStepperWidget";
 import KudosWidget from "@/features/dashboard/KudosWidget";
 import {
   useDashboardLayout,
@@ -581,6 +582,12 @@ function DashboardContent() {
             현재 학기 코호트·가입 14일 이내에만 노출, 그 외엔 null 렌더로 자동 숨김(비신입 미영향). */}
         <div className="mt-6 empty:hidden">
           <NewcomerProgressWidget />
+        </div>
+
+        {/* v17 H3: 회원 여정 완주 스텝퍼 — 가입→진단→학습→활동 통합 오케스트레이션.
+            신입 창(NewcomerProgressWidget 담당)에는 null 렌더로 양보, 그 외 회원에게만 노출. */}
+        <div className="mt-6 empty:hidden">
+          <JourneyStepperWidget />
         </div>
 
         {/* 사이클 104: F-패턴·정보 빈도 기반 상단 재편 (사용자 요청 — Mayer 멀티미디어/마케팅 시선흐름).
