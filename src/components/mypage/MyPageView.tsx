@@ -556,13 +556,22 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               )}
 
               {/* M1: 내 논문 진행도 — 보고서 완성도(작성률·분량 균형·lint 통과율) 상시 가시화 (본인만) */}
-              {isSelf && !readOnly && <ThesisProgressWidget variant="card" />}
+              {isSelf && !readOnly && (
+                <WidgetBoundary label="thesis-progress">
+                  <ThesisProgressWidget variant="card" />
+                </WidgetBoundary>
+              )}
 
               {/* 졸업요건 체크표 — 학점 자동 합산 + 관문 자가 체크 (본인만) */}
-              {isSelf && !readOnly && <GraduationChecklistCard userId={userId} />}
+              {isSelf && !readOnly && (
+                <WidgetBoundary label="graduation-checklist">
+                  <GraduationChecklistCard userId={userId} />
+                </WidgetBoundary>
+              )}
 
               {/* 진단평가 — 연구 준비도 진단 → 약점 개념 읽기 추천 → 재진단 루프 (본인만) */}
               {isSelf && !readOnly && (
+                <WidgetBoundary label="diagnostic-readiness">
                 <div className="rounded-2xl border-2 border-cat-5/20 bg-gradient-to-br from-cat-5/5 to-cat-5/10 p-5">
                   {latestDiagnostic ? (
                     <>
@@ -651,22 +660,43 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                   )}
                   {/* 사이클 122 완료: 진단 완료를 학습 잔디 활동으로 인정 — LearningStreak SCORES.diagnosticComplete(+5)로 createdAt 일별 1회 가산(연구활동🔬). */}
                 </div>
+                </WidgetBoundary>
               )}
 
               {/* 학습효과 증명 루프 (G2) — 복습한 약점 개념이 재진단에서 개선됐는지 교차 분석 (본인만) */}
-              {isSelf && !readOnly && <LearningEffectCard userId={userId} />}
+              {isSelf && !readOnly && (
+                <WidgetBoundary label="learning-effect">
+                  <LearningEffectCard userId={userId} />
+                </WidgetBoundary>
+              )}
 
               {/* 읽기 → 연구 진척 병치 (M5) — 최근 4주 논문 읽기 × 논문 작성 글자 증가 (본인만) */}
-              {isSelf && !readOnly && <ReadingResearchLoopCard userId={userId} />}
+              {isSelf && !readOnly && (
+                <WidgetBoundary label="reading-research-loop">
+                  <ReadingResearchLoopCard userId={userId} />
+                </WidgetBoundary>
+              )}
 
               {/* 심사 연습 추세 (M5) — 논문 심사 연습 회차별 평균 점수 시계열 (본인만) */}
-              {isSelf && !readOnly && <DefensePracticeTrendCard userId={userId} />}
+              {isSelf && !readOnly && (
+                <WidgetBoundary label="defense-practice-trend">
+                  <DefensePracticeTrendCard userId={userId} />
+                </WidgetBoundary>
+              )}
 
               {/* 러닝 가이드 이어읽기 (v16 H3) — 읽던 가이드 리텐션 훅 (본인만, 진행 있을 때만) */}
-              {isSelf && !readOnly && <ContinueReadingCard />}
+              {isSelf && !readOnly && (
+                <WidgetBoundary label="continue-reading">
+                  <ContinueReadingCard />
+                </WidgetBoundary>
+              )}
 
               {/* 내가 관심 밝힌 수요 (v16 H4) — question/demand-join 반응 수요 단계 추적 (본인만, 반응 있을 때만) */}
-              {isSelf && !readOnly && <DemandInterestCard userId={userId} />}
+              {isSelf && !readOnly && (
+                <WidgetBoundary label="demand-interest">
+                  <DemandInterestCard userId={userId} />
+                </WidgetBoundary>
+              )}
 
               {/* 내 암기카드 — 진단 오답 복습(뒤집기·간격반복). 카드가 있을 때만 노출 (본인만) */}
               {isSelf && !readOnly && flashcardTotal > 0 && (
