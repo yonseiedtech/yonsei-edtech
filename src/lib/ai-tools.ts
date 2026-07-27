@@ -317,12 +317,3 @@ export const staffTools = {
     },
   }),
 };
-
-/** 역할에 따라 사용 가능한 도구 세트 반환 */
-export function getToolsForRole(role: string) {
-  const STAFF_ROLES = ["sysadmin", "admin", "staff", "president"];
-  if (STAFF_ROLES.includes(role)) {
-    return { ...publicTools, ...staffTools };
-  }
-  return publicTools;
-}

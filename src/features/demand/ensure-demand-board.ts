@@ -19,11 +19,6 @@ import { commBoardsApi } from "@/lib/bkend";
 import { currentSemesterKey } from "@/lib/semester";
 import type { CommBoard } from "@/types";
 
-/** 현재 학기 키 — "YYYY-1"(전기) | "YYYY-2"(후기). */
-export function currentDemandSemesterKey(): string {
-  return currentSemesterKey();
-}
-
 /** 현재 학기 수요 보드 contextId — 예: "demand-2026-1". */
 export function currentDemandContextId(): string {
   return `demand-${currentSemesterKey()}`;

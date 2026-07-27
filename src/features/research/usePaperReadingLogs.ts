@@ -48,36 +48,3 @@ export function useCreateReadingLog() {
     onSuccess: () => qc.invalidateQueries({ queryKey: ["paper-reading-logs"] }),
   });
 }
-
-export function useUpdateReadingLog() {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: async ({
-      id,
-      patch,
-    }: {
-      id: string;
-      patch: Partial<PaperReadingLog>;
-    }) => {
-      await paperReadingLogsApi.update(id, {
-        ...patch,
-        updatedAt: new Date().toISOString(),
-      });
-      return { id };
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["paper-reading-logs"] }),
-  });
-}
-
-export function useDeleteReadingLog() {
-  const qc = useQueryClient();
-
-  return useMutation({
-    mutationFn: async (id: string) => {
-      await paperReadingLogsApi.delete(id);
-      return { id };
-    },
-    onSuccess: () => qc.invalidateQueries({ queryKey: ["paper-reading-logs"] }),
-  });
-}

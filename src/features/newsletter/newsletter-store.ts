@@ -1,4 +1,3 @@
-import { create } from "zustand";
 import { dataApi } from "@/lib/bkend";
 
 export interface NewsletterSection {
@@ -203,74 +202,3 @@ export function useDeleteNewsletter() {
     onSuccess: () => qc.invalidateQueries({ queryKey: QUERY_KEY }),
   });
 }
-
-// ── Zustand store (로컬 편집 상태 전용) ──
-
-interface NewsletterState {
-  issues: NewsletterIssue[];
-  setIssues: (issues: NewsletterIssue[]) => void;
-  addIssue: (issue: Omit<NewsletterIssue, "id" | "createdAt">) => void;
-  updateIssue: (id: string, data: Partial<NewsletterIssue>) => void;
-  addSection: (issueId: string, section: Omit<NewsletterSection, "id">) => void;
-  updateSection: (issueId: string, sectionId: string, data: Partial<NewsletterSection>) => void;
-  removeSection: (issueId: string, sectionId: string) => void;
-  reorderSections: (issueId: string, sections: NewsletterSection[]) => void;
-}
-
-export const useNewsletterStore = create<NewsletterState>((set) => ({
-  issues: [],
-
-  setIssues: (issues) => set({ issues }),
-
-  addIssue: (data) =>
-    set((state) => ({
-      issues: [
-        { ...data, id: `nl-${Date.now()}`, createdAt: new Date().toISOString() },
-        ...state.issues,
-      ],
-    })),
-
-  updateIssue: (id, data) =>
-    set((state) => ({
-      issues: state.issues.map((i) => (i.id === id ? { ...i, ...data } : i)),
-    })),
-
-  addSection: (issueId, section) =>
-    set((state) => ({
-      issues: state.issues.map((i) =>
-        i.id === issueId
-          ? { ...i, sections: [...i.sections, { ...section, id: `s${Date.now()}` }] }
-          : i
-      ),
-    })),
-
-  updateSection: (issueId, sectionId, data) =>
-    set((state) => ({
-      issues: state.issues.map((i) =>
-        i.id === issueId
-          ? {
-              ...i,
-              sections: i.sections.map((s) =>
-                s.id === sectionId ? { ...s, ...data } : s
-              ),
-            }
-          : i
-      ),
-    })),
-
-  removeSection: (issueId, sectionId) =>
-    set((state) => ({
-      issues: state.issues.map((i) =>
-        i.id === issueId
-          ? { ...i, sections: i.sections.filter((s) => s.id !== sectionId) }
-          : i
-      ),
-    })),
-
-  reorderSections: (issueId, sections) =>
-    set((state) => ({
-      issues: state.issues.map((i) =>
-        i.id === issueId ? { ...i, sections } : i
-      ),
-    })),
-}));

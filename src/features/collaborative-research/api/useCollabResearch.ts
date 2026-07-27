@@ -88,16 +88,6 @@ export function useCollabInboxInvites(userId: string | undefined) {
   });
 }
 
-/** 연구에서 보낸 초대 목록 (leader 화면용) */
-export function useCollabSentInvites(researchId: string | undefined) {
-  return useQuery({
-    queryKey: collabInviteKeys.sent(researchId),
-    queryFn: () => (researchId ? collabInvitesApi.listSent(researchId) : []),
-    enabled: !!researchId,
-    staleTime: 20_000,
-  });
-}
-
 // ── Mutations ──
 
 export function useCreateCollabResearch() {
@@ -191,17 +181,6 @@ export function useRejectCollabInvite() {
   });
 }
 
-export function useCancelCollabInvite(researchId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (inviteId: string) => collabInvitesApi.cancel(inviteId),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: collabInviteKeys.sent(researchId) });
-      toast("초대를 취소했습니다");
-    },
-  });
-}
-
 export function useUpdateMemberRole(researchId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -220,25 +199,6 @@ export function useUpdateMemberCreditRoles(researchId: string) {
       collabMembersApi.updateCreditRoles(params.memberId, params.creditRoles),
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: collabResearchKeys.members(researchId) });
-    },
-  });
-}
-
-export function useUpdateSelfMemberMeta(researchId: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (params: {
-      memberId: string;
-      affiliation?: string;
-      orcidId?: string;
-    }) =>
-      collabMembersApi.updateSelfMeta(params.memberId, {
-        affiliation: params.affiliation,
-        orcidId: params.orcidId,
-      }),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: collabResearchKeys.members(researchId) });
-      toast.success("저장되었습니다");
     },
   });
 }

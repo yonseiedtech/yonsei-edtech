@@ -25,14 +25,11 @@
 // 개념 문항은 conceptSeedKey 로 아카이브 개념(archive_concepts.seedKey)과 연결한다.
 // 런타임에 seedKey → 실제 문서 id 를 매핑해 약점 개념을 /archive/concept/[id] 로 링크.
 
-import { diagnosticQuestionsApi } from "./bkend";
 import type {
   CognitiveLevel,
   DiagnosticArea,
-  DiagnosticQuestion,
   DiagnosticQuestionType,
 } from "@/types";
-import { questionType } from "@/types";
 
 export interface SeedDiagnosticQuestion {
   /** 시드 멱등성 키. `dx:{area}:{n}` 형식 — 재시드 시 동일 문항 인식. */
@@ -3200,94 +3197,4 @@ export function getSeedPoolCountsByArea(): Record<DiagnosticArea, number> {
   const counts: Record<DiagnosticArea, number> = { statistics: 0, method: 0, concept: 0 };
   for (const q of SEED_DIAGNOSTIC_QUESTIONS) counts[q.area] += 1;
   return counts;
-}
-
-export interface DiagnosticSeedResult {
-  created: number;
-  skipped: number;
-}
-
-/**
- * 문항의 중복 판별 키 — `유형|본문` 형식. mcq·ordering 은 question, term 은 prompt 를
- * 본문으로 사용한다. 유형을 키에 포함해 같은 줄기(stem)라도 객관식/단어맞추기가
- * 서로 다른 문항으로 인식되도록 한다(예: 실험연구 mcq vs term 공존).
- */
-function identityKey(q: {
-  type?: DiagnosticQuestion["type"];
-  question?: string;
-  prompt?: string;
-  statement?: string;
-  passage?: string;
-}): string {
-  const t = questionType(q);
-  // 본문 텍스트: term=prompt, ox=statement, passage=지문+질문(지문 공유 문항 구분), 그 외=question
-  const text =
-    t === "term"
-      ? q.prompt
-      : t === "ox"
-        ? q.statement
-        : t === "passage"
-          ? `${q.passage ?? ""}::${q.question ?? ""}`
-          : q.question;
-  return `${t}|${(text ?? "").trim()}`;
-}
-
-/**
- * 동일 문항(question·prompt 텍스트 매칭)은 스킵하고 나머지를 published=true 로
- * 일괄 생성한다. 검수 완료된 객관적 문항만 시드에 포함하므로 연구방법·통계방법
- * 가이드와 달리 즉시 공개한다. 유형(type)·유형별 필드(items·prompt·answer 등)를
- * 함께 적재해 mcq·ordering·term 3종을 모두 지원한다.
- *
- * 개념 문항의 conceptId 는 호출부에서 seedKey→실제 conceptId 매핑을 주입한다
- * (없으면 conceptId 미설정 — 약점 링크만 생략되고 채점·준비도는 정상 동작).
- */
-export async function seedDiagnosticQuestions(
-  userId: string,
-  existing: DiagnosticQuestion[],
-  conceptIdBySeedKey?: Record<string, string>,
-): Promise<DiagnosticSeedResult> {
-  const existingKeys = new Set(existing.map((q) => identityKey(q)));
-  let created = 0;
-  let skipped = 0;
-  for (const entry of SEED_DIAGNOSTIC_QUESTIONS) {
-    if (existingKeys.has(identityKey(entry))) {
-      skipped += 1;
-      continue;
-    }
-    const conceptId = entry.conceptSeedKey
-      ? conceptIdBySeedKey?.[entry.conceptSeedKey]
-      : undefined;
-    // undefined 필드는 보내지 않도록 정리(유형별 미사용 필드 제외).
-    const payload: Record<string, unknown> = {
-      type: questionType(entry),
-      area: entry.area,
-      explanation: entry.explanation,
-      conceptId,
-      published: true,
-      createdBy: userId,
-    };
-    if (entry.cognitiveLevel !== undefined) payload.cognitiveLevel = entry.cognitiveLevel;
-    if (entry.question !== undefined) payload.question = entry.question;
-    if (entry.options !== undefined) payload.options = entry.options;
-    if (entry.answerIndex !== undefined) payload.answerIndex = entry.answerIndex;
-    if (entry.items !== undefined) payload.items = entry.items;
-    if (entry.prompt !== undefined) payload.prompt = entry.prompt;
-    if (entry.answer !== undefined) payload.answer = entry.answer;
-    if (entry.acceptedAnswers !== undefined)
-      payload.acceptedAnswers = entry.acceptedAnswers;
-    if (entry.statement !== undefined) payload.statement = entry.statement;
-    if (entry.answerBool !== undefined) payload.answerBool = entry.answerBool;
-    if (entry.leftItems !== undefined) payload.leftItems = entry.leftItems;
-    if (entry.rightItems !== undefined) payload.rightItems = entry.rightItems;
-    if (entry.correctMap !== undefined) payload.correctMap = entry.correctMap;
-    if (entry.passage !== undefined) payload.passage = entry.passage;
-    if (entry.svg !== undefined) payload.svg = entry.svg;
-    if (entry.relatedMethodName !== undefined)
-      payload.relatedMethodName = entry.relatedMethodName;
-    if (entry.relatedStatMethodName !== undefined)
-      payload.relatedStatMethodName = entry.relatedStatMethodName;
-    await diagnosticQuestionsApi.create(payload);
-    created += 1;
-  }
-  return { created, skipped };
 }

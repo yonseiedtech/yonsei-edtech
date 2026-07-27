@@ -112,9 +112,3 @@ export function evaluateConsentGate(article: ResearchJournalArticle): ConsentGat
 export function isAuthorComplete(a: ArticleAuthorSnapshot): boolean {
   return !!a.displayName?.trim() && !!a.affiliation?.trim();
 }
-
-/** 모든 저자가 완전한 정보를 갖췄는지 */
-export function areAllAuthorsComplete(authors: ArticleAuthorSnapshot[]): boolean {
-  if (authors.length === 0) return false;
-  return authors.every(isAuthorComplete);
-}

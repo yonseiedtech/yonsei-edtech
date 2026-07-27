@@ -77,16 +77,6 @@ export function useChapters(researchId: string | undefined) {
   });
 }
 
-export function useChapter(id: string | undefined) {
-  return useQuery({
-    queryKey: collabPhase2Keys.chapter(id),
-    queryFn: () =>
-      id ? collabChaptersApi.get(id) : Promise.resolve(null as never),
-    enabled: !!id,
-    staleTime: 5_000,
-  });
-}
-
 export function useCreateChapter(researchId: string) {
   const qc = useQueryClient();
   return useMutation({
@@ -133,16 +123,6 @@ export function useChapterComments(researchId: string, chapterId: string | undef
     enabled: !!chapterId,
     staleTime: 10_000,
     refetchInterval: 30_000, // 30초마다 새 댓글 polling
-  });
-}
-
-export function useMentionsInbox(userId: string | undefined) {
-  return useQuery({
-    queryKey: collabPhase2Keys.mentionsInbox(userId),
-    queryFn: () => (userId ? collabCommentsApi.listMentioningMe(userId) : []),
-    enabled: !!userId,
-    staleTime: 30_000,
-    refetchInterval: 120_000,
   });
 }
 
@@ -229,15 +209,6 @@ export function useMilestones(researchId: string | undefined) {
     queryFn: () => (researchId ? collabMilestonesApi.listByResearch(researchId) : []),
     enabled: !!researchId,
     staleTime: 15_000,
-  });
-}
-
-export function useMyMilestones(userId: string | undefined) {
-  return useQuery({
-    queryKey: collabPhase2Keys.myMilestones(userId),
-    queryFn: () => (userId ? collabMilestonesApi.listByAssignee(userId) : []),
-    enabled: !!userId,
-    staleTime: 30_000,
   });
 }
 

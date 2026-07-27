@@ -60,11 +60,6 @@ export const COLLAB_MEMBER_ROLE_COLORS: Record<CollabMemberRole, string> = {
   assistant:     CAT_BADGE.zinc,
 };
 
-/** 멤버 역할이 본문 편집권을 가지는지 (Phase 2 채택, Phase 1 에서도 정의해두면 UI 분기에 사용) */
-export function canEditChapter(role: CollabMemberRole | undefined): boolean {
-  return role === "principal" || role === "co_researcher";
-}
-
 const COLLAB_INVITE_STATUS_LABELS: Record<CollabInviteStatus, string> = {
   pending: "대기 중",
   accepted: "수락됨",

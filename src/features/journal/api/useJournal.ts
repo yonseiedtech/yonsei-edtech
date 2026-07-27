@@ -19,7 +19,6 @@ import type {
   ResearchJournalIssue,
   ReviewComment,
   UpdateArticleMetaInput,
-  UpdateJournalIssueInput,
 } from "@/types";
 
 // ── Query keys ──
@@ -134,17 +133,6 @@ export function useCreateIssue() {
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: journalKeys.all });
       toast.success("호수가 생성되었습니다");
-    },
-  });
-}
-
-export function useUpdateIssue(id: string) {
-  const qc = useQueryClient();
-  return useMutation({
-    mutationFn: (patch: UpdateJournalIssueInput) => journalIssuesApi.update(id, patch),
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: journalKeys.issueDetail(id) });
-      qc.invalidateQueries({ queryKey: journalKeys.issuesAll() });
     },
   });
 }

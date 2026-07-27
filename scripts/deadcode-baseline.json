@@ -1,65 +1,17 @@
 {
-  "ceiling": 26,
-  "generatedAt": "2026-07-23",
+  "ceiling": 13,
+  "generatedAt": "2026-07-27",
   "tool": "knip@6.27.0",
   "note": "node scripts/gen-deadcode-baseline.mjs 로 재생성. ceiling보다 이슈 수가 늘면 check-deadcode-ratchet.mjs 가 exit 1.",
-  "unusedExports": 26,
+  "unusedExports": 13,
   "unusedFiles": 0,
   "unusedTypes": 0,
   "items": [
     {
-      "file": "src/features/collaborative-research/api/useCollabPhase2.ts",
-      "name": "useChapter",
-      "kind": "export",
-      "line": 80
-    },
-    {
-      "file": "src/features/collaborative-research/api/useCollabPhase2.ts",
-      "name": "useMentionsInbox",
-      "kind": "export",
-      "line": 139
-    },
-    {
-      "file": "src/features/collaborative-research/api/useCollabPhase2.ts",
-      "name": "useMyMilestones",
-      "kind": "export",
-      "line": 235
-    },
-    {
-      "file": "src/features/collaborative-research/api/useCollabResearch.ts",
-      "name": "useCancelCollabInvite",
-      "kind": "export",
-      "line": 194
-    },
-    {
-      "file": "src/features/collaborative-research/api/useCollabResearch.ts",
-      "name": "useCollabSentInvites",
-      "kind": "export",
-      "line": 92
-    },
-    {
-      "file": "src/features/collaborative-research/api/useCollabResearch.ts",
-      "name": "useUpdateSelfMemberMeta",
-      "kind": "export",
-      "line": 227
-    },
-    {
-      "file": "src/features/collaborative-research/lib/research-status.ts",
-      "name": "canEditChapter",
-      "kind": "export",
-      "line": 64
-    },
-    {
       "file": "src/features/journal/lib/consent-gate.ts",
-      "name": "areAllAuthorsComplete",
+      "name": "isAuthorComplete",
       "kind": "export",
-      "line": 117
-    },
-    {
-      "file": "src/features/newsletter/newsletter-store.ts",
-      "name": "useNewsletterStore",
-      "kind": "export",
-      "line": 220
+      "line": 112
     },
     {
       "file": "src/features/notifications/notify.ts",
@@ -77,31 +29,13 @@
       "file": "src/features/notifications/notify.ts",
       "name": "notifySeminarReminder",
       "kind": "export",
-      "line": 265
+      "line": 280
     },
     {
       "file": "src/features/notifications/useNotifications.ts",
       "name": "createNotification",
       "kind": "export",
       "line": 171
-    },
-    {
-      "file": "src/features/research/usePaperReadingLogs.ts",
-      "name": "useDeleteReadingLog",
-      "kind": "export",
-      "line": 73
-    },
-    {
-      "file": "src/features/research/usePaperReadingLogs.ts",
-      "name": "useUpdateReadingLog",
-      "kind": "export",
-      "line": 52
-    },
-    {
-      "file": "src/lib/ai-tools.ts",
-      "name": "getToolsForRole",
-      "kind": "export",
-      "line": 322
     },
     {
       "file": "src/lib/bkend.ts",
@@ -128,12 +62,6 @@
       "line": 2073
     },
     {
-      "file": "src/lib/diagnostic-seed.ts",
-      "name": "seedDiagnosticQuestions",
-      "kind": "export",
-      "line": 3244
-    },
-    {
       "file": "src/lib/notify-timing.ts",
       "name": "computePeakWindow",
       "kind": "export",
@@ -156,12 +84,6 @@
       "name": "onForegroundPush",
       "kind": "export",
       "line": 143
-    },
-    {
-      "file": "src/lib/research-paper-source.ts",
-      "name": "searchOpenAlexEdTech",
-      "kind": "export",
-      "line": 79
     }
   ]
 }
