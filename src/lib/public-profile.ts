@@ -27,6 +27,23 @@ const HARD_SECRET_FIELDS = [
   "streakFreezes",
 ] as const;
 
+/**
+ * Firestore Timestamp/{_seconds}/{seconds} top-level 필드를 ISO 문자열로 정규화.
+ * 일부 레거시 users 문서는 createdAt 등이 문자열이 아닌 Timestamp 객체로 저장돼 있어,
+ * 이를 문자열로 다루는 소비처(cohortKeyOf·날짜 정렬·표시)가 SSR 렌더 중 throw 한다
+ * (`.localeCompare`/`.slice` is not a function). 소스에서 한 번에 차단.
+ */
+function normalizeTimestampsInPlace(obj: Record<string, unknown>): void {
+  for (const k of Object.keys(obj)) {
+    const v = obj[k];
+    if (v && typeof v === "object" && !Array.isArray(v)) {
+      const o = v as { _seconds?: number; seconds?: number };
+      const sec = o._seconds ?? o.seconds;
+      if (typeof sec === "number") obj[k] = new Date(sec * 1000).toISOString();
+    }
+  }
+}
+
 export async function getProjectedProfile(
   id: string,
   viewer: ViewerInfo | null,
@@ -40,6 +57,8 @@ export async function getProjectedProfile(
 
   const proj = { ...raw } as Record<string, unknown>;
   for (const f of HARD_SECRET_FIELDS) delete proj[f];
+  // 레거시 Timestamp 필드(createdAt 등) → ISO 문자열: SSR/CSR 소비처 크래시 차단
+  normalizeTimestampsInPlace(proj);
 
   const isSelf = !!viewer?.id && viewer.id === raw.id;
   if (!isSelf) {
