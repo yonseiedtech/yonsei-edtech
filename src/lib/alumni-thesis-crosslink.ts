@@ -29,21 +29,6 @@ export function thesesForResearchMethod(
     .sort(byAwardedDesc);
 }
 
-/**
- * 특정 통계방법(archive_statistical_methods id)을 쓴 졸업논문 — 학위수여년월 내림차순.
- * 자동추출(statMethodIds) ∪ 운영자 큐레이트(statisticalMethods).
- */
-function thesesForStatMethod(
-  theses: AlumniThesis[],
-  methodId: string | undefined | null,
-): AlumniThesis[] {
-  if (!methodId) return [];
-  return theses
-    .filter((t) =>
-      [...(t.statMethodIds ?? []), ...(t.statisticalMethods ?? [])].includes(methodId),
-    )
-    .sort(byAwardedDesc);
-}
 
 /**
  * 졸업논문 분석 프로필의 방법 태그(연구방법 + 통계) — 위젯 한 줄 보강용.

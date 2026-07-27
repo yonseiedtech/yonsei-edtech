@@ -4,7 +4,7 @@ import { use, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { useRouter } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
-import { profilesApi, seminarsApi, activitiesApi, certificatesApi } from "@/lib/bkend";
+import { profilesApi, seminarsApi, activitiesApi } from "@/lib/bkend";
 import { auth } from "@/lib/firebase";
 import ProfileEditor from "@/features/auth/ProfileEditor";
 import { useUpdateProfile, useApproveMember } from "@/features/member/useMembers";
@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ROLE_LABELS, ENROLLMENT_STATUS_LABELS } from "@/types";
-import type { User, UserRole, Seminar, Activity, Certificate } from "@/types";
+import type { User, UserRole, Seminar, Activity } from "@/types";
 import { toast } from "sonner";
 import {
   ArrowLeft, User as UserIcon, KeyRound, CheckCircle, XCircle, Shield,

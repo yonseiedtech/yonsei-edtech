@@ -12,7 +12,6 @@ import {
   MapPin,
   Users,
   Video,
-  BookOpen,
   AlertCircle,
   Pencil,
 } from "lucide-react";

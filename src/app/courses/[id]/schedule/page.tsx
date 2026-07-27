@@ -10,8 +10,6 @@ import {
   Plus,
   Pencil,
   Trash2,
-  NotebookPen,
-  ListChecks,
   Settings,
   Check,
 } from "lucide-react";

@@ -17,7 +17,7 @@ import {
   useLeaveCollabResearch,
 } from "../api/useCollabResearch";
 import { COLLAB_MEMBER_ROLE_LABELS } from "../lib/research-status";
-import type { CollabMemberRole, CreditRole, User } from "@/types";
+import type { CollabMemberRole, User } from "@/types";
 
 interface Props {
   researchId: string;

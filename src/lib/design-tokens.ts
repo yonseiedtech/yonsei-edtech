@@ -155,18 +155,6 @@ export const KIND_TO_TONE: Record<SemanticKind, SemanticTone> = {
 };
 
 /**
- * 상태 칩(배지) variant → SEMANTIC tone 매핑.
- * `neutral` 은 default(중립 회색) 톤에 대응. StatusBadge 및 상태색 마이그레이션의 톤 해석 단일 소스.
- */
-const STATUS_VARIANT_TO_TONE: Record<StatusVariant, SemanticTone> = {
-  success: "success",
-  danger: "danger",
-  warning: "warning",
-  info: "info",
-  neutral: "default",
-};
-
-/**
  * 상태 칩(배지) variant → 1-class chip 토큰 (bg+text+border, 라이트·다크).
  * `<Badge variant="outline" className={STATUS_CHIP[v]}>` 형태로 직접 소비.
  */

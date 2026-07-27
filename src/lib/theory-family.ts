@@ -57,14 +57,6 @@ export const THEORY_FAMILIES: TheoryFamilyMeta[] = [
   },
 ];
 
-const THEORY_FAMILY_META: Record<TheoryFamily, TheoryFamilyMeta> =
-  THEORY_FAMILIES.reduce(
-    (acc, f) => {
-      acc[f.key] = f;
-      return acc;
-    },
-    {} as Record<TheoryFamily, TheoryFamilyMeta>,
-  );
 
 /** 노드 간 간선(파생·영향·대조·가교) — to 는 대상 노드의 name */
 export interface TheoryNodeLink {

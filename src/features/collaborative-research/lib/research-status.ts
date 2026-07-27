@@ -60,13 +60,6 @@ export const COLLAB_MEMBER_ROLE_COLORS: Record<CollabMemberRole, string> = {
   assistant:     CAT_BADGE.zinc,
 };
 
-const COLLAB_INVITE_STATUS_LABELS: Record<CollabInviteStatus, string> = {
-  pending: "대기 중",
-  accepted: "수락됨",
-  rejected: "거절됨",
-  expired: "만료됨",
-  cancelled: "취소됨",
-};
 
 export const IRB_STATUS_LABELS: Record<IrbStatus, string> = {
   not_required: "심의 면제",
@@ -97,19 +90,6 @@ export const METHODOLOGY_DESIGN_LABELS: Record<MethodologyDesign, string> = {
   other: "기타",
 };
 
-const HYPOTHESIS_TYPE_LABELS: Record<HypothesisType, string> = {
-  directional: "방향성 가설",
-  non_directional: "비방향성 가설",
-  null: "영가설",
-};
-
-const HYPOTHESIS_STATUS_LABELS: Record<HypothesisStatus, string> = {
-  proposed: "제안",
-  supported: "지지",
-  rejected: "기각",
-  partial: "부분 지지",
-  deferred: "보류",
-};
 
 /** 상태 전이 허용 검사 (leader 만 호출). 부정확한 전이는 차단. */
 const ALLOWED_TRANSITIONS: Record<CollaborativeResearchStatus, CollaborativeResearchStatus[]> = {

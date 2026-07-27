@@ -39,7 +39,7 @@ import { cn } from "@/lib/utils";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import EmptyState from "@/components/ui/empty-state";
 import { DEFAULT_REGISTRATION_FIELDS } from "@/types";
-import type { Seminar, SeminarStatus, RegistrationFieldConfig } from "@/types";
+import type { Seminar, RegistrationFieldConfig } from "@/types";
 
 // Sub-components
 import HeroSection from "@/features/seminar/detail/HeroSection";

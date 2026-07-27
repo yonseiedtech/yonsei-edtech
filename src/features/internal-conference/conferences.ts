@@ -143,10 +143,6 @@ function ymd(now: Date): string {
   ).padStart(2, "0")}`;
 }
 
-/** slug 로 행사 조회. */
-function getConferenceBySlug(slug: string): InternalConference | undefined {
-  return INTERNAL_CONFERENCES.find((c) => c.slug === slug);
-}
 
 /** contextId 로 행사 조회. */
 export function getConferenceByContextId(

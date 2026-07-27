@@ -7,7 +7,6 @@ import { BarChart3, BookOpen, GraduationCap, Sparkles, ArrowRight, Type, Network
 import { Skeleton } from "@/components/ui/skeleton";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
@@ -453,27 +452,6 @@ export default function ResearchAnalyticsPage() {
         )}
       </div>
     </PageContainer>
-  );
-}
-
-function StatCard({
-  label,
-  value,
-  loading = false,
-}: {
-  label: string;
-  value: string;
-  loading?: boolean;
-}) {
-  return (
-    <div className="rounded-2xl border bg-card p-4 shadow-sm">
-      <p className="text-[11px] text-muted-foreground">{label}</p>
-      {loading ? (
-        <Skeleton className="mt-2 h-5 w-3/4" />
-      ) : (
-        <p className="mt-1 text-base font-bold tabular-nums sm:text-lg">{value}</p>
-      )}
-    </div>
   );
 }
 

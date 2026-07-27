@@ -38,19 +38,6 @@ export const RESEARCH_APPROACH_LABELS: Record<Exclude<ResearchApproach, "">, str
   free: "자유 진행",
 };
 
-const RESEARCH_APPROACH_HINTS: Record<Exclude<ResearchApproach, "">, string> = {
-  analytical:
-    "ADDIE / 체제적 교수설계 / 행동주의·인지주의 ID. ‘현상 → 원인 진단 → 이론적 처방’ 흐름. (1.5 진단 5슬라이드)",
-  generative:
-    "구성주의 학습설계 / DBR / 참여실행연구. ‘맥락 이해 → 함께 만들기 → 반복 진화’ 흐름. (1.5 탐구 3슬라이드)",
-  action_research:
-    "현장 교사·연구자가 자기 실천을 스스로 개선하는 Plan-Act-Observe-Reflect 사이클. (1.5 액션 3슬라이드)",
-  mixed_methods:
-    "양적 + 질적 데이터를 통합/대조해 한 연구 문제에 답하는 디자인. 수렴/설명/탐색/내포형. (1.5 혼합 4슬라이드)",
-  free:
-    "패러다임 분기를 건너뛰고 1 → 2 → 3 으로 곧장 진행. (1.5 슬라이드 모두 skip)",
-};
-
 /** Sprint 57: 인터뷰 모드 라벨 (진단 단계 5슬라이드 신설용) */
 // eslint-disable-next-line @typescript-eslint/no-unused-vars
 const EVIDENCE_TYPE_LABELS: Record<Exclude<EvidenceType, "">, string> = {

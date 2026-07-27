@@ -9,7 +9,7 @@
  */
 
 import { useMemo, useState } from "react";
-import { LayoutGrid, Workflow, Bot, ChevronRight, Loader2 } from "lucide-react";
+import { LayoutGrid, Workflow, ChevronRight, Loader2 } from "lucide-react";
 import ConsolePage from "@/components/admin/ConsolePage";
 import EmptyState from "@/components/ui/empty-state";
 import { useAgentJobs } from "@/features/yonsei-agents/useAgentJobs";

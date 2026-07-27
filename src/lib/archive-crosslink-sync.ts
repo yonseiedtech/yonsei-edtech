@@ -41,20 +41,6 @@ export interface CrosslinkPair {
   reverseField: string;
 }
 
-/** 연구방법 ↔ 통계방법 양방향 쌍 정의 (v5-H3 우선 대상) */
-const RESEARCH_TO_STAT: CrosslinkPair = {
-  selfCollection: "archive_research_methods",
-  selfField: "statisticalMethodIds",
-  targetCollection: "archive_statistical_methods",
-  reverseField: "relatedResearchMethodIds",
-};
-
-const STAT_TO_RESEARCH: CrosslinkPair = {
-  selfCollection: "archive_statistical_methods",
-  selfField: "relatedResearchMethodIds",
-  targetCollection: "archive_research_methods",
-  reverseField: "statisticalMethodIds",
-};
 
 /** 이전/이후 id 배열을 비교해 추가·제거분을 계산 */
 export function diffIds(

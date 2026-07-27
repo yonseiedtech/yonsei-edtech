@@ -17,7 +17,6 @@ import { Users, Network, AlertCircle, TrendingUp, GraduationCap, Sparkles } from
 import { cn } from "@/lib/utils";
 import {
   NETWORK_RELATION_LABELS,
-  type NetworkEdge,
   type NetworkGraph,
   type NetworkNode,
 } from "@/types";

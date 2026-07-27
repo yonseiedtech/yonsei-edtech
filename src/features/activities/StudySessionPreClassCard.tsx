@@ -24,7 +24,6 @@ import {
   Save,
   Trash2,
   Upload,
-  Users,
   X,
 } from "lucide-react";
 import { toast } from "sonner";

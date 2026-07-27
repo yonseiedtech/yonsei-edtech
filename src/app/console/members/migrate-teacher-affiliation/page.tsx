@@ -18,7 +18,6 @@ import AuthGuard from "@/features/auth/AuthGuard";
 import { profilesApi } from "@/lib/bkend";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
-import PageHeader from "@/components/ui/page-header";
 import EmptyState from "@/components/ui/empty-state";
 import SkeletonWidget from "@/components/ui/skeleton-widget";
 import { OFFICE_OF_EDUCATION_OPTIONS, type SchoolLevel, type User } from "@/types";

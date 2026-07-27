@@ -71,10 +71,3 @@ export const BRAND_TYPE_SCALE = {
   caption: 0.018, // 캡션·푸터
 } as const;
 
-const BRAND_KIT = {
-  palette: BRAND_PALETTE,
-  swatches: BRAND_SWATCHES,
-  logos: BRAND_LOGOS,
-  fonts: BRAND_FONTS,
-  typeScale: BRAND_TYPE_SCALE,
-} as const;

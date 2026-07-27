@@ -91,26 +91,6 @@ export function collectByItem(
     .sort((a, b) => (yearFrom(b) ?? 0) - (yearFrom(a) ?? 0));
 }
 
-/** 특정 연도 논문 모음 — drill-down */
-function collectByYear(theses: AlumniThesis[], year: number): AlumniThesis[] {
-  return theses
-    .filter((t) => yearFrom(t) === year)
-    .sort((a, b) => (a.title ?? "").localeCompare(b.title ?? ""));
-}
-
-/** 연도별 논문 수 (타임라인용) */
-function countByYear(theses: AlumniThesis[]): { year: number; count: number }[] {
-  const counts = new Map<number, number>();
-  for (const t of theses) {
-    const y = yearFrom(t);
-    if (y == null) continue;
-    counts.set(y, (counts.get(y) ?? 0) + 1);
-  }
-  return [...counts.entries()]
-    .map(([year, count]) => ({ year, count }))
-    .sort((a, b) => a.year - b.year);
-}
-
 /** 통합 검색 — 제목·키워드·변인명·방법·대상에서 부분일치. variableNames는 id→name 변환 결과를 넘긴다. */
 export function searchTheses(
   theses: AlumniThesis[],

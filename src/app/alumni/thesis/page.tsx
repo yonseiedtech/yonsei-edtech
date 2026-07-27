@@ -21,7 +21,6 @@ import {
   Lock,
   BarChart3,
   AlertTriangle,
-  ShieldCheck,
   AlertCircle,
   X,
 } from "lucide-react";

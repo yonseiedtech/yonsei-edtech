@@ -6,7 +6,6 @@ import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { cn } from "@/lib/utils";
 import { GAGNE_NINE_EVENTS } from "@/lib/program-development-guide";
 import {
   BASIC_LESSON_STAGES,

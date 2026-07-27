@@ -55,11 +55,6 @@ export const VISIBILITY_LABELS: Record<ArticleVisibility, string> = {
   public: "전체 공개",
 };
 
-const VISIBILITY_DESCRIPTIONS: Record<ArticleVisibility, string> = {
-  private: "연구팀 멤버만 열람 가능.",
-  society: "로그인한 학회 회원만 열람 가능.",
-  public: "비로그인 외부 방문자 포함 전체 공개 + Google Scholar 인덱싱.",
-};
 
 export const ISSUE_STATUS_LABELS: Record<JournalIssueStatus, string> = {
   preparing: "준비 중",

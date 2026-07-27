@@ -6,7 +6,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { ArrowLeft, LayoutGrid, Link as LinkIcon, Lock, Monitor, Pencil, Trash2, Unlock } from "lucide-react";
 import { toast } from "sonner";
 import { commBoardsApi, commQuestionsApi, commLikesApi } from "@/lib/bkend";
-import type { CommBoard, CommQuestion, CommSortMode, User } from "@/types";
+import type { CommQuestion, CommSortMode, User } from "@/types";
 import { COMM_SORT_LABELS } from "@/types";
 import { sortQuestions, canManageBoard } from "./comm-helpers";
 import QuestionComposer from "./QuestionComposer";

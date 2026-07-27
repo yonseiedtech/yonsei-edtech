@@ -6,14 +6,6 @@ import type { MemberMetricsRow } from "./computeMemberMetrics";
 
 export type MemberSegment = MemberMetricsRow["segment"];
 
-/** 시각화·집계 시 고정 세그먼트 순서 */
-const SNAPSHOT_SEGMENTS: MemberSegment[] = [
-  "champion",
-  "active",
-  "new",
-  "at_risk",
-  "dormant",
-];
 
 /**
  * 로얄티 스냅샷 — `loyalty_snapshots` 컬렉션, 문서 ID = 캡처 날짜(YYYY-MM-DD, KST).

@@ -27,7 +27,6 @@ export interface GreetingData {
 
 const QUERY_KEY = ["site_settings", "greeting"];
 
-const EMPTY_PERSON: GreetingPerson = { name: "", title: "", photo: "", content: "" };
 
 const DEFAULT_PRESIDENT: GreetingPerson = {
   name: "",

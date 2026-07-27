@@ -43,7 +43,6 @@ import { isAtLeast } from "@/lib/permissions";
 import { formatDday } from "@/lib/dday";
 import { toast } from "sonner";
 import {
-  INTERNAL_CONFERENCES,
   getConferenceStatus,
   type InternalConference,
   type InternalConferenceStatus,

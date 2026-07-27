@@ -42,7 +42,6 @@ import {
   Send,
   Check,
   Loader2,
-  ArrowLeft,
   ClipboardCheck,
   Info,
 } from "lucide-react";

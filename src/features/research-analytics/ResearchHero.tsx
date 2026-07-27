@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { motion, useInView, useReducedMotion, AnimatePresence } from "framer-motion";
+import { motion, useInView, useReducedMotion } from "framer-motion";
 import { BookOpen, Hash, TrendingUp, GraduationCap, Search, Users, Award } from "lucide-react";
 
 /* ──────────────────────────────────────────

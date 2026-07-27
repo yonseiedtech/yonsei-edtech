@@ -2,10 +2,6 @@
 
 export type GraduationType = "thesis" | "research_report";
 
-const GRADUATION_TYPE_LABELS: Record<GraduationType, string> = {
-  thesis: "논문",
-  research_report: "연구보고서",
-};
 
 export type ThesisAuthorMappingStatus =
   | "unmapped"   // 회원 매핑 시도 안 함

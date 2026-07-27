@@ -29,7 +29,6 @@ import {
   AlertTriangle,
   CalendarCheck,
 } from "lucide-react";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import PageHeader from "@/components/ui/page-header";
 import PageContainer from "@/components/ui/page-container";

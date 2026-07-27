@@ -11,7 +11,7 @@ import { collection, getDocs, query as fsQuery, where, limit } from "firebase/fi
 import { db } from "@/lib/firebase";
 import { getComputedStatus } from "@/lib/seminar-utils";
 import type { Seminar } from "@/types";
-import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2, Globe, ClipboardCheck, MessageSquareQuote, HeartHandshake, BarChart3, ListChecks, Inbox, ArrowRight, CalendarDays, CheckCircle2, Circle } from "lucide-react";
+import { Users, Clock, FileText, HelpCircle, LayoutDashboard, Bot, Map, FileUp, Loader2, ClipboardCheck, MessageSquareQuote, HeartHandshake, BarChart3, ListChecks, Inbox, ArrowRight, CalendarDays, CheckCircle2, Circle } from "lucide-react";
 import { useState, useRef, useEffect, useMemo } from "react";
 import { toast } from "sonner";
 import { auth as firebaseAuth } from "@/lib/firebase";

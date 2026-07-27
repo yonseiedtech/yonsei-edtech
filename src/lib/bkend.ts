@@ -38,7 +38,7 @@ import type { HackathonSubmission, HackathonJudging, HackathonTeamJoin, Hackatho
 import type {
   User, Post, Comment, Seminar, SeminarSession, SeminarAttendee,
   SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
-  SeminarReview, Inquiry, Activity, AppNotification, WaitlistEntry, DirectMessage,
+  SeminarReview, Activity, AppNotification, WaitlistEntry, DirectMessage,
   Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog, UserActivityLog,
   ActivityProgress, ActivityMaterial, EmailLog, ProgressMeeting,
   Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, ResearchDesign, WritingPaper, WritingPaperHistory, WritingPaperVersion, AdvisorFeedbackNote,

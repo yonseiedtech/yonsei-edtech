@@ -3,7 +3,6 @@
 import Link from "next/link";
 import { useState, useRef, useEffect, useCallback } from "react";
 import {
-  Bell,
   ArrowLeft,
   CheckCheck,
   Check,

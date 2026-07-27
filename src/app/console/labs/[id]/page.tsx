@@ -3,7 +3,6 @@
 import { use, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import Image from "next/image";
-import Link from "next/link";
 import { toast } from "sonner";
 import {
   useLab, useLabReactions, useToggleReaction,
