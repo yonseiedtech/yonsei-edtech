@@ -29,6 +29,7 @@ function SpeakerBlock({ s, single }: { s: SeminarSpeaker; single: boolean }) {
   return (
     <div className={single ? "flex flex-col sm:flex-row items-start gap-6" : "flex items-start gap-4"}>
       {s.photoUrl ? (
+        // eslint-disable-next-line @next/next/no-img-element -- 연사 사진이 업로드 data URL(base64) — next/image 최적화 비대상
         <img
           src={s.photoUrl}
           alt={s.name}

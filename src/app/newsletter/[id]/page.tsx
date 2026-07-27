@@ -2,6 +2,7 @@
 
 import { use, useState } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import {
   useNewsletters,
   SECTION_TYPE_LABELS,
@@ -134,10 +135,13 @@ export default function NewsletterDetailPage({
 
         {/* 표지 */}
         <div className="relative h-48 w-full overflow-hidden rounded-2xl sm:h-64">
-          <img
+          <Image
             src="/yonsei-campus.jpg"
             alt={issue.title}
-            className="h-full w-full object-cover"
+            fill
+            priority
+            sizes="(max-width: 640px) 100vw, 768px"
+            className="object-cover"
           />
           <div className="absolute bottom-0 left-0 right-0 p-5 text-white sm:p-8">
             <p className="text-xs font-medium uppercase tracking-widest opacity-80">

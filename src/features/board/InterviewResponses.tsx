@@ -302,6 +302,7 @@ export default function InterviewResponses({ postId, meta, storedResponseCount }
                           <div className="mt-2 flex flex-wrap gap-2">
                             {a.imageUrls.map((u, i) => (
                               <a key={u} href={u} target="_blank" rel="noreferrer">
+                                {/* eslint-disable-next-line @next/next/no-img-element -- 업로드 첨부 이미지가 data URL(base64) — next/image 최적화 비대상 */}
                                 <img src={u} alt={`첨부 사진 ${i + 1}`} className="h-24 w-24 rounded-lg border object-cover" />
                               </a>
                             ))}

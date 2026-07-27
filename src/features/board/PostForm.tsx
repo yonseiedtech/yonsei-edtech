@@ -472,6 +472,7 @@ export default function PostForm({ mode = "create", initialData, initialCategory
               <div className="flex flex-wrap gap-2">
                 {imageUrls.map((url) => (
                   <div key={url} className="group relative">
+                    {/* eslint-disable-next-line @next/next/no-img-element -- 업로드 미리보기 이미지가 data URL(base64) — next/image 최적화 비대상 */}
                     <img
                       src={url}
                       alt=""

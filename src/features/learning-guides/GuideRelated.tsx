@@ -84,9 +84,9 @@ function Chip({
   return (
     <Link href={href} className={`${base} ${colors}`}>
       {variant === "concept" ? (
-        <BookOpen size={11} className="shrink-0 text-primary/70" />
+        <BookOpen size={11} className="shrink-0 text-primary/70" aria-hidden />
       ) : (
-        <Users size={11} className="shrink-0 text-muted-foreground" />
+        <Users size={11} className="shrink-0 text-muted-foreground" aria-hidden />
       )}
       <span className="max-w-[12rem] truncate">{label}</span>
     </Link>

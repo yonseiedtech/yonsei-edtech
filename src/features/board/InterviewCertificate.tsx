@@ -86,6 +86,7 @@ export default function InterviewCertificate({ post, respondentName, answerCount
           <div className="relative flex h-full flex-col items-center justify-between p-8 text-white">
             <div className="flex flex-col items-center">
               <div className="flex items-center gap-2 rounded-xl bg-card/95 px-4 py-2 text-sm font-bold text-primary shadow">
+                {/* eslint-disable-next-line @next/next/no-img-element -- html2canvas 수료증 캡처 대상(crossOrigin)·정적 SVG — next/image 래퍼는 캡처 비호환 */}
                 <img
                   src="/yonsei-emblem.svg"
                   alt="연세대학교"

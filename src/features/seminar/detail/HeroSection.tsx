@@ -43,6 +43,7 @@ export default function HeroSection({ seminar, isStaff, onEditInfo }: Props) {
     <div className="overflow-hidden rounded-2xl border bg-card">
       {/* 이미지 + 제목 오버레이 */}
       <div className="relative h-48 sm:h-64 w-full">
+        {/* eslint-disable-next-line @next/next/no-img-element -- posterUrl 이 운영진 자유 입력 외부 URL(미등록 호스트 가능) — next/image 런타임 에러 위험 */}
         <img
           src={seminar.posterUrl || "/yonsei-campus.jpg"}
           alt={seminar.title}

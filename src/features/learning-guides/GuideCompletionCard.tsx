@@ -89,11 +89,11 @@ export default function GuideCompletionCard({ guide }: Props) {
       {/* 축하 헤더 (이어읽기 뱃지와 동일한 success 톤) */}
       <div className="flex items-start gap-3 border-b border-success/20 bg-success/10 px-5 py-4">
         <span className="flex h-10 w-10 shrink-0 items-center justify-center rounded-full bg-success/15 text-success">
-          <PartyPopper size={20} />
+          <PartyPopper size={20} aria-hidden />
         </span>
         <div className="min-w-0">
           <div className="flex items-center gap-1.5">
-            <CheckCircle2 size={14} className="shrink-0 text-success" />
+            <CheckCircle2 size={14} className="shrink-0 text-success" aria-hidden />
             <p className="text-sm font-semibold text-success">완독을 축하합니다!</p>
           </div>
           <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
@@ -106,11 +106,11 @@ export default function GuideCompletionCard({ guide }: Props) {
         {/* 스터디 수요 남기기 */}
         <div>
           <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-foreground/70">
-            <ClipboardList size={13} className="text-primary" /> 관련 스터디를 함께 하고 싶다면
+            <ClipboardList size={13} className="text-primary" aria-hidden /> 관련 스터디를 함께 하고 싶다면
           </p>
           <Link href={demandHref}>
             <Button size="sm" className="gap-1">
-              스터디 수요 남기기 <ArrowRight size={13} />
+              스터디 수요 남기기 <ArrowRight size={13} aria-hidden />
             </Button>
           </Link>
         </div>
@@ -119,7 +119,7 @@ export default function GuideCompletionCard({ guide }: Props) {
         {seminars.length > 0 && (
           <div>
             <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-foreground/70">
-              <CalendarDays size={13} className="text-primary" /> 관련 세미나
+              <CalendarDays size={13} className="text-primary" aria-hidden /> 관련 세미나
             </p>
             <div className="flex flex-col gap-1.5">
               {seminars.map((s) => (
@@ -128,10 +128,10 @@ export default function GuideCompletionCard({ guide }: Props) {
                   href={`/seminars/${s.id}`}
                   className="flex items-center gap-2 rounded-xl border bg-card px-3 py-2 transition-colors hover:bg-muted/40"
                 >
-                  <CalendarDays size={14} className="shrink-0 text-muted-foreground" />
+                  <CalendarDays size={14} className="shrink-0 text-muted-foreground" aria-hidden />
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{s.title}</span>
                   <span className="shrink-0 text-[11px] tabular-nums text-muted-foreground">{norm(s.date).slice(0, 10)}</span>
-                  <ArrowRight size={13} className="shrink-0 text-muted-foreground" />
+                  <ArrowRight size={13} className="shrink-0 text-muted-foreground" aria-hidden />
                 </Link>
               ))}
             </div>
@@ -142,7 +142,7 @@ export default function GuideCompletionCard({ guide }: Props) {
         {nextGuides.length > 0 && (
           <div>
             <p className="mb-1.5 flex items-center gap-1.5 text-xs font-medium text-foreground/70">
-              <BookOpen size={13} className="text-primary" /> 이어서 읽어볼 가이드
+              <BookOpen size={13} className="text-primary" aria-hidden /> 이어서 읽어볼 가이드
             </p>
             <div className="flex flex-col gap-1.5">
               {nextGuides.map((g) => (
@@ -153,7 +153,7 @@ export default function GuideCompletionCard({ guide }: Props) {
                 >
                   <span className="text-base" aria-hidden>{g.coverEmoji ?? "📖"}</span>
                   <span className="min-w-0 flex-1 truncate text-sm font-medium text-foreground">{g.title}</span>
-                  <ArrowRight size={13} className="shrink-0 text-muted-foreground" />
+                  <ArrowRight size={13} className="shrink-0 text-muted-foreground" aria-hidden />
                 </Link>
               ))}
             </div>
@@ -164,7 +164,7 @@ export default function GuideCompletionCard({ guide }: Props) {
         <div className="border-t border-success/20 pt-4">
           <Link href="/learning-guides">
             <Button variant="outline" size="sm" className="gap-1">
-              <BookOpen size={13} /> 서재로 돌아가기
+              <BookOpen size={13} aria-hidden /> 서재로 돌아가기
             </Button>
           </Link>
         </div>

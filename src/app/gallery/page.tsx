@@ -267,6 +267,7 @@ function AlbumCard({
       >
         <div className="relative aspect-[4/3] overflow-hidden bg-muted">
           {album.coverUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element -- coverUrl 은 업로드된 data URL(base64) — next/image 최적화 비대상
             <img
               src={album.coverUrl}
               alt={album.title}
@@ -564,6 +565,7 @@ function PhotoCell({
         className="aspect-square w-full overflow-hidden rounded-2xl bg-muted focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2"
         aria-label={photo.caption || `사진 ${idx + 1} 크게 보기`}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element -- 사진은 업로드된 data URL(base64) — next/image 최적화 비대상 */}
         <img
           src={photo.url}
           alt={photo.caption || `사진 ${idx + 1}`}
@@ -662,6 +664,7 @@ function Lightbox({
       )}
 
       {/* 이미지 */}
+      {/* eslint-disable-next-line @next/next/no-img-element -- 라이트박스 원본은 업로드된 data URL(base64)·object-contain 전체화면 — next/image 최적화 비대상 */}
       <img
         src={photo.url}
         alt={photo.caption || `사진 ${index + 1}`}

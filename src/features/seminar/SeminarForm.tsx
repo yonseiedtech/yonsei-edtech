@@ -282,6 +282,7 @@ export default function SeminarForm() {
                   <div key={idx} className="rounded-lg bg-muted/50 p-4">
                     <div className="flex items-start gap-4">
                       {s.photoUrl ? (
+                        // eslint-disable-next-line @next/next/no-img-element -- 연사 사진이 업로드 data URL(base64) — next/image 최적화 비대상
                         <img src={s.photoUrl} alt={s.name} className="h-16 w-16 shrink-0 rounded-full object-cover" />
                       ) : (
                         <div className="flex h-16 w-16 shrink-0 items-center justify-center rounded-full bg-primary/10 text-primary">

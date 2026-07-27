@@ -175,6 +175,7 @@ export default function PosterGenerator({ seminarId: propSeminarId }: { seminarI
         <div className="rounded-2xl border bg-card p-6">
           <h3 className="mb-4 text-lg font-semibold">생성된 포스터</h3>
           <div className="flex justify-center rounded-lg bg-muted/30 p-4">
+            {/* eslint-disable-next-line @next/next/no-img-element -- AI 생성 포스터 data URL(동적) — next/image 최적화 비대상 */}
             <img
               src={imageUrl}
               alt="생성된 포스터"

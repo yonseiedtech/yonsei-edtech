@@ -96,7 +96,7 @@ export default function DemandRetroSection() {
   if (boardsLoading) {
     return (
       <div className="flex justify-center py-12">
-        <Loader2 className="animate-spin text-muted-foreground" size={24} />
+        <Loader2 className="animate-spin text-muted-foreground" size={24} role="img" aria-label="불러오는 중" />
       </div>
     );
   }
@@ -105,7 +105,7 @@ export default function DemandRetroSection() {
   if (boards.length === 0) {
     return (
       <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed py-16 text-muted-foreground">
-        <History size={28} />
+        <History size={28} aria-hidden />
         <p className="text-sm">회고할 지난 학기 데이터가 아직 없습니다.</p>
         <p className="text-xs text-muted-foreground/70">
           한 학기 사이클이 완료되면 여기서 지난 학기 수요·개설 전환을 돌아볼 수 있습니다.
@@ -137,11 +137,11 @@ export default function DemandRetroSection() {
 
       {questionsLoading ? (
         <div className="flex justify-center py-12">
-          <Loader2 className="animate-spin text-muted-foreground" size={24} />
+          <Loader2 className="animate-spin text-muted-foreground" size={24} role="img" aria-label="불러오는 중" />
         </div>
       ) : stats.total === 0 ? (
         <div className="flex flex-col items-center gap-2 rounded-2xl border border-dashed py-16 text-muted-foreground">
-          <Inbox size={28} />
+          <Inbox size={28} aria-hidden />
           <p className="text-sm">
             {activeKey ? semesterLabelFromKey(activeKey) : "해당 학기"}에 등록된 수요가 없습니다.
           </p>
@@ -151,7 +151,7 @@ export default function DemandRetroSection() {
           {/* ── 회고 요약 (절대값 + 비율) ──────────────────────────────────── */}
           <div className="rounded-2xl border bg-card p-4">
             <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
-              <TrendingUp size={14} className="text-primary" />
+              <TrendingUp size={14} className="text-primary" aria-hidden />
               {activeKey ? semesterLabelFromKey(activeKey) : ""} 개설 전환 회고
             </p>
             <div className="grid grid-cols-3 gap-2">
@@ -196,7 +196,7 @@ export default function DemandRetroSection() {
           {stats.unopened.length > 0 && (
             <div className="rounded-2xl border bg-card p-4">
               <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
-                <Flame size={14} className="text-primary" />
+                <Flame size={14} className="text-primary" aria-hidden />
                 미개설 상위 주제
                 <span className="text-[11px] font-normal text-muted-foreground">
                   · 다음 학기 재점화 후보
@@ -213,12 +213,18 @@ export default function DemandRetroSection() {
                     </span>
                     <span className="flex-1 text-sm font-medium text-foreground">{q.body}</span>
                     <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                      <span className="flex items-center gap-0.5">
-                        <Heart size={11} className="text-primary" />
+                      <span
+                        className="flex items-center gap-0.5"
+                        aria-label={`관심있어요 ${q.likeCount ?? 0}명`}
+                      >
+                        <Heart size={11} className="text-primary" aria-hidden />
                         {q.likeCount ?? 0}
                       </span>
-                      <span className="flex items-center gap-0.5">
-                        <Users size={11} />
+                      <span
+                        className="flex items-center gap-0.5"
+                        aria-label={`참여할래요 ${joinCounts[q.id] ?? 0}명`}
+                      >
+                        <Users size={11} aria-hidden />
                         {joinCounts[q.id] ?? 0}
                       </span>
                     </span>

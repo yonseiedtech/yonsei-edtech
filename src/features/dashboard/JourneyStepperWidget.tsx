@@ -243,7 +243,14 @@ export default function JourneyStepperWidget() {
         </span>
       }
     >
-      <div className="mt-3" aria-label={`여정 진행률 ${pct}%`}>
+      <div
+        className="mt-3"
+        role="progressbar"
+        aria-valuenow={pct}
+        aria-valuemin={0}
+        aria-valuemax={100}
+        aria-label={`여정 진행률 ${pct}%`}
+      >
         <div className="h-2 w-full overflow-hidden rounded-full bg-muted/40">
           <div
             className="h-full rounded-full bg-primary transition-all duration-500"

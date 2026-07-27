@@ -357,6 +357,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
         className="flex items-center justify-between gap-2 border-b bg-card/60 px-3 py-2 backdrop-blur sm:px-4 sm:py-3"
         style={{ paddingTop: "max(0.5rem, env(safe-area-inset-top))" }}
       >
+        {/* eslint-disable-next-line @next/next/no-img-element -- 정적 SVG 엠블럼(소형 헤더 로고) — next/image SVG 최적화 비대상, LCP 영향 미미 */}
         <img
           src="/yonsei-emblem.svg"
           alt="연세대학교"
@@ -415,6 +416,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
               className="mx-auto w-full max-w-2xl text-center"
             >
               <div className="mx-auto flex flex-col items-center gap-2">
+                {/* eslint-disable-next-line @next/next/no-img-element -- 정적 SVG 엠블럼 — next/image SVG 최적화 비대상, LCP 영향 미미 */}
                 <img
                   src="/yonsei-emblem.svg"
                   alt="연세대학교"
@@ -806,6 +808,7 @@ export default function InterviewPlayer({ post, existing, onClose, onSubmitted }
                       <div className="mt-3 flex gap-2">
                         {currentAnswer!.imageUrls!.map((url, i) => (
                           <div key={url} className="relative">
+                            {/* eslint-disable-next-line @next/next/no-img-element -- 업로드 첨부 이미지가 data URL(base64) — next/image 최적화 비대상 */}
                             <img src={url} alt={`첨부 사진 ${i + 1}`} className="h-24 w-24 rounded-lg border object-cover" />
                             <button
                               type="button"

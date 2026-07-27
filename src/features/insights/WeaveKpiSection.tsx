@@ -193,7 +193,7 @@ export default function WeaveKpiSection() {
   if (!isStaff) {
     return (
       <div className="rounded-2xl border border-warning/20 bg-warning/5 p-6 text-center text-sm text-warning">
-        <ShieldAlert className="mx-auto mb-2" size={24} />
+        <ShieldAlert className="mx-auto mb-2" size={24} aria-hidden />
         운영진 전용 지표입니다.
       </div>
     );
@@ -204,7 +204,7 @@ export default function WeaveKpiSection() {
   return (
     <div className="space-y-4">
       <div className="flex items-start gap-2 rounded-xl border border-info/20 bg-info/5 p-3 text-xs text-info">
-        <Link2 size={15} className="mt-0.5 shrink-0 text-info" />
+        <Link2 size={15} className="mt-0.5 shrink-0 text-info" aria-hidden />
         <p>
           v16 이 심은 <b>연결고리</b>(진단→가이드, 가이드 완독, 수요→개설)가 실제로
           쓰이는지 측정합니다. 절대값과 전환율을 함께 보고 다음 기획 근거로 활용하세요.
@@ -215,7 +215,7 @@ export default function WeaveKpiSection() {
       {/* (a) 러닝 가이드 진행/완독 ───────────────────────────────────────────── */}
       <section className="rounded-2xl border bg-card p-5">
         <h2 className="flex items-center gap-2 text-sm font-bold">
-          <BookOpenCheck size={15} className="text-primary" />
+          <BookOpenCheck size={15} className="text-primary" aria-hidden />
           러닝 가이드 진행·완독
           <span className="ml-auto">
             <ToneBadge rate={guideData?.completionRate ?? null} goodAt={40} />
@@ -223,7 +223,7 @@ export default function WeaveKpiSection() {
         </h2>
         {guideLoading ? (
           <div className="flex justify-center py-6">
-            <Loader2 className="animate-spin text-muted-foreground" size={18} />
+            <Loader2 className="animate-spin text-muted-foreground" size={18} role="img" aria-label="집계 불러오는 중" />
           </div>
         ) : !guideData || guideData.started === 0 ? (
           <p className="py-4 text-center text-sm text-muted-foreground">
@@ -246,7 +246,7 @@ export default function WeaveKpiSection() {
       {/* (b) 수요→개설 전환 ─────────────────────────────────────────────────── */}
       <section className="rounded-2xl border bg-card p-5">
         <h2 className="flex items-center gap-2 text-sm font-bold">
-          <TrendingUp size={15} className="text-primary" />
+          <TrendingUp size={15} className="text-primary" aria-hidden />
           수요 → 개설 전환
           <span className="ml-auto">
             <ToneBadge rate={demand.conversionRate} goodAt={25} />
@@ -254,7 +254,7 @@ export default function WeaveKpiSection() {
         </h2>
         {demandLoading ? (
           <div className="flex justify-center py-6">
-            <Loader2 className="animate-spin text-muted-foreground" size={18} />
+            <Loader2 className="animate-spin text-muted-foreground" size={18} role="img" aria-label="집계 불러오는 중" />
           </div>
         ) : demand.total === 0 ? (
           <p className="py-4 text-center text-sm text-muted-foreground">
@@ -309,7 +309,7 @@ export default function WeaveKpiSection() {
       {/* (c) 진단 후속행동 ───────────────────────────────────────────────────── */}
       <section className="rounded-2xl border bg-card p-5">
         <h2 className="flex items-center gap-2 text-sm font-bold">
-          <Stethoscope size={15} className="text-primary" />
+          <Stethoscope size={15} className="text-primary" aria-hidden />
           진단 후속행동
           <span className="text-[11px] font-normal text-muted-foreground">
             · 완료 수·약점 태그 분포
@@ -317,7 +317,7 @@ export default function WeaveKpiSection() {
         </h2>
         {diagLoading ? (
           <div className="flex justify-center py-6">
-            <Loader2 className="animate-spin text-muted-foreground" size={18} />
+            <Loader2 className="animate-spin text-muted-foreground" size={18} role="img" aria-label="집계 불러오는 중" />
           </div>
         ) : diag.attempts === 0 ? (
           <p className="py-4 text-center text-sm text-muted-foreground">
@@ -332,7 +332,7 @@ export default function WeaveKpiSection() {
             {diag.topTags.length > 0 && (
               <div className="mt-4">
                 <p className="mb-2 flex items-center gap-1.5 text-xs font-semibold text-muted-foreground">
-                  <AlertTriangle size={13} className="text-warning" />
+                  <AlertTriangle size={13} className="text-warning" aria-hidden />
                   공통 약점 태그 Top {diag.topTags.length}
                 </p>
                 <div className="flex flex-wrap gap-2">

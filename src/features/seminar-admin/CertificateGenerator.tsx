@@ -1044,6 +1044,7 @@ export function CertificatePreview({
           }}
         >
           <DraggableArea {...dragProps("watermark")}>
+            {/* eslint-disable-next-line @next/next/no-img-element -- html2canvas 수료증 캡처 대상 — next/image 래퍼는 캡처 비호환 */}
             <img
               src="/cert-emblem.png"
               alt=""
@@ -1122,6 +1123,7 @@ export function CertificatePreview({
             }}
           >
             {/* 학회 엠블럼 */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- html2canvas 수료증 캡처 대상 — next/image 래퍼는 캡처 비호환 */}
             <img
               src="/cert-emblem.png"
               alt="연세대학교"
@@ -1157,6 +1159,7 @@ export function CertificatePreview({
             </div>
 
             {/* 직인 이미지 */}
+            {/* eslint-disable-next-line @next/next/no-img-element -- html2canvas 수료증 캡처 대상 — next/image 래퍼는 캡처 비호환 */}
             <img
               src="/cert-seal.jpeg"
               alt="직인"
