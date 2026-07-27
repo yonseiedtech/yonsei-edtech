@@ -142,7 +142,7 @@ export default async function PollSummaryPage({ params }: Props) {
   const maxCount = Math.max(0, ...tallies.map((t) => t.count));
 
   const dates = Array.from(new Set(candidateSlots.map((s) => s.split("|")[0]))).sort();
-  const responderCount = responses.filter((r) => r.availableSlots.length > 0).length;
+  const responderCount = responses.filter((r) => (r.availableSlots?.length ?? 0) > 0).length;
 
   // 최다 가능 일정 상위 3
   const topSlots = [...tallies]

@@ -200,19 +200,19 @@ export default function JournalArticleView({
       )}
 
       {/* CRediT 매트릭스 */}
-      {article.authors.some((a) => a.creditRoles.length > 0) && (
+      {(article.authors ?? []).some((a) => (a.creditRoles ?? []).length > 0) && (
         <section className="space-y-2">
           <h2 className="text-lg font-semibold">기여 역할 (CRediT)</h2>
           <Card>
             <CardContent className="p-4">
               <ul className="space-y-2 text-sm">
-                {article.authors.map((a) => (
+                {(article.authors ?? []).map((a) => (
                   <li key={a.userId}>
                     <strong>{a.displayName}</strong>:{" "}
                     <span className="text-muted-foreground">
-                      {a.creditRoles.length === 0
+                      {(a.creditRoles ?? []).length === 0
                         ? "(역할 미지정)"
-                        : a.creditRoles
+                        : (a.creditRoles ?? [])
                             .map((r) => CREDIT_ROLE_LABELS[r])
                             .join(" · ")}
                     </span>

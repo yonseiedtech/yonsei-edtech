@@ -191,7 +191,7 @@ function JournalConsoleContent() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-right tabular-nums">
-                      {iss.articleIds.length}편
+                      {(iss.articleIds ?? []).length}편
                     </td>
                     <td className="px-4 py-3 text-muted-foreground">
                       {iss.publishedAt

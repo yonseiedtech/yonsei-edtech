@@ -250,7 +250,7 @@ function IssueRow({ issue }: { issue: import("@/types").ResearchJournalIssue }) 
             {issue.season ? ` · ${issue.season}` : ""}
           </p>
           <p className="text-xs text-muted-foreground">
-            {ISSUE_STATUS_LABELS[issue.status]} · {issue.articleIds.length}편
+            {ISSUE_STATUS_LABELS[issue.status]} · {(issue.articleIds ?? []).length}편
             {issue.publishedAt &&
               ` · 발간 ${new Date(issue.publishedAt).toLocaleDateString("ko-KR")}`}
           </p>

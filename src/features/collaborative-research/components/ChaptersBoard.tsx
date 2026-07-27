@@ -469,7 +469,7 @@ function ChapterCommentSection({
                 </div>
               </div>
               <p className="whitespace-pre-wrap text-sm">{c.body}</p>
-              {c.mentionedUserIds.length > 0 && (
+              {(c.mentionedUserIds?.length ?? 0) > 0 && (
                 <p className="mt-1 text-xs text-cat-1">
                   멘션: {c.mentionedUserIds.map((u) => `@${u}`).join(" ")}
                 </p>

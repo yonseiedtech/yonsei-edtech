@@ -522,7 +522,7 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
       {viewMode === "schedule" && (
       <div className="sticky top-0 z-20 -mx-4 flex gap-2 overflow-x-auto whitespace-nowrap border-b bg-background/95 px-4 py-1 backdrop-blur supports-[backdrop-filter]:bg-background/80 sm:-mx-0 sm:px-0">
         {program.days.map((d, i) => {
-          const cnt = d.sessions.length;
+          const cnt = (d.sessions ?? []).length;
           const myDay = plans.filter((p) => p.sessionDate === d.date).length;
           return (
             <button
@@ -764,13 +764,13 @@ export default function ConferenceProgramView({ activityId, activityTitle, user 
               )}
             </div>
           </div>
-          {day.sessions.length === 0 ? (
+          {(day.sessions ?? []).length === 0 ? (
             <p className="rounded-md border bg-muted/30 p-6 text-center text-sm text-muted-foreground">
               이 날짜의 세션이 비어 있습니다.
             </p>
           ) : (() => {
             const q = searchQuery.trim().toLowerCase();
-            const filteredSessions = [...day.sessions]
+            const filteredSessions = [...(day.sessions ?? [])]
               // Sprint 67-Q: compareSessions 공통 함수 사용 (정렬 일관성)
               .sort(compareSessions)
               .filter((s) => {

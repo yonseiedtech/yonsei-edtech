@@ -41,8 +41,8 @@ export default function JournalIndexPage() {
       return (
         a.titleKo.toLowerCase().includes(q) ||
         a.titleEn?.toLowerCase().includes(q) ||
-        a.keywordsKo.some((k) => k.toLowerCase().includes(q)) ||
-        a.authors.some((au) => au.displayName.toLowerCase().includes(q))
+        (a.keywordsKo ?? []).some((k) => k.toLowerCase().includes(q)) ||
+        (a.authors ?? []).some((au) => au.displayName.toLowerCase().includes(q))
       );
     });
   }, [articles, search, typeFilter]);
@@ -76,7 +76,7 @@ export default function JournalIndexPage() {
                         `연세 교육공학 연구 ${formatIssueCode(issue.volume, issue.number)}`}
                     </p>
                     <p className="mt-2 text-xs text-muted-foreground">
-                      {issue.articleIds.length}편 수록
+                      {(issue.articleIds ?? []).length}편 수록
                     </p>
                   </CardContent>
                 </Card>
@@ -161,7 +161,7 @@ export default function JournalIndexPage() {
                       {article.abstractKo}
                     </p>
                   )}
-                  {article.keywordsKo.length > 0 && (
+                  {(article.keywordsKo ?? []).length > 0 && (
                     <p className="text-xs text-muted-foreground">
                       {article.keywordsKo.slice(0, 5).join(" · ")}
                     </p>

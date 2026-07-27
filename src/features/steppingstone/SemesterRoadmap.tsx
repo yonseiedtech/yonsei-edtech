@@ -222,18 +222,18 @@ interface StageCardProps {
 function StageCard({ stage, isMine, isLoggedIn, onProgressChange }: StageCardProps) {
   // 이 카드 내 항목별 체크 상태 — SSR safe 초기값 false
   const [checked, setChecked] = useState<boolean[]>(() =>
-    stage.items.map(() => false)
+    (stage.items ?? []).map(() => false)
   );
 
   // 클라이언트에서만 localStorage 읽기
   useEffect(() => {
     setChecked(
-      stage.items.map((_, i) => getItemChecked(stage.order, i))
+      (stage.items ?? []).map((_, i) => getItemChecked(stage.order, i))
     );
   }, [stage.order, stage.items]);
 
   const completedCount = checked.filter(Boolean).length;
-  const totalCount = stage.items.length;
+  const totalCount = (stage.items ?? []).length;
   const progressPct = totalCount > 0 ? (completedCount / totalCount) * 100 : 0;
   const isMastered = completedCount === totalCount && totalCount > 0;
 
@@ -337,7 +337,7 @@ function StageCard({ stage, isMine, isLoggedIn, onProgressChange }: StageCardPro
 
       {/* ── 체크리스트 항목 ── */}
       <ul className="mt-3 space-y-2">
-        {stage.items.map((item, i) => {
+        {(stage.items ?? []).map((item, i) => {
           const itemId = `roadmap-item-${stage.order}-${i}`;
           const isChecked = checked[i] ?? false;
 
@@ -441,7 +441,7 @@ export default function SemesterRoadmap() {
   const overallProgress = useMemo(() => {
     if (typeof window === "undefined") return { completed: 0, total: 0 };
     return getOverallProgress(
-      stages.map((s) => ({ order: s.order, itemCount: s.items.length }))
+      stages.map((s) => ({ order: s.order, itemCount: (s.items ?? []).length }))
     );
     // progressTick 을 의존성에 포함해 체크 변화 시 재계산
     // eslint-disable-next-line react-hooks/exhaustive-deps -- progressTick is a cache-bust signal for localStorage reads, not a true reactive dep

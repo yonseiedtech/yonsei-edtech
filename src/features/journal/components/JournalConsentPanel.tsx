@@ -79,7 +79,7 @@ export default function JournalConsentPanel({
         {article.consentRequestedAt && (
           <div className="space-y-2">
             <p className="text-xs font-medium text-muted-foreground">저자별 응답</p>
-            {article.authors.map((a) => {
+            {(article.authors ?? []).map((a) => {
               const c = article.authorConsents?.[a.userId];
               const status = c?.status ?? "pending";
               const statusColor =
@@ -113,7 +113,7 @@ export default function JournalConsentPanel({
               type="button"
               size="sm"
               onClick={() => requestMut.mutate(article.authors)}
-              disabled={article.authors.length === 0 || requestMut.isPending}
+              disabled={(article.authors ?? []).length === 0 || requestMut.isPending}
             >
               <Mail size={14} className="mr-1" />
               동의 요청 발송
