@@ -81,6 +81,7 @@ import DemandInterestCard from "@/features/mypage/DemandInterestCard";
 import MyActivityHub from "@/components/mypage/MyActivityHub";
 import ThesisProgressWidget from "@/features/research/ThesisProgressWidget";
 import ThesisJourneyProgress from "@/features/steppingstone/ThesisJourneyProgress";
+import WidgetBoundary from "@/components/ui/widget-boundary";
 import GraduationChecklistCard from "@/features/mypage/GraduationChecklistCard";
 import { isWrappedSeason } from "@/features/mypage/useSemesterWrapped";
 import { useAuth } from "@/features/auth/useAuth";
@@ -547,7 +548,12 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
               </Link>
 
               {/* v17 L2: 논문 여정 4단계 산출물 퍼널 진행률 — 계획서→설계→작성→보고서 현재 위치 (본인만) */}
-              {isSelf && !readOnly && <ThesisJourneyProgress />}
+              {/* WidgetBoundary: 한 위젯 크래시가 마이페이지 전체(/mypage/error.tsx)를 무너뜨리지 않도록 격리 */}
+              {isSelf && !readOnly && (
+                <WidgetBoundary label="thesis-journey">
+                  <ThesisJourneyProgress />
+                </WidgetBoundary>
+              )}
 
               {/* M1: 내 논문 진행도 — 보고서 완성도(작성률·분량 균형·lint 통과율) 상시 가시화 (본인만) */}
               {isSelf && !readOnly && <ThesisProgressWidget variant="card" />}
@@ -607,9 +613,9 @@ export default function MyPageView({ userId, readOnly = false }: Props) {
                       </div>
 
                       {/* 약점 개념 → 추천 학습 경로 (측정도구·졸업생 논문 큐레이션). 헤더/설명은 컴포넌트 내부. */}
-                      {latestDiagnostic.weakConceptIds.length > 0 && (
+                      {(latestDiagnostic.weakConceptIds?.length ?? 0) > 0 && (
                         <DiagnosticWeakConceptPath
-                          weakConceptIds={latestDiagnostic.weakConceptIds}
+                          weakConceptIds={latestDiagnostic.weakConceptIds ?? []}
                           weakConceptNames={latestDiagnostic.weakConceptNames}
                         />
                       )}
