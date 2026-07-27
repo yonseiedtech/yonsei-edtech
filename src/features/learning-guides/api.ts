@@ -83,8 +83,14 @@ export const guidesApi = {
     return { data: json.data ? normalizeGuide(json.data) : null };
   },
 
-  getById: async (id: string) =>
-    normalizeGuide(await dataApi.get<LearningGuide>("learning_guides", id)),
+  // Admin 라우트 경유로 통일(목록/뷰어와 동일 소스). 과거 dataApi.get(클라이언트 SDK)은
+  // Admin SDK 로 생성된 가이드를 못 찾아 편집 페이지가 "가이드를 찾을 수 없습니다" 로 붕괴했다.
+  getById: async (id: string) => {
+    const json = await adminFetch<{ data: LearningGuide }>(
+      `/api/learning-guides/${encodeURIComponent(id)}`,
+    );
+    return normalizeGuide(json.data);
+  },
 
   create: (data: Partial<LearningGuide>) =>
     adminFetch<{ data: LearningGuide }>("/api/learning-guides", {
@@ -113,11 +119,15 @@ export const guidesApi = {
 // ── 챕터 ──────────────────────────────────────────────────────────────────────
 
 export const guideChaptersApi = {
-  list: (guideId: string) =>
-    dataApi.list<GuideChapter>("guide_chapters", {
-      "filter[guideId]": guideId,
-      sort: "order:asc",
-    }),
+  // Admin 라우트 경유(클라이언트 dataApi 는 Admin SDK 로 생성된 챕터를 못 찾음).
+  list: async (guideId: string) => {
+    const res = await fetch(
+      `/api/guide-chapters?guideId=${encodeURIComponent(guideId)}`,
+      { headers: await optionalAuthHeaders() },
+    );
+    const json = (await res.json()) as { data?: GuideChapter[] };
+    return { data: json.data ?? [] };
+  },
 
   create: (data: Omit<GuideChapter, "id">) =>
     adminFetch<{ data: GuideChapter }>("/api/guide-chapters", {
@@ -140,17 +150,24 @@ export const guideChaptersApi = {
 // ── 페이지 ────────────────────────────────────────────────────────────────────
 
 export const guidePagesApi = {
-  listByGuide: (guideId: string) =>
-    dataApi.list<GuidePage>("guide_pages", {
-      "filter[guideId]": guideId,
-      sort: "order:asc",
-    }),
+  // Admin 라우트 경유(클라이언트 dataApi 는 Admin SDK 로 생성된 페이지를 못 찾음).
+  listByGuide: async (guideId: string) => {
+    const res = await fetch(
+      `/api/guide-pages?guideId=${encodeURIComponent(guideId)}`,
+      { headers: await optionalAuthHeaders() },
+    );
+    const json = (await res.json()) as { data?: GuidePage[] };
+    return { data: json.data ?? [] };
+  },
 
-  listByChapter: (chapterId: string) =>
-    dataApi.list<GuidePage>("guide_pages", {
-      "filter[chapterId]": chapterId,
-      sort: "order:asc",
-    }),
+  listByChapter: async (chapterId: string) => {
+    const res = await fetch(
+      `/api/guide-pages?chapterId=${encodeURIComponent(chapterId)}`,
+      { headers: await optionalAuthHeaders() },
+    );
+    const json = (await res.json()) as { data?: GuidePage[] };
+    return { data: json.data ?? [] };
+  },
 
   get: (id: string) => dataApi.get<GuidePage>("guide_pages", id),
 
