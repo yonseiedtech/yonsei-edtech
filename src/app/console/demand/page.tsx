@@ -29,6 +29,7 @@ import { Badge } from "@/components/ui/badge";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { commBoardsApi, commQuestionsApi, commLikesApi, activityParticipationsApi } from "@/lib/bkend";
 import { DEMAND_CONTEXT_ID } from "@/features/demand/ensure-demand-board";
+import DemandRetroSection from "@/features/demand/DemandRetroSection";
 import type { CommQuestion, CommBoard } from "@/types";
 
 type FilterTab = "all" | "스터디 희망" | "세미나 희망";
@@ -70,6 +71,7 @@ function escapeCell(v: string): string {
 
 export default function DemandConsolePage() {
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
+  const [view, setView] = useState<"current" | "retro">("current");
 
   // ── 보드 조회 (ensure 불필요 — 콘솔은 읽기 전용) ────────────────────────
   const { data: board } = useQuery({
@@ -205,6 +207,34 @@ export default function DemandConsolePage() {
         }
       />
 
+      {/* ── 모드 탭 (현재 수요 / 지난 학기 회고) ──────────────────────────── */}
+      <div className="flex gap-2">
+        {(
+          [
+            { key: "current", label: "현재 수요" },
+            { key: "retro", label: "지난 학기 회고" },
+          ] as { key: "current" | "retro"; label: string }[]
+        ).map(({ key, label }) => (
+          <button
+            key={key}
+            type="button"
+            onClick={() => setView(key)}
+            className={cn(
+              "rounded-full border px-3.5 py-1.5 text-sm font-medium transition-colors",
+              view === key
+                ? "border-primary bg-primary/10 text-primary"
+                : "border-transparent bg-muted text-muted-foreground hover:text-foreground",
+            )}
+          >
+            {label}
+          </button>
+        ))}
+      </div>
+
+      {view === "retro" ? (
+        <DemandRetroSection />
+      ) : (
+        <>
       {/* ── 요약 통계 ──────────────────────────────────────────────────────── */}
       <div className="rounded-2xl border bg-card p-4">
         <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
@@ -497,6 +527,8 @@ export default function DemandConsolePage() {
             </tbody>
           </table>
         </div>
+      )}
+        </>
       )}
     </div>
   );

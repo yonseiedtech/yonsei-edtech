@@ -13,7 +13,7 @@
  * - 요약 지표 + 상태 필터
  */
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import {
   Heart,
@@ -141,6 +141,12 @@ export default function DemandSurveySection({ kind }: Props) {
   const [body, setBody] = useState("");
   const [formatPref, setFormatPref] = useState<FormatPref>("무관");
   const [note, setNote] = useState("");
+
+  // v17 M4: 러닝가이드 완독 카드 등에서 넘어온 주제 prefill (client-only, DB 무변경)
+  useEffect(() => {
+    const topic = new URLSearchParams(window.location.search).get("demandTopic");
+    if (topic) setBody((prev) => (prev ? prev : topic.slice(0, 140)));
+  }, []);
 
   // ── 이 유형 항목(정렬: 검토>수집>개설>보류, 그 안에서 참여순) ──────────────
   const kindItems = useMemo(

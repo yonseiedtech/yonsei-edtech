@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback, useRef } from "react";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import {
-  ChevronLeft, ChevronRight, BookOpen, List, X,
+  ChevronLeft, ChevronRight, List, X,
   CheckCircle2, Circle, ExternalLink, FileText,
   Keyboard,
 } from "lucide-react";
@@ -13,6 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Skeleton } from "@/components/ui/skeleton";
 import SimpleMarkdown from "@/features/learning-guides/SimpleMarkdown";
 import GuideRelated from "@/features/learning-guides/GuideRelated";
+import GuideCompletionCard from "@/features/learning-guides/GuideCompletionCard";
 import { guidesApi, guideChaptersApi, guidePagesApi, guideProgressApi } from "@/features/learning-guides/api";
 import { useAuthStore } from "@/features/auth/auth-store";
 import type { LearningGuide, GuideChapter, GuidePage, LearningGuideProgress } from "@/types/learning-guide";
@@ -323,6 +324,8 @@ export default function GuideViewerPage() {
 
   const readCount = readPageIds.size;
   const progressPct = totalPages > 0 ? Math.round((readCount / totalPages) * 100) : 0;
+  // v17 M4: 완독 판정 = 전체 페이지를 모두 읽음 (기존 guide_progress 읽기만, 신규 저장 없음)
+  const isCompleted = totalPages > 0 && readCount >= totalPages;
 
   const currentChapter = currentPage
     ? chapters.find((c) => c.id === currentPage.chapterId) ?? null
@@ -485,17 +488,8 @@ export default function GuideViewerPage() {
             <span>T 목차</span>
           </div>
 
-          {/* 완료 시 서재로 돌아가기 */}
-          {nextPage === null && totalPages > 0 && (
-            <div className="mt-6 rounded-xl border bg-success/5 p-4 text-center">
-              <p className="text-sm font-medium text-success">가이드를 모두 읽었습니다!</p>
-              <Link href="/learning-guides">
-                <Button variant="outline" size="sm" className="mt-2">
-                  <BookOpen size={13} className="mr-1" /> 서재로 돌아가기
-                </Button>
-              </Link>
-            </div>
-          )}
+          {/* v17 M4: 완독 축하 + 다음 행동 카드 (완독 시에만 노출) */}
+          {isCompleted && <GuideCompletionCard guide={guide} />}
 
           {/* M6: 관련 학습 — 태그 매칭 아카이브 개념 + 스터디 칩 */}
           {guide.tags.length > 0 && (

@@ -26,6 +26,8 @@ import {
   Clock,
   TrendingUp,
   TrendingDown,
+  Send,
+  Timer,
 } from "lucide-react";
 import { dataApi } from "@/lib/bkend";
 import { auth } from "@/lib/firebase";
@@ -398,6 +400,296 @@ function CronTrendSection() {
             {trends.map((t) => (
               <KindTrendRow key={t.kind} trend={t} days={windowDays} />
             ))}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────────────────
+ * v17-M2: 리마인더 cron 통합 관제 뷰
+ *
+ * cron_runs(= /api/console/cron-runs) 를 재사용해 리마인더/넛지 계열 cron 만
+ * 도메인(스터디/세미나/네트워킹/멘토링/마감/기타)으로 그룹핑한다.
+ * 신규 컬렉션·쿼리 없음 — CronStatusSection 과 동일한 queryKey 로 캐시 공유(추가 fetch 없음).
+ * ───────────────────────────────────────────────────────────────────────── */
+
+type ReminderDomain = "study" | "seminar" | "networking" | "mentoring" | "deadline" | "other";
+
+const REMINDER_DOMAIN_META: Record<ReminderDomain, { label: string; badge: string }> = {
+  study: { label: "스터디", badge: "bg-cat-5/10 text-cat-5" },
+  seminar: { label: "세미나", badge: "bg-success/10 text-success" },
+  networking: { label: "네트워킹", badge: "bg-info/10 text-info" },
+  mentoring: { label: "멘토링", badge: "bg-primary/10 text-primary" },
+  deadline: { label: "마감", badge: "bg-destructive/10 text-destructive" },
+  other: { label: "기타", badge: "bg-muted text-muted-foreground" },
+};
+
+const REMINDER_DOMAIN_ORDER: ReminderDomain[] = [
+  "study",
+  "seminar",
+  "networking",
+  "mentoring",
+  "deadline",
+  "other",
+];
+
+/**
+ * cron kind(하이픈 디렉토리명)를 리마인더 도메인으로 분류.
+ * 리마인더/넛지 계열이 아니면 null (운영/집계 cron 은 관제 대상 제외).
+ */
+function classifyReminderKind(kind: string): ReminderDomain | null {
+  const k = kind.toLowerCase();
+  const isReminder =
+    /reminder|nudge|digest|review-request|review-todos|activation-sequence|flashcard/.test(k);
+  if (!isReminder) return null;
+  if (k.includes("study")) return "study";
+  if (k.includes("seminar")) return "seminar";
+  if (k.includes("networking")) return "networking";
+  if (k.includes("mentoring")) return "mentoring";
+  if (
+    k.includes("deadline") ||
+    k.includes("compexam") ||
+    k.includes("hackathon") ||
+    k.includes("recruitment")
+  ) {
+    return "deadline";
+  }
+  return "other";
+}
+
+/** cron 응답 summary 에서 "발송 건수"로 볼 수 있는 첫 숫자 필드. 없으면 null. */
+const REMINDER_SENT_KEYS = ["sentTotal", "sent", "notifCount", "notified", "emailCount"] as const;
+function reminderSentCount(summary: Record<string, number>): number | null {
+  for (const key of REMINDER_SENT_KEYS) {
+    const v = summary[key];
+    if (typeof v === "number") return v;
+  }
+  return null;
+}
+
+/** ISO 시각 → "N분/시간/일 전" 상대 표기 (임계 하드코딩 없이 경과만 표시). */
+function fmtElapsed(iso: string): string {
+  if (!iso) return "—";
+  const ms = Date.now() - new Date(iso).getTime();
+  if (ms < 0) return "방금";
+  const min = Math.floor(ms / 60_000);
+  if (min < 60) return `${min}분 전`;
+  const h = Math.floor(min / 60);
+  if (h < 24) return `${h}시간 전`;
+  return `${Math.floor(h / 24)}일 전`;
+}
+
+/** v17-M2: 리마인더 cron 통합 관제 섹션 — 도메인별 최근 실행·성공/실패·발송 건수 + 실패/미실행 경보 */
+function ReminderMonitorSection() {
+  const { data, isLoading, refetch, isRefetching } = useQuery({
+    // CronStatusSection 과 동일 queryKey → React Query 가 fetch 를 dedupe/공유 (추가 네트워크 없음)
+    queryKey: ["console", "cron-runs-status"],
+    queryFn: async () => {
+      const token = await auth.currentUser?.getIdToken();
+      if (!token) throw new Error("로그인 필요");
+      const res = await fetch("/api/console/cron-runs", {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (!res.ok) throw new Error(`조회 실패 (${res.status})`);
+      const json = (await res.json()) as { statuses: KindStatus[] };
+      return json.statuses ?? [];
+    },
+    staleTime: 60_000,
+  });
+
+  const reminderStatuses = useMemo(
+    () => (data ?? []).filter((s) => classifyReminderKind(s.kind) !== null),
+    [data],
+  );
+
+  const groups = useMemo(() => {
+    const map = new Map<ReminderDomain, KindStatus[]>();
+    for (const s of reminderStatuses) {
+      const domain = classifyReminderKind(s.kind);
+      if (!domain) continue;
+      if (!map.has(domain)) map.set(domain, []);
+      map.get(domain)!.push(s);
+    }
+    return REMINDER_DOMAIN_ORDER.filter((d) => map.has(d)).map((d) => ({
+      domain: d,
+      crons: (map.get(d) ?? []).slice().sort((a, b) => b.lastRunAt.localeCompare(a.lastRunAt)),
+    }));
+  }, [reminderStatuses]);
+
+  // 실패(연속) 또는 미실행(stale) = 경보 대상
+  const failing = reminderStatuses.filter((s) => !s.lastSuccess);
+  const stale = reminderStatuses.filter((s) => s.isStale && s.lastSuccess);
+
+  return (
+    <div className="space-y-2">
+      {/* 실패 경보 배너 (위험) */}
+      {failing.length > 0 && (
+        <div className="flex items-start gap-2 rounded-xl border border-destructive/40 bg-destructive/10 px-3 py-2.5 text-[11px] text-destructive">
+          <AlertTriangle size={13} className="mt-0.5 shrink-0" />
+          <div>
+            <span className="font-semibold">리마인더 실패 감지 — </span>
+            {failing.map((k) => (
+              <span key={k.kind} className="mr-2">
+                <code className="rounded bg-destructive/10 px-1">{k.kind}</code>
+                {k.consecutiveFailures >= 2 && (
+                  <span className="ml-1 font-semibold">{k.consecutiveFailures}회 연속</span>
+                )}
+                {k.lastErrorMessage && (
+                  <span className="ml-1 opacity-70">({k.lastErrorMessage.slice(0, 50)})</span>
+                )}
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* 미실행(stale) 경보 배너 (주의) */}
+      {stale.length > 0 && (
+        <div className="flex items-start gap-2 rounded-xl border border-warning/40 bg-warning/5 px-3 py-2.5 text-[11px] text-warning">
+          <Clock size={13} className="mt-0.5 shrink-0" />
+          <div>
+            <span className="font-semibold">예상 시각 미실행(stale) — </span>
+            {stale.map((k) => (
+              <span key={k.kind} className="mr-2">
+                <code className="rounded bg-warning/10 px-1">{k.kind}</code>{" "}
+                <span>마지막 {k.lastRunAt ? fmtElapsed(k.lastRunAt) : "—"}</span>
+              </span>
+            ))}
+          </div>
+        </div>
+      )}
+
+      <div className="rounded-2xl border bg-card p-4">
+        <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+          <h2 className="flex flex-wrap items-center gap-1 text-xs font-semibold">
+            <Send size={12} />
+            리마인더 cron 관제
+            <Badge variant="outline" className="text-[10px]">
+              cron_runs · 도메인별
+            </Badge>
+            <span className="text-[10px] font-normal text-muted-foreground">
+              {reminderStatuses.length > 0 ? `${reminderStatuses.length}종 집계` : ""}
+            </span>
+          </h2>
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => refetch()}
+            disabled={isRefetching}
+            className="h-7 gap-1 px-2 text-[11px]"
+          >
+            {isRefetching ? <Loader2 size={11} className="animate-spin" /> : <RefreshCw size={11} />}
+            새로고침
+          </Button>
+        </div>
+
+        {/* 범례 */}
+        <div className="mb-2 flex flex-wrap items-center gap-3 text-[10px] text-muted-foreground">
+          <span className="flex items-center gap-1">
+            <CheckCircle2 size={11} className="text-success" /> 최근 성공
+          </span>
+          <span className="flex items-center gap-1">
+            <XCircle size={11} className="text-destructive" /> 실패
+          </span>
+          <span className="flex items-center gap-1">
+            <Clock size={11} className="text-warning" /> 미실행(stale)
+          </span>
+          <span className="flex items-center gap-1">
+            <Send size={11} /> 발송 건수(가능한 필드)
+          </span>
+          <span className="ml-auto">임계 절대값 경보는 8월초 데이터 관찰 후</span>
+        </div>
+
+        {isLoading ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">
+            <Loader2 size={12} className="mx-auto mb-1 animate-spin" /> 불러오는 중…
+          </p>
+        ) : groups.length === 0 ? (
+          <p className="py-6 text-center text-xs text-muted-foreground">
+            아직 집계할 리마인더 cron 실행 기록이 없습니다. cron 이 실행되면 자동 집계됩니다.
+          </p>
+        ) : (
+          <div className="space-y-3">
+            {groups.map((g) => {
+              const meta = REMINDER_DOMAIN_META[g.domain];
+              return (
+                <div key={g.domain}>
+                  <div className="mb-1 flex items-center gap-1.5">
+                    <Badge variant="outline" className={cn("text-[10px]", meta.badge)}>
+                      {meta.label}
+                    </Badge>
+                    <span className="text-[10px] text-muted-foreground">{g.crons.length}종</span>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <table className="min-w-full text-[11px]">
+                      <thead>
+                        <tr className="border-b text-left text-muted-foreground">
+                          <th className="py-1 pr-2 font-medium">cron</th>
+                          <th className="py-1 px-2 font-medium">마지막 실행</th>
+                          <th className="py-1 px-2 font-medium">결과</th>
+                          <th className="py-1 pl-2 text-right font-medium">발송</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {g.crons.map((s) => {
+                          const sent = reminderSentCount(s.lastSummary);
+                          return (
+                            <tr key={s.kind} className="border-b last:border-b-0">
+                              <td className="py-1.5 pr-2">
+                                <code className="rounded bg-muted px-1 text-[10px]">{s.kind}</code>
+                              </td>
+                              <td className="py-1.5 px-2 text-muted-foreground">
+                                {s.lastRunAt ? (
+                                  <span className="inline-flex items-center gap-1">
+                                    <Timer size={10} className="opacity-60" />
+                                    {fmtElapsed(s.lastRunAt)}
+                                    {s.isStale && (
+                                      <Badge
+                                        variant="outline"
+                                        className="border-warning/40 bg-warning/5 text-[9px] text-warning"
+                                      >
+                                        stale
+                                      </Badge>
+                                    )}
+                                  </span>
+                                ) : (
+                                  "—"
+                                )}
+                              </td>
+                              <td className="py-1.5 px-2">
+                                {s.lastSuccess ? (
+                                  <span className="flex items-center gap-1 text-success">
+                                    <CheckCircle2 size={11} /> 성공
+                                  </span>
+                                ) : (
+                                  <span className="flex items-center gap-1 text-destructive">
+                                    <XCircle size={11} /> 실패
+                                    {s.consecutiveFailures >= 2 && (
+                                      <span className="ml-0.5 font-semibold">
+                                        ×{s.consecutiveFailures}
+                                      </span>
+                                    )}
+                                  </span>
+                                )}
+                              </td>
+                              <td className="py-1.5 pl-2 text-right font-medium tabular-nums">
+                                {sent === null ? (
+                                  <span className="text-muted-foreground">—</span>
+                                ) : (
+                                  <span className="text-foreground">{sent.toLocaleString()}</span>
+                                )}
+                              </td>
+                            </tr>
+                          );
+                        })}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+              );
+            })}
           </div>
         )}
       </div>
@@ -806,6 +1098,9 @@ export default function CronLogsPage() {
 
       {/* v7-M6 — cron 실행 상태 (cron_runs 컬렉션 · kind별 최신 + 연속 실패 배너) */}
       <CronStatusSection />
+
+      {/* v17-M2 — 리마인더 cron 통합 관제 (cron_runs 재사용 · 도메인별 그룹핑 + 실패/미실행 경보) */}
+      <ReminderMonitorSection />
 
       {/* H2(v12) — cron 안정성 추세 (cron_runs 일별 성공률 시계열 스파크라인) */}
       <CronTrendSection />

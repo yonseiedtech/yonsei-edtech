@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { auth } from "@/lib/firebase";
@@ -244,6 +244,15 @@ export default function ActivityPage({ type, icon, title, subtitle, initialActiv
   const completed = activities.filter((a) => a.status === "completed");
 
   const [statusTab, setStatusTab] = useState<"all" | "active" | "completed" | "demand">("all");
+
+  // v17 M4: ?tab=demand 딥링크 착지 — 수요조사 탭이 있을 때만 마운트 시 1회 반영
+  const hasDemand = !!demandSection;
+  useEffect(() => {
+    if (!hasDemand) return;
+    if (new URLSearchParams(window.location.search).get("tab") === "demand") {
+      setStatusTab("demand");
+    }
+  }, [hasDemand]);
 
   // 전체 탭: 미완료(행사일 가까운 순) → 완료(최근 종료 순)
   const sortedAll = (() => {
