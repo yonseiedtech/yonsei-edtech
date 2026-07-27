@@ -73,31 +73,3 @@ export interface AlumniThesis {
   createdAt: string;
   updatedAt: string;
 }
-
-export type ThesisReferenceSource = "manual" | "grobid" | "crossref" | "openalex";
-
-/** 학위논문 참고문헌 1건 (V1.5+) */
-export interface ThesisReference {
-  id: string;
-  thesisId: string;
-  rawCitation: string;
-  doi?: string;
-  normalizedTitle?: string;
-  normalizedAuthors?: string[];
-  year?: number;
-  source: ThesisReferenceSource;
-  createdAt: string;
-}
-
-/** 본인 학위논문 클레임 (졸업생 회원이 "이게 내 논문" 클레임) */
-export interface ThesisClaim {
-  id: string;
-  thesisId: string;
-  userId: string;
-  status: "pending" | "approved" | "rejected";
-  evidence?: string;
-  createdAt: string;
-  reviewedBy?: string;
-  reviewedAt?: string;
-  rejectionReason?: string;
-}

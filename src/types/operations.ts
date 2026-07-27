@@ -246,19 +246,6 @@ export interface ProgressMeeting {
   slidesName?: string;
 }
 
-// ── 활동 산출물 ──
-export interface ActivityMaterial {
-  id: string;
-  activityId: string;
-  title: string;
-  fileName: string;
-  fileUrl: string;
-  fileSize: number;
-  uploadedBy: string;
-  uploadedByName: string;
-  createdAt: string;
-}
-
 // ── 이메일 발송 이력 ──
 export interface EmailLog {
   id: string;

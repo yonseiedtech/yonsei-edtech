@@ -6,7 +6,6 @@
 // ────────────────────────────────────────────────────────────
 
 import type {
-  ArticleAuthorSnapshot,
   AuthorConsent,
   ResearchJournalArticle,
 } from "@/types";
@@ -106,9 +105,4 @@ export function evaluateConsentGate(article: ResearchJournalArticle): ConsentGat
     pending,
     total,
   };
-}
-
-/** 저자 정보가 출판 마법사 진입 자격을 갖추는지 (이름·소속 필수) */
-export function isAuthorComplete(a: ArticleAuthorSnapshot): boolean {
-  return !!a.displayName?.trim() && !!a.affiliation?.trim();
 }

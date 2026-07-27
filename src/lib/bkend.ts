@@ -40,13 +40,13 @@ import type {
   SeminarRegistration, Certificate, PromotionContent, SeminarMaterial,
   SeminarReview, Activity, AppNotification, WaitlistEntry, DirectMessage,
   Poll, PollResponse, PhotoAlbum, Photo, AdminTodo, AuditLog, UserActivityLog,
-  ActivityProgress, ActivityMaterial, EmailLog, ProgressMeeting,
+  ActivityProgress, EmailLog, ProgressMeeting,
   Lab, LabReaction, LabComment, ResearchPaper, ResearchReport, ResearchProposal, ResearchDesign, WritingPaper, WritingPaperHistory, WritingPaperVersion, AdvisorFeedbackNote,
   InterviewResponseReaction, InterviewResponseComment,
   ProfileLike, ProfileView, StudySession,
   ApplicantEntry, PublicSpeaker,
   ActivityParticipation, ActivityRole, Award, ExternalActivity, ContentCreation,
-  AlumniThesis, ThesisReference, ThesisClaim,
+  AlumniThesis,
   CourseOffering, CourseEnrollment, ClassSession, ClassSessionMode, CourseSessionNote, CourseTodo, SemesterTerm, ComprehensiveExamRecord, CourseReview,
   GuideTrack, GuideItem, GuideProgress,
   HostRetrospective, HostActivityType,
@@ -1542,13 +1542,6 @@ export const progressMeetingsApi = {
   delete: (id: string) => dataApi.delete("progress_meetings", id),
 };
 
-export const activityMaterialsApi = {
-  list: (activityId: string) =>
-    dataApi.list<ActivityMaterial>("activity_materials", { "filter[activityId]": activityId, sort: "createdAt:desc" }),
-  create: (data: Record<string, unknown>) => dataApi.create<ActivityMaterial>("activity_materials", data),
-  delete: (id: string) => dataApi.delete("activity_materials", id),
-};
-
 export const emailLogsApi = {
   list: (targetId?: string) =>
     dataApi.list<EmailLog>("email_logs", {
@@ -2068,34 +2061,6 @@ export const alumniThesesApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<AlumniThesis>("alumni_theses", id, data),
   delete: (id: string) => dataApi.delete("alumni_theses", id),
-};
-
-export const thesisReferencesApi = {
-  listByThesis: (thesisId: string) =>
-    dataApi.list<ThesisReference>("thesis_references", {
-      "filter[thesisId]": thesisId,
-      limit: 500,
-    }),
-  create: (data: Record<string, unknown>) =>
-    dataApi.create<ThesisReference>("thesis_references", data),
-  delete: (id: string) => dataApi.delete("thesis_references", id),
-};
-
-export const thesisClaimsApi = {
-  listPending: () =>
-    dataApi.list<ThesisClaim>("thesis_claims", {
-      "filter[status]": "pending",
-      limit: 200,
-    }),
-  listByUser: (userId: string) =>
-    dataApi.list<ThesisClaim>("thesis_claims", {
-      "filter[userId]": userId,
-      limit: 50,
-    }),
-  create: (data: Record<string, unknown>) =>
-    dataApi.create<ThesisClaim>("thesis_claims", data),
-  update: (id: string, data: Record<string, unknown>) =>
-    dataApi.update<ThesisClaim>("thesis_claims", id, data),
 };
 
 // ── Track 5: 수강과목 마스터 (Phase 1) ──

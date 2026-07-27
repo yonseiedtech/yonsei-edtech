@@ -76,25 +76,6 @@ export const SEVERITY_COLORS: Record<ReviewCommentSeverity, string> = {
   praise:   CAT_BADGE_BORDER.emerald,
 };
 
-/** 검수 워크플로우 상태 전이 화이트리스트. */
-const ALLOWED_TRANSITIONS: Record<ArticleReviewStatus, ArticleReviewStatus[]> = {
-  draft: ["submitted", "withdrawn"],
-  submitted: ["under_review", "draft", "withdrawn"],
-  under_review: ["revision_requested", "accepted", "draft", "withdrawn"],
-  revision_requested: ["submitted", "draft", "withdrawn"],
-  accepted: ["published", "under_review", "withdrawn"],
-  published: ["withdrawn"],
-  withdrawn: [],
-};
-
-export function canTransitionReviewStatus(
-  from: ArticleReviewStatus,
-  to: ArticleReviewStatus,
-): boolean {
-  if (from === to) return false;
-  return ALLOWED_TRANSITIONS[from]?.includes(to) ?? false;
-}
-
 /** 호수 코드 → "Vol.3 No.1" 형태 */
 export function formatIssueCode(volume: number, number: number): string {
   return `Vol.${volume} No.${number}`;

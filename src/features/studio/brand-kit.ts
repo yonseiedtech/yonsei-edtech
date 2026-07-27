@@ -50,24 +50,4 @@ export const BRAND_ASSET_LIST: { label: string; src: string; fit: "cover" | "con
   { label: "연세 캠퍼스", src: BRAND_LOGOS.campus, fit: "cover" },
 ];
 
-/** 서체 — 캔버스 텍스트 요소의 fontFamily 값과 일치 */
-export const BRAND_FONTS = {
-  /** 본문·UI 고딕 (Pretendard) */
-  sans: "sans",
-  /** 디스플레이 세리프 (Hahmlet) */
-  display: "display",
-} as const;
-
-/**
- * 타이포 스케일 — 캔버스 폭(px) 대비 비율. 문서 크기가 달라도 비례 유지.
- * templates.ts 가 W*ratio 로 fontSize 를 산출하던 관례를 명명 상수화.
- */
-export const BRAND_TYPE_SCALE = {
-  display: 0.072, // 커버 대제목 (세리프 블랙)
-  h1: 0.045, // 섹션 헤딩
-  h2: 0.032, // 소제목
-  subtitle: 0.03, // 부제
-  body: 0.028, // 본문
-  caption: 0.018, // 캡션·푸터
-} as const;
 

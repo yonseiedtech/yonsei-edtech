@@ -29,19 +29,6 @@ import {
 } from "firebase/firestore";
 import { db } from "./firebase";
 
-/** 양방향 크로스링크 한 쌍의 컬렉션·필드 정의 */
-export interface CrosslinkPair {
-  /** 편집 중인 self 문서의 컬렉션 */
-  selfCollection: string;
-  /** self 문서의 forward 링크 필드 */
-  selfField: string;
-  /** 역참조를 반영할 상대 컬렉션 */
-  targetCollection: string;
-  /** 상대 문서에서 self id 를 담는 reverse 필드 */
-  reverseField: string;
-}
-
-
 /** 이전/이후 id 배열을 비교해 추가·제거분을 계산 */
 export function diffIds(
   prevIds: readonly string[],

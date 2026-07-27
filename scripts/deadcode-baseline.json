@@ -1,18 +1,12 @@
 {
-  "ceiling": 13,
+  "ceiling": 9,
   "generatedAt": "2026-07-27",
   "tool": "knip@6.27.0",
   "note": "node scripts/gen-deadcode-baseline.mjs 로 재생성. ceiling보다 이슈 수가 늘면 check-deadcode-ratchet.mjs 가 exit 1.",
-  "unusedExports": 13,
+  "unusedExports": 9,
   "unusedFiles": 0,
   "unusedTypes": 0,
   "items": [
-    {
-      "file": "src/features/journal/lib/consent-gate.ts",
-      "name": "isAuthorComplete",
-      "kind": "export",
-      "line": 112
-    },
     {
       "file": "src/features/notifications/notify.ts",
       "name": "notifyNewNotice",
@@ -39,33 +33,15 @@
     },
     {
       "file": "src/lib/bkend.ts",
-      "name": "activityMaterialsApi",
-      "kind": "export",
-      "line": 1545
-    },
-    {
-      "file": "src/lib/bkend.ts",
       "name": "emailLogsApi",
       "kind": "export",
-      "line": 1552
-    },
-    {
-      "file": "src/lib/bkend.ts",
-      "name": "thesisClaimsApi",
-      "kind": "export",
-      "line": 2084
-    },
-    {
-      "file": "src/lib/bkend.ts",
-      "name": "thesisReferencesApi",
-      "kind": "export",
-      "line": 2073
+      "line": 1545
     },
     {
       "file": "src/lib/notify-timing.ts",
       "name": "computePeakWindow",
       "kind": "export",
-      "line": 142
+      "line": 128
     },
     {
       "file": "src/lib/notify-timing.ts",
