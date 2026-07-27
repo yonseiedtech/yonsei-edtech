@@ -31,6 +31,7 @@ import {
   Pencil,
 } from "lucide-react";
 import PortfolioVerifyButtons from "./PortfolioVerifyButtons";
+import { safeYmd } from "@/lib/utils";
 
 type PortfolioStatus = "approved" | "pending" | "rejected";
 
@@ -162,7 +163,8 @@ export default function ProfilePortfolio({ owner, isOwner }: Props) {
         raw: c,
       });
     }
-    return out.sort((a, b) => (b.date ?? "").localeCompare(a.date ?? ""));
+    // safeYmd: date 가 Timestamp/숫자여도 .localeCompare throw 방어
+    return out.sort((a, b) => safeYmd(b.date).localeCompare(safeYmd(a.date)));
   }, [awards, externals, contents]);
 
   const isLoading = awardsLoading || externalsLoading || contentsLoading;

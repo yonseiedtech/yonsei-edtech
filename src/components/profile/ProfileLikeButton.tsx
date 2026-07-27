@@ -12,6 +12,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { toast } from "sonner";
+import { safeYmd } from "@/lib/utils";
 
 interface Props {
   profileId: string;
@@ -73,7 +74,7 @@ export default function ProfileLikeButton({ profileId, isOwner }: Props) {
             <ul className="mt-3 max-h-80 space-y-2 overflow-y-auto">
               {likes
                 .slice()
-                .sort((a, b) => (b.createdAt ?? "").localeCompare(a.createdAt ?? ""))
+                .sort((a, b) => safeYmd(b.createdAt).localeCompare(safeYmd(a.createdAt)))
                 .map((l) => (
                   <li key={l.id} className="flex items-center justify-between rounded-md border px-3 py-2 text-sm">
                     <span className="font-medium">{l.likerName ?? "이름 미상"}</span>

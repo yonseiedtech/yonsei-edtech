@@ -34,8 +34,9 @@ export default function ProfileOutputs({ owner }: Props) {
         flat.push({ ...o, participationId: p.id });
       });
     });
+    // safeYmd: createdAt 이 Timestamp/숫자여도 .localeCompare throw 방어
     return flat.sort((a, b) =>
-      (b.createdAt ?? "").localeCompare(a.createdAt ?? ""),
+      safeYmd(b.createdAt).localeCompare(safeYmd(a.createdAt)),
     );
   }, [participations]);
 

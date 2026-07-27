@@ -22,11 +22,11 @@ export default function ProfileHeader({ owner, isOwner, viewer }: Props) {
       <div className="flex flex-col items-center gap-4 sm:flex-row sm:items-start sm:gap-6">
         {/* 프로필 이미지 */}
         <div className="relative h-24 w-24 shrink-0 overflow-hidden rounded-full bg-primary/10 ring-4 ring-white">
-          {owner.profileImage ? (
-            <Image src={owner.profileImage} alt={owner.name} fill className="object-cover" />
+          {typeof owner.profileImage === "string" && owner.profileImage ? (
+            <Image src={owner.profileImage} alt={String(owner.name ?? "")} fill className="object-cover" />
           ) : (
             <div className="flex h-full w-full items-center justify-center text-3xl font-bold text-primary">
-              {owner.name?.[0] ?? "?"}
+              {String(owner.name ?? "?")[0] ?? "?"}
             </div>
           )}
         </div>

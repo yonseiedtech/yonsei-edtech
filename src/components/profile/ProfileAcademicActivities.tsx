@@ -10,7 +10,7 @@ import { EXTERNAL_PARTICIPANT_TYPE_LABELS, EXTERNAL_PARTICIPANT_TYPE_COLORS } fr
 import type { Activity, ExternalParticipantType, Seminar, SeminarAttendee, User } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { BookOpen, ChevronRight, Crown, FolderKanban, Globe, Mic, Sparkles, Tag, CalendarRange, HandHeart, MessageSquare, Users } from "lucide-react";
-import { formatDate, cn } from "@/lib/utils";
+import { formatDate, cn, safeYmd } from "@/lib/utils";
 import { formatSemester, inferCurrentSemester, type Semester } from "@/lib/semester";
 import EmptyState from "@/components/ui/empty-state";
 
@@ -232,8 +232,9 @@ export default function ProfileAcademicActivities({ owner }: Props) {
     // 그룹 내 항목은 날짜 desc
     for (const g of arr) {
       g.items.sort((x, y) => {
-        const dx = (x as { date?: string }).date ?? "";
-        const dy = (y as { date?: string }).date ?? "";
+        // safeYmd: date 가 Timestamp/숫자여도 .localeCompare throw 방어
+        const dx = safeYmd((x as { date?: unknown }).date);
+        const dy = safeYmd((y as { date?: unknown }).date);
         return dy.localeCompare(dx);
       });
     }

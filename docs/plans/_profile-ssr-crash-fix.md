@@ -64,3 +64,66 @@ owner 필드가 아닌 **다른 컬렉션 데이터**의 날짜 정렬에서 같
 - `src/components/profile/ProfileResearchInterests.tsx`
 
 (커밋/배포/푸시 미실행 — 메인 오케스트레이터 게이트 대기)
+
+---
+
+# 2차 수정 (배포 후 재크래시 — digest 4205112007)
+
+배포 검증 결과: 1차 원래 크래시(digest 2354080519)는 해소됐으나 프로필(관리자) 페이지가
+**다른 지점에서 SSR 재크래시**(digest 4205112007). 1차 리포트 "남은 권고"의 두 번째 클래스
+(타 컬렉션 날짜 `.localeCompare` + SSR 렌더 컴포넌트의 비문자열 무가드 접근)가 노출된 것.
+
+## 근본원인 (2차)
+동일 크래시 클래스의 **타입 불일치**가 SSR 렌더 경로(viewer=null, staff-public-only)의
+ungated 컴포넌트에 남아 있었음:
+- **날짜 정렬** `(x.date ?? "").localeCompare(...)` — `date`/`createdAt` 가 문자열이 아닌
+  Timestamp/숫자면 `??` 가 통과시켜 `.localeCompare` 가 "not a function" throw.
+- **ProfileHeader 프로필 이미지** — `owner.profileImage` 가 문자열 아닌 손상값(예: 레거시
+  객체)이면 `owner.profileImage ?` 가 truthy 통과 → `<Image src={객체}>` 가 SSR에서 throw
+  (next/image src 는 문자열/StaticImport 필수). **admin/staff 프로필 SSR 재크래시의 유력 지점.**
+- **ProfileContactInfo socialLabel** — `s.label?.trim()` 은 label 이 비문자열이면 throw.
+
+## 수정 내용 (2차)
+`safeYmd`(src/lib/utils.ts — 문자열/Date/Timestamp/{seconds} 를 안전하게 YYYY-MM-DD 로 정규화,
+비문자열이어도 항상 string 반환) 재사용으로 날짜 정렬 4곳 강제. `safeYmd` 는 단순 `String()` 보다
+우수 — Timestamp 를 실제 비교 가능한 날짜 문자열로 변환해 정렬 정확성도 보존.
+
+| 파일 | 지점 | 조치 |
+|---|---|---|
+| ProfilePortfolio.tsx | items 정렬 `b.date.localeCompare` | `safeYmd(b.date).localeCompare(safeYmd(a.date))` |
+| ProfileOutputs.tsx | outputs 정렬 `createdAt` | `safeYmd(...)` |
+| ProfileAcademicActivities.tsx | 그룹 내 항목 date 정렬 | `safeYmd(...)` (+ cast `date?: unknown`) |
+| ProfileLikeButton.tsx | likes 정렬 `createdAt` | `safeYmd(...)` |
+| ProfileHeader.tsx | 프로필 이미지 src | `typeof owner.profileImage === "string" && owner.profileImage` 가드 + `alt`/이니셜 `String()` 강제 |
+| ProfileContactInfo.tsx | socialLabel | `String(s.label ?? "").trim()` + `SOCIAL_PLATFORM_LABELS[..] ?? "외부 링크"`(undefined 반환 제거) |
+
+## SSR 렌더 3컴포넌트 정독 결과 (viewer=null 경로)
+- **ProfileHeader**: 유일한 SSR throw 벡터 = `<Image src={owner.profileImage}>` (비문자열 src).
+  → typeof 가드로 차단. name 접근은 `String()` 로 방어. 자식(LikeButton count=0·CertButton pure)
+  안전, ShareMenu 는 isOwner/isStaff 게이트로 SSR 미렌더.
+- **ProfileContactInfo**: 이메일/전화는 `mailto:`/`tel:` 템플릿 리터럴로 자동 문자열화 → 안전.
+  socials.map 은 `showSocials` 게이트(admin 은 isStaffRole=false 라 false)로 SSR 미실행이나,
+  socialLabel `.trim()` 을 방어(심층방어).
+- **ProfilePortfolio**: SSR 시 React Query 미fetch → awards/externals/contents=[] → items=[] →
+  `.sort` 콜백 미실행이라 SSR 자체 throw 는 없음. 단 **로그인 뷰어 CSR 렌더**에서 실데이터의
+  비문자열 date 로 크래시 가능 → safeYmd 로 SSR/CSR 공통 방어.
+
+## 검증 (2차)
+- `npx tsc --noEmit` → **0** (TSC_EXIT=0)
+- `npx eslint` (변경 6파일) → **0** (ESLINT_EXIT=0)
+- next build 미실행(요청대로).
+
+## 2차 변경 파일
+- `src/components/profile/ProfilePortfolio.tsx`
+- `src/components/profile/ProfileOutputs.tsx`
+- `src/components/profile/ProfileLikeButton.tsx`
+- `src/components/profile/ProfileAcademicActivities.tsx`
+- `src/components/profile/ProfileHeader.tsx`
+- `src/components/profile/ProfileContactInfo.tsx`
+
+## 잔여 권고 (범위 밖)
+- `owner.profileImage` 비문자열 손상값은 /members·아바타 등 **타 페이지**에서도 동일 크래시
+  가능. 여유 시 `withGraduateDefaults`(또는 avatar 공용 컴포넌트)에서 profileImage 문자열 강제 권장.
+- 배포 후 문제의 admin 프로필 URL 실접속 QA 스모크로 digest 재발 여부 확인 필수.
+
+(커밋/배포/푸시 미실행 — 메인 오케스트레이터 게이트 대기)

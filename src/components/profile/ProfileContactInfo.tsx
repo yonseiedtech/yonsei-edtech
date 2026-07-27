@@ -24,8 +24,9 @@ const PLATFORM_ICON: Record<SocialPlatform, React.ComponentType<{ size?: number;
 };
 
 function socialLabel(s: SocialLink): string {
-  if (s.platform === "other") return s.label?.trim() || "외부 링크";
-  return SOCIAL_PLATFORM_LABELS[s.platform];
+  // String() 강제: label 이 문자열 아닌 레거시 값이어도 .trim throw 방어
+  if (s.platform === "other") return String(s.label ?? "").trim() || "외부 링크";
+  return SOCIAL_PLATFORM_LABELS[s.platform] ?? "외부 링크";
 }
 
 export default function ProfileContactInfo({
