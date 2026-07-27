@@ -6,12 +6,13 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dataApi } from "@/lib/bkend";
 import { useOrgChart } from "@/features/admin/settings/useOrgChart";
+import { useAuthStore } from "@/features/auth/auth-store";
 import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/ui/empty-state";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import {
-  FileText, Plus, Pencil, Trash2, ChevronDown, ChevronUp, Printer, Search,
+  FileText, Plus, Pencil, Trash2, ChevronDown, ChevronUp, Printer, Search, Sparkles,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -19,6 +20,7 @@ import type { HandoverDocument } from "@/types";
 import { HANDOVER_CATEGORY_LABELS } from "@/types";
 import { HandoverMarkdown } from "@/lib/markdown-handover";
 import { HandoverWorkflow, HandoverTodos } from "@/features/handover/HandoverExtras";
+import { STAFF_MANUAL_SEED_2026_2, STAFF_MANUAL_TERM } from "@/features/handover/staff-manual-seed";
 
 // 기본 직책 (조직 설정에 직책이 없을 때의 하위호환 폴백)
 const STAFF_ROLES = ["회장", "부회장", "총무", "학술부장", "홍보부장", "대외협력부장", "편집부장"];
@@ -43,6 +45,7 @@ export default function HandoverSection() {
   const roleParam = searchParams.get("role");
   const composeParam = searchParams.get("compose");
   const { positions } = useOrgChart();
+  const { user } = useAuthStore();
 
   const { data: handoverDocs = [] } = useQuery({
     queryKey: ["handover_docs"],
@@ -111,6 +114,44 @@ export default function HandoverSection() {
     },
   });
 
+  // 26년 후기(2026-2) 운영진 매뉴얼 시드 — 이미 있는(term+role) 문서는 스킵.
+  // 매뉴얼 문서만 생성하며 회원 계정·조직도 userId 는 건드리지 않는다.
+  const seedManualMutation = useMutation({
+    mutationFn: async () => {
+      const existing = new Set(
+        handoverDocs
+          .filter((d) => d.term === STAFF_MANUAL_TERM)
+          .flatMap(docRoles),
+      );
+      const toCreate = STAFF_MANUAL_SEED_2026_2.filter((s) => !existing.has(s.role));
+      for (const s of toCreate) {
+        await dataApi.create("handover_docs", {
+          role: s.role,
+          roles: s.roles,
+          title: s.title,
+          content: s.content,
+          workflow: s.workflow,
+          todos: s.todos,
+          category: s.category,
+          priority: s.priority,
+          term: STAFF_MANUAL_TERM,
+          authorId: user?.id ?? "",
+          authorName: user?.name ?? "운영진",
+        });
+      }
+      return { created: toCreate.length, skipped: STAFF_MANUAL_SEED_2026_2.length - toCreate.length };
+    },
+    onSuccess: ({ created, skipped }) => {
+      queryClient.invalidateQueries({ queryKey: ["handover_docs"] });
+      if (created === 0) {
+        toast.info("이미 26년 후기 매뉴얼이 모두 등록되어 있습니다.");
+      } else {
+        toast.success(`26년 후기 매뉴얼 ${created}건 생성${skipped > 0 ? ` (${skipped}건 기존 유지)` : ""}`);
+      }
+    },
+    onError: () => toast.error("매뉴얼 시드 중 오류가 발생했습니다."),
+  });
+
   return (
     <div className="space-y-4">
       {/* 상단: 직책 필터 칩 + 작성/리포트 버튼 */}
@@ -142,7 +183,19 @@ export default function HandoverSection() {
             </button>
           ))}
         </div>
-        <div className="flex shrink-0 gap-2">
+        <div className="flex shrink-0 flex-wrap gap-2">
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => {
+              if (confirm("26년 후기(2026-2) 운영진 5역할 매뉴얼을 업무수행철에 생성합니다.\n(이미 있는 역할은 건너뜁니다. 회원 계정·권한은 변경하지 않습니다.)"))
+                seedManualMutation.mutate();
+            }}
+            disabled={seedManualMutation.isPending}
+          >
+            <Sparkles size={14} className="mr-1" />
+            26년 후기 매뉴얼 시드
+          </Button>
           <Link href={`/console/handover/report?term=${CURRENT_TERM}`}>
             <Button variant="outline" size="sm">
               <Printer size={14} className="mr-1" />
