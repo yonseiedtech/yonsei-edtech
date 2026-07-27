@@ -42,6 +42,7 @@ import {
 } from "@/lib/bkend";
 import { parseSchedule } from "@/lib/courseSchedule";
 import { inferCurrentSemester } from "@/lib/semester";
+import { resolveOfferingPeriod, isDateInPeriod } from "@/lib/semesterWeeks";
 import { isDueToday } from "@/lib/flashcard-srs";
 import { useGraduationSummary } from "@/features/mypage/useGraduationSummary";
 import {
@@ -296,12 +297,25 @@ export default function NextActionBanner() {
     for (const o of myOfferings) {
       const parsed = parseSchedule(o.schedule);
       if (parsed.startMin == null || parsed.weekdays.length === 0) continue;
+      // 종강·개강 전(방학) 제외 — 각 날짜가 수업 기간(개강~종강) 안일 때만.
+      // (inferCurrentSemester 는 3~8월 전체를 1학기로 보므로 종강 후에도 학기가 유지됨 →
+      //  기간 가드가 없으면 방학에도 "다음 수업"이 잡힘. DailyClassTimelineWidget 과 동일 처리.)
+      const period = resolveOfferingPeriod({
+        year: sem.year,
+        term,
+        weekdays: parsed.weekdays,
+        semesterStartDate: o.semesterStartDate,
+        semesterEndDate: o.semesterEndDate,
+        totalWeeks: o.totalWeeks,
+      });
       // 오늘부터 1일 후까지 두 번 확인
       for (let dayOffset = 0; dayOffset <= 1; dayOffset++) {
         const d = new Date(now);
         d.setDate(d.getDate() + dayOffset);
         const wd = d.getDay();
         if (!parsed.weekdays.includes(wd)) continue;
+        const dYmd = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(d.getDate()).padStart(2, "0")}`;
+        if (!isDateInPeriod(period, dYmd)) continue;
         const startAt = new Date(d.getFullYear(), d.getMonth(), d.getDate(), 0, 0, 0);
         startAt.setMinutes(parsed.startMin);
         const t = startAt.getTime();
@@ -354,7 +368,7 @@ export default function NextActionBanner() {
 
     list.sort((a, b) => a.startAt.getTime() - b.startAt.getTime());
     return list;
-  }, [now, userId, myOfferings, mySeminars, courseTodos]);
+  }, [now, userId, myOfferings, mySeminars, courseTodos, sem.year, term]);
 
   const top = candidates[0];
 
