@@ -264,4 +264,15 @@
 
 ---
 
-*파일: `docs/plans/service-enhancement-plan-v17.md` | 생성: 2026-07-27 | 다음 재검토: v17 High 4항목(H1~H4) LIVE 후 운영 자동화·측정 효과 QA + 8월 이벤트 데이터 도래 시 v18 편성*
+## 7. 진행 로그 (2026-07-27 갱신)
+
+- **High H1~H4 · Medium M1/M2/M4/M6 · Low L1~L3**: 전량 LIVE.
+- **핫픽스(사용자 리포트) — /mypage 로드 실패 크래시**: 근본원인=레거시 진단문서 `weakConceptIds` 필드 누락→`undefined.length` TypeError→`error.tsx` route boundary가 페이지 전체 붕괴(SSR 200/클라만). 옵셔널 가드 + 신규 `WidgetBoundary`(class ErrorBoundary)로 overview 개인 위젯 전부 격리 + `Date.now` purity 해소(ESLint ratchet **149→148**). 3커밋 LIVE(bd2f3c85·f81e2c2a·d132b203). 상세 `docs/plans/_mypage-load-error-debug.md`.
+- **M5 (rawcolor 라운드6)**: **여지 없음 확정**. rawcolor ratchet은 raw Tailwind 팔레트(`bg-red-500` 등) 파일 수를 세며 이미 CEILING=1(design-tokens.ts 의도적 잔존)로 라운드1~10에서 347→1 완전 상환. 잔여 hex 리터럴(569건/70파일)은 PDF·canvas·차트·OG·이메일 등 Tailwind 스코프 밖 불가피 색상이라 대상 아님.
+- **M5 (exhaustive-deps 안전검토)**: 진행 중 — 억제 46파일 감사(`docs/plans/_exhaustive-deps-audit-2026-07-27.md`). High(stale/리페치 누락)만 선별 후 배치 수정 예정.
+- **부가 감사 — 런타임 크래시 스윕**: /mypage 크래시와 같은 클래스(fetch 데이터 무가드 접근)를 전 페이지 정적 스윕(`docs/plans/_runtime-crash-sweep-2026-07-27.md`). High 발견 시 옵셔널 가드/WidgetBoundary 배치 적용.
+- **잔여 백로그**: **M3(출석 관리)** = X5(운영진 세미나/스터디 출석 데이터 정책·신규 컬렉션 여부) 결정 대기 → 별도 트랙. 두 감사 결과 반영 후 planner 재소환하여 v18 편성.
+
+---
+
+*파일: `docs/plans/service-enhancement-plan-v17.md` | 생성: 2026-07-27 | 다음 재검토: exhaustive-deps·크래시 스윕 배치 수정 완료 후 planner 재소환(v18) + 8월 이벤트 데이터 도래 시*
