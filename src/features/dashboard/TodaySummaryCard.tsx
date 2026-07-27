@@ -26,6 +26,7 @@ import {
 } from "@/lib/bkend";
 import { parseSchedule } from "@/lib/courseSchedule";
 import { inferCurrentSemester } from "@/lib/semester";
+import { resolveOfferingPeriod, isDateInPeriod } from "@/lib/semesterWeeks";
 import {
   type CourseEnrollment,
   type CourseOffering,
@@ -149,6 +150,18 @@ export default function TodaySummaryCard({ variant = "card" }: { variant?: "card
       const parsed = parseSchedule(o.schedule);
       if (parsed.startMin == null || parsed.weekdays.length === 0) continue;
       if (!parsed.weekdays.includes(todayWeekday)) continue;
+      // 종강·개강 전 제외 — 오늘이 수업 기간(개강~종강) 안일 때만 표시.
+      // (inferCurrentSemester 는 3~8월 전체를 1학기로 보므로 종강 후에도 학기가 유지됨 →
+      //  기간 가드가 없으면 방학에도 수업이 노출됨. DailyClassTimelineWidget 과 동일 처리.)
+      const period = resolveOfferingPeriod({
+        year: sem.year,
+        term,
+        weekdays: parsed.weekdays,
+        semesterStartDate: o.semesterStartDate,
+        semesterEndDate: o.semesterEndDate,
+        totalWeeks: o.totalWeeks,
+      });
+      if (!isDateInPeriod(period, todayYmd)) continue;
       candidates.push({ offering: o, startMin: parsed.startMin });
     }
     if (candidates.length === 0) return null;
@@ -163,7 +176,7 @@ export default function TodaySummaryCard({ variant = "card" }: { variant?: "card
       startLabel: `${pad2(h)}:${pad2(m)}`,
       href: `/courses/${upcoming.offering.id}/schedule`,
     };
-  }, [myOfferings, userId, todayWeekday, nowMin]);
+  }, [myOfferings, userId, todayWeekday, nowMin, todayYmd, sem.year, term]);
 
   // ── 오늘 세미나 1건 (날짜 일치) ──
   const todaySeminar = useMemo(() => {
