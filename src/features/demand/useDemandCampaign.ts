@@ -57,6 +57,19 @@ export const DIFFICULTY_OPTIONS = ["입문", "중급", "심화", "무관"] as co
 
 export const TIME_OPTIONS = ["오전", "오후", "저녁", "무관"] as const;
 
+/**
+ * 새 캠페인 주제 생성 — 고유 id 발급.
+ * 학기 복제(L5)·수요 이월(L2) 시 교차 학기 topicId 혼동을 막기 위해 항상 새 id 를 부여한다.
+ * 이벤트 핸들러에서만 호출(렌더 순수성 무관 — crypto/Date 폴백).
+ */
+export function makeCampaignTopic(label = "", domain = ""): DemandCampaignTopic {
+  const id =
+    typeof crypto !== "undefined" && crypto.randomUUID
+      ? crypto.randomUUID()
+      : `t-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+  return { id, label, domain };
+}
+
 /** 학기 스코프 site_settings 키 — 예: "demand_campaign:2026-2" */
 export function demandCampaignKey(semesterKey: string): string {
   return `demand_campaign:${semesterKey}`;

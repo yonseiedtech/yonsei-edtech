@@ -7,25 +7,35 @@
  *  - 회원 화면(DemandSurveySection)에 배너·주제 칩·D-day·기간 마감으로 반영된다.
  */
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
-import { Megaphone, Plus, Trash2, Loader2, Save, Info } from "lucide-react";
+import { Megaphone, Plus, Trash2, Loader2, Save, Info, History, ClipboardCheck } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Label } from "@/components/ui/label";
 import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
-import { semesterLabelFromKey } from "@/lib/semester";
+import { semesterLabelFromKey, shiftSemesterKey } from "@/lib/semester";
 import { useAuthStore } from "@/features/auth/auth-store";
+import { commBoardsApi, commQuestionsApi, commLikesApi } from "@/lib/bkend";
+import { appendStatusHistory } from "./demand-status";
 import {
   useDemandCampaign,
   useUpdateDemandCampaign,
+  makeCampaignTopic,
   DOMAIN_OPTIONS,
   type DemandCampaign,
   type DemandCampaignTopic,
   type CampaignStatus,
 } from "./useDemandCampaign";
+import type { CommBoard, CommQuestion } from "@/types";
+
+/** 참여할래요 반응 targetType (DemandSurveySection 과 동일 값) */
+const DEMAND_JOIN = "demand-join";
+/** 개설 정족수 — 참여할래요 이 수 이상이면 검토 대기 전환 대상 */
+const JOIN_THRESHOLD = 3;
 
 const STATUS_META: Record<CampaignStatus, { label: string; hint: string }> = {
   draft: { label: "초안", hint: "회원 화면에 노출되지 않습니다." },
@@ -34,19 +44,20 @@ const STATUS_META: Record<CampaignStatus, { label: string; hint: string }> = {
 };
 
 function newTopic(): DemandCampaignTopic {
-  const id =
-    typeof crypto !== "undefined" && crypto.randomUUID
-      ? crypto.randomUUID()
-      : `t-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
-  return { id, label: "", domain: "" };
+  return makeCampaignTopic();
 }
 
 export default function DemandCampaignEditor() {
   const semesterKey = useEffectiveSemesterKey();
   const semesterLabel = semesterLabelFromKey(semesterKey);
   const { user } = useAuthStore();
+  const qc = useQueryClient();
   const { campaign, recordId, isLoading } = useDemandCampaign(semesterKey);
   const saveMutation = useUpdateDemandCampaign();
+
+  // L5. 지난 학기 캠페인 (템플릿 복제 소스) — 직전 학기 키로 로드.
+  const prevKey = useMemo(() => shiftSemesterKey(semesterKey, -1), [semesterKey]);
+  const { campaign: prevCampaign, isLoading: prevLoading } = useDemandCampaign(prevKey ?? "");
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -76,6 +87,94 @@ export default function DemandCampaignEditor() {
     setTopics((prev) => prev.filter((t) => t.id !== id));
   }
 
+  // L5. 지난 학기 캠페인 불러오기 — 주제 복제 + 제목/설명 프리필. 기간은 비워 재설정 유도.
+  function handleLoadPrev() {
+    if (!prevCampaign) {
+      toast.error("불러올 지난 학기 캠페인이 없습니다.");
+      return;
+    }
+    const hasContent = !!(title.trim() || description.trim() || topics.length > 0);
+    if (
+      hasContent &&
+      !window.confirm(
+        "현재 편집 중인 내용을 지난 학기 캠페인 내용으로 덮어씁니다. 계속할까요?\n(기간은 비워지므로 다시 설정해주세요.)",
+      )
+    ) {
+      return;
+    }
+    setTitle(prevCampaign.title ?? "");
+    setDescription(prevCampaign.description ?? "");
+    setTopics(prevCampaign.topics.map((t) => makeCampaignTopic(t.label, t.domain ?? "")));
+    setStartDate("");
+    setEndDate("");
+    setStatus("draft");
+    toast.success(
+      `지난 학기 캠페인을 불러왔습니다. 주제 ${prevCampaign.topics.length}건 복제 · 기간을 다시 설정하세요.`,
+    );
+  }
+
+  // L6. 정족수 달성 수요 일괄 검토전환 — 현재 학기 보드의 수집중 & 정족수 달성 수요를 reviewing 으로.
+  const bulkConvertMutation = useMutation({
+    mutationFn: async (targets: CommQuestion[]) => {
+      for (const q of targets) {
+        await commQuestionsApi.update(q.id, {
+          demandPref: {
+            ...q.demandPref,
+            status: "reviewing",
+            statusHistory: appendStatusHistory(q.demandPref, "reviewing", user?.id),
+          },
+        });
+      }
+      return targets.length;
+    },
+    onSuccess: (n) => {
+      void qc.invalidateQueries({ queryKey: ["demand-questions"] });
+      void qc.invalidateQueries({ queryKey: ["demand-joins"] });
+      toast.success(`정족수 달성 ${n}건을 검토 대기로 전환했습니다.`);
+    },
+    onError: (e) => toast.error(`전환 실패: ${e instanceof Error ? e.message : "오류"}`),
+  });
+
+  const [scanning, setScanning] = useState(false);
+
+  /** 현재 학기 보드에서 정족수(참여 ≥ N) 달성 & 수집중 수요를 조회. */
+  async function scanQuorumTargets(): Promise<CommQuestion[]> {
+    const contextId = `demand-${semesterKey}`;
+    const res = await commBoardsApi.listByContext("demand", contextId);
+    const board = (res.data as CommBoard[])[0];
+    if (!board) return [];
+    const [questions, joinCounts] = await Promise.all([
+      commQuestionsApi.listByBoard(board.id).then((r) => r.data as CommQuestion[]),
+      commLikesApi.countsByType(DEMAND_JOIN),
+    ]);
+    return questions.filter((q) => {
+      const st = q.demandPref?.status ?? "collecting";
+      return st === "collecting" && (joinCounts[q.id] ?? 0) >= JOIN_THRESHOLD;
+    });
+  }
+
+  /** 일괄 전환 실행 — closing=true 이면 마감 저장 직후 자동 호출. */
+  async function runBulkConvert(closing: boolean) {
+    if (scanning || bulkConvertMutation.isPending) return;
+    setScanning(true);
+    try {
+      const targets = await scanQuorumTargets();
+      if (targets.length === 0) {
+        if (!closing) toast.info("정족수(참여 3명 이상) 달성 수집중 수요가 없습니다.");
+        return;
+      }
+      const prompt = closing
+        ? `마감하면 회원 등록이 중단됩니다.\n정족수 달성 ${targets.length}건을 개설 검토 대기로 전환합니다. 계속할까요?`
+        : `정족수 달성 ${targets.length}건을 개설 검토 대기(reviewing)로 전환합니다. 계속할까요?`;
+      if (!window.confirm(prompt)) return;
+      bulkConvertMutation.mutate(targets);
+    } catch (e) {
+      toast.error(`조회 실패: ${e instanceof Error ? e.message : "오류"}`);
+    } finally {
+      setScanning(false);
+    }
+  }
+
   function handleSave() {
     if (!title.trim()) {
       toast.error("캠페인 제목을 입력하세요.");
@@ -99,10 +198,15 @@ export default function DemandCampaignEditor() {
       updatedBy: user?.name ?? user?.id ?? "",
       updatedAt: new Date().toISOString(),
     };
+    // 마감으로 전환(직전 저장이 마감이 아니었던 경우)이면 저장 성공 후 일괄 전환 흐름 실행.
+    const closing = status === "closed" && campaign?.status !== "closed";
     saveMutation.mutate(
       { recordId, campaign: payload, semesterKey },
       {
-        onSuccess: () => toast.success("캠페인을 저장했습니다."),
+        onSuccess: () => {
+          toast.success("캠페인을 저장했습니다.");
+          if (closing) void runBulkConvert(true);
+        },
         onError: (e) =>
           toast.error(`저장 실패: ${e instanceof Error ? e.message : "오류"}`),
       },
@@ -126,6 +230,26 @@ export default function DemandCampaignEditor() {
           <span className="rounded-full bg-muted px-2 py-0.5 text-[11px] text-muted-foreground">
             {semesterLabel}
           </span>
+          <Button
+            type="button"
+            size="sm"
+            variant="outline"
+            className="ml-auto"
+            onClick={handleLoadPrev}
+            disabled={prevLoading || !prevCampaign}
+            title={
+              prevCampaign
+                ? `${semesterLabelFromKey(prevKey)} 캠페인 주제·제목을 복제합니다.`
+                : "불러올 지난 학기 캠페인이 없습니다."
+            }
+          >
+            {prevLoading ? (
+              <Loader2 size={13} className="mr-1 animate-spin" />
+            ) : (
+              <History size={13} className="mr-1" />
+            )}
+            지난 학기 캠페인 불러오기
+          </Button>
         </div>
 
         <div className="space-y-4">
@@ -264,6 +388,31 @@ export default function DemandCampaignEditor() {
                 ))}
               </ul>
             )}
+          </div>
+
+          {/* L6. 정족수 달성 수요 일괄 검토전환 */}
+          <div className="space-y-2 rounded-xl border border-dashed p-3">
+            <p className="flex items-center gap-1.5 text-xs font-medium text-foreground">
+              <ClipboardCheck size={13} className="text-primary" /> 정족수 달성 수요 일괄 전환
+            </p>
+            <p className="text-[11px] text-muted-foreground">
+              현재 학기 보드에서 &quot;참여할래요&quot; {JOIN_THRESHOLD}명 이상이면서 아직 수집중인
+              수요를 개설 검토 대기로 한 번에 전환합니다. 캠페인을 마감(저장)하면 자동으로 실행됩니다.
+            </p>
+            <Button
+              type="button"
+              size="sm"
+              variant="outline"
+              onClick={() => runBulkConvert(false)}
+              disabled={scanning || bulkConvertMutation.isPending}
+            >
+              {scanning || bulkConvertMutation.isPending ? (
+                <Loader2 size={13} className="mr-1 animate-spin" />
+              ) : (
+                <ClipboardCheck size={13} className="mr-1" />
+              )}
+              정족수 달성 수요 검토전환
+            </Button>
           </div>
 
           <div className="flex justify-end border-t pt-3">

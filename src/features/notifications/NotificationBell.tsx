@@ -37,6 +37,7 @@ const TYPE_ICONS: Record<AppNotification["type"], string> = {
   hackathon_submission_reminder: "🏆",
   pending_signup_nudge: "👤",
   demand_quorum_reached: "🔥",
+  demand_campaign_open: "📣",
 };
 
 function timeAgo(dateStr: string): string {

@@ -110,7 +110,8 @@ export type NotificationType =
   | "mentoring_nudge"     // 멘토링 미참여 신입 주간 넛지 (v8-M3, cron)
   | "hackathon_submission_reminder" // 해커톤 산출물 제출 마감 리마인더 (v9-H3, cron)
   | "pending_signup_nudge"  // 미처리 가입 신청 운영진 알림 (v9-H5, cron)
-  | "demand_quorum_reached"; // 수요 개설 정족수 도달 운영진 알림 (Phase 2 M6)
+  | "demand_quorum_reached" // 수요 개설 정족수 도달 운영진 알림 (Phase 2 M6)
+  | "demand_campaign_open"; // 수요조사 캠페인 오픈 회원 안내 (Phase 4 L3, 콘솔 수동 트리거)
 
 export interface AppNotification {
   id: string;

@@ -40,11 +40,22 @@ import {
   Users,
   BarChart3,
   Layers,
+  Plus,
+  Check,
 } from "lucide-react";
+import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { commBoardsApi, commQuestionsApi, commLikesApi } from "@/lib/bkend";
 import { listSemesterKeys, currentSemesterKey, semesterLabelFromKey } from "@/lib/semester";
-import { DOMAIN_OPTIONS } from "./useDemandCampaign";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
+import { useAuthStore } from "@/features/auth/auth-store";
+import {
+  DOMAIN_OPTIONS,
+  useDemandCampaign,
+  useUpdateDemandCampaign,
+  makeCampaignTopic,
+  type DemandCampaign,
+} from "./useDemandCampaign";
 import type { CommBoard, CommQuestion } from "@/types";
 
 /** demandPref.status 부재 시 "collecting". 개설 판정은 "opened". */
@@ -80,6 +91,55 @@ export default function DemandRetroSection() {
     const cur = currentSemesterKey();
     return listSemesterKeys(6, 0).filter((k) => k !== cur);
   }, []);
+
+  // ── L2) 학기 전환 수요 이월 — 미개설 상위 수요를 현재 학기 캠페인 주제로 추가 ──
+  const { user } = useAuthStore();
+  const currentKey = useEffectiveSemesterKey();
+  const { campaign: currentCampaign, recordId: currentRecordId } = useDemandCampaign(currentKey);
+  const carryOverMutation = useUpdateDemandCampaign();
+  // 이미 이번 학기 캠페인 주제에 있는 라벨(중복 방지) — 소문자·trim 정규화 집합.
+  const currentTopicLabels = useMemo(
+    () => new Set((currentCampaign?.topics ?? []).map((t) => t.label.trim().toLowerCase())),
+    [currentCampaign],
+  );
+
+  function isAlreadyTopic(body: string | undefined): boolean {
+    return currentTopicLabels.has((body ?? "").trim().toLowerCase());
+  }
+
+  function addToCampaign(q: CommQuestion) {
+    const label = (q.body ?? "").trim();
+    if (!label) return;
+    if (isAlreadyTopic(label)) {
+      toast.info("이미 이번 학기 캠페인 주제에 있습니다.");
+      return;
+    }
+    const rawDomain = q.demandPref?.domain;
+    const domain =
+      rawDomain && (DOMAIN_OPTIONS as readonly string[]).includes(rawDomain) ? rawDomain : "";
+    const base: DemandCampaign = currentCampaign ?? {
+      semester: currentKey,
+      title: `${semesterLabelFromKey(currentKey)} 스터디 수요조사`,
+      topics: [],
+      startDate: "",
+      endDate: "",
+      status: "draft",
+    };
+    const next: DemandCampaign = {
+      ...base,
+      topics: [...base.topics, makeCampaignTopic(label.slice(0, 60), domain)],
+      updatedBy: user?.name ?? user?.id ?? base.updatedBy,
+      updatedAt: new Date().toISOString(),
+    };
+    carryOverMutation.mutate(
+      { recordId: currentRecordId, campaign: next, semesterKey: currentKey },
+      {
+        onSuccess: () =>
+          toast.success(`"${label.slice(0, 20)}${label.length > 20 ? "…" : ""}"을(를) 다음 캠페인 주제로 추가했습니다.`),
+        onError: (e) => toast.error(`추가 실패: ${e instanceof Error ? e.message : "오류"}`),
+      },
+    );
+  }
 
   // ── 2) 실제로 존재하는 보드만 (학기 선택 UI 소스) ──────────────────────────
   const { data: boards = [], isLoading: boardsLoading } = useQuery({
@@ -402,33 +462,58 @@ export default function DemandRetroSection() {
                 </span>
               </p>
               <ol className="space-y-2">
-                {stats.unopened.map((q, i) => (
-                  <li
-                    key={q.id}
-                    className="flex items-start gap-2 rounded-xl border bg-muted/20 px-3 py-2.5"
-                  >
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
-                      {i + 1}
-                    </span>
-                    <span className="flex-1 text-sm font-medium text-foreground">{q.body}</span>
-                    <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
-                      <span
-                        className="flex items-center gap-0.5"
-                        aria-label={`관심있어요 ${q.likeCount ?? 0}명`}
-                      >
-                        <Heart size={11} className="text-primary" aria-hidden />
-                        {q.likeCount ?? 0}
-                      </span>
-                      <span
-                        className="flex items-center gap-0.5"
-                        aria-label={`참여할래요 ${joinCounts[q.id] ?? 0}명`}
-                      >
-                        <Users size={11} aria-hidden />
-                        {joinCounts[q.id] ?? 0}
-                      </span>
-                    </span>
-                  </li>
-                ))}
+                {stats.unopened.map((q, i) => {
+                  const added = isAlreadyTopic(q.body);
+                  return (
+                    <li key={q.id} className="rounded-xl border bg-muted/20 px-3 py-2.5">
+                      <div className="flex items-start gap-2">
+                        <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/10 text-[11px] font-bold text-primary">
+                          {i + 1}
+                        </span>
+                        <span className="flex-1 text-sm font-medium text-foreground">{q.body}</span>
+                        <span className="flex shrink-0 items-center gap-2 text-xs text-muted-foreground">
+                          <span
+                            className="flex items-center gap-0.5"
+                            aria-label={`관심있어요 ${q.likeCount ?? 0}명`}
+                          >
+                            <Heart size={11} className="text-primary" aria-hidden />
+                            {q.likeCount ?? 0}
+                          </span>
+                          <span
+                            className="flex items-center gap-0.5"
+                            aria-label={`참여할래요 ${joinCounts[q.id] ?? 0}명`}
+                          >
+                            <Users size={11} aria-hidden />
+                            {joinCounts[q.id] ?? 0}
+                          </span>
+                        </span>
+                      </div>
+                      <div className="mt-2 flex justify-end">
+                        <button
+                          type="button"
+                          onClick={() => addToCampaign(q)}
+                          disabled={added || carryOverMutation.isPending}
+                          className={cn(
+                            "flex items-center gap-1 rounded-full border px-2.5 py-1 text-[11px] font-medium transition-colors",
+                            added
+                              ? "border-success/30 bg-success/10 text-success"
+                              : "border-border text-muted-foreground hover:bg-accent hover:text-foreground disabled:opacity-50",
+                          )}
+                        >
+                          {added ? (
+                            <>
+                              <Check size={11} aria-hidden /> 캠페인 주제에 추가됨
+                            </>
+                          ) : (
+                            <>
+                              <Plus size={11} aria-hidden /> 다음 캠페인 주제로 추가
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </li>
+                  );
+                })}
               </ol>
               <p className="mt-2 text-[11px] text-muted-foreground/70">
                 관심있어요·참여할래요 반응이 많았으나 개설되지 못한 주제입니다.

@@ -308,6 +308,27 @@ export async function notifyDemandQuorumReached(
   );
 }
 
+/**
+ * 수요조사 캠페인 오픈 회원 안내 (Phase 4 L3) — 캠페인이 active 로 오픈될 때
+ * 회원에게 "수요조사가 시작되었습니다(마감 D-N)" 를 안내한다.
+ *
+ * 범위·트리거 판단: 캠페인 오픈은 공지·세미나 등록·일정 투표 개시(notifyGatheringPollStarted)와
+ * 동일한 전체 공지성 이벤트이므로 fanOut(승인 회원 전체) 패턴을 재사용한다. 다만 자동 발송이 아니라
+ * 콘솔(console/demand)의 운영진 수동 트리거 버튼에서만 호출해 과알림·오발송을 막는다.
+ * 마감 임박/결과 알림은 시간 기반(cron)이 필요하므로 이번 범위에서 제외하고 콘솔 D-day 표시로 대체한다.
+ * DemandCampaignEditor 의 상태 전환과 자동 연결은 후속 과제(편집기는 병렬 담당).
+ */
+export function notifyDemandCampaignOpen(campaignTitle: string, daysLeft: number | null) {
+  const dday = daysLeft !== null && daysLeft >= 0 ? ` (마감 D-${daysLeft})` : "";
+  const label = campaignTitle.trim() || "이번 학기 수요조사";
+  return fanOut(
+    "demand_campaign_open",
+    "수요조사가 시작되었습니다",
+    `${label}가 시작되었습니다${dday}. 원하는 스터디·세미나 주제를 등록해 주세요.`,
+    "/activities/studies",
+  );
+}
+
 export function notifyStudyOpened(userId: string, studyTitle: string, activityId: string) {
   return create(
     userId,

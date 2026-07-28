@@ -55,6 +55,7 @@ const TYPE_ICONS: Record<NotificationType, string> = {
   hackathon_submission_reminder: "🏆",
   pending_signup_nudge: "👤",
   demand_quorum_reached: "🔥",
+  demand_campaign_open: "📣",
 };
 
 const TYPE_LABELS: Record<NotificationType, string> = {
@@ -86,6 +87,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   hackathon_submission_reminder: "해커톤 제출 알림",
   pending_signup_nudge: "가입 신청 알림",
   demand_quorum_reached: "수요 정족수",
+  demand_campaign_open: "수요조사 캠페인",
 };
 
 // 필터 탭 정의

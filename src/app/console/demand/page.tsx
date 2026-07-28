@@ -29,6 +29,9 @@ import {
   Megaphone,
   CalendarDays,
   X,
+  AlarmClock,
+  CheckCircle2,
+  Send,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -44,7 +47,9 @@ import {
   DOMAIN_OPTIONS,
   DIFFICULTY_OPTIONS,
   TIME_OPTIONS,
+  type DemandCampaign,
 } from "@/features/demand/useDemandCampaign";
+import { notifyDemandCampaignOpen } from "@/features/notifications/notify";
 import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import type { CommQuestion, CommBoard } from "@/types";
 
@@ -88,6 +93,8 @@ function escapeCell(v: string): string {
 /** 개설 정족수 — DemandSurveySection JOIN_THRESHOLD 와 동일 값(미export 상수 재선언) */
 const JOIN_THRESHOLD = 3;
 const UNCLASSIFIED = "미분류";
+/** L1 미처리 수요 기준일 — collecting 상태로 이 일수 이상 경과 시 리마인더 대상 */
+const STALE_DAYS = 14;
 
 /** demandPref 구조화 필드를 옵션 집합으로 정규화(미입력·미지 값 → 미분류) */
 function normDomain(q: CommQuestion): string {
@@ -113,13 +120,98 @@ function heatClass(count: number, max: number): string {
   return "bg-primary/10 text-foreground";
 }
 
+/**
+ * L3 캠페인 오픈 알림 트리거 (콘솔 수동) — active 캠페인일 때 운영진이 회원 전체에
+ * "수요조사 시작" 안내를 1회 발송한다. 편집기(DemandCampaignEditor) 는 병렬 담당이라
+ * 여기서 notify 함수만 호출하고, 오발송 방지를 위해 확인 단계를 둔다.
+ */
+function CampaignOpenNotifier({
+  campaign,
+  daysLeft,
+}: {
+  campaign: DemandCampaign;
+  daysLeft: number | null;
+}) {
+  const [confirming, setConfirming] = useState(false);
+  const [sending, setSending] = useState(false);
+  const [sentAt, setSentAt] = useState<string | null>(null);
+  const active = campaign.status === "active";
+
+  async function send() {
+    setSending(true);
+    try {
+      await notifyDemandCampaignOpen(campaign.title, daysLeft);
+      setSentAt(new Date().toISOString());
+      const { toast } = await import("sonner");
+      toast.success("회원에게 캠페인 시작 알림을 보냈습니다.");
+    } catch {
+      const { toast } = await import("sonner");
+      toast.error("알림 발송에 실패했습니다.");
+    } finally {
+      setSending(false);
+      setConfirming(false);
+    }
+  }
+
+  return (
+    <div className="rounded-2xl border bg-card p-4">
+      <p className="flex items-center gap-2 text-sm font-semibold">
+        <Send size={14} className="text-primary" />
+        회원에게 캠페인 시작 알림
+      </p>
+      <p className="mt-1 text-xs text-muted-foreground">
+        {active
+          ? "승인된 전체 회원에게 수요조사 시작 안내를 보냅니다. 캠페인 오픈 직후 한 번만 발송하세요."
+          : "캠페인이 진행중(active)일 때만 발송할 수 있습니다."}
+      </p>
+      {confirming ? (
+        <div className="mt-3 rounded-xl border border-primary/30 bg-primary/5 p-3">
+          <p className="text-xs font-medium text-foreground">
+            승인된 전체 회원에게 알림을 보냅니다. 계속하시겠습니까?
+          </p>
+          <div className="mt-2 flex gap-2">
+            <Button size="sm" disabled={sending} onClick={send}>
+              {sending ? "발송 중…" : "발송"}
+            </Button>
+            <Button
+              size="sm"
+              variant="outline"
+              disabled={sending}
+              onClick={() => setConfirming(false)}
+            >
+              취소
+            </Button>
+          </div>
+        </div>
+      ) : (
+        <div className="mt-3 flex items-center gap-2">
+          <Button
+            size="sm"
+            variant="outline"
+            disabled={!active || sending}
+            onClick={() => setConfirming(true)}
+          >
+            <Send size={13} className="mr-1" />
+            회원에게 캠페인 시작 알림
+          </Button>
+          {sentAt && (
+            <span className="text-[11px] text-success">
+              발송 완료 ({sentAt.slice(11, 16)})
+            </span>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
 export default function DemandConsolePage() {
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
   const [view, setView] = useState<"campaign" | "current" | "insights" | "retro">("current");
   // M2 히트맵 셀 클릭 → 목록 필터(domain × difficulty). insights 탭에서 클릭 시 current 로 이동.
   const [cellFilter, setCellFilter] = useState<{ domain: string; difficulty: string } | null>(null);
   const semesterKey = useEffectiveSemesterKey();
-  const { campaign } = useDemandCampaign(semesterKey);
+  const { campaign, state, today } = useDemandCampaign(semesterKey);
 
   // ── 보드 조회 (ensure 불필요 — 콘솔은 읽기 전용) ────────────────────────
   const { data: board } = useQuery({
@@ -294,6 +386,23 @@ export default function DemandConsolePage() {
     const declined = studyItems.filter((q) => stageOf(q) === "declined").length;
     return { total, totalLikes, studyCount, seminarCount, top3, funnel, declined };
   }, [questions]);
+
+  // ── L1 미처리 수요 (collecting 상태로 STALE_DAYS 이상 경과) ────────────────
+  // today 는 useDemandCampaign 훅이 useMemo 로 1회 고정한 값(렌더 경로 Date.now 없음).
+  const staleDemands = useMemo(() => {
+    return questions
+      .filter((q) => stageOf(q) === "collecting")
+      .map((q) => {
+        const created = (q.createdAt ?? "").slice(0, 10);
+        const elapsed = created ? daysBetweenYmd(created, today) : null;
+        return { q, elapsed };
+      })
+      .filter(
+        (x): x is { q: CommQuestion; elapsed: number } =>
+          x.elapsed !== null && x.elapsed >= STALE_DAYS,
+      )
+      .sort((a, b) => b.elapsed - a.elapsed);
+  }, [questions, today]);
 
   // ── H3 퍼널 지표 (statusHistory 기반) ─────────────────────────────────────
   // 리드타임(등록→개설)·단계별 평균 체류·이탈률. statusHistory 없는 레거시는 제외(가드).
@@ -478,7 +587,12 @@ export default function DemandConsolePage() {
       </div>
 
       {view === "campaign" ? (
-        <DemandCampaignEditor />
+        <div className="space-y-4">
+          {campaign && (
+            <CampaignOpenNotifier campaign={campaign} daysLeft={state.daysLeft} />
+          )}
+          <DemandCampaignEditor />
+        </div>
       ) : view === "retro" ? (
         <DemandRetroSection />
       ) : view === "insights" ? (
@@ -733,6 +847,58 @@ export default function DemandConsolePage() {
         </>
       ) : (
         <>
+      {/* ── L1 미처리 수요 리마인더 (collecting 14일+) ────────────────────── */}
+      <div className="rounded-2xl border bg-card p-4">
+        <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
+          <AlarmClock size={14} className="text-primary" />
+          미처리 수요
+          {staleDemands.length > 0 ? (
+            <span className="inline-flex h-5 min-w-[1.25rem] items-center justify-center rounded-full bg-warning/15 px-1.5 text-[11px] font-bold text-warning">
+              {staleDemands.length}
+            </span>
+          ) : (
+            <span className="text-[11px] font-normal text-muted-foreground">
+              · {STALE_DAYS}일+ 수집중
+            </span>
+          )}
+        </p>
+        {staleDemands.length === 0 ? (
+          <div className="flex items-center gap-2 rounded-xl border border-success/30 bg-success/5 px-3 py-2.5 text-sm text-success">
+            <CheckCircle2 size={15} />
+            {STALE_DAYS}일 이상 방치된 수집중 수요가 없습니다.
+          </div>
+        ) : (
+          <ul className="space-y-1.5">
+            {staleDemands.map(({ q, elapsed }) => (
+              <li key={q.id}>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilterTab("all");
+                    setCellFilter(null);
+                    document
+                      .getElementById(`demand-row-${q.id}`)
+                      ?.scrollIntoView({ behavior: "smooth", block: "center" });
+                  }}
+                  className="flex w-full items-center gap-3 rounded-xl border bg-muted/20 px-3 py-2.5 text-left transition-colors hover:bg-muted/40"
+                >
+                  <span className="flex-1 truncate text-sm font-medium text-foreground">
+                    {q.body}
+                  </span>
+                  <span className="flex shrink-0 items-center gap-0.5 text-[11px] text-muted-foreground">
+                    <Users size={11} />
+                    {joinCounts[q.id] ?? 0}
+                  </span>
+                  <span className="shrink-0 rounded-full bg-warning/15 px-2 py-0.5 text-[10px] font-semibold text-warning">
+                    {elapsed}일 경과
+                  </span>
+                </button>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+
       {/* ── 요약 통계 ──────────────────────────────────────────────────────── */}
       <div className="rounded-2xl border bg-card p-4">
         <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
@@ -1073,7 +1239,7 @@ export default function DemandConsolePage() {
               {filtered.map((q) => {
                 const pref = q.demandPref;
                 return (
-                  <tr key={q.id} className="hover:bg-muted/30">
+                  <tr key={q.id} id={`demand-row-${q.id}`} className="hover:bg-muted/30">
                     <td className="py-2.5 pr-3">
                       <span className="flex items-center gap-1 font-semibold tabular-nums text-primary">
                         <Heart size={12} className="fill-primary" />
