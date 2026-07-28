@@ -6,7 +6,7 @@
  * DB/rules 무변경 — 기존 store 집계만 조합.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   ListTodo,
   FolderKanban,
@@ -17,11 +17,20 @@ import {
   TrendingUp,
   Heart,
   Rocket,
+  Users,
+  ShieldCheck,
+  ChevronDown,
 } from "lucide-react";
+import Image from "next/image";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import Link from "next/link";
-import { currentSemesterKey } from "@/lib/semester";
+import { currentSemesterKey, semesterLabelFromKey } from "@/lib/semester";
+import { useOrgChart, type OrgRole } from "@/features/admin/settings/useOrgChart";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
+import { useAllMembers } from "@/features/member/useMembers";
+import { isAdminOrSysadmin } from "@/lib/permissions";
+import { ROLE_LABELS, type UserRole } from "@/types";
 import {
   useStaffProjects,
   useAllStaffTasks,
@@ -53,6 +62,34 @@ const OPENING_STAGE_BADGE: Record<OpeningDemandStage, string> = {
   designing: "bg-primary/10 text-primary",
 };
 
+/** 조직도 role 표시 순서 (학회장 우선). 미지정 role 은 뒤로. */
+const ORG_ROLE_ORDER: Record<OrgRole, number> = {
+  president: 0,
+  vice_president: 1,
+  direct_aide: 2,
+  team_member: 3,
+  advisor: 4,
+  professor: 5,
+};
+
+/** 조직도 role 짧은 라벨 — 배지용 */
+const ORG_ROLE_LABELS: Record<OrgRole, string> = {
+  president: "학회장",
+  vice_president: "부학회장",
+  direct_aide: "직속",
+  team_member: "팀원",
+  advisor: "자문",
+  professor: "교수",
+};
+
+/** 콘솔 접근 권한자 role 배지 — 시맨틱 토큰만 */
+const ACCESS_ROLE_BADGE: Partial<Record<UserRole, string>> = {
+  sysadmin: "bg-destructive/10 text-destructive",
+  admin: "bg-warning/10 text-warning",
+  president: "bg-primary/10 text-primary",
+  staff: "bg-muted text-muted-foreground",
+};
+
 interface Props {
   onGoTab: (tab: string) => void;
 }
@@ -74,7 +111,39 @@ export default function StaffHomeTab({ onGoTab }: Props) {
   const reviewPending = reviewItems.filter((r) => r.count > 0);
   const openingDemands = useOpeningDemands(!!user);
 
+  // 조직도 운영진 — 학기 셀렉터 연동: "전체"(빈 문자열)면 현재(effective) 학기, 아니면 선택 학기.
+  const effectiveKey = useEffectiveSemesterKey();
+  const orgSemesterKey = selectedSemester || effectiveKey;
+  const { positions: orgPositions } = useOrgChart(orgSemesterKey);
+
+  // 접근 권한자 (admin 전용)
+  const isAdmin = isAdminOrSysadmin(user);
+  const { members: allMembers } = useAllMembers();
+  const [accessOpen, setAccessOpen] = useState(false);
+
   const currentKey = useMemo(() => currentSemesterKey(), []);
+
+  // 배정된 운영진만(userName 또는 userId 존재) role 순 정렬
+  const roster = useMemo(() => {
+    const assigned = (orgPositions ?? []).filter(
+      (p) => (p.userName && p.userName.trim()) || p.userId,
+    );
+    return [...assigned].sort((a, b) => {
+      const ra = a.role ? ORG_ROLE_ORDER[a.role] : 99;
+      const rb = b.role ? ORG_ROLE_ORDER[b.role] : 99;
+      if (ra !== rb) return ra - rb;
+      return (a.order ?? 0) - (b.order ?? 0);
+    });
+  }, [orgPositions]);
+
+  // role in [staff, president, admin, sysadmin], 이름 오름차순
+  const accessMembers = useMemo(() => {
+    if (!isAdmin) return [];
+    const roles = new Set<UserRole>(["staff", "president", "admin", "sysadmin"]);
+    return (allMembers ?? [])
+      .filter((m) => roles.has(m.role))
+      .sort((a, b) => (a.name ?? "").localeCompare(b.name ?? ""));
+  }, [allMembers, isAdmin]);
 
   // 학기 필터(폴백 A) — 프로젝트를 먼저 필터하고, 태스크는 필터된 프로젝트에 속한 것만.
   const projects = useMemo(
@@ -324,6 +393,80 @@ export default function StaffHomeTab({ onGoTab }: Props) {
       </section>
       </WidgetBoundary>
 
+      {/* ── 이번 학기 운영진 (조직도 연동) ── */}
+      <WidgetBoundary label="staff-roster">
+      <section>
+        <div className="mb-2 flex items-center justify-between">
+          <h3 className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <Users size={15} className="text-primary" /> 이번 학기 운영진
+          </h3>
+          <span className="shrink-0 rounded-full bg-muted px-2 py-0.5 text-[11px] font-medium text-muted-foreground">
+            {semesterLabelFromKey(orgSemesterKey)}
+          </span>
+        </div>
+        {roster.length === 0 ? (
+          <div className="rounded-xl border border-dashed bg-card px-4 py-6 text-center text-sm text-muted-foreground">
+            이번 학기 조직도가 아직 설정되지 않았습니다.
+            <Link
+              href="/console/settings/org-chart"
+              className="mt-1 flex items-center justify-center gap-0.5 text-primary hover:underline"
+            >
+              조직도 설정하기 <ArrowRight size={12} />
+            </Link>
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 gap-2 sm:grid-cols-2">
+            {roster.map((p) => {
+              const photo = typeof p.userPhoto === "string" ? p.userPhoto : "";
+              const inner = (
+                <>
+                  <span className="relative flex h-9 w-9 shrink-0 items-center justify-center overflow-hidden rounded-full bg-primary/10 text-xs font-semibold text-primary">
+                    {photo ? (
+                      <Image src={photo} alt="" fill className="object-cover" />
+                    ) : (
+                      (p.userName ?? "?").charAt(0)
+                    )}
+                  </span>
+                  <span className="min-w-0 flex-1">
+                    <span className="flex items-center gap-1.5">
+                      <span className="truncate text-sm font-medium text-foreground">
+                        {p.userName ?? "미배정"}
+                      </span>
+                      {p.role && (
+                        <span className="shrink-0 rounded-full bg-primary/10 px-1.5 py-0.5 text-[10px] font-medium text-primary">
+                          {ORG_ROLE_LABELS[p.role]}
+                        </span>
+                      )}
+                    </span>
+                    <span className="block truncate text-[11px] text-muted-foreground">
+                      {p.title}
+                      {p.duty ? ` · ${p.duty}` : ""}
+                    </span>
+                  </span>
+                </>
+              );
+              return p.userId ? (
+                <Link
+                  key={p.id}
+                  href={`/profile/${p.userId}`}
+                  className="flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5 transition-colors hover:bg-muted/30"
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <div
+                  key={p.id}
+                  className="flex items-center gap-2.5 rounded-xl border bg-card px-3 py-2.5"
+                >
+                  {inner}
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </section>
+      </WidgetBoundary>
+
       {/* ── 내 할당 업무 ── */}
       <WidgetBoundary label="staff-my-tasks">
       <section>
@@ -419,6 +562,59 @@ export default function StaffHomeTab({ onGoTab }: Props) {
         </section>
       )}
       </WidgetBoundary>
+
+      {/* ── 콘솔 접근 권한자 (admin 전용, 기본 접힘) ── */}
+      {isAdmin && (
+        <WidgetBoundary label="staff-access-list">
+        <section>
+          <button
+            type="button"
+            onClick={() => setAccessOpen((v) => !v)}
+            aria-expanded={accessOpen}
+            className="flex w-full items-center justify-between rounded-xl border border-dashed bg-muted/40 px-3 py-2.5 text-left transition-colors hover:bg-muted/60"
+          >
+            <span className="flex items-center gap-1.5 text-sm font-semibold text-foreground">
+              <ShieldCheck size={15} className="text-muted-foreground" /> 콘솔 접근 권한자 ({accessMembers.length}명)
+            </span>
+            <ChevronDown
+              size={16}
+              className={cn("shrink-0 text-muted-foreground transition-transform", accessOpen && "rotate-180")}
+            />
+          </button>
+          {accessOpen && (
+            <div className="mt-2 rounded-xl border bg-card p-2">
+              {accessMembers.length === 0 ? (
+                <p className="px-2 py-4 text-center text-sm text-muted-foreground">
+                  콘솔 접근 권한자가 없습니다.
+                </p>
+              ) : (
+                <ul className="divide-y">
+                  {accessMembers.map((m) => (
+                    <li key={m.id} className="flex items-center justify-between px-2 py-2">
+                      <span className="truncate text-sm text-foreground">{m.name}</span>
+                      <span
+                        className={cn(
+                          "ml-2 shrink-0 rounded-full px-2 py-0.5 text-[10px] font-medium",
+                          ACCESS_ROLE_BADGE[m.role] ?? "bg-muted text-muted-foreground",
+                        )}
+                      >
+                        {ROLE_LABELS[m.role]}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+              <Link
+                href="/console/members"
+                className="mt-1 flex items-center justify-end gap-0.5 px-2 py-1.5 text-xs text-muted-foreground hover:text-foreground"
+              >
+                회원 관리 <ArrowRight size={12} />
+              </Link>
+            </div>
+          )}
+        </section>
+        </WidgetBoundary>
+      )}
 
       {/* ── 빠른 이동 ── */}
       <section>
