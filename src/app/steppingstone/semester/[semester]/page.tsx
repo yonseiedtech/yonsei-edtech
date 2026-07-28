@@ -50,6 +50,7 @@ import {
   getItemChecked,
   setItemChecked,
 } from "@/features/steppingstone/mastery-progress";
+import { getGuidebookFallback } from "@/features/steppingstone/semester-guidebook-content";
 import { cn } from "@/lib/utils";
 
 // ── 정규화 (RoadmapStage · RoadmapItem → GuidebookStage) ─────────────────────
@@ -366,7 +367,14 @@ export default function SemesterGuidebookPage() {
   }
 
   const links = crossLinks(stage);
-  const hasSections = (stage.sections ?? []).length > 0;
+  // Firestore 리치필드 우선, 비어있으면 코드 번들 콘텐츠로 폴백(운영진 조치 없이 노출)
+  const fallback = getGuidebookFallback(stage.semester);
+  const overview = stage.overview ?? fallback?.overview;
+  const sections =
+    stage.sections && stage.sections.length > 0 ? stage.sections : fallback?.sections ?? [];
+  const resources =
+    stage.resources && stage.resources.length > 0 ? stage.resources : fallback?.resources ?? [];
+  const hasSections = sections.length > 0;
 
   return (
     <PageContainer width="narrow">
@@ -406,9 +414,9 @@ export default function SemesterGuidebookPage() {
       </header>
 
       {/* ── 개요 ── */}
-      {stage.overview && (
+      {overview && (
         <section className="mb-8 rounded-2xl border bg-card p-5">
-          <SimpleMarkdown body={stage.overview} />
+          <SimpleMarkdown body={overview} />
         </section>
       )}
 
@@ -416,7 +424,7 @@ export default function SemesterGuidebookPage() {
       {hasSections ? (
         <section>
           {/* 목차 */}
-          {(stage.sections ?? []).length > 1 && (
+          {sections.length > 1 && (
             <nav
               aria-label="가이드북 목차"
               className="mb-6 rounded-2xl border border-primary/20 bg-primary/5 p-4"
@@ -426,7 +434,7 @@ export default function SemesterGuidebookPage() {
                 목차
               </p>
               <ul className="space-y-1">
-                {(stage.sections ?? []).map((sec, i) => (
+                {sections.map((sec, i) => (
                   <li key={i}>
                     <a
                       href={`#${sectionId(i)}`}
@@ -441,7 +449,7 @@ export default function SemesterGuidebookPage() {
           )}
 
           <div className="space-y-8">
-            {(stage.sections ?? []).map((sec, i) => (
+            {sections.map((sec, i) => (
               <article key={i} id={sectionId(i)} className="scroll-mt-20">
                 <h2 className="mb-2 border-b pb-2 text-xl font-bold text-foreground">
                   {sec.heading}
@@ -467,9 +475,9 @@ export default function SemesterGuidebookPage() {
           <h2 className="text-lg font-bold">자료·바로가기</h2>
         </div>
 
-        {(stage.resources ?? []).length > 0 && (
+        {resources.length > 0 && (
           <div className="mb-4 grid gap-2 sm:grid-cols-2">
-            {(stage.resources ?? []).map((r, i) => {
+            {resources.map((r, i) => {
               const isExternal = r.kind === "external" || /^https?:\/\//.test(r.href);
               const Icon =
                 r.kind === "download" ? Download : isExternal ? ExternalLink : ArrowRight;
