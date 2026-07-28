@@ -31,6 +31,11 @@ import {
   UserCheck,
   PencilRuler,
   Rocket,
+  Megaphone,
+  ChevronDown,
+  Pencil,
+  X,
+  Lock,
 } from "lucide-react";
 import { toast } from "sonner";
 import Link from "next/link";
@@ -48,6 +53,13 @@ import {
   currentDemandSemesterLabel,
 } from "./ensure-demand-board";
 import StudyLaunchPanel from "./StudyLaunchPanel";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
+import {
+  useDemandCampaign,
+  DOMAIN_OPTIONS,
+  DIFFICULTY_OPTIONS,
+  TIME_OPTIONS,
+} from "./useDemandCampaign";
 import type { CommQuestion } from "@/types";
 
 const DEMAND_JOIN = "demand-join";
@@ -97,6 +109,86 @@ const KIND_META = {
   },
 } as const;
 
+/** 구조화 선호 3종 셀렉트 (등록·편집 폼 공용, 제안서 2.1.1) */
+function PrefSelects({
+  idPrefix,
+  domain,
+  difficulty,
+  time,
+  onDomain,
+  onDifficulty,
+  onTime,
+}: {
+  idPrefix: string;
+  domain: string;
+  difficulty: string;
+  time: string;
+  onDomain: (v: string) => void;
+  onDifficulty: (v: string) => void;
+  onTime: (v: string) => void;
+}) {
+  const selectCls =
+    "h-9 w-full rounded-md border border-input bg-background px-2 text-xs text-foreground";
+  return (
+    <div className="grid grid-cols-3 gap-2">
+      <div className="space-y-1">
+        <label className="text-[11px] text-muted-foreground" htmlFor={`${idPrefix}-domain`}>
+          분야
+        </label>
+        <select
+          id={`${idPrefix}-domain`}
+          value={domain}
+          onChange={(e) => onDomain(e.target.value)}
+          className={selectCls}
+        >
+          <option value="">무관</option>
+          {DOMAIN_OPTIONS.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-1">
+        <label className="text-[11px] text-muted-foreground" htmlFor={`${idPrefix}-difficulty`}>
+          난이도
+        </label>
+        <select
+          id={`${idPrefix}-difficulty`}
+          value={difficulty}
+          onChange={(e) => onDifficulty(e.target.value)}
+          className={selectCls}
+        >
+          <option value="">무관</option>
+          {DIFFICULTY_OPTIONS.map((d) => (
+            <option key={d} value={d}>
+              {d}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="space-y-1">
+        <label className="text-[11px] text-muted-foreground" htmlFor={`${idPrefix}-time`}>
+          시간대
+        </label>
+        <select
+          id={`${idPrefix}-time`}
+          value={time}
+          onChange={(e) => onTime(e.target.value)}
+          className={selectCls}
+        >
+          <option value="">무관</option>
+          {TIME_OPTIONS.map((t) => (
+            <option key={t} value={t}>
+              {t}
+            </option>
+          ))}
+        </select>
+      </div>
+    </div>
+  );
+}
+
 interface Props {
   kind: "study" | "seminar";
 }
@@ -104,6 +196,8 @@ interface Props {
 export default function DemandSurveySection({ kind }: Props) {
   const meta = KIND_META[kind];
   const semesterLabel = currentDemandSemesterLabel();
+  const semesterKey = useEffectiveSemesterKey();
+  const { campaign, state: campaignState } = useDemandCampaign(semesterKey);
   const { user } = useAuthStore();
   const isStaff = isAtLeast(user, "staff");
   const qc = useQueryClient();
@@ -141,6 +235,21 @@ export default function DemandSurveySection({ kind }: Props) {
   const [body, setBody] = useState("");
   const [formatPref, setFormatPref] = useState<FormatPref>("무관");
   const [note, setNote] = useState("");
+  // 구조화 선호 (제안서 2.1.1) — 기본 접힘 아코디언
+  const [domain, setDomain] = useState("");
+  const [difficulty, setDifficulty] = useState("");
+  const [preferredTime, setPreferredTime] = useState("");
+  const [campaignTopicId, setCampaignTopicId] = useState<string | null>(null);
+  const [showAdvanced, setShowAdvanced] = useState(false);
+
+  // 수요 편집 (본인·수집중 항목) — 제안서 2.5.2
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editBody, setEditBody] = useState("");
+  const [editFormat, setEditFormat] = useState<FormatPref>("무관");
+  const [editNote, setEditNote] = useState("");
+  const [editDomain, setEditDomain] = useState("");
+  const [editDifficulty, setEditDifficulty] = useState("");
+  const [editTime, setEditTime] = useState("");
 
   // v17 M4: 러닝가이드 완독 카드 등에서 넘어온 주제 prefill (client-only, DB 무변경)
   useEffect(() => {
@@ -187,6 +296,19 @@ export default function DemandSurveySection({ kind }: Props) {
     });
   }, [kindItems, statusFilter]);
 
+  // ── 유사 수요 안내 (제안서 2.1.2) — 입력 중 부분 문자열 매칭 ────────────────
+  const similar = useMemo(() => {
+    const q = body.trim().toLowerCase();
+    if (q.length < 2) return [];
+    return kindItems
+      .filter((it) => {
+        const b = (it.body ?? "").trim().toLowerCase();
+        if (!b || b === q) return false;
+        return b.includes(q) || q.includes(b);
+      })
+      .slice(0, 3);
+  }, [body, kindItems]);
+
   // ── 등록 ──────────────────────────────────────────────────────────────────
   const submitMutation = useMutation({
     mutationFn: async () => {
@@ -203,6 +325,10 @@ export default function DemandSurveySection({ kind }: Props) {
           format: formatPref,
           status: "collecting",
           ...(note.trim() ? { note: note.trim() } : {}),
+          ...(domain ? { domain } : {}),
+          ...(difficulty ? { difficulty } : {}),
+          ...(preferredTime ? { preferredTime } : {}),
+          ...(campaignTopicId ? { campaignTopicId } : {}),
         },
       });
     },
@@ -211,6 +337,11 @@ export default function DemandSurveySection({ kind }: Props) {
       setBody("");
       setNote("");
       setFormatPref("무관");
+      setDomain("");
+      setDifficulty("");
+      setPreferredTime("");
+      setCampaignTopicId(null);
+      setShowAdvanced(false);
       qc.invalidateQueries({ queryKey: ["demand-questions"] });
     },
     onError: (e) => toast.error(`등록 실패: ${e instanceof Error ? e.message : "오류"}`),
@@ -244,6 +375,38 @@ export default function DemandSurveySection({ kind }: Props) {
     },
     onError: (e) => toast.error(`삭제 실패: ${e instanceof Error ? e.message : "오류"}`),
   });
+
+  // ── 수요 편집 (본인·수집중) — 제안서 2.5.2 ─────────────────────────────────
+  const editMutation = useMutation({
+    mutationFn: (q: CommQuestion) =>
+      commQuestionsApi.update(q.id, {
+        body: editBody.trim(),
+        demandPref: {
+          ...(q.demandPref ?? {}),
+          format: editFormat,
+          note: editNote.trim() || undefined,
+          domain: editDomain || undefined,
+          difficulty: editDifficulty || undefined,
+          preferredTime: editTime || undefined,
+        },
+      }),
+    onSuccess: () => {
+      toast.success("수정되었습니다.");
+      setEditingId(null);
+      qc.invalidateQueries({ queryKey: ["demand-questions"] });
+    },
+    onError: (e) => toast.error(`수정 실패: ${e instanceof Error ? e.message : "오류"}`),
+  });
+
+  function startEdit(q: CommQuestion) {
+    setEditingId(q.id);
+    setEditBody(q.body ?? "");
+    setEditFormat((q.demandPref?.format as FormatPref | undefined) ?? "무관");
+    setEditNote(q.demandPref?.note ?? "");
+    setEditDomain(q.demandPref?.domain ?? "");
+    setEditDifficulty(q.demandPref?.difficulty ?? "");
+    setEditTime(q.demandPref?.preferredTime ?? "");
+  }
 
   // ── 운영진 상태 전환 ──────────────────────────────────────────────────────
   const statusMutation = useMutation({
@@ -299,6 +462,44 @@ export default function DemandSurveySection({ kind }: Props) {
         주제부터 운영진이 개설을 검토합니다.
       </p>
 
+      {/* ── 수요조사 캠페인 배너 ── */}
+      {campaign && campaignState.isVisible && (
+        <div
+          className={cn(
+            "mb-4 rounded-2xl border p-4",
+            campaignState.isOpen
+              ? "border-primary/30 bg-primary/5"
+              : "border-border bg-muted/40",
+          )}
+        >
+          <div className="flex flex-wrap items-center gap-2">
+            <Megaphone size={15} className="text-primary" />
+            <p className="text-sm font-semibold text-foreground">{campaign.title}</p>
+            {campaignState.isOpen ? (
+              campaignState.daysLeft !== null && (
+                <Badge variant="outline" className="border-primary/30 bg-primary/10 text-[10px] text-primary">
+                  {campaignState.daysLeft > 0
+                    ? `마감까지 D-${campaignState.daysLeft}`
+                    : "오늘 마감"}
+                </Badge>
+              )
+            ) : (
+              <Badge variant="outline" className="text-[10px] text-muted-foreground">
+                마감됨
+              </Badge>
+            )}
+          </div>
+          {campaign.description && (
+            <p className="mt-1.5 text-xs text-muted-foreground">{campaign.description}</p>
+          )}
+          {(campaign.startDate || campaign.endDate) && (
+            <p className="mt-1 text-[11px] text-muted-foreground">
+              진행 기간: {campaign.startDate || "미정"} ~ {campaign.endDate || "미정"}
+            </p>
+          )}
+        </div>
+      )}
+
       {/* ── 요약 지표 ── */}
       {!!user && !isLoading && summary.total > 0 && (
         <div className="mb-4 grid grid-cols-3 gap-2 sm:max-w-md">
@@ -328,8 +529,48 @@ export default function DemandSurveySection({ kind }: Props) {
         </div>
       ) : (
         <>
-          {/* ── 등록 폼 ── */}
+          {/* ── 등록 폼 (캠페인 마감 시 비활성) ── */}
+          {!campaignState.isOpen ? (
+            <div className="flex items-center gap-3 rounded-2xl border border-dashed bg-muted/40 px-5 py-6 text-sm">
+              <Lock size={16} className="shrink-0 text-muted-foreground" />
+              <div>
+                <p className="font-medium text-foreground">수요조사가 마감되었습니다.</p>
+                <p className="mt-0.5 text-xs text-muted-foreground">
+                  이미 등록된 수요에는 관심·참여로 계속 반응할 수 있습니다.
+                </p>
+              </div>
+            </div>
+          ) : (
           <div className="space-y-4 rounded-2xl border bg-card p-5 shadow-sm">
+            {/* 캠페인 사전 주제 칩 */}
+            {campaignState.isVisible && (campaign?.topics.length ?? 0) > 0 && (
+              <div className="space-y-1.5">
+                <p className="text-xs font-medium text-muted-foreground">추천 주제</p>
+                <div className="flex flex-wrap gap-1.5">
+                  {campaign!.topics.map((t) => (
+                    <button
+                      key={t.id}
+                      type="button"
+                      onClick={() => {
+                        setBody(t.label.slice(0, 140));
+                        setCampaignTopicId(t.id);
+                        if (t.domain) setDomain(t.domain);
+                      }}
+                      aria-pressed={campaignTopicId === t.id}
+                      className={cn(
+                        "rounded-full border px-3 py-1 text-xs transition-colors",
+                        campaignTopicId === t.id
+                          ? "border-primary bg-primary/10 text-primary"
+                          : "border-border text-muted-foreground hover:bg-accent",
+                      )}
+                    >
+                      {t.label}
+                    </button>
+                  ))}
+                </div>
+              </div>
+            )}
+
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground" htmlFor={`demand-body-${kind}`}>
                 주제 한 줄 <span className="text-destructive" aria-hidden>*</span>
@@ -338,10 +579,39 @@ export default function DemandSurveySection({ kind }: Props) {
                 id={`demand-body-${kind}`}
                 placeholder={meta.placeholder}
                 value={body}
-                onChange={(e) => setBody(e.target.value.slice(0, 140))}
+                onChange={(e) => {
+                  setBody(e.target.value.slice(0, 140));
+                  setCampaignTopicId(null);
+                }}
                 maxLength={140}
               />
               <p className="text-right text-[11px] text-muted-foreground">{body.length}/140</p>
+
+              {/* 유사 수요 안내 (2.1.2) */}
+              {similar.length > 0 && (
+                <div className="rounded-xl border border-primary/20 bg-primary/5 p-3">
+                  <p className="mb-1.5 text-xs font-medium text-foreground">
+                    비슷한 수요가 이미 있습니다. 관심으로 합류해보세요.
+                  </p>
+                  <ul className="space-y-1">
+                    {similar.map((it) => (
+                      <li key={it.id} className="flex items-center justify-between gap-2">
+                        <span className="min-w-0 flex-1 truncate text-xs text-muted-foreground">
+                          {it.body}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => interestMutation.mutate(it.id)}
+                          disabled={interestMutation.isPending}
+                          className="inline-flex shrink-0 items-center gap-1 rounded-md border border-primary/30 px-2 py-0.5 text-[10px] font-medium text-primary transition-colors hover:bg-primary/10"
+                        >
+                          <Heart size={10} /> 관심으로 합류
+                        </button>
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
             </div>
 
             <div className="space-y-1.5">
@@ -379,6 +649,33 @@ export default function DemandSurveySection({ kind }: Props) {
               />
             </div>
 
+            {/* 상세 선호 아코디언 (2.1.1) — 기본 접힘 */}
+            <div className="space-y-2">
+              <button
+                type="button"
+                onClick={() => setShowAdvanced((v) => !v)}
+                aria-expanded={showAdvanced}
+                className="flex items-center gap-1 text-xs font-medium text-muted-foreground transition-colors hover:text-foreground"
+              >
+                <ChevronDown
+                  size={13}
+                  className={cn("transition-transform", showAdvanced && "rotate-180")}
+                />
+                상세 선호 <span className="text-muted-foreground/60">(선택 — 분야·난이도·시간대)</span>
+              </button>
+              {showAdvanced && (
+                <PrefSelects
+                  idPrefix={`demand-adv-${kind}`}
+                  domain={domain}
+                  difficulty={difficulty}
+                  time={preferredTime}
+                  onDomain={setDomain}
+                  onDifficulty={setDifficulty}
+                  onTime={setPreferredTime}
+                />
+              )}
+            </div>
+
             <div className="flex justify-end">
               <Button onClick={() => submitMutation.mutate()} disabled={!body.trim() || submitMutation.isPending}>
                 {submitMutation.isPending ? (
@@ -390,6 +687,7 @@ export default function DemandSurveySection({ kind }: Props) {
               </Button>
             </div>
           </div>
+          )}
 
           {/* ── 상태 필터 ── */}
           {!isLoading && summary.total > 0 && (
@@ -500,6 +798,15 @@ export default function DemandSurveySection({ kind }: Props) {
                           {pref?.format && pref.format !== "무관" && (
                             <Badge variant="outline" className="text-[10px]">{pref.format}</Badge>
                           )}
+                          {pref?.domain && (
+                            <Badge variant="outline" className="text-[10px]">{pref.domain}</Badge>
+                          )}
+                          {pref?.difficulty && pref.difficulty !== "무관" && (
+                            <Badge variant="outline" className="text-[10px]">{pref.difficulty}</Badge>
+                          )}
+                          {pref?.preferredTime && pref.preferredTime !== "무관" && (
+                            <Badge variant="outline" className="text-[10px]">{pref.preferredTime}</Badge>
+                          )}
                         </div>
                         <p className="text-sm font-medium leading-relaxed text-foreground">{q.body}</p>
                         {pref?.note && <p className="mt-1 text-xs text-muted-foreground">{pref.note}</p>}
@@ -515,6 +822,71 @@ export default function DemandSurveySection({ kind }: Props) {
                         <p className="mt-2 text-[11px] text-muted-foreground">
                           {q.authorName} · {(q.createdAt ?? "").slice(0, 10)}
                         </p>
+
+                        {/* 본인 편집 폼 (수집중 항목) — 2.5.2 */}
+                        {editingId === q.id && (
+                          <div className="mt-2 space-y-2.5 rounded-xl border bg-muted/20 p-3">
+                            <Input
+                              value={editBody}
+                              onChange={(e) => setEditBody(e.target.value.slice(0, 140))}
+                              maxLength={140}
+                              placeholder={meta.placeholder}
+                            />
+                            <div className="flex flex-wrap gap-1.5">
+                              {FORMAT_OPTIONS.map((f) => (
+                                <button
+                                  key={f}
+                                  type="button"
+                                  onClick={() => setEditFormat(f)}
+                                  aria-pressed={editFormat === f}
+                                  className={cn(
+                                    "rounded-full border px-3 py-1 text-xs transition-colors",
+                                    editFormat === f
+                                      ? "border-primary bg-primary/10 text-primary"
+                                      : "border-border text-muted-foreground hover:bg-accent",
+                                  )}
+                                >
+                                  {f}
+                                </button>
+                              ))}
+                            </div>
+                            <Input
+                              value={editNote}
+                              onChange={(e) => setEditNote(e.target.value.slice(0, 100))}
+                              maxLength={100}
+                              placeholder="메모 (선택 — 희망 주기·수준 등)"
+                            />
+                            <PrefSelects
+                              idPrefix={`demand-edit-${q.id}`}
+                              domain={editDomain}
+                              difficulty={editDifficulty}
+                              time={editTime}
+                              onDomain={setEditDomain}
+                              onDifficulty={setEditDifficulty}
+                              onTime={setEditTime}
+                            />
+                            <div className="flex justify-end gap-1.5">
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => setEditingId(null)}
+                                disabled={editMutation.isPending}
+                              >
+                                취소
+                              </Button>
+                              <Button
+                                size="sm"
+                                onClick={() => editMutation.mutate(q)}
+                                disabled={!editBody.trim() || editMutation.isPending}
+                              >
+                                {editMutation.isPending ? (
+                                  <Loader2 size={13} className="mr-1 animate-spin" />
+                                ) : null}
+                                저장
+                              </Button>
+                            </div>
+                          </div>
+                        )}
 
                         {/* 개설 파이프라인(스터디) / 운영진 액션(세미나) */}
                         {status !== "opened" && status !== "declined" && user && (
@@ -569,20 +941,37 @@ export default function DemandSurveySection({ kind }: Props) {
                         )}
                       </div>
 
-                      {/* 본인 삭제 */}
+                      {/* 본인 편집·삭제 */}
                       {isOwner && (
-                        <button
-                          type="button"
-                          onClick={() => {
-                            if (!window.confirm("삭제하시겠습니까?")) return;
-                            deleteMutation.mutate(q.id);
-                          }}
-                          disabled={deleteMutation.isPending}
-                          aria-label="삭제"
-                          className="shrink-0 rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
-                        >
-                          <Trash2 size={14} />
-                        </button>
+                        <div className="flex shrink-0 flex-col gap-1">
+                          {status === "collecting" && (
+                            <button
+                              type="button"
+                              onClick={() => (editingId === q.id ? setEditingId(null) : startEdit(q))}
+                              aria-label="수정"
+                              className={cn(
+                                "rounded-lg p-1.5 transition-colors hover:bg-muted",
+                                editingId === q.id
+                                  ? "text-primary"
+                                  : "text-muted-foreground hover:text-primary",
+                              )}
+                            >
+                              {editingId === q.id ? <X size={14} /> : <Pencil size={14} />}
+                            </button>
+                          )}
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!window.confirm("삭제하시겠습니까?")) return;
+                              deleteMutation.mutate(q.id);
+                            }}
+                            disabled={deleteMutation.isPending}
+                            aria-label="삭제"
+                            className="rounded-lg p-1.5 text-muted-foreground transition-colors hover:bg-muted hover:text-destructive"
+                          >
+                            <Trash2 size={14} />
+                          </button>
+                        </div>
                       )}
                     </div>
                   </div>

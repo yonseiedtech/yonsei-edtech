@@ -30,6 +30,7 @@ import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { commBoardsApi, commQuestionsApi, commLikesApi, activityParticipationsApi } from "@/lib/bkend";
 import { DEMAND_CONTEXT_ID } from "@/features/demand/ensure-demand-board";
 import DemandRetroSection from "@/features/demand/DemandRetroSection";
+import DemandCampaignEditor from "@/features/demand/DemandCampaignEditor";
 import type { CommQuestion, CommBoard } from "@/types";
 
 type FilterTab = "all" | "스터디 희망" | "세미나 희망";
@@ -71,7 +72,7 @@ function escapeCell(v: string): string {
 
 export default function DemandConsolePage() {
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
-  const [view, setView] = useState<"current" | "retro">("current");
+  const [view, setView] = useState<"campaign" | "current" | "retro">("current");
 
   // ── 보드 조회 (ensure 불필요 — 콘솔은 읽기 전용) ────────────────────────
   const { data: board } = useQuery({
@@ -211,9 +212,10 @@ export default function DemandConsolePage() {
       <div className="flex gap-2">
         {(
           [
+            { key: "campaign", label: "수요조사 캠페인" },
             { key: "current", label: "현재 수요" },
             { key: "retro", label: "지난 학기 회고" },
-          ] as { key: "current" | "retro"; label: string }[]
+          ] as { key: "campaign" | "current" | "retro"; label: string }[]
         ).map(({ key, label }) => (
           <button
             key={key}
@@ -231,7 +233,9 @@ export default function DemandConsolePage() {
         ))}
       </div>
 
-      {view === "retro" ? (
+      {view === "campaign" ? (
+        <DemandCampaignEditor />
+      ) : view === "retro" ? (
         <DemandRetroSection />
       ) : (
         <>

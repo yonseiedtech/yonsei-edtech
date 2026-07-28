@@ -80,6 +80,18 @@ export interface CommQuestion {
     /** 희망 주기·수준 등 메모 (≤100자) */
     note?: string;
     /**
+     * 구조화 선호 필드 (제안서 2.1.1 Phase 1). 모두 옵셔널 — 부재 시 "무관"으로 취급.
+     * 캠페인 주제(topic) 선택 시 domain 을 자동 채울 수 있다.
+     */
+    /** 교육공학 하위 분야 (교수설계·학습분석·에듀테크·HRD/평생교육·교육평가·연구방법론·기타) */
+    domain?: string;
+    /** 난이도 (입문·중급·심화·무관) */
+    difficulty?: string;
+    /** 선호 시간대 (오전·오후·저녁·무관) */
+    preferredTime?: string;
+    /** 등록 시 선택한 캠페인 사전 주제 id (자유 입력 시 부재) */
+    campaignTopicId?: string;
+    /**
      * 스터디 개설 파이프라인 단계 (운영진/모임장 관리). 부재 시 "collecting".
      *  - collecting: 수집중(기본)   - reviewing: 개설 검토중(정족수)
      *  - leader: 모임장 선정         - designing: 스터디 설계중
