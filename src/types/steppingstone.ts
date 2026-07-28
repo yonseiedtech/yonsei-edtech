@@ -148,6 +148,22 @@ export interface RoadmapStage {
    * 옵션 — 미지정 시 표시 안 함.
    */
   bloomStage?: BloomStage;
+  /**
+   * 학기별 온보딩 가이드북 리치 필드 (모두 옵셔널 — 하위호환).
+   * 미지정 시 기존 체크리스트 카드만 노출된다.
+   */
+  /** 안정 URL slug (미지정 시 matchSemester 번호 사용) */
+  slug?: string;
+  /** 가이드북 도입부 (markdown) */
+  overview?: string;
+  /** 가이드북 챕터 (heading + markdown 본문) */
+  sections?: { heading: string; body: string }[];
+  /** 자료·바로가기 링크 */
+  resources?: {
+    label: string;
+    href: string;
+    kind?: "internal" | "external" | "download";
+  }[];
   /** 게시 여부 — false 면 회원에게 숨김 */
   published: boolean;
   createdAt: string;

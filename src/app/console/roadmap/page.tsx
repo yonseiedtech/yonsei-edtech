@@ -13,6 +13,7 @@ import {
   AlertTriangle,
   ArrowDown,
   ArrowUp,
+  BookOpen,
   CheckCircle2,
   Eye,
   EyeOff,
@@ -37,7 +38,19 @@ import {
 } from "@/types/steppingstone";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
+
+type ResourceKind = "internal" | "external" | "download";
+interface DraftSection {
+  heading: string;
+  body: string;
+}
+interface DraftResource {
+  label: string;
+  href: string;
+  kind: ResourceKind;
+}
 
 interface StageDraft {
   id?: string;
@@ -49,9 +62,18 @@ interface StageDraft {
   colorPreset: RoadmapColorPreset;
   isAlumni: boolean;
   published: boolean;
+  // 온보딩 가이드북 리치 필드 (옵셔널 — 하위호환)
+  overview: string;
+  sections: DraftSection[];
+  resources: DraftResource[];
 }
 
 const COLOR_KEYS: RoadmapColorPreset[] = ["blue", "emerald", "amber", "rose", "purple", "slate"];
+const RESOURCE_KINDS: { value: ResourceKind; label: string }[] = [
+  { value: "internal", label: "사이트 내" },
+  { value: "external", label: "외부 링크" },
+  { value: "download", label: "다운로드" },
+];
 
 function newDraft(order: number): StageDraft {
   return {
@@ -63,6 +85,9 @@ function newDraft(order: number): StageDraft {
     colorPreset: "blue",
     isAlumni: false,
     published: false,
+    overview: "",
+    sections: [],
+    resources: [],
   };
 }
 
@@ -77,6 +102,29 @@ function stageToDraft(s: RoadmapStage): StageDraft {
     colorPreset: s.colorPreset,
     isAlumni: s.isAlumni,
     published: s.published,
+    overview: s.overview ?? "",
+    sections: (s.sections ?? []).map((x) => ({ heading: x.heading, body: x.body })),
+    resources: (s.resources ?? []).map((x) => ({
+      label: x.label,
+      href: x.href,
+      kind: (x.kind ?? "internal") as ResourceKind,
+    })),
+  };
+}
+
+/** 리치 필드 → 저장 payload (빈값 정리 후 undefined 로 하위호환) */
+function richPayload(draft: StageDraft): Record<string, unknown> {
+  const overview = draft.overview.trim();
+  const sections = draft.sections
+    .map((s) => ({ heading: s.heading.trim(), body: s.body.trim() }))
+    .filter((s) => s.heading || s.body);
+  const resources = draft.resources
+    .map((r) => ({ label: r.label.trim(), href: r.href.trim(), kind: r.kind }))
+    .filter((r) => r.label && r.href);
+  return {
+    overview: overview || undefined,
+    sections: sections.length > 0 ? sections : undefined,
+    resources: resources.length > 0 ? resources : undefined,
   };
 }
 
@@ -131,6 +179,7 @@ function AdminContent() {
         colorPreset: draft.colorPreset,
         isAlumni: draft.isAlumni,
         published: draft.published,
+        ...richPayload(draft),
         updatedAt: now,
       });
       toast.success("저장됨");
@@ -182,6 +231,7 @@ function AdminContent() {
         colorPreset: newStage.colorPreset,
         isAlumni: newStage.isAlumni,
         published: newStage.published,
+        ...richPayload(newStage),
         createdAt: now,
         updatedAt: now,
       });
@@ -420,6 +470,191 @@ function AdminContent() {
               <Plus size={12} />
               항목 추가
             </Button>
+          </div>
+        </div>
+
+        {/* ── 온보딩 가이드북 리치 필드 (옵셔널) ── */}
+        <div className="mt-5 rounded-xl border border-dashed border-primary/30 bg-primary/5 p-4">
+          <div className="flex items-center gap-1.5 text-xs font-bold text-primary">
+            <BookOpen size={13} />
+            온보딩 가이드북 (선택)
+          </div>
+          <p className="mt-0.5 text-[11px] text-muted-foreground">
+            입력 시 학기 카드의 &ldquo;가이드북 열기&rdquo; 페이지에 노출됩니다. 마크다운을 지원합니다.
+          </p>
+
+          {/* 개요 */}
+          <div className="mt-3">
+            <label className="text-xs font-semibold">개요 (도입부 · markdown)</label>
+            <Textarea
+              value={draft.overview}
+              onChange={(e) => onChange({ overview: e.target.value })}
+              placeholder="이 학기의 목표·핵심 메시지를 간단히 소개하세요."
+              className="mt-1 min-h-20"
+            />
+          </div>
+
+          {/* 챕터 */}
+          <div className="mt-3">
+            <label className="text-xs font-semibold">챕터 (heading + 본문)</label>
+            <div className="mt-1 space-y-3">
+              {draft.sections.map((sec, idx) => (
+                <div key={idx} className="rounded-lg border bg-card p-3">
+                  <div className="flex items-center gap-1.5">
+                    <span className="w-5 shrink-0 text-center text-xs font-medium text-muted-foreground tabular-nums">
+                      {idx + 1}
+                    </span>
+                    <Input
+                      value={sec.heading}
+                      onChange={(e) => {
+                        const next = [...draft.sections];
+                        next[idx] = { ...next[idx], heading: e.target.value };
+                        onChange({ sections: next });
+                      }}
+                      placeholder={`챕터 ${idx + 1} 제목 — 예: 합격 직후 준비`}
+                      className="flex-1"
+                    />
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={() => {
+                        if (idx === 0) return;
+                        const next = [...draft.sections];
+                        [next[idx - 1], next[idx]] = [next[idx], next[idx - 1]];
+                        onChange({ sections: next });
+                      }}
+                      disabled={idx === 0}
+                      aria-label={`${idx + 1}번 챕터 위로`}
+                    >
+                      <ArrowUp size={12} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={() => {
+                        if (idx === draft.sections.length - 1) return;
+                        const next = [...draft.sections];
+                        [next[idx + 1], next[idx]] = [next[idx], next[idx + 1]];
+                        onChange({ sections: next });
+                      }}
+                      disabled={idx === draft.sections.length - 1}
+                      aria-label={`${idx + 1}번 챕터 아래로`}
+                    >
+                      <ArrowDown size={12} />
+                    </Button>
+                    <Button
+                      size="sm"
+                      variant="outline"
+                      type="button"
+                      onClick={() =>
+                        onChange({ sections: draft.sections.filter((_, i) => i !== idx) })
+                      }
+                      className="text-destructive"
+                      aria-label={`${idx + 1}번 챕터 삭제`}
+                    >
+                      <Trash2 size={12} />
+                    </Button>
+                  </div>
+                  <Textarea
+                    value={sec.body}
+                    onChange={(e) => {
+                      const next = [...draft.sections];
+                      next[idx] = { ...next[idx], body: e.target.value };
+                      onChange({ sections: next });
+                    }}
+                    placeholder="챕터 본문 (markdown — 목록·굵게·링크 지원)"
+                    className="mt-2 min-h-24"
+                  />
+                </div>
+              ))}
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={() =>
+                  onChange({ sections: [...draft.sections, { heading: "", body: "" }] })
+                }
+                className="gap-1"
+              >
+                <Plus size={12} />
+                챕터 추가
+              </Button>
+            </div>
+          </div>
+
+          {/* 자료·바로가기 */}
+          <div className="mt-3">
+            <label className="text-xs font-semibold">자료·바로가기</label>
+            <div className="mt-1 space-y-2">
+              {draft.resources.map((res, idx) => (
+                <div key={idx} className="flex flex-wrap items-center gap-1.5">
+                  <Input
+                    value={res.label}
+                    onChange={(e) => {
+                      const next = [...draft.resources];
+                      next[idx] = { ...next[idx], label: e.target.value };
+                      onChange({ resources: next });
+                    }}
+                    placeholder="라벨 — 예: 수강신청 안내"
+                    className="min-w-[8rem] flex-1"
+                  />
+                  <Input
+                    value={res.href}
+                    onChange={(e) => {
+                      const next = [...draft.resources];
+                      next[idx] = { ...next[idx], href: e.target.value };
+                      onChange({ resources: next });
+                    }}
+                    placeholder="링크 — /archive 또는 https://…"
+                    className="min-w-[10rem] flex-1"
+                  />
+                  <select
+                    value={res.kind}
+                    onChange={(e) => {
+                      const next = [...draft.resources];
+                      next[idx] = { ...next[idx], kind: e.target.value as ResourceKind };
+                      onChange({ resources: next });
+                    }}
+                    className="h-10 rounded-md border bg-background px-2 text-sm"
+                    aria-label={`${idx + 1}번 자료 유형`}
+                  >
+                    {RESOURCE_KINDS.map((k) => (
+                      <option key={k.value} value={k.value}>
+                        {k.label}
+                      </option>
+                    ))}
+                  </select>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    type="button"
+                    onClick={() =>
+                      onChange({ resources: draft.resources.filter((_, i) => i !== idx) })
+                    }
+                    className="text-destructive"
+                    aria-label={`${idx + 1}번 자료 삭제`}
+                  >
+                    <Trash2 size={12} />
+                  </Button>
+                </div>
+              ))}
+              <Button
+                size="sm"
+                variant="outline"
+                type="button"
+                onClick={() =>
+                  onChange({
+                    resources: [...draft.resources, { label: "", href: "", kind: "internal" }],
+                  })
+                }
+                className="gap-1"
+              >
+                <Plus size={12} />
+                자료 추가
+              </Button>
+            </div>
           </div>
         </div>
 

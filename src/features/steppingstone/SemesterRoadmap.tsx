@@ -44,7 +44,7 @@ import {
   setItemChecked,
 } from "./mastery-progress";
 
-interface RoadmapItem {
+export interface RoadmapItem {
   semester: number;
   /** stage 정렬 순서 — localStorage 키에 사용 */
   order: number;
@@ -58,7 +58,7 @@ interface RoadmapItem {
 }
 
 /** Firestore 가 비어있을 때 사용할 정적 fallback */
-const STATIC_FALLBACK: RoadmapItem[] = [
+export const STATIC_FALLBACK: RoadmapItem[] = [
   {
     semester: 1,
     order: 1,
@@ -225,8 +225,9 @@ function StageCard({ stage, isMine, isLoggedIn, onProgressChange }: StageCardPro
     (stage.items ?? []).map(() => false)
   );
 
-  // 클라이언트에서만 localStorage 읽기
+  // 클라이언트에서만 localStorage 읽기 (SSR-safe 하이드레이션 — 서버 false, 마운트 후 1회 반영)
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     setChecked(
       (stage.items ?? []).map((_, i) => getItemChecked(stage.order, i))
     );
@@ -383,6 +384,19 @@ function StageCard({ stage, isMine, isLoggedIn, onProgressChange }: StageCardPro
         // 비로그인 안내는 섹션 하단 통합 배너에서 처리 — 카드별 표시 생략
         null
       )}
+
+      {/* 학기별 온보딩 가이드북 딥링크 */}
+      <Link
+        href={`/steppingstone/semester/${stage.semester}`}
+        aria-label={`${stage.title} 가이드북 열기`}
+        className={cn(
+          "mt-4 inline-flex items-center gap-1 text-sm font-semibold transition-colors hover:underline",
+          isMine ? "text-primary" : stage.color
+        )}
+      >
+        <BookOpen size={14} aria-hidden />
+        가이드북 열기 →
+      </Link>
     </div>
   );
 }
