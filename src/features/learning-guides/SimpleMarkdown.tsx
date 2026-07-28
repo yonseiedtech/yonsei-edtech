@@ -128,6 +128,7 @@ type BlockNode =
   | { type: "ul"; items: string[] }
   | { type: "ol"; items: string[] }
   | { type: "p"; text: string }
+  | { type: "hr" }
   | { type: "blank" };
 
 function parseBlocks(markdown: string): BlockNode[] {
@@ -152,7 +153,12 @@ function parseBlocks(markdown: string): BlockNode[] {
       continue;
     }
 
-    // 헤딩
+    // 수평 구분선 (--- / *** / ___)
+    if (/^\s*([-*_])\1{2,}\s*$/.test(line)) { blocks.push({ type: "hr" }); i++; continue; }
+
+    // 헤딩 (#### 이상은 h3 스타일로 렌더 — 문자 그대로 노출 방지)
+    const h4plus = line.match(/^#{4,6}\s+(.+)$/);
+    if (h4plus) { blocks.push({ type: "h3", text: h4plus[1] }); i++; continue; }
     const h3 = line.match(/^### (.+)$/);
     if (h3) { blocks.push({ type: "h3", text: h3[1] }); i++; continue; }
     const h2 = line.match(/^## (.+)$/);
@@ -189,15 +195,25 @@ function parseBlocks(markdown: string): BlockNode[] {
       continue;
     }
 
-    // 단락
-    const paragraphLines: string[] = [];
-    while (i < lines.length && lines[i].trim() !== "" && !lines[i].match(/^[#`*-]/) && !/^\d+\./.test(lines[i])) {
+    // 단락 — 위 블록 분기를 모두 통과한 줄이므로 현재 줄은 무조건 1개 소비한다.
+    // (과거: 단락 가드가 첫 문자 /^[#`*-]/ 만 보고 "**볼드**"·"---"·"#### 헤딩"·"`코드`"
+    //  로 시작하는 줄을 배제 → paragraphLines 가 비어 i 가 전진하지 못하고 무한 루프 →
+    //  Chrome "응답 없음". 계속 수집은 '진짜 블록 시작'(공백 포함) 기준으로만 중단한다.)
+    const isBlockStart = (l: string): boolean =>
+      l.trim() === "" ||
+      l.trimStart().startsWith("```") ||
+      /^#{1,6}\s/.test(l) ||
+      /^\s*([-*_])\1{2,}\s*$/.test(l) ||
+      /^[-*]\s/.test(l) ||
+      /^\d+\.\s/.test(l);
+
+    const paragraphLines: string[] = [lines[i]];
+    i++;
+    while (i < lines.length && !isBlockStart(lines[i])) {
       paragraphLines.push(lines[i]);
       i++;
     }
-    if (paragraphLines.length > 0) {
-      blocks.push({ type: "p", text: paragraphLines.join(" ") });
-    }
+    blocks.push({ type: "p", text: paragraphLines.join(" ") });
   }
 
   return blocks;
@@ -259,6 +275,8 @@ function renderBlock(block: BlockNode, idx: number): ReactNode {
           {renderInline(parseInline(block.text), key)}
         </p>
       );
+    case "hr":
+      return <hr key={key} className="my-6 border-t border-border" />;
     case "blank":
       return <div key={key} className="h-3" />;
     default:
