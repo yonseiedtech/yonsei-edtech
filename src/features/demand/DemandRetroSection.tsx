@@ -51,9 +51,12 @@ import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSeme
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   DOMAIN_OPTIONS,
-  useDemandCampaign,
-  useUpdateDemandCampaign,
+  useDemandCampaigns,
+  useUpdateDemandCampaigns,
+  upsertCampaign,
+  pickActiveOrLatest,
   makeCampaignTopic,
+  makeCampaignId,
   type DemandCampaign,
 } from "./useDemandCampaign";
 import type { CommBoard, CommQuestion } from "@/types";
@@ -95,8 +98,12 @@ export default function DemandRetroSection() {
   // ── L2) 학기 전환 수요 이월 — 미개설 상위 수요를 현재 학기 캠페인 주제로 추가 ──
   const { user } = useAuthStore();
   const currentKey = useEffectiveSemesterKey();
-  const { campaign: currentCampaign, recordId: currentRecordId } = useDemandCampaign(currentKey);
-  const carryOverMutation = useUpdateDemandCampaign();
+  const { campaigns, recordId: currentRecordId, today } = useDemandCampaigns(currentKey);
+  const currentCampaign = useMemo(
+    () => pickActiveOrLatest(campaigns, today),
+    [campaigns, today],
+  );
+  const carryOverMutation = useUpdateDemandCampaigns();
   // 이미 이번 학기 캠페인 주제에 있는 라벨(중복 방지) — 소문자·trim 정규화 집합.
   const currentTopicLabels = useMemo(
     () => new Set((currentCampaign?.topics ?? []).map((t) => t.label.trim().toLowerCase())),
@@ -118,6 +125,8 @@ export default function DemandRetroSection() {
     const domain =
       rawDomain && (DOMAIN_OPTIONS as readonly string[]).includes(rawDomain) ? rawDomain : "";
     const base: DemandCampaign = currentCampaign ?? {
+      id: makeCampaignId(),
+      round: 1,
       semester: currentKey,
       title: `${semesterLabelFromKey(currentKey)} 스터디 수요조사`,
       topics: [],
@@ -132,7 +141,7 @@ export default function DemandRetroSection() {
       updatedAt: new Date().toISOString(),
     };
     carryOverMutation.mutate(
-      { recordId: currentRecordId, campaign: next, semesterKey: currentKey },
+      { recordId: currentRecordId, campaigns: upsertCampaign(campaigns, next), semesterKey: currentKey },
       {
         onSuccess: () =>
           toast.success(`"${label.slice(0, 20)}${label.length > 20 ? "…" : ""}"을(를) 다음 캠페인 주제로 추가했습니다.`),

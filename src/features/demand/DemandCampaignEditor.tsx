@@ -22,9 +22,12 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { commBoardsApi, commQuestionsApi, commLikesApi } from "@/lib/bkend";
 import { appendStatusHistory } from "./demand-status";
 import {
-  useDemandCampaign,
-  useUpdateDemandCampaign,
+  useDemandCampaigns,
+  useUpdateDemandCampaigns,
+  upsertCampaign,
+  pickActiveOrLatest,
   makeCampaignTopic,
+  makeCampaignId,
   DOMAIN_OPTIONS,
   type DemandCampaign,
   type DemandCampaignTopic,
@@ -52,12 +55,34 @@ export default function DemandCampaignEditor() {
   const semesterLabel = semesterLabelFromKey(semesterKey);
   const { user } = useAuthStore();
   const qc = useQueryClient();
-  const { campaign, recordId, isLoading } = useDemandCampaign(semesterKey);
-  const saveMutation = useUpdateDemandCampaign();
+  const { campaigns, recordId, isLoading, today } = useDemandCampaigns(semesterKey);
+  const saveMutation = useUpdateDemandCampaigns();
 
-  // L5. 지난 학기 캠페인 (템플릿 복제 소스) — 직전 학기 키로 로드.
+  // L5. 지난 학기 캠페인 (템플릿 복제 소스) — 직전 학기 키로 로드(활성/최신 1건).
   const prevKey = useMemo(() => shiftSemesterKey(semesterKey, -1), [semesterKey]);
-  const { campaign: prevCampaign, isLoading: prevLoading } = useDemandCampaign(prevKey ?? "");
+  const { campaigns: prevCampaigns, isLoading: prevLoading, today: prevToday } =
+    useDemandCampaigns(prevKey ?? "");
+  const prevCampaign = useMemo(
+    () => pickActiveOrLatest(prevCampaigns, prevToday),
+    [prevCampaigns, prevToday],
+  );
+
+  // ── 편집 대상 선택 (복수 라운드) ──────────────────────────────────────────
+  // selectedId 가 배열에 없으면(미저장 신규) pendingNew 로 편집한다.
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [pendingNew, setPendingNew] = useState<DemandCampaign | null>(null);
+  const activeOrLatest = useMemo(() => pickActiveOrLatest(campaigns, today), [campaigns, today]);
+  const selected = useMemo<DemandCampaign | null>(() => {
+    if (pendingNew && selectedId === pendingNew.id) return pendingNew;
+    return campaigns.find((c) => c.id === selectedId) ?? activeOrLatest;
+  }, [campaigns, selectedId, activeOrLatest, pendingNew]);
+
+  // 라운드 목록(round 오름차순 + 미저장 신규 말미)
+  const roundList = useMemo(() => {
+    const list = [...campaigns].sort((a, b) => (a.round ?? 0) - (b.round ?? 0));
+    if (pendingNew) list.push(pendingNew);
+    return list;
+  }, [campaigns, pendingNew]);
 
   const [title, setTitle] = useState("");
   const [description, setDescription] = useState("");
@@ -66,18 +91,63 @@ export default function DemandCampaignEditor() {
   const [status, setStatus] = useState<CampaignStatus>("draft");
   const [topics, setTopics] = useState<DemandCampaignTopic[]>([]);
 
-  // 로드된 캠페인으로 폼 동기화 — 렌더 중 안전 리셋(React "이전 값 저장" 패턴).
-  // 학기 전환·저장 후 재조회로 identity(키)가 바뀌면 서버 값으로 폼을 재설정한다.
+  // 선택 캠페인으로 폼 동기화 — 렌더 중 안전 리셋(React "이전 값 저장" 패턴).
+  // 학기 전환·라운드 선택·저장 후 재조회로 identity(키)가 바뀌면 서버 값으로 폼을 재설정한다.
   const [loadedKey, setLoadedKey] = useState<string | null>(null);
-  const identity = isLoading ? null : `${semesterKey}::${recordId ?? "new"}::${campaign?.updatedAt ?? ""}`;
+  const identity = isLoading
+    ? null
+    : `${semesterKey}::${recordId ?? "new"}::${selected?.id ?? "empty"}::${selected?.updatedAt ?? ""}`;
   if (identity !== null && identity !== loadedKey) {
     setLoadedKey(identity);
-    setTitle(campaign?.title ?? "");
-    setDescription(campaign?.description ?? "");
-    setStartDate(campaign?.startDate ?? "");
-    setEndDate(campaign?.endDate ?? "");
-    setStatus(campaign?.status ?? "draft");
-    setTopics(campaign?.topics ?? []);
+    setTitle(selected?.title ?? "");
+    setDescription(selected?.description ?? "");
+    setStartDate(selected?.startDate ?? "");
+    setEndDate(selected?.endDate ?? "");
+    setStatus(selected?.status ?? "draft");
+    setTopics(selected?.topics ?? []);
+  }
+
+  function selectRound(id: string) {
+    setSelectedId(id);
+    if (pendingNew && pendingNew.id !== id) setPendingNew(null);
+  }
+
+  function handleAddRound() {
+    const maxRound = campaigns.reduce((m, c) => Math.max(m, c.round ?? 1), 0);
+    const fresh: DemandCampaign = {
+      id: makeCampaignId(),
+      round: maxRound + 1,
+      semester: semesterKey,
+      title: "",
+      topics: [],
+      startDate: "",
+      endDate: "",
+      status: "draft",
+    };
+    setPendingNew(fresh);
+    setSelectedId(fresh.id);
+  }
+
+  function handleRemoveRound() {
+    if (!selected) return;
+    // 미저장 신규(pendingNew) 는 배열에서 그냥 폐기.
+    if (pendingNew && selected.id === pendingNew.id) {
+      setPendingNew(null);
+      setSelectedId(null);
+      return;
+    }
+    if (!window.confirm(`${selected.round ?? 1}차 캠페인을 삭제합니다. 계속할까요?`)) return;
+    const nextCampaigns = campaigns.filter((c) => c.id !== selected.id);
+    saveMutation.mutate(
+      { recordId, campaigns: nextCampaigns, semesterKey },
+      {
+        onSuccess: () => {
+          toast.success("라운드를 삭제했습니다.");
+          setSelectedId(null);
+        },
+        onError: (e) => toast.error(`삭제 실패: ${e instanceof Error ? e.message : "오류"}`),
+      },
+    );
   }
 
   function updateTopic(id: string, patch: Partial<DemandCampaignTopic>) {
@@ -187,7 +257,13 @@ export default function DemandCampaignEditor() {
     const cleanTopics = topics
       .map((t) => ({ ...t, label: t.label.trim(), domain: t.domain?.trim() || undefined }))
       .filter((t) => t.label.length > 0);
+    // 선택 캠페인의 id·round 승계(신규는 새 id·round=1). 배열에 upsert 후 전체 저장.
+    const id = selected?.id ?? makeCampaignId();
+    const round = selected?.round ?? 1;
+    const prevStatus = selected?.status;
     const payload: DemandCampaign = {
+      id,
+      round,
       semester: semesterKey,
       title: title.trim(),
       description: description.trim() || undefined,
@@ -198,13 +274,16 @@ export default function DemandCampaignEditor() {
       updatedBy: user?.name ?? user?.id ?? "",
       updatedAt: new Date().toISOString(),
     };
+    const nextCampaigns = upsertCampaign(campaigns, payload);
     // 마감으로 전환(직전 저장이 마감이 아니었던 경우)이면 저장 성공 후 일괄 전환 흐름 실행.
-    const closing = status === "closed" && campaign?.status !== "closed";
+    const closing = status === "closed" && prevStatus !== "closed";
     saveMutation.mutate(
-      { recordId, campaign: payload, semesterKey },
+      { recordId, campaigns: nextCampaigns, semesterKey },
       {
         onSuccess: () => {
           toast.success("캠페인을 저장했습니다.");
+          setPendingNew(null);
+          setSelectedId(id);
           if (closing) void runBulkConvert(true);
         },
         onError: (e) =>
@@ -250,6 +329,48 @@ export default function DemandCampaignEditor() {
             )}
             지난 학기 캠페인 불러오기
           </Button>
+        </div>
+
+        {/* ── 라운드(캠페인) 목록 — 복수 캠페인 선택·추가·삭제 ── */}
+        <div className="mb-4 flex flex-wrap items-center gap-1.5 border-b pb-3">
+          {roundList.map((c) => {
+            const isSel = selected?.id === c.id;
+            const isPending = pendingNew?.id === c.id;
+            return (
+              <button
+                key={c.id}
+                type="button"
+                onClick={() => selectRound(c.id)}
+                aria-pressed={isSel}
+                className={cn(
+                  "flex items-center gap-1.5 rounded-full border px-3 py-1 text-xs transition-colors",
+                  isSel
+                    ? "border-primary bg-primary/10 text-primary"
+                    : "border-border text-muted-foreground hover:bg-accent",
+                )}
+              >
+                <span className="font-medium">{c.round ?? 1}차</span>
+                <span className="text-[10px] opacity-70">
+                  {isPending ? "미저장" : STATUS_META[c.status].label}
+                </span>
+              </button>
+            );
+          })}
+          <Button type="button" size="sm" variant="outline" onClick={handleAddRound}>
+            <Plus size={13} className="mr-1" /> 라운드 추가
+          </Button>
+          {selected && (
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              onClick={handleRemoveRound}
+              disabled={saveMutation.isPending}
+              className="text-muted-foreground hover:text-destructive"
+            >
+              <Trash2 size={13} className="mr-1" /> 라운드 삭제
+            </Button>
+          )}
         </div>
 
         <div className="space-y-4">

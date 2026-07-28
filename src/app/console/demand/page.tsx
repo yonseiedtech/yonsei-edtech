@@ -42,7 +42,9 @@ import { DEMAND_CONTEXT_ID } from "@/features/demand/ensure-demand-board";
 import DemandRetroSection from "@/features/demand/DemandRetroSection";
 import DemandCampaignEditor from "@/features/demand/DemandCampaignEditor";
 import {
-  useDemandCampaign,
+  useDemandCampaigns,
+  resolveCampaignPhase,
+  pickActiveOrLatest,
   daysBetweenYmd,
   DOMAIN_OPTIONS,
   DIFFICULTY_OPTIONS,
@@ -211,7 +213,40 @@ export default function DemandConsolePage() {
   // M2 히트맵 셀 클릭 → 목록 필터(domain × difficulty). insights 탭에서 클릭 시 current 로 이동.
   const [cellFilter, setCellFilter] = useState<{ domain: string; difficulty: string } | null>(null);
   const semesterKey = useEffectiveSemesterKey();
-  const { campaign, state, today } = useDemandCampaign(semesterKey);
+  // 복수 캠페인(라운드) — 선택 캠페인 우선, 미선택 시 활성/최신 1건 기준으로 대시보드·알림을 구성.
+  const { campaigns, today } = useDemandCampaigns(semesterKey);
+  const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null);
+  const campaign = useMemo(() => {
+    const found = selectedCampaignId
+      ? campaigns.find((c) => c.id === selectedCampaignId)
+      : null;
+    return found ?? pickActiveOrLatest(campaigns, today);
+  }, [campaigns, selectedCampaignId, today]);
+  const state = useMemo(() => resolveCampaignPhase(campaign, today), [campaign, today]);
+
+  // 라운드 선택 드롭다운 (캠페인 2개 이상일 때만 노출)
+  const campaignSelector =
+    campaigns.length >= 2 ? (
+      <div className="flex flex-wrap items-center gap-2">
+        <label htmlFor="campaign-round-select" className="text-[11px] text-muted-foreground">
+          라운드 선택
+        </label>
+        <select
+          id="campaign-round-select"
+          value={campaign?.id ?? ""}
+          onChange={(e) => setSelectedCampaignId(e.target.value || null)}
+          className="h-8 rounded-md border border-input bg-background px-2 text-xs text-foreground"
+        >
+          {[...campaigns]
+            .sort((a, b) => (a.round ?? 0) - (b.round ?? 0))
+            .map((c) => (
+              <option key={c.id} value={c.id}>
+                {c.round ?? 1}차 · {c.title || "(제목 없음)"}
+              </option>
+            ))}
+        </select>
+      </div>
+    ) : null;
 
   // ── 보드 조회 (ensure 불필요 — 콘솔은 읽기 전용) ────────────────────────
   const { data: board } = useQuery({
@@ -588,6 +623,7 @@ export default function DemandConsolePage() {
 
       {view === "campaign" ? (
         <div className="space-y-4">
+          {campaignSelector}
           {campaign && (
             <CampaignOpenNotifier campaign={campaign} daysLeft={state.daysLeft} />
           )}
@@ -786,6 +822,7 @@ export default function DemandConsolePage() {
                     {campaign.startDate} ~ {campaign.endDate}
                   </span>
                 )}
+                {campaignSelector && <div className="ml-auto">{campaignSelector}</div>}
               </div>
 
               <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">

@@ -57,7 +57,9 @@ import { appendStatusHistory } from "./demand-status";
 import { notifyDemandQuorumReached } from "@/features/notifications/notify";
 import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import {
-  useDemandCampaign,
+  useDemandCampaigns,
+  resolveActiveCampaign,
+  resolveCampaignPhase,
   DOMAIN_OPTIONS,
   DIFFICULTY_OPTIONS,
   TIME_OPTIONS,
@@ -252,7 +254,16 @@ export default function DemandSurveySection({ kind }: Props) {
   const meta = KIND_META[kind];
   const semesterLabel = currentDemandSemesterLabel();
   const semesterKey = useEffectiveSemesterKey();
-  const { campaign, state: campaignState } = useDemandCampaign(semesterKey);
+  // 복수 캠페인 중 현재 활성 1건을 골라 배너·주제칩·기간마감을 적용. 활성 없으면 현행 자유 등록.
+  const { campaigns, today } = useDemandCampaigns(semesterKey);
+  const campaign = useMemo(
+    () => resolveActiveCampaign(campaigns, today),
+    [campaigns, today],
+  );
+  const campaignState = useMemo(
+    () => resolveCampaignPhase(campaign, today),
+    [campaign, today],
+  );
   const { user } = useAuthStore();
   const isStaff = isAtLeast(user, "staff");
   const qc = useQueryClient();
