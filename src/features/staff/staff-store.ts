@@ -103,10 +103,12 @@ export function useCreateNotice() {
       pinned: boolean;
       authorId: string;
       authorName: string;
+      /** 스탬프 학기 키. 미전달 시 currentSemesterKey() 폴백(하위호환). */
+      semester?: string;
     }) =>
       dataApi.create<Record<string, unknown>>(NOTICES_TABLE, {
         ...data,
-        semester: currentSemesterKey(),
+        semester: data.semester || currentSemesterKey(),
       }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["staff_notices"] }),
   });
@@ -167,7 +169,8 @@ export function useCreateProject() {
     mutationFn: (data: Omit<StaffProject, "id" | "createdAt" | "updatedAt">) =>
       dataApi.create<Record<string, unknown>>(PROJECTS_TABLE, {
         ...data,
-        semester: currentSemesterKey(),
+        // 호출부에서 effectiveKey(override 반영)를 넘기면 우선, 미전달 시 현재 학기 폴백(하위호환).
+        semester: data.semester || currentSemesterKey(),
       } as Record<string, unknown>),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["staff_projects"] }),
   });
@@ -360,6 +363,14 @@ interface StaffUiState {
   /** 선택된 학기 키("YYYY-1"|"YYYY-2"), 빈 문자열이면 전체. 기본=현재 학기. */
   selectedSemester: string;
   setSelectedSemester: (key: string) => void;
+  /**
+   * 사용자가 학기 셀렉트를 직접 바꿨는지 여부.
+   * false 인 동안에만 effectiveKey(override 반영)로 최초 1회 동기화한다(StaffPage).
+   * 사용자가 직접 선택하면 true 로 잠가 override 재동기화가 사용자 선택을 덮지 않게 한다.
+   */
+  semesterTouched: boolean;
+  /** 사용자 직접 선택 — touched 를 잠그고 학기를 설정. */
+  chooseSemester: (key: string) => void;
 }
 
 export const useStaffUiStore = create<StaffUiState>((set) => ({
@@ -367,4 +378,6 @@ export const useStaffUiStore = create<StaffUiState>((set) => ({
   setFocusProjectId: (focusProjectId) => set({ focusProjectId }),
   selectedSemester: currentSemesterKey(),
   setSelectedSemester: (selectedSemester) => set({ selectedSemester }),
+  semesterTouched: false,
+  chooseSemester: (selectedSemester) => set({ selectedSemester, semesterTouched: true }),
 }));

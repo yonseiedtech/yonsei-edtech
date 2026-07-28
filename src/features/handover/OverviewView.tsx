@@ -7,6 +7,7 @@ import {
   FileText, User as UserIcon, Printer, AlertTriangle, Clock, CheckCircle2,
 } from "lucide-react";
 import { useOrgChart } from "@/features/admin/settings/useOrgChart";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import { dataApi } from "@/lib/bkend";
 import EmptyState from "@/components/ui/empty-state";
 import { Button } from "@/components/ui/button";
@@ -37,7 +38,7 @@ interface PositionReadiness {
 }
 
 export default function OverviewView() {
-  const { positions, isLoading } = useOrgChart();
+  const { positions, isLoading } = useOrgChart(useEffectiveSemesterKey());
 
   // 업무수행철(업무노트) — 직책별 건수·최신 갱신일 산출용 (기존 컬렉션 재사용, 신규 없음)
   const { data: handoverDocs = [] } = useQuery({

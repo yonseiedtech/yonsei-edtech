@@ -6,6 +6,7 @@ import { useMutation, useQueryClient, useQuery } from "@tanstack/react-query";
 import { dataApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useOrgChart } from "@/features/admin/settings/useOrgChart";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import { toast } from "sonner";
 import WorkLogEditor, {
   type WorkLogFormValues, sanitizeWorkflow, sanitizeTodos,
@@ -21,7 +22,7 @@ function NewWorkLogInner() {
   const roleParam = searchParams.get("role");
   const { user } = useAuthStore();
   const queryClient = useQueryClient();
-  const { positions } = useOrgChart();
+  const { positions } = useOrgChart(useEffectiveSemesterKey());
 
   const { data: handoverDocs = [] } = useQuery({
     queryKey: ["handover_docs"],

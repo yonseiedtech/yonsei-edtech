@@ -12,6 +12,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { isAdminOrSysadmin } from "@/lib/permissions";
 import { useAllMembers } from "@/features/member/useMembers";
 import { currentSemesterKey, semesterLabelFromKey } from "@/lib/semester";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import {
   useStaffProjects,
   useCreateProject,
@@ -954,6 +955,7 @@ function KanbanBoard({
 function CreateProjectForm({ onClose }: { onClose: () => void }) {
   const { user } = useAuthStore();
   const createProject = useCreateProject();
+  const effectiveKey = useEffectiveSemesterKey();
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
   const [dueDate, setDueDate] = useState("");
@@ -970,6 +972,8 @@ function CreateProjectForm({ onClose }: { onClose: () => void }) {
         status: "planning",
         dueDate: dueDate || undefined,
         createdBy: user.id,
+        // override 반영 학기 스탬프(미설정 시 현재 학기와 동일).
+        semester: effectiveKey,
       },
       {
         onSuccess: () => { toast.success("프로젝트가 생성되었습니다."); onClose(); },

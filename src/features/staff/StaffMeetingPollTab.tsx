@@ -19,7 +19,7 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { networkingEventsApi } from "@/lib/bkend";
 import type { NetworkingEvent } from "@/types";
-import { currentSemesterKey } from "@/lib/semester";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import NetworkingPoll from "@/features/networking/NetworkingPoll";
 import EmptyState from "@/components/ui/empty-state";
 
@@ -44,6 +44,7 @@ function formatPeriod(ev: NetworkingEvent): string {
 export default function StaffMeetingPollTab() {
   const { user } = useAuthStore();
   const qc = useQueryClient();
+  const effectiveKey = useEffectiveSemesterKey();
 
   const canEdit = isAtLeast(user, "staff");
 
@@ -92,7 +93,8 @@ export default function StaffMeetingPollTab() {
         autoDues: false,
         status: "upcoming",
         published: false,
-        semester: currentSemesterKey(),
+        // override 반영 학기 스탬프(미설정 시 현재 학기와 동일).
+        semester: effectiveKey,
         createdBy: user.id,
         createdAt: now,
         updatedAt: now,

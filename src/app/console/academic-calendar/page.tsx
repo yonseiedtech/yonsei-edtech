@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import {
   CalendarDays,
   Plus,
@@ -25,6 +25,11 @@ import {
   pickActiveEntry,
   computeProgress,
 } from "@/features/site-settings/useAcademicCalendar";
+import {
+  useCurrentSemesterSetting,
+  useSetCurrentSemester,
+} from "@/features/site-settings/useCurrentSemester";
+import { currentSemesterKey, listSemesterKeys, semesterLabelFromKey } from "@/lib/semester";
 import ConsolePageHeader from "@/components/admin/ConsolePageHeader";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -163,6 +168,105 @@ function DdayBadge({ start, end }: { start: string | undefined; end?: string }) 
   );
 }
 
+// ── 현재 학기 수동 설정(override) 카드 ──
+// ①층(귀속·스탬프·기본필터)만 반영. 대시보드 날짜 파생 표시(②층)는 학사일정 날짜를 따른다.
+function CurrentSemesterSettingCard() {
+  const { override, isAuto, effectiveKey, recordId, isLoading } = useCurrentSemesterSetting();
+  const setMutation = useSetCurrentSemester();
+  // 렌더 순수성 — 자동 학기 키는 마운트 시 1회 고정.
+  const autoKey = useMemo(() => currentSemesterKey(), []);
+  const semesterKeys = useMemo(() => listSemesterKeys(4, 1), []);
+
+  // 저장된 설정(로딩 완료 시점)에서 파생한 폼 기준값.
+  const savedMode: "auto" | "manual" = isAuto ? "auto" : "manual";
+  const savedKey = isAuto ? autoKey : override.trim();
+
+  const [mode, setMode] = useState<"auto" | "manual">(savedMode);
+  const [manualKey, setManualKey] = useState(savedKey);
+  // 저장값이 바뀌면(최초 로딩·저장 후 포함) 폼을 저장값으로 재동기화 — 렌더 중 조정(React 권장 패턴,
+  // useEffect setState 회피). 로딩 중에는 동기화하지 않음.
+  const [syncedSig, setSyncedSig] = useState(`${savedMode}:${savedKey}`);
+  const savedSig = `${savedMode}:${savedKey}`;
+  if (!isLoading && savedSig !== syncedSig) {
+    setSyncedSig(savedSig);
+    setMode(savedMode);
+    setManualKey(savedKey);
+  }
+
+  async function handleSave() {
+    const value = mode === "manual" ? manualKey : "";
+    try {
+      await setMutation.mutateAsync({ value, recordId });
+      toast.success("현재 학기 설정을 저장했습니다.");
+    } catch (e) {
+      toast.error(`저장 실패: ${(e as Error).message}`);
+    }
+  }
+
+  return (
+    <div className="space-y-3 rounded-2xl border bg-card p-4">
+      <div className="flex flex-wrap items-center justify-between gap-2">
+        <div>
+          <p className="text-sm font-semibold">현재 학기 설정</p>
+          <p className="mt-0.5 text-xs text-muted-foreground">
+            운영진 프로젝트·공지·조직도 등의 귀속 학기와 기본 필터에 적용됩니다. 대시보드의 날짜
+            기반 표시는 위 학사일정 날짜를 따릅니다.
+          </p>
+        </div>
+        <span className="shrink-0 rounded-full border px-2.5 py-1 text-xs font-semibold text-muted-foreground">
+          적용 중: {semesterLabelFromKey(effectiveKey)}
+        </span>
+      </div>
+
+      <div className="flex flex-wrap items-center gap-x-5 gap-y-2">
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="radio"
+            name="current-semester-mode"
+            checked={mode === "auto"}
+            onChange={() => setMode("auto")}
+            className="accent-primary"
+          />
+          자동 (날짜 기준)
+          <span className="text-xs text-muted-foreground">
+            (자동: {semesterLabelFromKey(autoKey)})
+          </span>
+        </label>
+        <label className="flex items-center gap-2 text-sm">
+          <input
+            type="radio"
+            name="current-semester-mode"
+            checked={mode === "manual"}
+            onChange={() => setMode("manual")}
+            className="accent-primary"
+          />
+          수동 지정
+        </label>
+        {mode === "manual" && (
+          <select
+            value={manualKey}
+            onChange={(e) => setManualKey(e.target.value)}
+            className="rounded-md border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+            aria-label="수동 학기 선택"
+          >
+            {semesterKeys.map((k) => (
+              <option key={k} value={k}>
+                {semesterLabelFromKey(k)}
+              </option>
+            ))}
+          </select>
+        )}
+      </div>
+
+      <div className="flex justify-end">
+        <Button size="sm" onClick={handleSave} disabled={setMutation.isPending || isLoading}>
+          {setMutation.isPending ? "저장 중..." : "학기 설정 저장"}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
 export default function AcademicCalendarConsolePage() {
   const { value, recordId, isLoading } = useAcademicCalendar();
   const updateMutation = useUpdateAcademicCalendar();
@@ -288,6 +392,8 @@ export default function AcademicCalendarConsolePage() {
           </p>
         </div>
       )}
+
+      <CurrentSemesterSettingCard />
 
       {/* 상단 툴바: 학기 필터 + 학기 추가 */}
       <div className="flex flex-wrap items-center gap-2">

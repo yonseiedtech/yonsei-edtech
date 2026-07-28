@@ -4,6 +4,7 @@ import { useState, useRef, useCallback, useEffect } from "react";
 import { useSeminars, useAttendees } from "@/features/seminar/useSeminar";
 import { useSeminarAdminContext } from "./seminar-admin-store";
 import { useOrgChart, type OrgPosition } from "@/features/admin/settings/useOrgChart";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { auth } from "@/lib/firebase";
 import { certificatesApi } from "@/lib/bkend";
@@ -1269,7 +1270,7 @@ const STYLE_PRESETS: StylePreset[] = [
 
 export default function CertificateGenerator() {
   const { seminars } = useSeminars();
-  const { positions: orgPositions } = useOrgChart();
+  const { positions: orgPositions } = useOrgChart(useEffectiveSemesterKey());
   const { user } = useAuthStore();
   const activeSeminarId = useSeminarAdminContext((s) => s.activeSeminarId);
   const setActiveSeminarId = useSeminarAdminContext((s) => s.setActiveSeminarId);

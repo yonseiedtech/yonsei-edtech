@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery } from "@tanstack/react-query";
 import { dataApi } from "@/lib/bkend";
 import { useOrgChart, type OrgRole } from "@/features/admin/settings/useOrgChart";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { BackButton } from "@/components/ui/back-button";
@@ -133,7 +134,7 @@ function ReportInner() {
     router.replace(`/console/handover/report?${params.toString()}`);
   }
 
-  const { positions, isLoading: orgLoading } = useOrgChart();
+  const { positions, isLoading: orgLoading } = useOrgChart(useEffectiveSemesterKey());
   const { data: docs = [], isLoading: docsLoading } = useQuery({
     queryKey: ["handover_docs", "all"],
     queryFn: async () => {

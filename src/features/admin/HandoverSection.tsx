@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dataApi } from "@/lib/bkend";
 import { useOrgChart } from "@/features/admin/settings/useOrgChart";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { Button } from "@/components/ui/button";
 import EmptyState from "@/components/ui/empty-state";
@@ -44,7 +45,7 @@ export default function HandoverSection() {
   const searchParams = useSearchParams();
   const roleParam = searchParams.get("role");
   const composeParam = searchParams.get("compose");
-  const { positions } = useOrgChart();
+  const { positions } = useOrgChart(useEffectiveSemesterKey());
   const { user } = useAuthStore();
 
   const { data: handoverDocs = [] } = useQuery({

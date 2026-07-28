@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAdminOrSysadmin } from "@/lib/permissions";
 import { currentSemesterKey, semesterLabelFromKey } from "@/lib/semester";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import {
   useStaffNotices,
   useCreateNotice,
@@ -133,6 +134,7 @@ function NoticeCard({
 function CreateNoticeForm({ onClose }: { onClose: () => void }) {
   const { user } = useAuthStore();
   const createNotice = useCreateNotice();
+  const effectiveKey = useEffectiveSemesterKey();
   const [title, setTitle] = useState("");
   const [body, setBody] = useState("");
   const [pinned, setPinned] = useState(false);
@@ -147,6 +149,8 @@ function CreateNoticeForm({ onClose }: { onClose: () => void }) {
         pinned,
         authorId: user.id,
         authorName: user.name,
+        // override 반영 학기 스탬프(미설정 시 현재 학기와 동일).
+        semester: effectiveKey,
       },
       {
         onSuccess: () => {

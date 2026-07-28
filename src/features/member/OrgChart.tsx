@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useOrgChart, buildOrgTree, type OrgTreeNode, type OrgRole } from "@/features/admin/settings/useOrgChart";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import { semesterLabelFromKey } from "@/lib/semester";
 
 const ROLE_LABELS: Record<OrgRole, string> = {
@@ -244,7 +245,7 @@ function MobileOrgList({ nodes, depth = 0 }: { nodes: OrgTreeNode[]; depth?: num
 }
 
 export default function OrgChart() {
-  const { positions, isLoading, semesterKey } = useOrgChart();
+  const { positions, isLoading, semesterKey } = useOrgChart(useEffectiveSemesterKey());
 
   if (isLoading) {
     return (
