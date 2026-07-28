@@ -54,6 +54,7 @@ const TYPE_ICONS: Record<NotificationType, string> = {
   mentoring_nudge: "🤝",
   hackathon_submission_reminder: "🏆",
   pending_signup_nudge: "👤",
+  demand_quorum_reached: "🔥",
 };
 
 const TYPE_LABELS: Record<NotificationType, string> = {
@@ -84,6 +85,7 @@ const TYPE_LABELS: Record<NotificationType, string> = {
   mentoring_nudge: "멘토링 참여 안내",
   hackathon_submission_reminder: "해커톤 제출 알림",
   pending_signup_nudge: "가입 신청 알림",
+  demand_quorum_reached: "수요 정족수",
 };
 
 // 필터 탭 정의

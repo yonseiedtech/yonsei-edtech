@@ -53,6 +53,7 @@ import {
   currentDemandSemesterLabel,
 } from "./ensure-demand-board";
 import StudyLaunchPanel from "./StudyLaunchPanel";
+import { notifyDemandQuorumReached } from "@/features/notifications/notify";
 import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import {
   useDemandCampaign,
@@ -85,7 +86,60 @@ function resolveStatus(q: CommQuestion): DemandStatus {
   return (q.demandPref?.status as DemandStatus | undefined) ?? "collecting";
 }
 
+/** 내 수요 파이프라인 스테퍼 단계 (제안서 2.5.1 M4) — declined 는 별도 표기 */
+const DEMAND_STEPS: { key: DemandStatus; label: string }[] = [
+  { key: "collecting", label: "수집중" },
+  { key: "reviewing", label: "검토중" },
+  { key: "leader", label: "모임장" },
+  { key: "designing", label: "설계중" },
+  { key: "opened", label: "개설됨" },
+];
+const STEP_INDEX: Record<DemandStatus, number> = {
+  collecting: 0, reviewing: 1, leader: 2, designing: 3, opened: 4, declined: -1,
+};
+
+/** 내 수요 카드의 현재 단계 시각화 (M4) */
+function DemandStepper({ status }: { status: DemandStatus }) {
+  if (status === "declined") {
+    return (
+      <p className="mt-2 flex items-center gap-1 text-[11px] text-muted-foreground">
+        <PauseCircle size={12} /> 보류된 수요입니다.
+      </p>
+    );
+  }
+  const idx = STEP_INDEX[status];
+  return (
+    <ol className="mt-2 flex flex-wrap items-center gap-1">
+      {DEMAND_STEPS.map((step, i) => {
+        const done = i < idx;
+        const active = i === idx;
+        return (
+          <li key={step.key} className="flex items-center gap-1">
+            <span
+              className={cn(
+                "flex h-4 w-4 items-center justify-center rounded-full border text-[9px]",
+                done && "border-success bg-success/10 text-success",
+                active && "border-primary bg-primary/10 text-primary",
+                !done && !active && "border-border text-muted-foreground",
+              )}
+            >
+              {done ? <CheckCircle2 size={10} /> : i + 1}
+            </span>
+            <span className={cn("text-[10px]", active ? "font-semibold text-foreground" : "text-muted-foreground")}>
+              {step.label}
+            </span>
+            {i < DEMAND_STEPS.length - 1 && (
+              <span className={cn("mx-0.5 h-px w-3", done ? "bg-success/40" : "bg-border")} aria-hidden />
+            )}
+          </li>
+        );
+      })}
+    </ol>
+  );
+}
+
 type StatusFilter = "all" | "active" | "opened" | "declined";
+type DemandScope = "all" | "mine";
 
 type FormatPref = "온라인" | "오프라인" | "무관";
 const FORMAT_OPTIONS: FormatPref[] = ["온라인", "오프라인", "무관"];
@@ -203,6 +257,7 @@ export default function DemandSurveySection({ kind }: Props) {
   const qc = useQueryClient();
 
   const [statusFilter, setStatusFilter] = useState<StatusFilter>("all");
+  const [scope, setScope] = useState<DemandScope>("all"); // 전체 ↔ 내 수요 (M4)
   const [pipelineTarget, setPipelineTarget] = useState<CommQuestion | null>(null);
 
   // ── 보드 프로비저닝 (학기별) ───────────────────────────────────────────────
@@ -286,15 +341,27 @@ export default function DemandSurveySection({ kind }: Props) {
     return { total: kindItems.length, joinTotal, opened, reviewing };
   }, [kindItems, joinCounts]);
 
-  // ── 상태 필터 적용 ────────────────────────────────────────────────────────
+  // ── 내 수요 (등록했거나 관심·참여 표시한 항목) — M4 ─────────────────────────
+  const mineItems = useMemo(() => {
+    if (!user) return [];
+    return kindItems.filter(
+      (q) =>
+        q.authorId === user.id ||
+        likedSet.has(`question__${q.id}`) ||
+        likedSet.has(`${DEMAND_JOIN}__${q.id}`),
+    );
+  }, [kindItems, user, likedSet]);
+
+  // ── 스코프(전체/내 수요) + 상태 필터 적용 ──────────────────────────────────
   const visible = useMemo(() => {
-    if (statusFilter === "all") return kindItems;
-    return kindItems.filter((q) => {
+    const base = scope === "mine" ? mineItems : kindItems;
+    if (statusFilter === "all") return base;
+    return base.filter((q) => {
       const s = resolveStatus(q);
       if (statusFilter === "active") return s !== "opened" && s !== "declined";
       return s === statusFilter;
     });
-  }, [kindItems, statusFilter]);
+  }, [kindItems, mineItems, scope, statusFilter]);
 
   // ── 유사 수요 안내 (제안서 2.1.2) — 입력 중 부분 문자열 매칭 ────────────────
   const similar = useMemo(() => {
@@ -358,11 +425,28 @@ export default function DemandSurveySection({ kind }: Props) {
   });
 
   const joinMutation = useMutation({
-    mutationFn: (questionId: string) =>
-      commLikesApi.togglePlain(user!.id, DEMAND_JOIN, questionId, user!.name ?? ""),
+    mutationFn: async (q: CommQuestion) => {
+      const added = await commLikesApi.togglePlain(user!.id, DEMAND_JOIN, q.id, user!.name ?? "");
+      // Q2: 참여 추가로 정족수 도달 & 아직 수집중일 때만 collecting → reviewing 자동 전환
+      if (added && resolveStatus(q) === "collecting") {
+        const nextCount = (joinCounts[q.id] ?? 0) + 1; // 방금 추가분 반영 (added=true → 미집계였음)
+        if (nextCount >= JOIN_THRESHOLD) {
+          await commQuestionsApi.update(q.id, {
+            demandPref: { ...(q.demandPref ?? {}), status: "reviewing" },
+          });
+          // M6: 운영진 알림 — 전환 1회 시점에만. 실패해도 전환을 막지 않는다(비블로킹).
+          try {
+            await notifyDemandQuorumReached(q.body ?? "", meta.demandType);
+          } catch {
+            // 알림 실패는 무시
+          }
+        }
+      }
+    },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: ["demand-joins"] });
       qc.invalidateQueries({ queryKey: ["demand-liked"] });
+      qc.invalidateQueries({ queryKey: ["demand-questions"] });
     },
     onError: (e) => toast.error(`참여 반응 오류: ${e instanceof Error ? e.message : "오류"}`),
   });
@@ -689,9 +773,33 @@ export default function DemandSurveySection({ kind }: Props) {
           </div>
           )}
 
-          {/* ── 상태 필터 ── */}
+          {/* ── 스코프 토글 (전체 / 내 수요) — M4 ── */}
           {!isLoading && summary.total > 0 && (
             <div className="mt-4 flex flex-wrap items-center gap-1.5">
+              {([
+                { key: "all", label: "전체 보기", count: kindItems.length },
+                { key: "mine", label: "내 수요", count: mineItems.length },
+              ] as { key: DemandScope; label: string; count: number }[]).map((s) => (
+                <button
+                  key={s.key}
+                  type="button"
+                  onClick={() => setScope(s.key)}
+                  className={cn(
+                    "rounded-full border px-3 py-1 text-xs font-medium transition-colors",
+                    scope === s.key
+                      ? "border-primary bg-primary/10 text-primary"
+                      : "border-border text-muted-foreground hover:text-foreground",
+                  )}
+                >
+                  {s.label} <span className="tabular-nums opacity-70">{s.count}</span>
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* ── 상태 필터 ── */}
+          {!isLoading && summary.total > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-1.5">
               {FILTER_TABS.map((t) => (
                 <button
                   key={t.key}
@@ -719,8 +827,20 @@ export default function DemandSurveySection({ kind }: Props) {
             ) : visible.length === 0 ? (
               <EmptyState
                 icon={Inbox}
-                title={summary.total === 0 ? meta.emptyTitle : "해당 상태의 수요가 없습니다"}
-                description={summary.total === 0 ? meta.emptyDesc : "다른 상태 필터를 선택해 보세요."}
+                title={
+                  scope === "mine" && mineItems.length === 0
+                    ? "내 수요가 아직 없습니다"
+                    : summary.total === 0
+                      ? meta.emptyTitle
+                      : "해당 상태의 수요가 없습니다"
+                }
+                description={
+                  scope === "mine" && mineItems.length === 0
+                    ? "주제를 등록하거나 관심·참여로 반응하면 여기에 모여요."
+                    : summary.total === 0
+                      ? meta.emptyDesc
+                      : "다른 상태 필터를 선택해 보세요."
+                }
               />
             ) : (
               visible.map((q) => {
@@ -765,7 +885,7 @@ export default function DemandSurveySection({ kind }: Props) {
                         </button>
                         <button
                           type="button"
-                          onClick={() => joinMutation.mutate(q.id)}
+                          onClick={() => joinMutation.mutate(q)}
                           disabled={joinMutation.isPending}
                           aria-pressed={isJoined}
                           aria-label={isJoined ? "참여 의사 취소" : "참여할래요"}
@@ -822,6 +942,21 @@ export default function DemandSurveySection({ kind }: Props) {
                         <p className="mt-2 text-[11px] text-muted-foreground">
                           {q.authorName} · {(q.createdAt ?? "").slice(0, 10)}
                         </p>
+
+                        {/* 내 수요 스테퍼 + 개설 활동 바로가기 (M4) */}
+                        {scope === "mine" && (
+                          <>
+                            <DemandStepper status={status} />
+                            {status === "opened" && pref?.linkedActivityId && (
+                              <Link
+                                href={`/activities/studies/${pref.linkedActivityId}`}
+                                className="mt-1.5 inline-flex items-center gap-1 rounded-md border border-success/30 bg-success/5 px-2 py-0.5 text-[10px] font-medium text-success transition-colors hover:bg-success/10"
+                              >
+                                개설된 활동 보기 <ArrowRight size={11} />
+                              </Link>
+                            )}
+                          </>
+                        )}
 
                         {/* 본인 편집 폼 (수집중 항목) — 2.5.2 */}
                         {editingId === q.id && (

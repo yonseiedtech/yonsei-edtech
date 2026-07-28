@@ -43,6 +43,20 @@ async function getAllMemberIds(excludeUserId?: string): Promise<string[]> {
   }
 }
 
+/** 운영진(staff+) 회원 ID 목록 조회 — 운영진 대상 알림 fan-out용 (M6). role 별 조회 후 중복 제거. */
+async function getStaffMemberIds(): Promise<string[]> {
+  const roles = ["staff", "president", "admin", "sysadmin"] as const;
+  const lists = await Promise.all(
+    roles.map((role) =>
+      profilesApi
+        .list({ "filter[approved]": "true", "filter[role]": role, limit: 200 })
+        .then((res) => (res.data as unknown as { id: string }[]).map((u) => u.id))
+        .catch(() => [] as string[]),
+    ),
+  );
+  return Array.from(new Set(lists.flat()));
+}
+
 /** 전체 회원에게 fan-out 알림 (공지, 세미나, 뉴스레터 등) */
 async function fanOut(
   type: NotificationType,
@@ -267,6 +281,33 @@ export function notifyTimelineAssigned(
  * "참여할래요"로 의사를 밝힌 회원에게 발송. networking_reminder 타입 재사용(최소 diff).
  * 자동 등록이 아니라 안내이므로, 회원이 직접 활동 페이지에서 신청하도록 링크로 연결한다.
  */
+/**
+ * 정족수 도달 운영진 알림 (Phase 2 M6) — "참여할래요"(demand-join) 반응으로 수요가
+ * 개설 정족수(JOIN_THRESHOLD)에 도달해 collecting → reviewing 자동 전환된 시점,
+ * staff+ 운영진에게 인앱 알림. 자동 전환 1회 시점에만 호출(호출부 dedup)해 과알림을 막는다.
+ * 링크는 유형별 수요조사 탭으로 연결한다.
+ */
+export async function notifyDemandQuorumReached(
+  topic: string,
+  demandType: "스터디 희망" | "세미나 희망",
+) {
+  const staffIds = await getStaffMemberIds();
+  const kindLabel = demandType === "스터디 희망" ? "스터디" : "세미나";
+  const excerpt = topic.trim().slice(0, 40);
+  const link = demandType === "스터디 희망" ? "/activities/studies" : "/seminars";
+  await Promise.all(
+    staffIds.map((id) =>
+      create(
+        id,
+        "demand_quorum_reached",
+        "수요가 개설 정족수에 도달했습니다",
+        `${kindLabel} 수요 "${excerpt}"이(가) 개설 정족수에 도달해 검토 대기로 전환되었습니다.`,
+        link,
+      ),
+    ),
+  );
+}
+
 export function notifyStudyOpened(userId: string, studyTitle: string, activityId: string) {
   return create(
     userId,

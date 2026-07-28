@@ -22,6 +22,13 @@ import {
   Lightbulb,
   BookOpen,
   PlusCircle,
+  LayoutGrid,
+  Clock,
+  Users,
+  Target,
+  Megaphone,
+  CalendarDays,
+  X,
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
@@ -31,6 +38,14 @@ import { commBoardsApi, commQuestionsApi, commLikesApi, activityParticipationsAp
 import { DEMAND_CONTEXT_ID } from "@/features/demand/ensure-demand-board";
 import DemandRetroSection from "@/features/demand/DemandRetroSection";
 import DemandCampaignEditor from "@/features/demand/DemandCampaignEditor";
+import {
+  useDemandCampaign,
+  daysBetweenYmd,
+  DOMAIN_OPTIONS,
+  DIFFICULTY_OPTIONS,
+  TIME_OPTIONS,
+} from "@/features/demand/useDemandCampaign";
+import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import type { CommQuestion, CommBoard } from "@/types";
 
 type FilterTab = "all" | "스터디 희망" | "세미나 희망";
@@ -70,9 +85,41 @@ function escapeCell(v: string): string {
   return `"${safe.replace(/"/g, '""')}"`;
 }
 
+/** 개설 정족수 — DemandSurveySection JOIN_THRESHOLD 와 동일 값(미export 상수 재선언) */
+const JOIN_THRESHOLD = 3;
+const UNCLASSIFIED = "미분류";
+
+/** demandPref 구조화 필드를 옵션 집합으로 정규화(미입력·미지 값 → 미분류) */
+function normDomain(q: CommQuestion): string {
+  const d = q.demandPref?.domain;
+  return d && (DOMAIN_OPTIONS as readonly string[]).includes(d) ? d : UNCLASSIFIED;
+}
+function normDifficulty(q: CommQuestion): string {
+  const d = q.demandPref?.difficulty;
+  return d && (DIFFICULTY_OPTIONS as readonly string[]).includes(d) ? d : UNCLASSIFIED;
+}
+function normTime(q: CommQuestion): string {
+  const t = q.demandPref?.preferredTime;
+  return t && (TIME_OPTIONS as readonly string[]).includes(t) ? t : UNCLASSIFIED;
+}
+
+/** 히트맵 셀 강도 — 시맨틱 토큰 + opacity(raw color 미도입) */
+function heatClass(count: number, max: number): string {
+  if (count <= 0) return "bg-muted/20 text-muted-foreground";
+  const r = max <= 0 ? 0 : count / max;
+  if (r > 0.75) return "bg-primary/40 text-foreground";
+  if (r > 0.5) return "bg-primary/30 text-foreground";
+  if (r > 0.25) return "bg-primary/20 text-foreground";
+  return "bg-primary/10 text-foreground";
+}
+
 export default function DemandConsolePage() {
   const [filterTab, setFilterTab] = useState<FilterTab>("all");
-  const [view, setView] = useState<"campaign" | "current" | "retro">("current");
+  const [view, setView] = useState<"campaign" | "current" | "insights" | "retro">("current");
+  // M2 히트맵 셀 클릭 → 목록 필터(domain × difficulty). insights 탭에서 클릭 시 current 로 이동.
+  const [cellFilter, setCellFilter] = useState<{ domain: string; difficulty: string } | null>(null);
+  const semesterKey = useEffectiveSemesterKey();
+  const { campaign } = useDemandCampaign(semesterKey);
 
   // ── 보드 조회 (ensure 불필요 — 콘솔은 읽기 전용) ────────────────────────
   const { data: board } = useQuery({
@@ -91,14 +138,140 @@ export default function DemandConsolePage() {
     enabled: !!board,
   });
 
+  // ── 참여 의사(demand-join) 카운트 — targetId(질문 id)별 (M3·M7·집계 공용) ──
+  const { data: joinCounts = {} } = useQuery({
+    queryKey: ["demand-joins-console", board?.id],
+    queryFn: () => commLikesApi.countsByType("demand-join"),
+    enabled: !!board,
+  });
+
   // ── 필터 + 정렬 (공감순) ─────────────────────────────────────────────────
   const filtered = useMemo(() => {
-    const base =
+    let base =
       filterTab === "all"
         ? questions
         : questions.filter((q) => q.presenter === filterTab);
+    if (cellFilter) {
+      base = base.filter(
+        (q) =>
+          normDomain(q) === cellFilter.domain &&
+          normDifficulty(q) === cellFilter.difficulty,
+      );
+    }
     return [...base].sort((a, b) => (b.likeCount ?? 0) - (a.likeCount ?? 0));
-  }, [questions, filterTab]);
+  }, [questions, filterTab, cellFilter]);
+
+  // ── Phase 2 집계 (M2 히트맵 · M3 시간대 · M7 캠페인 대시보드) ───────────────
+  const insights = useMemo(() => {
+    const all = questions ?? [];
+    const join = (id: string) => joinCounts[id] ?? 0;
+
+    // KPI
+    const total = all.length;
+    const quorumReached = all.filter((q) => join(q.id) >= JOIN_THRESHOLD).length;
+    const openedCount = all.filter((q) => stageOf(q) === "opened").length;
+
+    // M2-1 캠페인 주제(topicId)별 집계 — 자유 입력은 미분류
+    const topics = campaign?.topics ?? [];
+    const topicIdSet = new Set(topics.map((t) => t.id));
+    const topicRows = [
+      ...topics.map((t) => ({ id: t.id, label: t.label })),
+      { id: "__none__", label: UNCLASSIFIED },
+    ].map((t) => {
+      const items =
+        t.id === "__none__"
+          ? all.filter(
+              (q) =>
+                !q.demandPref?.campaignTopicId ||
+                !topicIdSet.has(q.demandPref.campaignTopicId),
+            )
+          : all.filter((q) => q.demandPref?.campaignTopicId === t.id);
+      return {
+        id: t.id,
+        label: t.label,
+        count: items.length,
+        likes: items.reduce((s, q) => s + (q.likeCount ?? 0), 0),
+        joins: items.reduce((s, q) => s + join(q.id), 0),
+      };
+    });
+    const topicMax = Math.max(0, ...topicRows.map((r) => r.count));
+
+    // M2-2 domain × difficulty 매트릭스
+    const domainRows = [...DOMAIN_OPTIONS, UNCLASSIFIED];
+    const diffCols = [...DIFFICULTY_OPTIONS, UNCLASSIFIED];
+    const matrix: Record<string, Record<string, number>> = {};
+    for (const dr of domainRows) {
+      matrix[dr] = {};
+      for (const dc of diffCols) matrix[dr][dc] = 0;
+    }
+    for (const q of all) matrix[normDomain(q)][normDifficulty(q)] += 1;
+    // 값이 있는 행/열만 노출(과밀 방지)
+    const activeDomains = domainRows.filter((dr) =>
+      diffCols.some((dc) => matrix[dr][dc] > 0),
+    );
+    const activeDiffs = diffCols.filter((dc) =>
+      domainRows.some((dr) => matrix[dr][dc] > 0),
+    );
+    const matrixMax = Math.max(
+      0,
+      ...domainRows.flatMap((dr) => diffCols.map((dc) => matrix[dr][dc])),
+    );
+
+    // M3 시간대별 수요·참여 인원
+    const timeSlots = [...TIME_OPTIONS, UNCLASSIFIED];
+    const timeRows = timeSlots
+      .map((slot) => {
+        const items = all.filter((q) => normTime(q) === slot);
+        return {
+          slot,
+          count: items.length,
+          joins: items.reduce((s, q) => s + join(q.id), 0),
+        };
+      })
+      .filter((r) => r.count > 0);
+
+    // M7 캠페인 기간 내 일별 등록 추이 (createdAt 기준)
+    let campaignDaily: { date: string; count: number }[] = [];
+    let focusPct: number | null = null;
+    if (campaign && campaign.startDate && campaign.endDate) {
+      const span = daysBetweenYmd(campaign.startDate, campaign.endDate);
+      if (span !== null && span >= 0 && span <= 90) {
+        const perDay: Record<string, number> = {};
+        for (const q of all) {
+          const d = (q.createdAt ?? "").slice(0, 10);
+          if (d >= campaign.startDate && d <= campaign.endDate) {
+            perDay[d] = (perDay[d] ?? 0) + 1;
+          }
+        }
+        campaignDaily = Array.from({ length: span + 1 }, (_, i) => {
+          const ms = Date.parse(`${campaign.startDate}T00:00:00Z`) + i * 86400000;
+          const date = new Date(ms).toISOString().slice(0, 10);
+          return { date, count: perDay[date] ?? 0 };
+        });
+      }
+      const withTopic = all.filter(
+        (q) =>
+          q.demandPref?.campaignTopicId &&
+          topicIdSet.has(q.demandPref.campaignTopicId),
+      ).length;
+      focusPct = total === 0 ? null : Math.round((withTopic / total) * 100);
+    }
+    const dailyMax = Math.max(0, ...campaignDaily.map((d) => d.count));
+
+    return {
+      kpi: { total, quorumReached, openedCount },
+      topicRows,
+      topicMax,
+      matrix,
+      activeDomains,
+      activeDiffs,
+      matrixMax,
+      timeRows,
+      campaignDaily,
+      dailyMax,
+      focusPct,
+    };
+  }, [questions, joinCounts, campaign]);
 
   // ── 요약 통계 ─────────────────────────────────────────────────────────────
   const summary = useMemo(() => {
@@ -214,8 +387,9 @@ export default function DemandConsolePage() {
           [
             { key: "campaign", label: "수요조사 캠페인" },
             { key: "current", label: "현재 수요" },
+            { key: "insights", label: "집계·인사이트" },
             { key: "retro", label: "지난 학기 회고" },
-          ] as { key: "campaign" | "current" | "retro"; label: string }[]
+          ] as { key: "campaign" | "current" | "insights" | "retro"; label: string }[]
         ).map(({ key, label }) => (
           <button
             key={key}
@@ -237,6 +411,256 @@ export default function DemandConsolePage() {
         <DemandCampaignEditor />
       ) : view === "retro" ? (
         <DemandRetroSection />
+      ) : view === "insights" ? (
+        <>
+          {/* ── Phase 2 KPI 카드 ─────────────────────────────────────────── */}
+          <div className="grid grid-cols-3 gap-2">
+            {(
+              [
+                { label: "총 수요", value: insights.kpi.total, unit: "건", icon: ClipboardList },
+                { label: "정족수 도달", value: insights.kpi.quorumReached, unit: `건 (${JOIN_THRESHOLD}명+)`, icon: Target },
+                { label: "개설 전환", value: insights.kpi.openedCount, unit: `/ ${insights.kpi.total}건`, icon: TrendingUp },
+              ] as { label: string; value: number; unit: string; icon: typeof Target }[]
+            ).map(({ label, value, unit, icon: Icon }) => (
+              <div key={label} className="flex flex-col items-center rounded-2xl border bg-card px-2 py-3">
+                <Icon size={14} className="text-primary" />
+                <p className="mt-1.5 text-2xl font-bold tabular-nums text-foreground">
+                  {value === 0 ? "—" : value}
+                </p>
+                <p className="text-[11px] font-medium text-foreground">{label}</p>
+                <p className="text-[10px] text-muted-foreground">{unit}</p>
+              </div>
+            ))}
+          </div>
+
+          {/* ── M2-1 캠페인 주제별 수요 ──────────────────────────────────── */}
+          {insights.topicRows.length > 1 && (
+            <div className="rounded-2xl border bg-card p-4">
+              <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                <Megaphone size={14} className="text-primary" />
+                캠페인 주제별 수요
+                <span className="text-[11px] font-normal text-muted-foreground">· 관심·참여 집계</span>
+              </p>
+              <div className="space-y-1.5">
+                {insights.topicRows.map((r) => (
+                  <div key={r.id} className="flex items-center gap-3">
+                    <span className="w-32 shrink-0 truncate text-xs text-foreground" title={r.label}>
+                      {r.label}
+                    </span>
+                    <div className="flex h-5 flex-1 items-center overflow-hidden rounded-full bg-muted/30">
+                      <div
+                        className="h-full rounded-full bg-primary/30"
+                        style={{
+                          width: `${insights.topicMax > 0 ? Math.max(r.count > 0 ? 8 : 0, (r.count / insights.topicMax) * 100) : 0}%`,
+                        }}
+                        aria-hidden
+                      />
+                    </div>
+                    <span className="w-8 shrink-0 text-right text-xs font-semibold tabular-nums text-foreground">
+                      {r.count}
+                    </span>
+                    <span className="flex w-24 shrink-0 items-center justify-end gap-2 text-[10px] tabular-nums text-muted-foreground">
+                      <span className="flex items-center gap-0.5">
+                        <Heart size={9} className="text-primary" />
+                        {r.likes}
+                      </span>
+                      <span className="flex items-center gap-0.5">
+                        <Users size={9} />
+                        {r.joins}
+                      </span>
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* ── M2-2 분야 × 난이도 히트맵 ────────────────────────────────── */}
+          {insights.activeDomains.length > 0 && (
+            <div className="rounded-2xl border bg-card p-4">
+              <p className="mb-1 flex items-center gap-2 text-sm font-semibold">
+                <LayoutGrid size={14} className="text-primary" />
+                분야 × 난이도 히트맵
+              </p>
+              <p className="mb-3 text-[11px] text-muted-foreground">
+                셀을 클릭하면 해당 조건의 수요 목록으로 이동합니다.
+              </p>
+              <div className="overflow-x-auto">
+                <table className="w-full border-separate border-spacing-1 text-xs">
+                  <thead>
+                    <tr>
+                      <th className="p-1 text-left font-medium text-muted-foreground" />
+                      {insights.activeDiffs.map((dc) => (
+                        <th key={dc} className="p-1 text-center font-medium text-muted-foreground">
+                          {dc}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {insights.activeDomains.map((dr) => (
+                      <tr key={dr}>
+                        <td className="whitespace-nowrap p-1 pr-2 text-right font-medium text-foreground">
+                          {dr}
+                        </td>
+                        {insights.activeDiffs.map((dc) => {
+                          const c = insights.matrix[dr][dc];
+                          return (
+                            <td key={dc} className="p-0">
+                              <button
+                                type="button"
+                                disabled={c === 0}
+                                onClick={() => {
+                                  setCellFilter({ domain: dr, difficulty: dc });
+                                  setFilterTab("all");
+                                  setView("current");
+                                }}
+                                className={cn(
+                                  "flex h-9 w-full min-w-[44px] items-center justify-center rounded-md text-xs font-semibold tabular-nums transition-opacity",
+                                  heatClass(c, insights.matrixMax),
+                                  c > 0 ? "cursor-pointer hover:opacity-80" : "cursor-default",
+                                )}
+                                aria-label={`${dr} · ${dc} 수요 ${c}건`}
+                              >
+                                {c === 0 ? "" : c}
+                              </button>
+                            </td>
+                          );
+                        })}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* ── M3 시간대 겹침 분석 ──────────────────────────────────────── */}
+          {insights.timeRows.length > 0 && (
+            <div className="rounded-2xl border bg-card p-4">
+              <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                <Clock size={14} className="text-primary" />
+                시간대 겹침 분석
+                <span className="text-[11px] font-normal text-muted-foreground">· 참여 의사 기준</span>
+              </p>
+              <div className="space-y-2">
+                {insights.timeRows.map((r) => {
+                  const feasible = r.joins >= JOIN_THRESHOLD;
+                  return (
+                    <div
+                      key={r.slot}
+                      className={cn(
+                        "flex flex-col gap-1 rounded-xl border px-3 py-2.5",
+                        feasible ? "border-success/30 bg-success/5" : "bg-muted/20",
+                      )}
+                    >
+                      <div className="flex items-center gap-2">
+                        <span className="w-16 shrink-0 text-sm font-medium text-foreground">
+                          {r.slot}
+                        </span>
+                        <span className="text-xs text-muted-foreground">
+                          수요 <span className="font-semibold tabular-nums text-foreground">{r.count}</span>건 ·
+                          참여 의사 <span className="font-semibold tabular-nums text-foreground">{r.joins}</span>명
+                        </span>
+                        {feasible && (
+                          <span className="ml-auto rounded-full bg-success/10 px-2 py-0.5 text-[10px] font-semibold text-success">
+                            성사 가능
+                          </span>
+                        )}
+                      </div>
+                      {feasible && (
+                        <p className="pl-[4.5rem] text-[11px] text-success">
+                          이 시간대로 개설하면 {r.joins}명 참여 가능
+                        </p>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          )}
+
+          {/* ── M7 캠페인 결과 대시보드 (캠페인 있을 때만) ──────────────── */}
+          {campaign ? (
+            <div className="rounded-2xl border bg-card p-4">
+              <div className="mb-3 flex flex-wrap items-center gap-2">
+                <Megaphone size={14} className="text-primary" />
+                <span className="text-sm font-semibold text-foreground">{campaign.title || "수요조사 캠페인"}</span>
+                <Badge
+                  variant="secondary"
+                  className={cn(
+                    "text-[10px]",
+                    campaign.status === "active" && "bg-success/10 text-success",
+                    campaign.status === "closed" && "bg-muted text-muted-foreground",
+                  )}
+                >
+                  {campaign.status === "active" ? "진행중" : campaign.status === "closed" ? "마감" : "초안"}
+                </Badge>
+                {campaign.startDate && campaign.endDate && (
+                  <span className="flex items-center gap-1 text-[11px] text-muted-foreground">
+                    <CalendarDays size={11} />
+                    {campaign.startDate} ~ {campaign.endDate}
+                  </span>
+                )}
+              </div>
+
+              <div className="grid grid-cols-2 gap-2 sm:grid-cols-3">
+                <div className="flex flex-col items-center rounded-xl border bg-muted/20 px-2 py-3">
+                  <p className="text-[11px] text-muted-foreground">등록 수(응답)</p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+                    {insights.kpi.total === 0 ? "—" : insights.kpi.total}
+                  </p>
+                </div>
+                <div className="flex flex-col items-center rounded-xl border bg-muted/20 px-2 py-3">
+                  <p className="text-[11px] text-muted-foreground">주제 집중도</p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+                    {insights.focusPct === null ? "—" : `${insights.focusPct}%`}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">사전 주제 선택 비율</p>
+                </div>
+                <div className="flex flex-col items-center rounded-xl border bg-muted/20 px-2 py-3">
+                  <p className="text-[11px] text-muted-foreground">개설 전환</p>
+                  <p className="mt-1 text-2xl font-bold tabular-nums text-foreground">
+                    {insights.kpi.openedCount === 0 ? "—" : insights.kpi.openedCount}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">/ {insights.kpi.total}건</p>
+                </div>
+              </div>
+
+              {/* 기간 내 일별 등록 추이 */}
+              {insights.campaignDaily.length > 0 && (
+                <div className="mt-4">
+                  <p className="mb-2 text-xs font-semibold text-muted-foreground">기간 내 일별 등록 추이</p>
+                  <div className="flex items-end gap-0.5" style={{ height: 64 }}>
+                    {insights.campaignDaily.map((d) => (
+                      <div
+                        key={d.date}
+                        className="flex flex-1 flex-col items-center justify-end"
+                        title={`${d.date}: ${d.count}건`}
+                      >
+                        <div
+                          className={cn("w-full rounded-t", d.count > 0 ? "bg-primary/40" : "bg-muted/40")}
+                          style={{
+                            height: `${insights.dailyMax > 0 && d.count > 0 ? Math.max(6, (d.count / insights.dailyMax) * 56) : 2}px`,
+                          }}
+                          aria-hidden
+                        />
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-1 flex justify-between text-[9px] text-muted-foreground">
+                    <span>{insights.campaignDaily[0]?.date.slice(5)}</span>
+                    <span>{insights.campaignDaily[insights.campaignDaily.length - 1]?.date.slice(5)}</span>
+                  </div>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="rounded-2xl border border-dashed bg-card p-4 text-center text-sm text-muted-foreground">
+              이번 학기 캠페인이 설정되지 않았습니다. 캠페인 결과 대시보드는 캠페인 설정 후 표시됩니다.
+            </div>
+          )}
+        </>
       ) : (
         <>
       {/* ── 요약 통계 ──────────────────────────────────────────────────────── */}
@@ -430,6 +854,24 @@ export default function DemandConsolePage() {
               </table>
             </div>
           )}
+        </div>
+      )}
+
+      {/* ── 히트맵 셀 필터 칩 (M2 연동) ─────────────────────────────────────── */}
+      {cellFilter && (
+        <div className="flex items-center gap-2">
+          <span className="flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-medium text-primary">
+            {cellFilter.domain} × {cellFilter.difficulty}
+            <button
+              type="button"
+              onClick={() => setCellFilter(null)}
+              className="flex h-4 w-4 items-center justify-center rounded-full hover:bg-primary/20"
+              aria-label="히트맵 필터 해제"
+            >
+              <X size={11} />
+            </button>
+          </span>
+          <span className="text-xs text-muted-foreground">{filtered.length}건</span>
         </div>
       )}
 
