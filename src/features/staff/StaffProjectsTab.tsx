@@ -11,6 +11,7 @@ import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAdminOrSysadmin } from "@/lib/permissions";
 import { useAllMembers } from "@/features/member/useMembers";
+import { currentSemesterKey, semesterLabelFromKey } from "@/lib/semester";
 import {
   useStaffProjects,
   useCreateProject,
@@ -22,6 +23,7 @@ import {
   useUpdateTask,
   useDeleteTask,
   useStaffUiStore,
+  matchesSemester,
   getDueDateStatus,
   TASK_STATUS_LABELS,
   TASK_STATUS_CHIP,
@@ -1021,7 +1023,15 @@ export default function StaffProjectsTab() {
   const { data: allTasks = [] } = useAllStaffTasks();
   const [selectedProject, setSelectedProject] = useState<StaffProject | null>(null);
   const [showCreateForm, setShowCreateForm] = useState(false);
-  const { focusProjectId, setFocusProjectId } = useStaffUiStore();
+  const { focusProjectId, setFocusProjectId, selectedSemester } = useStaffUiStore();
+  const currentKey = useMemo(() => currentSemesterKey(), []);
+  const showSemester = selectedSemester === "";
+
+  // 학기 필터(폴백 A). 딥링크(focusProjectId)는 학기 무관 동작을 위해 전체 projects에서 조회.
+  const visibleProjects = useMemo(
+    () => (projects ?? []).filter((p) => matchesSemester(p.semester, selectedSemester, currentKey)),
+    [projects, selectedSemester, currentKey],
+  );
 
   // 홈 탭 딥링크: focusProjectId가 있으면 해당 프로젝트를 우선 표시 (순수 파생, setState-in-effect 회피)
   const effectiveProject = useMemo(() => {
@@ -1075,14 +1085,18 @@ export default function StaffProjectsTab() {
         <div className="space-y-2">
           {[1, 2, 3].map((i) => <div key={i} className="h-20 animate-pulse rounded-xl bg-muted" />)}
         </div>
-      ) : projects.length === 0 ? (
+      ) : visibleProjects.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center">
-          <p className="text-sm text-muted-foreground">등록된 프로젝트가 없습니다.</p>
-          <p className="mt-1 text-xs text-muted-foreground">새 프로젝트 버튼으로 시작하세요.</p>
+          <p className="text-sm text-muted-foreground">
+            {projects.length === 0 ? "등록된 프로젝트가 없습니다." : "선택한 학기의 프로젝트가 없습니다."}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {projects.length === 0 ? "새 프로젝트 버튼으로 시작하세요." : "학기를 바꾸거나 새 프로젝트를 만드세요."}
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
-          {projects.map((proj) => {
+          {visibleProjects.map((proj) => {
             const stats = statsByProject.get(proj.id) ?? { total: 0, done: 0, overdue: 0, pct: 0 };
             return (
               <button
@@ -1097,6 +1111,11 @@ export default function StaffProjectsTab() {
                     <span className={cn("rounded px-1.5 py-0.5 text-[11px] font-semibold", PROJECT_STATUS_CHIP[proj.status])}>
                       {PROJECT_STATUS_LABELS[proj.status]}
                     </span>
+                    {showSemester && (
+                      <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                        {semesterLabelFromKey(proj.semester ?? currentKey)}
+                      </span>
+                    )}
                     {stats.overdue > 0 && (
                       <span className="flex items-center gap-0.5 rounded bg-destructive/10 px-1.5 py-0.5 text-[10px] font-bold text-destructive">
                         <AlertTriangle size={9} />

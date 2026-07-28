@@ -21,11 +21,13 @@ import {
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import Link from "next/link";
+import { currentSemesterKey } from "@/lib/semester";
 import {
   useStaffProjects,
   useAllStaffTasks,
   useStaffNotices,
   useStaffUiStore,
+  matchesSemester,
   getDueDateStatus,
   TASK_STATUS_LABELS,
   TASK_STATUS_CHIP,
@@ -64,13 +66,25 @@ function formatDate(iso: string): string {
 
 export default function StaffHomeTab({ onGoTab }: Props) {
   const { user } = useAuthStore();
-  const { setFocusProjectId } = useStaffUiStore();
-  const { data: projects = [] } = useStaffProjects();
-  const { data: allTasks = [] } = useAllStaffTasks();
+  const { setFocusProjectId, selectedSemester } = useStaffUiStore();
+  const { data: rawProjects = [] } = useStaffProjects();
+  const { data: rawTasks = [] } = useAllStaffTasks();
   const { data: notices = [] } = useStaffNotices();
   const reviewItems = useStaffReviewQueue(!!user);
   const reviewPending = reviewItems.filter((r) => r.count > 0);
   const openingDemands = useOpeningDemands(!!user);
+
+  const currentKey = useMemo(() => currentSemesterKey(), []);
+
+  // 학기 필터(폴백 A) — 프로젝트를 먼저 필터하고, 태스크는 필터된 프로젝트에 속한 것만.
+  const projects = useMemo(
+    () => (rawProjects ?? []).filter((p) => matchesSemester(p.semester, selectedSemester, currentKey)),
+    [rawProjects, selectedSemester, currentKey],
+  );
+  const allTasks = useMemo(() => {
+    const ids = new Set(projects.map((p) => p.id));
+    return (rawTasks ?? []).filter((t) => ids.has(t.projectId));
+  }, [rawTasks, projects]);
 
   const projectName = useMemo(() => {
     const m: Record<string, string> = {};

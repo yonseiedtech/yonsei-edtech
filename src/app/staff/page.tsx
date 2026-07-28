@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Home, Megaphone, FolderKanban, LayoutDashboard, CalendarClock } from "lucide-react";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import StaffHomeTab from "@/features/staff/StaffHomeTab";
@@ -8,17 +8,40 @@ import StaffNoticesTab from "@/features/staff/StaffNoticesTab";
 import StaffProjectsTab from "@/features/staff/StaffProjectsTab";
 import StaffConsoleTab from "@/features/staff/StaffConsoleTab";
 import StaffMeetingPollTab from "@/features/staff/StaffMeetingPollTab";
+import { useStaffUiStore, ALL_SEMESTERS } from "@/features/staff/staff-store";
+import { listSemesterKeys, semesterLabelFromKey } from "@/lib/semester";
 
 export default function StaffPage() {
   const [tab, setTab] = useState("home");
+  const { selectedSemester, setSelectedSemester } = useStaffUiStore();
+  // 현재 학기 기준 앞뒤 학기 옵션(최신이 앞). 렌더 순수성 위해 마운트 시 1회 계산.
+  const semesterKeys = useMemo(() => listSemesterKeys(4, 1), []);
 
   return (
     <div className="mx-auto max-w-5xl px-4 py-8">
-      <div className="mb-6">
-        <h1 className="text-2xl font-bold">운영진 페이지</h1>
-        <p className="mt-1 text-sm text-muted-foreground">
-          운영진 전용 협업·공지·프로젝트 관리 공간입니다.
-        </p>
+      <div className="mb-6 flex flex-wrap items-start justify-between gap-3">
+        <div>
+          <h1 className="text-2xl font-bold">운영진 페이지</h1>
+          <p className="mt-1 text-sm text-muted-foreground">
+            운영진 전용 협업·공지·프로젝트 관리 공간입니다.
+          </p>
+        </div>
+        <label className="flex items-center gap-2 text-sm">
+          <span className="text-muted-foreground">학기</span>
+          <select
+            value={selectedSemester}
+            onChange={(e) => setSelectedSemester(e.target.value)}
+            className="rounded-lg border bg-background px-3 py-1.5 text-sm outline-none focus:ring-2 focus:ring-ring"
+            aria-label="학기 선택"
+          >
+            <option value={ALL_SEMESTERS}>전체 학기</option>
+            {semesterKeys.map((k) => (
+              <option key={k} value={k}>
+                {semesterLabelFromKey(k)}
+              </option>
+            ))}
+          </select>
+        </label>
       </div>
 
       <Tabs value={tab} onValueChange={setTab}>

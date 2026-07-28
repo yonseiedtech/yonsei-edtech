@@ -3,6 +3,7 @@
 import { create } from "zustand";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { dataApi } from "@/lib/bkend";
+import { currentSemesterKey } from "@/lib/semester";
 
 // ── Types ──────────────────────────────────────────────────────────────────────
 
@@ -13,6 +14,8 @@ export interface StaffNotice {
   pinned: boolean;
   authorId: string;
   authorName: string;
+  /** 저장 시점 학기 키("YYYY-1"|"YYYY-2"). 레거시 문서엔 없을 수 있음(폴백 A: 현재 학기 간주). */
+  semester?: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -27,6 +30,8 @@ export interface StaffProject {
   ownerName: string;
   status: ProjectStatus;
   dueDate?: string;
+  /** 저장 시점 학기 키("YYYY-1"|"YYYY-2"). 레거시 문서엔 없을 수 있음(폴백 A: 현재 학기 간주). */
+  semester?: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
@@ -67,6 +72,7 @@ function docToNotice(doc: Record<string, unknown>): StaffNotice {
     pinned: Boolean(doc.pinned),
     authorId: String(doc.authorId ?? ""),
     authorName: String(doc.authorName ?? ""),
+    semester: doc.semester ? String(doc.semester) : undefined,
     createdAt: String(doc.createdAt ?? ""),
     updatedAt: String(doc.updatedAt ?? ""),
   };
@@ -97,7 +103,11 @@ export function useCreateNotice() {
       pinned: boolean;
       authorId: string;
       authorName: string;
-    }) => dataApi.create<Record<string, unknown>>(NOTICES_TABLE, data),
+    }) =>
+      dataApi.create<Record<string, unknown>>(NOTICES_TABLE, {
+        ...data,
+        semester: currentSemesterKey(),
+      }),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["staff_notices"] }),
   });
 }
@@ -132,6 +142,7 @@ function docToProject(doc: Record<string, unknown>): StaffProject {
     ownerName: String(doc.ownerName ?? ""),
     status: (doc.status as ProjectStatus) ?? "planning",
     dueDate: doc.dueDate ? String(doc.dueDate) : undefined,
+    semester: doc.semester ? String(doc.semester) : undefined,
     createdBy: String(doc.createdBy ?? ""),
     createdAt: String(doc.createdAt ?? ""),
     updatedAt: String(doc.updatedAt ?? ""),
@@ -154,7 +165,10 @@ export function useCreateProject() {
   const qc = useQueryClient();
   return useMutation({
     mutationFn: (data: Omit<StaffProject, "id" | "createdAt" | "updatedAt">) =>
-      dataApi.create<Record<string, unknown>>(PROJECTS_TABLE, data as Record<string, unknown>),
+      dataApi.create<Record<string, unknown>>(PROJECTS_TABLE, {
+        ...data,
+        semester: currentSemesterKey(),
+      } as Record<string, unknown>),
     onSuccess: () => qc.invalidateQueries({ queryKey: ["staff_projects"] }),
   });
 }
@@ -320,14 +334,37 @@ export const PROJECT_STATUS_CHIP: Record<ProjectStatus, string> = {
 
 export const TASK_STATUS_ORDER: TaskStatus[] = ["todo", "doing", "review", "done"];
 
-// ── UI State (딥링크용 경량 공유 상태) ─────────────────────────────────────────
+/** "전체 학기" 선택을 나타내는 sentinel(빈 문자열). */
+export const ALL_SEMESTERS = "";
+
+/**
+ * 학기 필터 매칭 — 폴백 A.
+ * selected가 빈 문자열(전체)이면 항상 통과.
+ * 그 외에는 항목의 semester(없으면 현재 학기 currentKey로 간주)가 selected와 일치해야 통과.
+ * currentKey는 호출부에서 useMemo(()=>currentSemesterKey(),[])로 주입해 렌더 순수성을 유지.
+ */
+export function matchesSemester(
+  itemSemester: string | undefined,
+  selected: string,
+  currentKey: string,
+): boolean {
+  if (!selected) return true;
+  return (itemSemester ?? currentKey) === selected;
+}
+
+// ── UI State (딥링크·학기 필터용 경량 공유 상태) ────────────────────────────────
 
 interface StaffUiState {
   focusProjectId: string | null;
   setFocusProjectId: (id: string | null) => void;
+  /** 선택된 학기 키("YYYY-1"|"YYYY-2"), 빈 문자열이면 전체. 기본=현재 학기. */
+  selectedSemester: string;
+  setSelectedSemester: (key: string) => void;
 }
 
 export const useStaffUiStore = create<StaffUiState>((set) => ({
   focusProjectId: null,
   setFocusProjectId: (focusProjectId) => set({ focusProjectId }),
+  selectedSemester: currentSemesterKey(),
+  setSelectedSemester: (selectedSemester) => set({ selectedSemester }),
 }));

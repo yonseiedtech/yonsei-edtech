@@ -1,16 +1,19 @@
 "use client";
 
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { Pin, PinOff, Trash2, Plus, ChevronDown, ChevronUp } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAdminOrSysadmin } from "@/lib/permissions";
+import { currentSemesterKey, semesterLabelFromKey } from "@/lib/semester";
 import {
   useStaffNotices,
   useCreateNotice,
   useUpdateNotice,
   useDeleteNotice,
+  useStaffUiStore,
+  matchesSemester,
   type StaffNotice,
 } from "./staff-store";
 
@@ -25,10 +28,14 @@ function NoticeCard({
   notice,
   currentUserId,
   isAdmin,
+  showSemester,
+  currentKey,
 }: {
   notice: StaffNotice;
   currentUserId: string;
   isAdmin: boolean;
+  showSemester: boolean;
+  currentKey: string;
 }) {
   const [expanded, setExpanded] = useState(false);
   const updateNotice = useUpdateNotice();
@@ -104,8 +111,13 @@ function NoticeCard({
               </button>
             </div>
           </div>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            {notice.authorName} · {formatDate(notice.createdAt)}
+          <p className="mt-0.5 flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+            <span>{notice.authorName} · {formatDate(notice.createdAt)}</span>
+            {showSemester && (
+              <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                {semesterLabelFromKey(notice.semester ?? currentKey)}
+              </span>
+            )}
           </p>
         </div>
       </div>
@@ -202,6 +214,13 @@ export default function StaffNoticesTab() {
   const { data: notices = [], isLoading } = useStaffNotices();
   const isAdmin = isAdminOrSysadmin(user);
   const [showForm, setShowForm] = useState(false);
+  const { selectedSemester } = useStaffUiStore();
+  const currentKey = useMemo(() => currentSemesterKey(), []);
+  const filteredNotices = useMemo(
+    () => (notices ?? []).filter((n) => matchesSemester(n.semester, selectedSemester, currentKey)),
+    [notices, selectedSemester, currentKey],
+  );
+  const showSemester = selectedSemester === "";
 
   return (
     <div className="space-y-4">
@@ -225,19 +244,25 @@ export default function StaffNoticesTab() {
             <div key={i} className="h-16 animate-pulse rounded-xl bg-muted" />
           ))}
         </div>
-      ) : notices.length === 0 ? (
+      ) : filteredNotices.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-xl border border-dashed py-12 text-center">
-          <p className="text-sm text-muted-foreground">등록된 공지가 없습니다.</p>
-          <p className="mt-1 text-xs text-muted-foreground">공지 작성 버튼으로 첫 공지를 남겨보세요.</p>
+          <p className="text-sm text-muted-foreground">
+            {notices.length === 0 ? "등록된 공지가 없습니다." : "선택한 학기의 공지가 없습니다."}
+          </p>
+          <p className="mt-1 text-xs text-muted-foreground">
+            {notices.length === 0 ? "공지 작성 버튼으로 첫 공지를 남겨보세요." : "학기를 바꾸거나 새 공지를 작성하세요."}
+          </p>
         </div>
       ) : (
         <div className="space-y-2">
-          {notices.map((notice) => (
+          {filteredNotices.map((notice) => (
             <NoticeCard
               key={notice.id}
               notice={notice}
               currentUserId={user?.id ?? ""}
               isAdmin={isAdmin}
+              showSemester={showSemester}
+              currentKey={currentKey}
             />
           ))}
         </div>
