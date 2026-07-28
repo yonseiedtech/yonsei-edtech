@@ -20,15 +20,58 @@
 
 import { useMemo, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { History, Loader2, Inbox, TrendingUp, Flame, Heart, Users } from "lucide-react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  Legend,
+  ResponsiveContainer,
+} from "recharts";
+import {
+  History,
+  Loader2,
+  Inbox,
+  TrendingUp,
+  Flame,
+  Heart,
+  Users,
+  BarChart3,
+  Layers,
+} from "lucide-react";
 import { cn } from "@/lib/utils";
 import { commBoardsApi, commQuestionsApi, commLikesApi } from "@/lib/bkend";
 import { listSemesterKeys, currentSemesterKey, semesterLabelFromKey } from "@/lib/semester";
+import { DOMAIN_OPTIONS } from "./useDemandCampaign";
 import type { CommBoard, CommQuestion } from "@/types";
 
 /** demandPref.status 부재 시 "collecting". 개설 판정은 "opened". */
 function stageOf(q: CommQuestion): string {
   return q.demandPref?.status ?? "collecting";
+}
+
+/** 차트 카테고리 색상 — 시맨틱 CAT 토큰(라이트/다크 자동 대응, raw color 미도입). */
+const CAT_COLORS = [
+  "var(--color-cat-1)",
+  "var(--color-cat-2)",
+  "var(--color-cat-3)",
+  "var(--color-cat-4)",
+  "var(--color-cat-5)",
+  "var(--color-cat-6)",
+];
+
+/** 분야 스택 색상 — "미분류"는 중립색, 나머지는 CAT 순환. */
+function domainColor(domain: string, i: number): string {
+  return domain === "미분류"
+    ? "var(--color-muted-foreground)"
+    : CAT_COLORS[i % CAT_COLORS.length];
+}
+
+/** 학기 키를 시간순(오래된→최신)으로 — "YYYY-N" 형식은 사전식 정렬이 곧 시간순. */
+function chronoSort(keys: string[]): string[] {
+  return [...keys].sort();
 }
 
 export default function DemandRetroSection() {
@@ -92,6 +135,68 @@ export default function DemandRetroSection() {
     enabled: stats.unopened.length > 0,
   });
 
+  // ── 6) 학기 간 트렌드 (H4) — 존재하는 모든 지난 학기 보드의 수요 (bounded ≤6) ──
+  const trendBoardsKey = boards.map((b) => b.board.id).join(",");
+  const { data: trendQuestions = {}, isLoading: trendLoading } = useQuery({
+    queryKey: ["demand-retro-trend", trendBoardsKey],
+    queryFn: async () => {
+      const entries = await Promise.all(
+        boards.map(async ({ key, board }) => {
+          const res = await commQuestionsApi
+            .listByBoard(board.id)
+            .catch(() => ({ data: [] as CommQuestion[] }));
+          return [key, (res.data as CommQuestion[]) ?? []] as const;
+        }),
+      );
+      return Object.fromEntries(entries) as Record<string, CommQuestion[]>;
+    },
+    enabled: boards.length > 0,
+  });
+
+  // 시간순 학기 키 + 학기별 수요/개설 건수 시계열
+  const countSeries = useMemo(() => {
+    const keys = chronoSort(boards.map((b) => b.key));
+    return keys.map((key) => {
+      const qs = trendQuestions[key] ?? [];
+      return {
+        label: semesterLabelFromKey(key),
+        수요: qs.length,
+        개설: qs.filter((q) => stageOf(q) === "opened").length,
+      };
+    });
+  }, [boards, trendQuestions]);
+
+  // 데이터가 실제로 존재하는 분야만 (순서: DOMAIN_OPTIONS → 미분류)
+  const activeDomains = useMemo(() => {
+    const set = new Set<string>();
+    for (const qs of Object.values(trendQuestions)) {
+      for (const q of qs ?? []) {
+        const d = q.demandPref?.domain;
+        set.add(d && (DOMAIN_OPTIONS as readonly string[]).includes(d) ? d : "미분류");
+      }
+    }
+    const ordered = DOMAIN_OPTIONS.filter((d) => set.has(d)) as string[];
+    if (set.has("미분류")) ordered.push("미분류");
+    return ordered;
+  }, [trendQuestions]);
+
+  // 학기별 분야 분포 (스택 바용)
+  const domainSeries = useMemo(() => {
+    const keys = chronoSort(boards.map((b) => b.key));
+    return keys.map((key) => {
+      const qs = trendQuestions[key] ?? [];
+      const row: Record<string, string | number> = { label: semesterLabelFromKey(key) };
+      for (const d of activeDomains) row[d] = 0;
+      for (const q of qs) {
+        const d = q.demandPref?.domain;
+        const bucket =
+          d && (DOMAIN_OPTIONS as readonly string[]).includes(d) ? d : "미분류";
+        if (bucket in row) row[bucket] = (row[bucket] as number) + 1;
+      }
+      return row;
+    });
+  }, [boards, trendQuestions, activeDomains]);
+
   // ── 로딩 ──────────────────────────────────────────────────────────────────
   if (boardsLoading) {
     return (
@@ -116,6 +221,100 @@ export default function DemandRetroSection() {
 
   return (
     <div className="space-y-5">
+      {/* ── H4. 학기 간 트렌드 (지난 학기 보드 2개 이상일 때) ─────────────────── */}
+      {boards.length >= 2 && (
+        <div className="space-y-4">
+          {/* 학기별 수요·개설 건수 추이 */}
+          <div className="rounded-2xl border bg-card p-4">
+            <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
+              <BarChart3 size={14} className="text-primary" aria-hidden />
+              학기별 수요·개설 추이
+              <span className="text-[11px] font-normal text-muted-foreground">
+                · 최근 {countSeries.length}개 학기
+              </span>
+            </p>
+            {trendLoading ? (
+              <div className="flex h-[220px] items-center justify-center">
+                <Loader2
+                  className="animate-spin text-muted-foreground"
+                  size={20}
+                  role="img"
+                  aria-label="불러오는 중"
+                />
+              </div>
+            ) : (
+              <div className="overflow-x-auto">
+                <ResponsiveContainer width="100%" height={220} minWidth={280}>
+                  <BarChart data={countSeries}>
+                    <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                    <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                    <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={28} />
+                    <Tooltip />
+                    <Legend />
+                    <Bar dataKey="수요" fill="var(--color-cat-1)" radius={[4, 4, 0, 0]} />
+                    <Bar dataKey="개설" fill="var(--color-cat-5)" radius={[4, 4, 0, 0]} />
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+          </div>
+
+          {/* 분야별 수요 비중 변화 (스택 바) */}
+          {activeDomains.length > 0 && (
+            <div className="rounded-2xl border bg-card p-4">
+              <p className="mb-3 flex items-center gap-2 text-sm font-semibold">
+                <Layers size={14} className="text-primary" aria-hidden />
+                분야별 수요 비중 변화
+                <span className="text-[11px] font-normal text-muted-foreground">
+                  · 학기별 분야 분포
+                </span>
+              </p>
+              {trendLoading ? (
+                <div className="flex h-[240px] items-center justify-center">
+                  <Loader2
+                    className="animate-spin text-muted-foreground"
+                    size={20}
+                    role="img"
+                    aria-label="불러오는 중"
+                  />
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <ResponsiveContainer width="100%" height={240} minWidth={280}>
+                    <BarChart data={domainSeries}>
+                      <CartesianGrid strokeDasharray="3 3" stroke="var(--color-border)" />
+                      <XAxis dataKey="label" tick={{ fontSize: 11 }} />
+                      <YAxis allowDecimals={false} tick={{ fontSize: 11 }} width={28} />
+                      <Tooltip />
+                      <Legend />
+                      {activeDomains.map((d, i) => (
+                        <Bar
+                          key={d}
+                          dataKey={d}
+                          stackId="domain"
+                          fill={domainColor(d, i)}
+                          radius={
+                            i === activeDomains.length - 1 ? [4, 4, 0, 0] : [0, 0, 0, 0]
+                          }
+                        />
+                      ))}
+                    </BarChart>
+                  </ResponsiveContainer>
+                </div>
+              )}
+              <p className="mt-2 text-[11px] text-muted-foreground/70">
+                분야 미입력 수요는 &quot;미분류&quot;로 집계됩니다.
+              </p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2 pt-1">
+            <History size={13} className="text-muted-foreground" aria-hidden />
+            <p className="text-xs font-semibold text-muted-foreground">학기별 상세 회고</p>
+          </div>
+        </div>
+      )}
+
       {/* ── 학기 선택 (존재하는 보드 키만) ──────────────────────────────────── */}
       <div className="flex flex-wrap gap-2">
         {boards.map(({ key }) => (

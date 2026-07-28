@@ -118,6 +118,12 @@ export interface CommQuestion {
     linkedActivityId?: string;
     /** 운영진 상태 메모(개설 안내·보류 사유 등, ≤120자) */
     statusNote?: string;
+    /**
+     * 상태 전환 이력 (H3 퍼널 지표 — Phase 3). 부재=이력 없음(레거시).
+     * 마이그레이션 불필요. 같은 status 연속 기록 안 함(중복 방지).
+     * at=ISO(생성 시점), by=전환 수행자 user.id.
+     */
+    statusHistory?: { status: string; at: string; by?: string }[];
   };
   createdAt?: string;
   updatedAt?: string;

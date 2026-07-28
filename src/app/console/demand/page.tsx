@@ -295,6 +295,76 @@ export default function DemandConsolePage() {
     return { total, totalLikes, studyCount, seminarCount, top3, funnel, declined };
   }, [questions]);
 
+  // ── H3 퍼널 지표 (statusHistory 기반) ─────────────────────────────────────
+  // 리드타임(등록→개설)·단계별 평균 체류·이탈률. statusHistory 없는 레거시는 제외(가드).
+  // 순수 데이터 파생(useMemo 내 계산 — 렌더 경로 Date.now 없음).
+  const funnelMetrics = useMemo(() => {
+    const studyItems = questions.filter((q) => q.presenter === "스터디 희망");
+    const daysBetween = (a: string, b: string): number | null => {
+      const ta = Date.parse(a);
+      const tb = Date.parse(b);
+      if (Number.isNaN(ta) || Number.isNaN(tb)) return null;
+      return (tb - ta) / 86400000;
+    };
+    const avg = (xs: number[]): number | null =>
+      xs.length ? xs.reduce((s, v) => s + v, 0) / xs.length : null;
+
+    // 리드타임: createdAt → statusHistory 의 opened at
+    const leadDays: number[] = [];
+    // 단계별 체류: 인접 단계 첫 발생 시각 차 (collecting→…→opened)
+    const pairs: [DemandStage, DemandStage][] = [
+      ["collecting", "reviewing"],
+      ["reviewing", "leader"],
+      ["leader", "designing"],
+      ["designing", "opened"],
+    ];
+    const dwell: Record<string, number[]> = {};
+    let tracked = 0; // statusHistory 보유(비레거시) 수
+
+    for (const q of studyItems) {
+      const hist = q.demandPref?.statusHistory;
+      if (!hist || hist.length === 0) continue;
+      tracked += 1;
+      // 상태별 최초 발생 시각
+      const firstAt: Record<string, string> = {};
+      for (const h of hist) if (!(h.status in firstAt)) firstAt[h.status] = h.at;
+
+      const openedAt = firstAt["opened"];
+      if (openedAt && q.createdAt) {
+        const d = daysBetween(q.createdAt, openedAt);
+        if (d !== null && d >= 0) leadDays.push(d);
+      }
+      for (const [from, to] of pairs) {
+        const a = firstAt[from];
+        const b = firstAt[to];
+        if (a && b) {
+          const d = daysBetween(a, b);
+          if (d !== null && d >= 0) (dwell[`${from}>${to}`] ??= []).push(d);
+        }
+      }
+    }
+
+    const stageDwell = pairs.map(([from, to]) => ({
+      from,
+      to,
+      avgDays: avg(dwell[`${from}>${to}`] ?? []),
+      n: (dwell[`${from}>${to}`] ?? []).length,
+    }));
+
+    const total = studyItems.length;
+    const declined = studyItems.filter((q) => stageOf(q) === "declined").length;
+
+    return {
+      tracked,
+      avgLeadDays: avg(leadDays),
+      leadN: leadDays.length,
+      stageDwell,
+      dropRate: total > 0 ? Math.round((declined / total) * 100) : null,
+      declined,
+      total,
+    };
+  }, [questions]);
+
   // ── 개설 후 전환 집계 ─────────────────────────────────────────────────────
   const openedStudies = useMemo(
     () =>
@@ -745,6 +815,74 @@ export default function DemandConsolePage() {
               )}
             </div>
           ))}
+        </div>
+
+        {/* ── H3 퍼널 지표 (리드타임·단계별 체류·이탈률) ──────────────────── */}
+        <div className="mt-4 border-t pt-4">
+          {funnelMetrics.tracked === 0 ? (
+            <p className="text-xs text-muted-foreground">
+              이력(statusHistory) 기반 지표는 새 상태 전환이 쌓인 후 표시됩니다.
+              <span className="text-muted-foreground/70"> 기존 수요는 이력이 없어 집계에서 제외됩니다.</span>
+            </p>
+          ) : (
+            <div className="space-y-3">
+              <div className="grid grid-cols-3 gap-2">
+                <div className="flex flex-col items-center rounded-xl border bg-muted/20 px-2 py-3">
+                  <Clock size={13} className="text-primary" />
+                  <p className="mt-1 text-lg font-bold tabular-nums text-foreground">
+                    {funnelMetrics.avgLeadDays === null
+                      ? "—"
+                      : `${funnelMetrics.avgLeadDays.toFixed(1)}일`}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">개설 리드타임</p>
+                  <p className="text-[9px] text-muted-foreground/70">
+                    {funnelMetrics.leadN === 0 ? "개설 이력 없음" : `개설 ${funnelMetrics.leadN}건`}
+                  </p>
+                </div>
+                <div className="flex flex-col items-center rounded-xl border bg-muted/20 px-2 py-3">
+                  <TrendingUp size={13} className="text-primary" />
+                  <p className="mt-1 text-lg font-bold tabular-nums text-foreground">
+                    {funnelMetrics.dropRate === null ? "—" : `${funnelMetrics.dropRate}%`}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">이탈률</p>
+                  <p className="text-[9px] text-muted-foreground/70">
+                    보류 {funnelMetrics.declined} / {funnelMetrics.total}건
+                  </p>
+                </div>
+                <div className="flex flex-col items-center rounded-xl border bg-muted/20 px-2 py-3">
+                  <Target size={13} className="text-primary" />
+                  <p className="mt-1 text-lg font-bold tabular-nums text-foreground">
+                    {funnelMetrics.tracked}
+                  </p>
+                  <p className="text-[10px] text-muted-foreground">이력 추적 수요</p>
+                  <p className="text-[9px] text-muted-foreground/70">statusHistory 보유</p>
+                </div>
+              </div>
+
+              {/* 단계별 평균 체류 */}
+              <div>
+                <p className="mb-1.5 text-[11px] font-semibold text-muted-foreground">
+                  단계별 평균 체류
+                </p>
+                <div className="flex flex-wrap gap-1.5">
+                  {funnelMetrics.stageDwell.map((d) => (
+                    <span
+                      key={`${d.from}>${d.to}`}
+                      className="inline-flex items-center gap-1 rounded-lg border bg-muted/20 px-2 py-1 text-[10px] text-muted-foreground"
+                    >
+                      {STAGE_LABELS[d.from]}
+                      <span className="text-muted-foreground/50">›</span>
+                      {STAGE_LABELS[d.to]}
+                      <span className="font-semibold tabular-nums text-foreground">
+                        {d.avgDays === null ? "—" : `${d.avgDays.toFixed(1)}일`}
+                      </span>
+                      {d.n > 0 && <span className="text-muted-foreground/60">({d.n})</span>}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 

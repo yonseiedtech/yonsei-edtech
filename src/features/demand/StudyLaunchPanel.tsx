@@ -9,7 +9,7 @@
  *  - 최종 "개설"(activities 생성): firestore.rules 상 staff 전용
  */
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import {
   UserCheck,
@@ -19,6 +19,7 @@ import {
   Loader2,
   ArrowRight,
   Users,
+  Award,
 } from "lucide-react";
 import { toast } from "sonner";
 import { cn } from "@/lib/utils";
@@ -37,7 +38,8 @@ import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
 import { commQuestionsApi, activitiesApi, commLikesApi } from "@/lib/bkend";
 import { notifyStudyOpened } from "@/features/notifications/notify";
-import type { CommQuestion } from "@/types";
+import { appendStatusHistory } from "./demand-status";
+import type { CommQuestion, Activity } from "@/types";
 
 type Stage = "reviewing" | "leader" | "designing" | "opened";
 
@@ -81,6 +83,30 @@ export default function StudyLaunchPanel({ question, joinCount, open, onClose, o
     enabled: open && canManage,
   });
 
+  // H2 모임장 추천 — 과거 스터디 모임장 경험자(activities type=study·leaderId)를 뱃지·우선정렬
+  const { data: studyLeaderIds = new Set<string>() } = useQuery({
+    queryKey: ["study-leader-ids"],
+    queryFn: async () => {
+      const res = await activitiesApi.list("study");
+      const set = new Set<string>();
+      for (const a of res.data as Activity[]) {
+        if (a.leaderId) set.add(a.leaderId);
+      }
+      return set;
+    },
+    enabled: open && canManage,
+  });
+
+  // 경험자 우선 정렬 (기존 명단·leaderId 지정 로직은 보존 — 표시 순서만 변경)
+  const sortedResponders = useMemo(
+    () =>
+      [...responders].sort(
+        (a, b) =>
+          (studyLeaderIds.has(b.userId) ? 1 : 0) - (studyLeaderIds.has(a.userId) ? 1 : 0),
+      ),
+    [responders, studyLeaderIds],
+  );
+
   // 설계 폼 상태
   const [startDate, setStartDate] = useState(pref.design?.startDate ?? "");
   const [cadence, setCadence] = useState(pref.design?.cadence ?? "");
@@ -96,9 +122,17 @@ export default function StudyLaunchPanel({ question, joinCount, open, onClose, o
     });
   }
 
-  // 단계 전환 (모임장 모집 시작 등)
+  // 단계 전환 (모임장 모집 시작 등) — status 변경 시 statusHistory append(H3)
   const advanceMutation = useMutation({
-    mutationFn: (patch: Record<string, unknown>) => patchPref(patch),
+    mutationFn: (patch: Record<string, unknown>) =>
+      patchPref(
+        typeof patch.status === "string"
+          ? {
+              ...patch,
+              statusHistory: appendStatusHistory(question.demandPref, patch.status, user?.id),
+            }
+          : patch,
+      ),
     onSuccess: () => {
       toast.success("진행 상태를 업데이트했습니다.");
       onUpdated();
@@ -109,7 +143,12 @@ export default function StudyLaunchPanel({ question, joinCount, open, onClose, o
   // 모임장 자원
   const volunteerMutation = useMutation({
     mutationFn: () =>
-      patchPref({ leaderId: user!.id, leaderName: user!.name ?? "", status: "leader" }),
+      patchPref({
+        leaderId: user!.id,
+        leaderName: user!.name ?? "",
+        status: "leader",
+        statusHistory: appendStatusHistory(question.demandPref, "leader", user!.id),
+      }),
     onSuccess: () => {
       toast.success("모임장으로 자원했습니다.");
       onUpdated();
@@ -122,6 +161,7 @@ export default function StudyLaunchPanel({ question, joinCount, open, onClose, o
     mutationFn: () =>
       patchPref({
         status: "designing",
+        statusHistory: appendStatusHistory(question.demandPref, "designing", user?.id),
         design: {
           startDate: startDate || undefined,
           cadence: cadence.trim() || undefined,
@@ -171,6 +211,7 @@ export default function StudyLaunchPanel({ question, joinCount, open, onClose, o
           status: "opened",
           linkedActivityId: activityId,
           statusNote: "수요조사에서 스터디로 개설되었습니다. 참가자 모집이 시작됩니다.",
+          statusHistory: appendStatusHistory(question.demandPref, "opened", user?.id),
         },
       });
       // 참여 희망 회원에게 개설 알림 (자동 등록 아님 — 신청 유도) · 개설 흐름 비블로킹
@@ -247,17 +288,31 @@ export default function StudyLaunchPanel({ question, joinCount, open, onClose, o
                 <Users size={12} /> 참여 희망 명단 <span className="text-muted-foreground">({responders.length})</span>
               </p>
               <div className="flex flex-wrap gap-1.5">
-                {responders.map((r) => (
-                  <span
-                    key={r.userId}
-                    className="rounded-full border bg-card px-2 py-0.5 text-[11px] text-foreground"
-                  >
-                    {r.userName || "회원"}
-                  </span>
-                ))}
+                {sortedResponders.map((r) => {
+                  const experienced = studyLeaderIds.has(r.userId);
+                  return (
+                    <span
+                      key={r.userId}
+                      className={cn(
+                        "inline-flex items-center gap-1 rounded-full border px-2 py-0.5 text-[11px]",
+                        experienced
+                          ? "border-primary/40 bg-primary/5 text-primary"
+                          : "bg-card text-foreground",
+                      )}
+                    >
+                      {r.userName || "회원"}
+                      {experienced && (
+                        <span className="inline-flex items-center gap-0.5 text-[9px] font-semibold text-primary">
+                          <Award size={9} /> 모임장 경험
+                        </span>
+                      )}
+                    </span>
+                  );
+                })}
               </div>
               <p className="mt-1.5 text-[10px] text-muted-foreground">
                 개설 후 이 회원들에게 참여를 안내하세요. 자동 등록되지 않습니다.
+                <span className="text-primary"> · 모임장 경험자를 상단에 추천 표시합니다.</span>
               </p>
             </div>
           )}

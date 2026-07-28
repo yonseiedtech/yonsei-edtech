@@ -53,6 +53,7 @@ import {
   currentDemandSemesterLabel,
 } from "./ensure-demand-board";
 import StudyLaunchPanel from "./StudyLaunchPanel";
+import { appendStatusHistory } from "./demand-status";
 import { notifyDemandQuorumReached } from "@/features/notifications/notify";
 import { useEffectiveSemesterKey } from "@/features/site-settings/useCurrentSemester";
 import {
@@ -391,6 +392,7 @@ export default function DemandSurveySection({ kind }: Props) {
         demandPref: {
           format: formatPref,
           status: "collecting",
+          statusHistory: appendStatusHistory(undefined, "collecting", user.id),
           ...(note.trim() ? { note: note.trim() } : {}),
           ...(domain ? { domain } : {}),
           ...(difficulty ? { difficulty } : {}),
@@ -432,7 +434,11 @@ export default function DemandSurveySection({ kind }: Props) {
         const nextCount = (joinCounts[q.id] ?? 0) + 1; // 방금 추가분 반영 (added=true → 미집계였음)
         if (nextCount >= JOIN_THRESHOLD) {
           await commQuestionsApi.update(q.id, {
-            demandPref: { ...(q.demandPref ?? {}), status: "reviewing" },
+            demandPref: {
+              ...(q.demandPref ?? {}),
+              status: "reviewing",
+              statusHistory: appendStatusHistory(q.demandPref, "reviewing", user!.id),
+            },
           });
           // M6: 운영진 알림 — 전환 1회 시점에만. 실패해도 전환을 막지 않는다(비블로킹).
           try {
@@ -500,6 +506,7 @@ export default function DemandSurveySection({ kind }: Props) {
           ...(q.demandPref ?? {}),
           status,
           statusNote: statusNote || undefined,
+          statusHistory: appendStatusHistory(q.demandPref, status, user?.id),
         },
       }),
     onSuccess: () => {
