@@ -615,7 +615,7 @@ function DashboardContent() {
             items-stretch 로 두 컬럼 높이를 맞추고, 우측 마지막 위젯(학습 잔디)을 flex-1 로 늘려
             좌측 타임라인+커맨드센터 하단과 우측 잔디 하단 라인을 일치시킨다. */}
         {canShowWidget(user.role, "dailyClassTimeline") ? (
-          <div className="mb-6 grid items-stretch gap-4 lg:grid-cols-[1fr_336px]">
+          <div className="mt-6 mb-6 grid items-stretch gap-4 lg:grid-cols-[1fr_336px]">
             <div className="flex min-w-0 flex-col gap-5">
               <DailyClassTimelineWidget />
               <DashboardCommandCenter />
@@ -629,7 +629,7 @@ function DashboardContent() {
             </div>
           </div>
         ) : (
-          <div className="mb-6 space-y-5">
+          <div className="mt-6 mb-6 space-y-5">
             <ProfileSummaryCard user={user} />
             <DashboardCommandCenter />
           </div>
