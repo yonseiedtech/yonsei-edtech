@@ -78,6 +78,7 @@ import LearningStreak from "@/features/mypage/LearningStreak";
 import InactivityCoachingCard from "@/features/dashboard/InactivityCoachingCard";
 import WeeklyGoalCard from "@/features/dashboard/WeeklyGoalCard";
 import WeeklyReturnNudgeCard from "@/features/dashboard/WeeklyReturnNudgeCard";
+import ThesisCompletionNudgeCard from "@/features/dashboard/ThesisCompletionNudgeCard";
 import StageRecommendationPanel from "@/features/dashboard/StageRecommendationPanel";
 import EmptyState from "@/components/ui/empty-state";
 import NewcomerProgressWidget from "@/features/dashboard/NewcomerProgressWidget";
@@ -661,6 +662,17 @@ function DashboardContent() {
         <div className="mb-6 empty:hidden">
           <WidgetBoundary label="weekly-return-nudge">
             <WeeklyReturnNudgeCard />
+          </WidgetBoundary>
+        </div>
+
+        {/* C2(v19): 논문 완주 임박자 이탈 방지 (in-app 전용) — 논문 단계(4학기+) 회원 한정.
+            정체(연구/논문 3주+ 무진전) 시 디펜스 연습 리마인드로 지지적 격려, 졸업요건 충족 시
+            축하 + 학기 회고(Wrapped) 공유로 D1 추천 루프에 연결. 정상 진행 중이면 진행도 표시는
+            ThesisProgressWidget 이 담당하므로 본 카드는 null 렌더(중복 회피). 페르소나 게이트가
+            엄격해 논문 단계가 아닌 회원·졸업생·신입에겐 절대 노출되지 않는다. */}
+        <div className="mb-6 empty:hidden">
+          <WidgetBoundary label="thesis-completion-nudge">
+            <ThesisCompletionNudgeCard />
           </WidgetBoundary>
         </div>
 
