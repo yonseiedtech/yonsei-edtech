@@ -598,14 +598,6 @@ function DashboardContent() {
           </WidgetBoundary>
         </div>
 
-        {/* v17 H3: 회원 여정 완주 스텝퍼 — 가입→진단→학습→활동 통합 오케스트레이션.
-            신입 창(NewcomerProgressWidget 담당)에는 null 렌더로 양보, 그 외 회원에게만 노출. */}
-        <div className="empty:hidden">
-          <WidgetBoundary label="journey-stepper">
-            <JourneyStepperWidget />
-          </WidgetBoundary>
-        </div>
-
         {/* 사이클 104: F-패턴·정보 빈도 기반 상단 재편 (사용자 요청 — Mayer 멀티미디어/마케팅 시선흐름).
             좌상단(최고 시선)에 매일 보는 '오늘의 시간표', 우측 좁은 컬럼에 프로필 요약(정체성·완성도).
             시간표 비대상(졸업생 등)은 프로필 풀폭 폴백. */}
@@ -633,6 +625,16 @@ function DashboardContent() {
             <DashboardCommandCenter />
           </div>
         )}
+
+        {/* v17 H3: 회원 여정 완주 스텝퍼 — 가입→진단→학습→활동 통합 오케스트레이션.
+            P1-3(2026-07-30): 매일 보는 2단 그리드(시간표·연구 현황)를 fold 위로 승격하면서,
+            48px 스트립인 나의 여정을 그리드 아래로 재배치(밀도 비용 낮아 발견성 유지).
+            신입 창(NewcomerProgressWidget 담당)에는 null 렌더로 양보, 그 외 회원에게만 노출. */}
+        <div className="empty:hidden">
+          <WidgetBoundary label="journey-stepper">
+            <JourneyStepperWidget />
+          </WidgetBoundary>
+        </div>
 
         {/* P1-1(2026-07-29): 코칭/넛지 단일 슬롯 오케스트레이터.
             기존 6종(InactivityCoaching·WeeklyGoal·WeeklyReturnNudge·ThesisCompletionNudge·

@@ -63,7 +63,7 @@ export default function JourneyGreetingHeader({ user }: { user: User }) {
   return (
     <section
       aria-label="여정 인사"
-      className="relative overflow-hidden rounded-2xl border bg-gradient-to-r from-primary/10 via-info/5 to-transparent p-4 sm:p-5"
+      className="relative overflow-hidden rounded-2xl border bg-gradient-to-r from-primary/10 via-info/5 to-transparent p-3.5 sm:p-4"
     >
       <div className="flex flex-wrap items-center justify-between gap-3">
         <div className="min-w-0">

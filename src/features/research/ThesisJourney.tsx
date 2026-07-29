@@ -164,7 +164,7 @@ export const JOURNEY_STAGES: JourneyStage[] = [
   },
   {
     stage: 5,
-    semesterLabel: "5학기",
+    semesterLabel: "5학기 이상",
     title: "완성·심사 방어",
     icon: Award,
     goal: "결과·논의(4~5장)를 완성하고 타당도 위협 방어 논리로 심사를 준비합니다.",
@@ -199,7 +199,7 @@ interface OutputProgressStage {
   key: string;
   label: string;
   href: string;
-  /** 예상 소요 기간 (예: "8~12주") */
+  /** 권장 학기 (예: "3-4학기") */
   durationHint: string;
   done: boolean;
 }
@@ -385,39 +385,39 @@ export default function ThesisJourney({ user, editable = true }: Props) {
     [myDesigns],
   );
 
-  // 4단계 산출물 진행 상태 (계획서 → 연구 설계 → 논문 작성 → 연구보고서)
+  // 4단계 산출물 진행 순서 (연구보고서 → 연구 설계 → 연구계획서 → 논문 작성) — 하단 라벨은 권장 학기
   const outputStages: OutputProgressStage[] = useMemo(
     () => [
       {
-        key: "proposal",
-        label: "계획서",
-        href: "/mypage/research?tab=proposal",
-        durationHint: "8~12주",
-        done: myProposals.length > 0,
+        key: "report",
+        label: "연구보고서",
+        href: "/mypage/research?tab=reportdoc",
+        durationHint: "1학기",
+        done: myReports.length > 0,
       },
       {
         key: "design",
         label: "연구 설계",
         href: "/mypage/research?tab=design",
-        durationHint: "4~6주",
+        durationHint: "2학기",
         done: hasDesign,
+      },
+      {
+        key: "proposal",
+        label: "연구계획서",
+        href: "/mypage/research?tab=proposal",
+        durationHint: "3-4학기",
+        done: myProposals.length > 0,
       },
       {
         key: "writing",
         label: "논문 작성",
         href: "/mypage/research?tab=writing",
-        durationHint: "16~24주",
+        durationHint: "4-5학기",
         done: writingPercent >= 10,
       },
-      {
-        key: "report",
-        label: "연구보고서",
-        href: "/mypage/research?tab=reportdoc",
-        durationHint: "4~8주",
-        done: myReports.length > 0,
-      },
     ],
-    [myProposals.length, hasDesign, writingPercent, myReports.length],
+    [myReports.length, hasDesign, myProposals.length, writingPercent],
   );
 
   /** 단계별 산출물 칩 텍스트 — 없으면 null */
@@ -509,11 +509,11 @@ export default function ThesisJourney({ user, editable = true }: Props) {
         </div>
       )}
 
-      {/* ── 산출물 4단계 진행률 (계획서 → 연구 설계 → 논문 작성 → 연구보고서) ── */}
+      {/* ── 산출물 4단계 진행률 (연구보고서 → 연구 설계 → 연구계획서 → 논문 작성) ── */}
       {editable && <JourneyOutputProgress stages={outputStages} />}
 
       {/* ── 스테퍼 ── */}
-      <ol className="mt-4 flex items-center gap-0 overflow-x-auto pb-1" aria-label="논문 여정 5단계">
+      <ol className="mt-4 mx-auto flex max-w-xl items-center justify-center gap-0 overflow-x-auto pb-1" aria-label="논문 여정 5단계">
         {JOURNEY_STAGES.map((s, idx) => {
           const done = s.stage < currentStage;
           const active = s.stage === currentStage;
