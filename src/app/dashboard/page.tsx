@@ -75,15 +75,10 @@ import NewPostsBadge from "@/features/dashboard/NewPostsBadge";
 import SemesterKickoffBanner from "@/features/dashboard/SemesterKickoffBanner";
 import HackathonCtaBanner from "@/features/hackathon/HackathonCtaBanner";
 import LearningStreak from "@/features/mypage/LearningStreak";
-import InactivityCoachingCard from "@/features/dashboard/InactivityCoachingCard";
-import WeeklyGoalCard from "@/features/dashboard/WeeklyGoalCard";
-import WeeklyReturnNudgeCard from "@/features/dashboard/WeeklyReturnNudgeCard";
-import ThesisCompletionNudgeCard from "@/features/dashboard/ThesisCompletionNudgeCard";
-import StageRecommendationPanel from "@/features/dashboard/StageRecommendationPanel";
+import CoachingSlot from "@/features/dashboard/CoachingSlot";
 import EmptyState from "@/components/ui/empty-state";
 import NewcomerProgressWidget from "@/features/dashboard/NewcomerProgressWidget";
 import JourneyStepperWidget from "@/features/dashboard/JourneyStepperWidget";
-import KudosWidget from "@/features/dashboard/KudosWidget";
 import WidgetBoundary from "@/components/ui/widget-boundary";
 import {
   useDashboardLayout,
@@ -639,50 +634,15 @@ function DashboardContent() {
           </div>
         )}
 
-        {/* M4: 잔디 비활성 영역 자동 코칭 — 위 잔디/활동 위젯에 인접.
-            최근 14일 멈춘 연구 습관 1개만 가벼운 다음 한 걸음으로 제안.
-            신입·활동 고른 회원·해당 없음이면 컴포넌트가 null 렌더로 자동 숨김. */}
+        {/* P1-1(2026-07-29): 코칭/넛지 단일 슬롯 오케스트레이터.
+            기존 6종(InactivityCoaching·WeeklyGoal·WeeklyReturnNudge·ThesisCompletionNudge·
+            Kudos·StageRec)이 개별 나열되어 조건이 겹치면 2~3개가 동시 노출되던 것을,
+            CoachingSlot 이 시점당 우선순위 최고 1개만 렌더한다(넛지 피로 해소).
+            각 카드의 판정·닫기·페르소나 게이트는 그대로 재사용(predicate 기반 선택).
+            WidgetBoundary 로 슬롯 격리 + empty:hidden 유령 여백 제거. */}
         <div className="empty:hidden">
-          <WidgetBoundary label="inactivity-coaching">
-            <InactivityCoachingCard />
-          </WidgetBoundary>
-        </div>
-
-        {/* M1(v5): 주간 학습 목표 설정·달성 루프 — 코칭 카드 형제.
-            목표 설정 시 진행 바·달성 축하, 미설정 시 프리셋 3종 CTA + 지난주 회고. */}
-        <div className="empty:hidden">
-          <WidgetBoundary label="weekly-goal">
-            <WeeklyGoalCard />
-          </WidgetBoundary>
-        </div>
-
-        {/* C1(v19): 주간 재방문 리듬 & 복귀 넛지 (in-app 전용, ⚠️X3 알림 blocked 우회).
-            직전 주까지 연속(≥2주)이 살아 있으나 이번 주 아직 활동 0인 "끊기기 직전"에만
-            부드러운 복귀 넛지 1건 노출. InactivityCoaching(14일 멈춤)·justBroke(이미 끊김)·
-            WeeklyGoal(능동 목표) 과 각도가 다른 예방 구간을 채운다.
-            비신입·비졸업·위험·미닫힘일 때만, 그 외엔 null 렌더로 자동 숨김. */}
-        <div className="empty:hidden">
-          <WidgetBoundary label="weekly-return-nudge">
-            <WeeklyReturnNudgeCard />
-          </WidgetBoundary>
-        </div>
-
-        {/* C2(v19): 논문 완주 임박자 이탈 방지 (in-app 전용) — 논문 단계(4학기+) 회원 한정.
-            정체(연구/논문 3주+ 무진전) 시 디펜스 연습 리마인드로 지지적 격려, 졸업요건 충족 시
-            축하 + 학기 회고(Wrapped) 공유로 D1 추천 루프에 연결. 정상 진행 중이면 진행도 표시는
-            ThesisProgressWidget 이 담당하므로 본 카드는 null 렌더(중복 회피). 페르소나 게이트가
-            엄격해 논문 단계가 아닌 회원·졸업생·신입에겐 절대 노출되지 않는다. */}
-        <div className="empty:hidden">
-          <WidgetBoundary label="thesis-completion-nudge">
-            <ThesisCompletionNudgeCard />
-          </WidgetBoundary>
-        </div>
-
-        {/* v8-H2: 응원(kudos) 위젯 — 이번 주 받은 응원 + 코호트 동기에게 응원 보내기.
-            받은 응원·보낼 대상 모두 없으면 null 렌더로 자동 숨김. */}
-        <div className="empty:hidden">
-          <WidgetBoundary label="kudos">
-            <KudosWidget />
+          <WidgetBoundary label="coaching-slot">
+            <CoachingSlot />
           </WidgetBoundary>
         </div>
 
@@ -701,13 +661,8 @@ function DashboardContent() {
           <QuickLinks />
         </div>
 
-        {/* 사이클 85: 이번 학기 추천 한 걸음 — 커맨드센터 아래, JOURNEY_STAGES 현재 학기 추천 행동 (여정 문서 High ②).
-            학기 미설정자는 JourneyGreetingHeader 가 유도하므로 패널 내부에서 null 렌더. */}
-        <div className="empty:hidden">
-          <WidgetBoundary label="stage-recommendation">
-            <StageRecommendationPanel user={user} />
-          </WidgetBoundary>
-        </div>
+        {/* 사이클 85: 이번 학기 추천 한 걸음(StageRecommendationPanel)은 P1-1(2026-07-29)에서
+            코칭 슬롯(CoachingSlot)의 우선순위 후보로 흡수됨 — 개별 마운트 제거(중복 방지). */}
 
         {/* 스프린트3 H4: 신입 온보딩 표면 통합 — 기존 WelcomeBanner·ChecklistWidget 2종을
             상단 NewMemberOnboardingCard(자족형) 단일 카드로 수렴. 전체 가이드는 카드 하단

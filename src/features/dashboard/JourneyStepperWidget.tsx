@@ -19,11 +19,18 @@
  *  - 재사용 쿼리 키(seminars·gradlife)는 DashboardCommandCenter 와 캐시를 공유해 추가 read 를 만들지 않는다.
  */
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { CheckCircle2, Circle, Compass, ArrowRight, Trophy } from "lucide-react";
 import WidgetCard from "@/components/ui/widget-card";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useUserDiagnostics } from "@/features/dashboard/useUserDiagnostics";
 import { hasGuideStarted } from "@/features/dashboard/journey-stages";
@@ -196,6 +203,9 @@ export default function JourneyStepperWidget() {
         { key: "demand", label: "스터디 수요 남기기", href: "/activities/studies?tab=demand" },
       ];
 
+  // P1-2(2026-07-29): 상세 스텝퍼는 온디맨드 시트/모달로만 펼침 — 고정 스택엔 스트립만 상주.
+  const [open, setOpen] = useState(false);
+
   // 미로그인·신입 창(NewcomerProgressWidget 담당)에서는 미노출
   if (!user || windowOpen) return null;
 
@@ -233,76 +243,122 @@ export default function JourneyStepperWidget() {
 
   const pct = Math.round((doneCount / total) * 100);
 
+  // ── P1-2: 고정 스택엔 1줄 요약 스트립만 상주(≈48px), 탭 시 전체 스텝퍼를 시트/모달로 펼침 ──
   return (
-    <WidgetCard
-      title="나의 여정"
-      icon={Compass}
-      semantic="info"
-      actions={
-        <span className="text-xs font-semibold tabular-nums text-muted-foreground">
-          {doneCount}/{total}
-        </span>
-      }
-    >
-      <div
-        className="mt-3"
-        role="progressbar"
-        aria-valuenow={pct}
-        aria-valuemin={0}
-        aria-valuemax={100}
-        aria-label={`여정 진행률 ${pct}%`}
+    <>
+      <button
+        type="button"
+        onClick={() => setOpen(true)}
+        aria-expanded={open}
+        aria-controls="journey-stepper-sheet"
+        aria-label={`나의 여정 ${doneCount}/${total} 단계 완료${
+          nextStep ? `, 다음 단계 ${nextStep.cta}` : ""
+        }. 눌러서 전체 단계 보기`}
+        className="group flex w-full items-center gap-3 rounded-2xl border bg-card px-4 py-3 text-left shadow-sm transition-colors hover:bg-muted/40 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary focus-visible:ring-offset-1"
       >
-        <div className="h-2 w-full overflow-hidden rounded-full bg-muted/40">
+        <span className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-info/10 text-info">
+          <Compass size={16} aria-hidden />
+        </span>
+        <span className="min-w-0 flex-1">
+          <span className="flex items-center gap-2">
+            <span className="text-sm font-semibold">나의 여정</span>
+            <span className="text-xs font-semibold tabular-nums text-muted-foreground">
+              {doneCount}/{total}
+            </span>
+          </span>
+          <span
+            aria-hidden
+            className="mt-1.5 block h-1.5 w-full overflow-hidden rounded-full bg-muted/40"
+          >
+            <span
+              className="block h-full rounded-full bg-primary transition-all duration-500"
+              style={{ width: `${pct}%` }}
+            />
+          </span>
+        </span>
+        {nextStep && (
+          <span className="hidden shrink-0 items-center gap-1 text-xs font-medium text-primary sm:inline-flex">
+            다음: {nextStep.cta}
+            <ArrowRight size={13} className="shrink-0" aria-hidden />
+          </span>
+        )}
+      </button>
+
+      <Dialog open={open} onOpenChange={setOpen}>
+        <DialogContent id="journey-stepper-sheet" className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle className="flex items-center gap-2">
+              <Compass size={16} className="text-info" aria-hidden />
+              나의 여정
+              <span className="ml-auto text-xs font-semibold tabular-nums text-muted-foreground">
+                {doneCount}/{total}
+              </span>
+            </DialogTitle>
+            <DialogDescription>
+              가입부터 활동까지, 다음 한 걸음을 따라가면 학회를 200% 활용할 수 있어요.
+            </DialogDescription>
+          </DialogHeader>
+
           <div
-            className="h-full rounded-full bg-primary transition-all duration-500"
-            style={{ width: `${pct}%` }}
-          />
-        </div>
-        <p className="mt-1.5 text-[11px] text-muted-foreground">
-          가입부터 활동까지, 다음 한 걸음을 따라가면 학회를 200% 활용할 수 있어요.
-        </p>
-      </div>
+            className="mt-1"
+            role="progressbar"
+            aria-valuenow={pct}
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-label={`여정 진행률 ${pct}%`}
+          >
+            <div className="h-2 w-full overflow-hidden rounded-full bg-muted/40">
+              <div
+                className="h-full rounded-full bg-primary transition-all duration-500"
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+          </div>
 
-      <ul className="mt-4 grid gap-1.5">
-        {steps.map((s) => {
-          const StatusIcon = s.done ? CheckCircle2 : Circle;
-          return (
-            <li key={s.key}>
-              {s.done ? (
-                <div
-                  className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground"
-                  aria-label={`${s.label} 완료`}
-                >
-                  <StatusIcon size={16} className="shrink-0 text-success" aria-hidden />
-                  <span className="truncate line-through">{s.label}</span>
-                </div>
-              ) : (
-                <Link
-                  href={s.href}
-                  className="flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-muted/40"
-                  aria-label={`${s.label} — ${s.cta}`}
-                >
-                  <StatusIcon size={16} className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden />
-                  <span className="min-w-0">
-                    <span className="block truncate font-medium">{s.label}</span>
-                    <span className="block text-[11px] text-muted-foreground">{s.desc}</span>
-                  </span>
-                </Link>
-              )}
-            </li>
-          );
-        })}
-      </ul>
+          <ul className="mt-4 grid gap-1.5">
+            {steps.map((s) => {
+              const StatusIcon = s.done ? CheckCircle2 : Circle;
+              return (
+                <li key={s.key}>
+                  {s.done ? (
+                    <div
+                      className="flex items-center gap-2.5 rounded-lg px-2.5 py-2 text-sm text-muted-foreground"
+                      aria-label={`${s.label} 완료`}
+                    >
+                      <StatusIcon size={16} className="shrink-0 text-success" aria-hidden />
+                      <span className="truncate line-through">{s.label}</span>
+                    </div>
+                  ) : (
+                    <Link
+                      href={s.href}
+                      onClick={() => setOpen(false)}
+                      className="flex items-start gap-2.5 rounded-lg px-2.5 py-2 text-sm transition-colors hover:bg-muted/40"
+                      aria-label={`${s.label} — ${s.cta}`}
+                    >
+                      <StatusIcon size={16} className="mt-0.5 shrink-0 text-muted-foreground" aria-hidden />
+                      <span className="min-w-0">
+                        <span className="block truncate font-medium">{s.label}</span>
+                        <span className="block text-[11px] text-muted-foreground">{s.desc}</span>
+                      </span>
+                    </Link>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
 
-      {nextStep && (
-        <Link
-          href={nextStep.href}
-          className="mt-4 flex items-center justify-between gap-2 rounded-xl bg-primary px-3.5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
-        >
-          <span className="min-w-0 truncate">다음: {nextStep.cta}</span>
-          <ArrowRight size={15} className="shrink-0" aria-hidden />
-        </Link>
-      )}
-    </WidgetCard>
+          {nextStep && (
+            <Link
+              href={nextStep.href}
+              onClick={() => setOpen(false)}
+              className="mt-4 flex items-center justify-between gap-2 rounded-xl bg-primary px-3.5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <span className="min-w-0 truncate">다음: {nextStep.cta}</span>
+              <ArrowRight size={15} className="shrink-0" aria-hidden />
+            </Link>
+          )}
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

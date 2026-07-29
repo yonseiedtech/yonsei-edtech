@@ -76,7 +76,12 @@ function useLocalBoolean(key: string): boolean {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-export default function ThesisCompletionNudgeCard() {
+export default function ThesisCompletionNudgeCard({
+  onDismiss: onSlotDismiss,
+}: {
+  /** CoachingSlot(P1-1) 제어 시 — 닫으면 슬롯이 다음 우선순위 넛지로 넘어가도록 통지. */
+  onDismiss?: () => void;
+} = {}) {
   const { user } = useAuthStore();
   const userId = user?.id;
 
@@ -131,7 +136,8 @@ export default function ThesisCompletionNudgeCard() {
     } catch {
       // ignore
     }
-  }, [dismissedKey]);
+    onSlotDismiss?.();
+  }, [dismissedKey, onSlotDismiss]);
 
   if (!user || !active || isLoading || dismissed) return null;
   if (state.phase === "hidden") return null;

@@ -72,7 +72,12 @@ function useLocalBoolean(key: string): boolean {
   return useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
 }
 
-export default function WeeklyReturnNudgeCard() {
+export default function WeeklyReturnNudgeCard({
+  onDismiss: onSlotDismiss,
+}: {
+  /** CoachingSlot(P1-1) 제어 시 — 닫으면 슬롯이 다음 우선순위 넛지로 넘어가도록 통지. */
+  onDismiss?: () => void;
+} = {}) {
   const { user } = useAuthStore();
   const userId = user?.id;
 
@@ -123,7 +128,8 @@ export default function WeeklyReturnNudgeCard() {
     } catch {
       // ignore
     }
-  }, [dismissedKey]);
+    onSlotDismiss?.();
+  }, [dismissedKey, onSlotDismiss]);
 
   // 노출 게이트: 로그인 + 비신입 + 비졸업 + 로딩 완료 + 이번 주 위험 + 미닫힘.
   if (!user || !active || isLoading || dismissed) return null;
