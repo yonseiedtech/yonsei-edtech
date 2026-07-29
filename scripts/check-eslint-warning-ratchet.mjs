@@ -33,8 +33,9 @@ import { execSync } from "node:child_process";
 // 2026-07-27 v17-L1 img→Image 억제+사유 주석(no-img-element 정리) 후: 167 → 149
 // 2026-07-27 mypage needsRediagnosis Date.now→useState lazy init(react-hooks/purity 해소): 149 → 148
 // 2026-07-29 학기 가이드북/SimpleMarkdown 정리 후 경고 1건 감소: 148 → 147
+// 2026-07-29 대시보드 P0/운영진 연동 리팩터 후 경고 1건 감소: 147 → 146
 // ─────────────────────────────────────────────────────────────
-const CEILING = 147;
+const CEILING = 146;
 
 // ── 1. ESLint 실행 (JSON 포맷) ───────────────────────────────
 // execSync 사용 — ESLint 가 error 시 exit 1 을 던지므로 catch 로 stdout 수집.

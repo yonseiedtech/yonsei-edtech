@@ -33,7 +33,7 @@ export default function NewPostsBadge({ prevVisit }: { prevVisit?: string | null
   return (
     <Link
       href="/board"
-      className="mb-4 flex items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm transition-colors hover:bg-primary/10"
+      className="flex items-center justify-between gap-2 rounded-xl border border-primary/30 bg-primary/5 px-4 py-2.5 text-sm transition-colors hover:bg-primary/10"
     >
       <span className="flex items-center gap-2 font-medium text-foreground/90">
         <MessageSquare size={15} className="text-primary" />

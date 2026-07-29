@@ -52,7 +52,7 @@ import type {
   HostRetrospective, HostActivityType,
   SitePopup,
   DefensePracticeSet, DefenseQuestionTemplate,
-  GradLifePosition,
+  GradLifePosition, GradLifeRole, GradLifeSemester,
   ConferenceProgram, UserSessionPlan,
   ArchiveConcept, ArchiveVariable, ArchiveMeasurementTool, ArchiveFavorite, ArchiveFavoriteItemType,
   ResearchMethod, ResearchMethodKind,
@@ -2549,6 +2549,44 @@ export const gradLifePositionsApi = {
   update: (id: string, data: Record<string, unknown>) =>
     dataApi.update<GradLifePosition>("grad_life_positions", id, data),
   delete: (id: string) => dataApi.delete("grad_life_positions", id),
+  /**
+   * 조직도 배정 → grad-life 멱등 반영(권장안 C). `sourceOrgKey` 로 기존 문서를 조회해
+   * 있으면 update, 없으면 create — 재반영 시 중복 생성 없음.
+   * 종료 학기(endYear/endSemester)·notes 는 payload 에 넣지 않아 update 시 보존됨
+   * (Firestore updateDoc 부분 병합) → 자동 종료 금지·관리자 수기 보정 유지(제안서 §3·§6).
+   */
+  upsertFromOrg: async (input: {
+    sourceOrgKey: string;
+    userId: string;
+    userName?: string;
+    role: GradLifeRole;
+    detail?: string;
+    startYear: number;
+    startSemester: GradLifeSemester;
+    createdBy?: string;
+  }): Promise<{ created: boolean; id: string }> => {
+    const existing = await dataApi.list<GradLifePosition>("grad_life_positions", {
+      "filter[sourceOrgKey]": input.sourceOrgKey,
+      limit: 1,
+    });
+    const payload: Record<string, unknown> = {
+      sourceOrgKey: input.sourceOrgKey,
+      userId: input.userId,
+      userName: input.userName || "",
+      role: input.role,
+      detail: input.detail?.trim() || undefined,
+      startYear: input.startYear,
+      startSemester: input.startSemester,
+      createdBy: input.createdBy,
+    };
+    const found = existing.data[0];
+    if (found) {
+      await dataApi.update<GradLifePosition>("grad_life_positions", found.id, payload);
+      return { created: false, id: found.id };
+    }
+    const res = await dataApi.create<GradLifePosition>("grad_life_positions", payload);
+    return { created: true, id: res.id };
+  },
 };
 
 // ── 교육공학 아카이브 ──

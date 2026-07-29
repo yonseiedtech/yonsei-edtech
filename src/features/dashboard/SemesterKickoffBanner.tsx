@@ -81,7 +81,7 @@ export default function SemesterKickoffBanner() {
 
   if (isOnLeave) {
     return (
-      <div className="relative mb-4 overflow-hidden rounded-2xl border-2 border-warning/30 bg-warning/5 p-4">
+      <div className="relative overflow-hidden rounded-2xl border-2 border-warning/30 bg-warning/5 p-4">
         <button
           type="button"
           onClick={dismiss}
@@ -116,7 +116,7 @@ export default function SemesterKickoffBanner() {
       : "방학 동안 논문 도구가 크게 업그레이드됐어요";
 
   return (
-    <div className="relative mb-4 overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-info/5 to-primary/5 p-4">
+    <div className="relative overflow-hidden rounded-2xl border-2 border-primary/30 bg-gradient-to-br from-primary/10 via-info/5 to-primary/5 p-4">
       <button
         type="button"
         onClick={dismiss}

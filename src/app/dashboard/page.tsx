@@ -32,7 +32,7 @@ import { ROLE_LABELS } from "@/types";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { cn, formatDate } from "@/lib/utils";
-import { STATUS_CHIP } from "@/lib/design-tokens";
+import { STATUS_CHIP, DASHBOARD_STACK_GAP } from "@/lib/design-tokens";
 import {
   inferSeminarMode,
   SEMINAR_MODE_BADGE,
@@ -526,7 +526,10 @@ function DashboardContent() {
 
       {/* ── 섹션 1: 헤더 영역 ── */}
       {/* 사이클 86: 상단 이중 마진(py + mt) 제거 — 최상위 py 가 상단 여백 담당, 섹션 mt 제거로 과다 여백 해소 */}
-      <section className="mx-auto max-w-6xl px-4">
+      {/* P0-1(2026-07-29): 세로 리듬 통일 — 직속 자식 블록의 mt/mb 수직 마진을 걷어내고
+          컨테이너(DASHBOARD_STACK_GAP=space-y-6)가 인접 간격 24px 를 단일 소유.
+          empty:hidden 블록은 display:none 이라 space-y 갭을 만들지 않아 유령 여백 0. */}
+      <section className={cn("mx-auto max-w-6xl px-4", DASHBOARD_STACK_GAP)}>
         <PageHeader
           icon={
             // PageHeader 가 JSX 아이콘을 48px 칩 박스로 감싸므로, 엠블럼은 박스 안에
@@ -583,8 +586,8 @@ function DashboardContent() {
         />
 
         {/* 체감 스프린트: 여정 인사 헤더 — 리브랜딩 시그니처를 매일 보는 곳에 */}
-        {/* 사이클 86: PageHeader 와 간격 부여(mt-6) — 인사 헤더가 PageHeader 에 붙던 문제 해소 */}
-        <div className="mt-6 mb-5">
+        {/* P0-1: 세로 간격은 부모 space-y-6 이 소유 — 직속 mt-6 mb-5 제거 */}
+        <div>
           <JourneyGreetingHeader user={user} />
         </div>
 
@@ -594,7 +597,7 @@ function DashboardContent() {
 
         {/* B4(신입 워크스루): 신입 첫 2주 진행 위젯을 상단(TodayCard 직후)으로 승격.
             현재 학기 코호트·가입 14일 이내에만 노출, 그 외엔 null 렌더로 자동 숨김(비신입 미영향). */}
-        <div className="mt-6 empty:hidden">
+        <div className="empty:hidden">
           <WidgetBoundary label="newcomer-progress">
             <NewcomerProgressWidget />
           </WidgetBoundary>
@@ -602,7 +605,7 @@ function DashboardContent() {
 
         {/* v17 H3: 회원 여정 완주 스텝퍼 — 가입→진단→학습→활동 통합 오케스트레이션.
             신입 창(NewcomerProgressWidget 담당)에는 null 렌더로 양보, 그 외 회원에게만 노출. */}
-        <div className="mt-6 empty:hidden">
+        <div className="empty:hidden">
           <WidgetBoundary label="journey-stepper">
             <JourneyStepperWidget />
           </WidgetBoundary>
@@ -613,25 +616,24 @@ function DashboardContent() {
             시간표 비대상(졸업생 등)은 프로필 풀폭 폴백. */}
         {/* 사이클 111: 시간표·커맨드센터를 좌측 1fr 로 묶어 폭 정렬(사용자 — 시간표 폭 ≠ 커맨드 그리드),
             우측 컬럼에 프로필 요약 + 알림·할일 미니위젯으로 하단 공백 채움(사용자 요청). */}
-        {/* 사이클 124: 좌·우 컬럼 하단 라인 정렬 (사용자 요청).
-            items-stretch 로 두 컬럼 높이를 맞추고, 우측 마지막 위젯(학습 잔디)을 flex-1 로 늘려
-            좌측 타임라인+커맨드센터 하단과 우측 잔디 하단 라인을 일치시킨다. */}
+        {/* P0-2(2026-07-29): 하단 강제 정렬(items-stretch + 우측 flex-1 filler) 폐기 →
+            자연 높이 병치(items-start) + 우측을 lg:sticky 사이드바로 승격. 좌·우 내부 gap 을
+            gap-4 로 통일. 세로 마진(mt-6 mb-6)은 부모 space-y-6 이 소유하므로 제거.
+            CommandCenter 자체 mb-6 도 제거되어 좌측 하단 잔여 마진 없음. */}
         {canShowWidget(user.role, "dailyClassTimeline") ? (
-          <div className="mt-6 mb-6 grid items-stretch gap-4 lg:grid-cols-[1fr_336px]">
-            <div className="flex min-w-0 flex-col gap-5">
+          <div className="grid items-start gap-4 lg:grid-cols-[1fr_336px]">
+            <div className="flex min-w-0 flex-col gap-4">
               <DailyClassTimelineWidget />
               <DashboardCommandCenter />
             </div>
-            <div className="flex flex-col gap-4">
+            <div className="flex flex-col gap-4 lg:sticky lg:top-20">
               <ProfileSummaryCard user={user} />
               <ProfileSideWidget userId={user.id} />
-              <div className="flex flex-1 flex-col [&>*]:flex-1">
-                <LearningStreak compact />
-              </div>
+              <LearningStreak compact />
             </div>
           </div>
         ) : (
-          <div className="mt-6 mb-6 space-y-5">
+          <div className="space-y-4">
             <ProfileSummaryCard user={user} />
             <DashboardCommandCenter />
           </div>
@@ -640,7 +642,7 @@ function DashboardContent() {
         {/* M4: 잔디 비활성 영역 자동 코칭 — 위 잔디/활동 위젯에 인접.
             최근 14일 멈춘 연구 습관 1개만 가벼운 다음 한 걸음으로 제안.
             신입·활동 고른 회원·해당 없음이면 컴포넌트가 null 렌더로 자동 숨김. */}
-        <div className="mb-6 empty:hidden">
+        <div className="empty:hidden">
           <WidgetBoundary label="inactivity-coaching">
             <InactivityCoachingCard />
           </WidgetBoundary>
@@ -648,7 +650,7 @@ function DashboardContent() {
 
         {/* M1(v5): 주간 학습 목표 설정·달성 루프 — 코칭 카드 형제.
             목표 설정 시 진행 바·달성 축하, 미설정 시 프리셋 3종 CTA + 지난주 회고. */}
-        <div className="mb-6 empty:hidden">
+        <div className="empty:hidden">
           <WidgetBoundary label="weekly-goal">
             <WeeklyGoalCard />
           </WidgetBoundary>
@@ -659,7 +661,7 @@ function DashboardContent() {
             부드러운 복귀 넛지 1건 노출. InactivityCoaching(14일 멈춤)·justBroke(이미 끊김)·
             WeeklyGoal(능동 목표) 과 각도가 다른 예방 구간을 채운다.
             비신입·비졸업·위험·미닫힘일 때만, 그 외엔 null 렌더로 자동 숨김. */}
-        <div className="mb-6 empty:hidden">
+        <div className="empty:hidden">
           <WidgetBoundary label="weekly-return-nudge">
             <WeeklyReturnNudgeCard />
           </WidgetBoundary>
@@ -670,7 +672,7 @@ function DashboardContent() {
             축하 + 학기 회고(Wrapped) 공유로 D1 추천 루프에 연결. 정상 진행 중이면 진행도 표시는
             ThesisProgressWidget 이 담당하므로 본 카드는 null 렌더(중복 회피). 페르소나 게이트가
             엄격해 논문 단계가 아닌 회원·졸업생·신입에겐 절대 노출되지 않는다. */}
-        <div className="mb-6 empty:hidden">
+        <div className="empty:hidden">
           <WidgetBoundary label="thesis-completion-nudge">
             <ThesisCompletionNudgeCard />
           </WidgetBoundary>
@@ -678,7 +680,7 @@ function DashboardContent() {
 
         {/* v8-H2: 응원(kudos) 위젯 — 이번 주 받은 응원 + 코호트 동기에게 응원 보내기.
             받은 응원·보낼 대상 모두 없으면 null 렌더로 자동 숨김. */}
-        <div className="mb-6 empty:hidden">
+        <div className="empty:hidden">
           <WidgetBoundary label="kudos">
             <KudosWidget />
           </WidgetBoundary>
@@ -694,13 +696,14 @@ function DashboardContent() {
         <NewPostsBadge prevVisit={prevVisitRef.current ?? null} />
 
         {/* 사이클 113b: 빠른 바로가기 한 줄 (사용자 요청 — 별도 영역) */}
-        <div className="mb-6">
+        {/* P0-1: 세로 간격은 부모 space-y-6 이 소유 — 직속 mb-6 제거 */}
+        <div>
           <QuickLinks />
         </div>
 
         {/* 사이클 85: 이번 학기 추천 한 걸음 — 커맨드센터 아래, JOURNEY_STAGES 현재 학기 추천 행동 (여정 문서 High ②).
             학기 미설정자는 JourneyGreetingHeader 가 유도하므로 패널 내부에서 null 렌더. */}
-        <div className="mb-6 empty:hidden">
+        <div className="empty:hidden">
           <WidgetBoundary label="stage-recommendation">
             <StageRecommendationPanel user={user} />
           </WidgetBoundary>

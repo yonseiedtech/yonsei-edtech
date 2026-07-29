@@ -53,6 +53,12 @@ export interface GradLifePosition {
   endYear?: number;
   endSemester?: GradLifeSemester;
   notes?: string;
+  /**
+   * 출처 조직도 참조 키 — `org_chart:{학기}#{직책id}` (예: `org_chart:2026-2#pos_123`).
+   * 조직도 배정을 프로필에 반영할 때 멱등 upsert의 판정 키로 사용(하위호환, 선택).
+   * 수기 입력분에는 없음.
+   */
+  sourceOrgKey?: string;
   createdBy?: string;
   createdAt: string;
   updatedAt: string;

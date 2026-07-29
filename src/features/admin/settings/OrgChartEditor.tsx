@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { Plus, Trash2, ChevronUp, ChevronDown, Pencil, Sparkles, ArrowUpCircle, FileText, GraduationCap, Copy } from "lucide-react";
 import { useOrgChart, useUpdateOrgChart, orgChartKey, DEFAULT_ORG_SEED, type OrgPosition, type OrgRole } from "./useOrgChart";
 import { useAllMembers, useChangeRole } from "@/features/member/useMembers";
@@ -10,9 +10,10 @@ import { currentSemesterKey, listSemesterKeys, shiftSemesterKey, semesterLabelFr
 import { useAuthStore } from "@/features/auth/auth-store";
 import { logAudit } from "@/lib/audit";
 import { ROLE_HIERARCHY } from "@/lib/permissions";
-import { dataApi, siteSettingsApi } from "@/lib/bkend";
-import { ROLE_LABELS as USER_ROLE_LABELS } from "@/types";
-import type { UserRole, HandoverDocument } from "@/types";
+import { dataApi, siteSettingsApi, gradLifePositionsApi } from "@/lib/bkend";
+import { mapOrgRoleToGradRole, buildSourceOrgKey, semesterKeyToGradStart } from "@/lib/org-gradlife-map";
+import { ROLE_LABELS as USER_ROLE_LABELS, GRAD_LIFE_ROLE_LABELS } from "@/types";
+import type { UserRole, HandoverDocument, GradLifePosition } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -80,6 +81,7 @@ function EditDialog({ position, allPositions, semesterKey, open, onClose, onSave
   const [form, setForm] = useState<OrgPosition>(
     position ?? { id: generateId(), title: "", level: 0, order: 0 },
   );
+  const [reflecting, setReflecting] = useState(false);
 
   useEffect(() => {
     if (position) setForm(position);
@@ -151,6 +153,35 @@ function EditDialog({ position, allPositions, semesterKey, open, onClose, onSave
   const worklogHref = form.title
     ? `/console/handover?tab=worklog&role=${encodeURIComponent(form.title)}`
     : "/console/handover?tab=worklog";
+
+  // grad-life 프로필 반영 대상 판정(제안서 C안 ③): userId 있고 매핑 가능한 역할·유효 학기여야 반영.
+  const gradRole = form.userId ? mapOrgRoleToGradRole({ role: form.role, title: form.title }) : null;
+  const gradStart = semesterKeyToGradStart(semesterKey);
+  const canReflect = !!(assignedMember && gradRole && gradStart);
+
+  async function handleReflectToProfile() {
+    if (!form.userId || !gradRole || !gradStart) return;
+    setReflecting(true);
+    try {
+      const r = await gradLifePositionsApi.upsertFromOrg({
+        sourceOrgKey: buildSourceOrgKey(semesterKey, form.id),
+        userId: form.userId,
+        userName: form.userName,
+        role: gradRole,
+        detail: form.title,
+        startYear: gradStart.startYear,
+        startSemester: gradStart.startSemester,
+        createdBy: user?.id,
+      });
+      toast.success(
+        `${form.userName ?? "회원"} 님의 프로필에 ${r.created ? "반영" : "갱신"}했습니다 · ${GRAD_LIFE_ROLE_LABELS[gradRole]} · ${semesterLabelFromKey(semesterKey)}`,
+      );
+    } catch (e) {
+      toast.error(e instanceof Error ? e.message : "프로필 반영에 실패했습니다.");
+    } finally {
+      setReflecting(false);
+    }
+  }
 
   return (
     <Dialog open={open} onOpenChange={(v) => !v && onClose()}>
@@ -299,12 +330,32 @@ function EditDialog({ position, allPositions, semesterKey, open, onClose, onSave
               직책명을 기준으로 업무수행철(업무노트)이 연결됩니다. 링크를 열면 이 직책으로 필터되어 새 노트를 작성할 수 있습니다.
             </p>
             {assignedMember && (
-              <Link
-                href={`/console/grad-life/positions?userId=${encodeURIComponent(assignedMember.id)}&userName=${encodeURIComponent(assignedMember.name)}&position=${encodeURIComponent(form.title)}&semester=${encodeURIComponent(semesterKey)}`}
-                className="mt-1.5 inline-flex items-center gap-1.5 text-[11px] text-primary hover:underline"
-              >
-                <GraduationCap size={12} /> {assignedMember.name} 님의 활동 이력(대학원 생활)에 기록 →
-              </Link>
+              <div className="mt-2 space-y-1.5">
+                {canReflect && gradRole && (
+                  <div className="rounded-lg border border-primary/30 bg-primary/5 p-2.5">
+                    <p className="text-[11px] leading-relaxed">
+                      <strong>{assignedMember.name}</strong> 님의 프로필 &quot;대학원 생활&quot;에 반영:{" "}
+                      <strong>{GRAD_LIFE_ROLE_LABELS[gradRole]}</strong> · {semesterLabelFromKey(semesterKey)} ~ 진행중
+                      <span className="text-muted-foreground"> (종료 학기는 반영되지 않음)</span>
+                    </p>
+                    <Button size="sm" variant="outline" className="mt-2" onClick={handleReflectToProfile} disabled={reflecting}>
+                      <GraduationCap size={13} className="mr-1" />
+                      {reflecting ? "반영 중…" : "프로필에 반영"}
+                    </Button>
+                  </div>
+                )}
+                {assignedMember && !canReflect && (
+                  <p className="text-[11px] text-muted-foreground">
+                    이 직책은 프로필 활동 이력 반영 대상이 아닙니다(교수·졸업생 대표 등).
+                  </p>
+                )}
+                <Link
+                  href={`/console/grad-life/positions?userId=${encodeURIComponent(assignedMember.id)}&userName=${encodeURIComponent(assignedMember.name)}&position=${encodeURIComponent(form.title)}&semester=${encodeURIComponent(semesterKey)}`}
+                  className="inline-flex items-center gap-1.5 text-[11px] text-primary hover:underline"
+                >
+                  <GraduationCap size={12} /> {assignedMember.name} 님의 활동 이력을 직접 편집 →
+                </Link>
+              </div>
             )}
           </div>
           <div>
@@ -336,11 +387,67 @@ export default function OrgChartEditor() {
   const { positions, recordId, signature, isLegacyFallback, isLoading } = useOrgChart(selectedSemester);
   const { members, isLoading: membersLoading } = useAllMembers();
   const updateMutation = useUpdateOrgChart();
+  const qc = useQueryClient();
+  const { user } = useAuthStore();
   const [items, setItems] = useState<OrgPosition[]>([]);
   const [editPos, setEditPos] = useState<OrgPosition | null>(null);
   const [showDialog, setShowDialog] = useState(false);
   // 저장 전 이탈 경고용 dirty 플래그(#11)
   const [dirty, setDirty] = useState(false);
+  const [bulkBusy, setBulkBusy] = useState(false);
+
+  // grad-life 프로필 반영 현황(권장안 C ④) — 이미 반영된 sourceOrgKey 집합으로 미반영 건수 계산.
+  const { data: gradLifeAll } = useQuery({
+    queryKey: ["grad-life-positions-all"],
+    queryFn: () => gradLifePositionsApi.list(),
+    staleTime: 30_000,
+  });
+  const reflectedKeys = useMemo(() => {
+    const set = new Set<string>();
+    ((gradLifeAll?.data ?? []) as GradLifePosition[]).forEach((p) => {
+      if (p.sourceOrgKey) set.add(p.sourceOrgKey);
+    });
+    return set;
+  }, [gradLifeAll]);
+  // 이번 학기 반영 대상(userId 있고 매핑 가능) — 공석·교수·졸업생 대표 등은 제외.
+  const reflectTargets = useMemo(
+    () => items.filter((p) => p.userId && mapOrgRoleToGradRole(p) !== null),
+    [items],
+  );
+  const unreflected = useMemo(
+    () => reflectTargets.filter((p) => !reflectedKeys.has(buildSourceOrgKey(selectedSemester, p.id))),
+    [reflectTargets, reflectedKeys, selectedSemester],
+  );
+
+  async function handleBulkReflect() {
+    if (unreflected.length === 0) return;
+    if (dirty && !confirm("저장되지 않은 조직도 변경이 있습니다. 반영 전에 조직도를 저장하는 것을 권장합니다. 계속할까요?")) return;
+    const gradStart = semesterKeyToGradStart(selectedSemester);
+    if (!gradStart) { toast.error("학기 형식이 올바르지 않아 반영할 수 없습니다."); return; }
+    setBulkBusy(true);
+    let created = 0, updated = 0, failed = 0;
+    for (const p of unreflected) {
+      const role = mapOrgRoleToGradRole(p);
+      if (!p.userId || !role) continue;
+      try {
+        const r = await gradLifePositionsApi.upsertFromOrg({
+          sourceOrgKey: buildSourceOrgKey(selectedSemester, p.id),
+          userId: p.userId,
+          userName: p.userName,
+          role,
+          detail: p.title,
+          startYear: gradStart.startYear,
+          startSemester: gradStart.startSemester,
+          createdBy: user?.id,
+        });
+        if (r.created) created++; else updated++;
+      } catch { failed++; }
+    }
+    await qc.invalidateQueries({ queryKey: ["grad-life-positions-all"] });
+    await qc.invalidateQueries({ queryKey: ["grad-life-positions"] });
+    setBulkBusy(false);
+    toast.success(`일괄 반영 완료 — 신규 ${created}건${updated ? `, 갱신 ${updated}건` : ""}${failed ? `, 실패 ${failed}건` : ""}`);
+  }
 
   // 학기 전환 시 이전 학기 데이터 flash 방지 — 선택 즉시 빈 상태로 초기화.
   // positions/isLoading 이 새 학기 데이터로 교체되기 전에 실행되도록 먼저 선언.
@@ -572,6 +679,24 @@ export default function OrgChartEditor() {
         <Button size="sm" onClick={handleSaveAll} disabled={updateMutation.isPending}>
           {updateMutation.isPending ? "저장 중..." : "저장"}
         </Button>
+      </div>
+
+      {/* grad-life 프로필 반영(권장안 C ④) — 배정 직책을 회원 프로필 활동 이력에 멱등 일괄 반영 */}
+      <div className="mt-3 rounded-lg border bg-muted/20 p-3">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <div className="flex items-center gap-1.5 text-xs font-medium">
+            <GraduationCap size={13} className="text-muted-foreground" />
+            프로필 활동 이력 반영
+            <span className="text-muted-foreground">· 대상 {reflectTargets.length}건 중 미반영 {unreflected.length}건</span>
+          </div>
+          <Button size="sm" variant="outline" onClick={handleBulkReflect} disabled={bulkBusy || unreflected.length === 0}>
+            <GraduationCap size={13} className="mr-1" />
+            {bulkBusy ? "반영 중…" : `이번 학기 배정 일괄 반영 (미반영 ${unreflected.length}건)`}
+          </Button>
+        </div>
+        <p className="mt-1 text-[11px] leading-relaxed text-muted-foreground">
+          회원이 배정된 직책을 각 프로필의 &quot;대학원 생활 · 학회 운영진&quot;에 반영합니다(재반영해도 중복 없음). 교수·졸업생 대표·공석은 제외되며, 종료 학기는 자동 반영되지 않습니다(진행중). 반영 후에도 회원 본인의 프로필 공개범위 설정은 그대로 존중됩니다.
+        </p>
       </div>
 
       <EditDialog

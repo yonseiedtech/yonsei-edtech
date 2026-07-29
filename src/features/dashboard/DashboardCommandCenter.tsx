@@ -143,7 +143,9 @@ export default function DashboardCommandCenter() {
   }, [events, positions, paper, papers, seminars, nowIso]);
 
   return (
-    <div className="mb-6">
+    // P0-2(2026-07-29): 자체 mb-6 제거 — 이 컴포넌트는 그리드/스택 컨테이너 안에서만
+    // 쓰이므로 세로 간격은 부모(gap/space-y)가 소유한다. 2단 그리드 하단 정렬 어긋남의 직접 원인 제거.
+    <div>
       <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
         {stats.map((s) => (
           <Link

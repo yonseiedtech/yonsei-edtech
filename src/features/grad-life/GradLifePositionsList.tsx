@@ -18,6 +18,7 @@ import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { toast } from "sonner";
 import { GraduationCap, Plus, Pencil, Trash2, Users, Filter } from "lucide-react";
 import { gradLifePositionsApi } from "@/lib/bkend";
+import { inferGradRole } from "@/lib/org-gradlife-map";
 import { useAllMembers } from "@/features/member/useMembers";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { isAtLeast } from "@/lib/permissions";
@@ -74,17 +75,6 @@ const initialForm = (): FormState => ({
   endSemester: "",
   notes: "",
 });
-
-/** 조직도 직책명 → grad-life 역할 추론(불확실하면 society_staff). 프리필 편의용. */
-function inferGradRole(title: string): GradLifeRole {
-  const t = title.trim();
-  if (t.includes("부학회장") || t.includes("부회장")) return "society_vice_president";
-  if (t.includes("학회장") || t.includes("회장")) return "society_president";
-  if (t.includes("전공대표")) return "major_rep";
-  if (t.includes("조교")) return "ta";
-  if (t.includes("자문") || t.includes("지도")) return "student_advisor";
-  return "society_staff";
-}
 
 function formatRange(p: GradLifePosition): string {
   const start = `${p.startYear}년 ${GRAD_LIFE_SEMESTER_LABELS[p.startSemester]}`;

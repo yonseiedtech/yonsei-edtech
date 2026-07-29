@@ -172,6 +172,14 @@ export const WIDGET_PADDING = "p-5 sm:p-6";
 /** 위젯 간 표준 간격 */
 export const WIDGET_GAP = "mt-5";
 
+/**
+ * 대시보드 고정 상단 스택의 세로 리듬 토큰 (P0-1, 2026-07-29).
+ * 개별 블록이 `mt-*`/`mb-*` 를 각자 갖던 방식(0~48px 편차)을 폐기하고,
+ * 부모 컨테이너가 인접 블록 간 세로 간격(24px)을 단일 소유한다.
+ * `WIDGET_GAP`(mt-5, 개별 위젯 상단 마진)과 정책 정합 — 이쪽은 컨테이너 space-y.
+ */
+export const DASHBOARD_STACK_GAP = "space-y-6";
+
 /** 섹션 헤더 아이콘 사이즈 */
 export const SECTION_ICON_SIZE = 18;
 
