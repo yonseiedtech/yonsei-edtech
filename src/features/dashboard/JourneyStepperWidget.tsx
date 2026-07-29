@@ -263,7 +263,7 @@ export default function JourneyStepperWidget() {
         </p>
       </div>
 
-      <ul className="mt-4 grid gap-1">
+      <ul className="mt-4 grid gap-1.5">
         {steps.map((s) => {
           const StatusIcon = s.done ? CheckCircle2 : Circle;
           return (
@@ -297,7 +297,7 @@ export default function JourneyStepperWidget() {
       {nextStep && (
         <Link
           href={nextStep.href}
-          className="mt-3 flex items-center justify-between gap-2 rounded-xl bg-primary px-3.5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
+          className="mt-4 flex items-center justify-between gap-2 rounded-xl bg-primary px-3.5 py-2.5 text-sm font-semibold text-primary-foreground transition-colors hover:bg-primary/90"
         >
           <span className="min-w-0 truncate">다음: {nextStep.cta}</span>
           <ArrowRight size={15} className="shrink-0" aria-hidden />

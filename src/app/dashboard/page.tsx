@@ -77,6 +77,7 @@ import HackathonCtaBanner from "@/features/hackathon/HackathonCtaBanner";
 import LearningStreak from "@/features/mypage/LearningStreak";
 import InactivityCoachingCard from "@/features/dashboard/InactivityCoachingCard";
 import WeeklyGoalCard from "@/features/dashboard/WeeklyGoalCard";
+import WeeklyReturnNudgeCard from "@/features/dashboard/WeeklyReturnNudgeCard";
 import StageRecommendationPanel from "@/features/dashboard/StageRecommendationPanel";
 import EmptyState from "@/components/ui/empty-state";
 import NewcomerProgressWidget from "@/features/dashboard/NewcomerProgressWidget";
@@ -649,6 +650,17 @@ function DashboardContent() {
         <div className="mb-6 empty:hidden">
           <WidgetBoundary label="weekly-goal">
             <WeeklyGoalCard />
+          </WidgetBoundary>
+        </div>
+
+        {/* C1(v19): 주간 재방문 리듬 & 복귀 넛지 (in-app 전용, ⚠️X3 알림 blocked 우회).
+            직전 주까지 연속(≥2주)이 살아 있으나 이번 주 아직 활동 0인 "끊기기 직전"에만
+            부드러운 복귀 넛지 1건 노출. InactivityCoaching(14일 멈춤)·justBroke(이미 끊김)·
+            WeeklyGoal(능동 목표) 과 각도가 다른 예방 구간을 채운다.
+            비신입·비졸업·위험·미닫힘일 때만, 그 외엔 null 렌더로 자동 숨김. */}
+        <div className="mb-6 empty:hidden">
+          <WidgetBoundary label="weekly-return-nudge">
+            <WeeklyReturnNudgeCard />
           </WidgetBoundary>
         </div>
 
