@@ -11,6 +11,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
+import { toast } from "sonner";
 import {
   Sparkles,
   Flame,
@@ -22,11 +23,13 @@ import {
   Layers,
   ArrowRight,
   Download,
+  Share2,
   Trophy,
 } from "lucide-react";
 import PageContainer from "@/components/ui/page-container";
 import { Button } from "@/components/ui/button";
 import { BRAND } from "@/lib/brand";
+import { buildWrappedShareUrl, shareWrapped } from "@/lib/wrapped-share";
 import { useAuthStore } from "@/features/auth/auth-store";
 import {
   useSemesterWrapped,
@@ -258,6 +261,25 @@ function StoryCard({
 function SummaryCard({ m }: { m: WrappedMetrics }) {
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const [saving, setSaving] = useState(false);
+  const [sharing, setSharing] = useState(false);
+
+  async function handleShare() {
+    setSharing(true);
+    try {
+      // 공개 소개 페이지(/about)로 초대 — 회원 전용 개인 데이터 URL은 공유하지 않음.
+      const url = buildWrappedShareUrl(m.semesterKey);
+      const text = `${m.semesterLabel}, 연세교육공학회에서 남긴 나의 학회 발자취예요. 함께 성장해요!`;
+      const result = await shareWrapped(url, text);
+      if (result === "copied") {
+        toast.success("공유 링크를 복사했어요. 동기·후배에게 붙여넣어 초대해보세요.");
+      } else if (result === "failed") {
+        toast.error("공유에 실패했어요. 주소창의 URL을 직접 복사해주세요.");
+      }
+      // "shared"(네이티브 시트 완료)·"dismissed"(사용자 취소)는 별도 토스트 없음.
+    } finally {
+      setSharing(false);
+    }
+  }
 
   function handleDownload() {
     setSaving(true);
@@ -297,19 +319,24 @@ function SummaryCard({ m }: { m: WrappedMetrics }) {
       <canvas ref={canvasRef} width={1080} height={1080} className="hidden" aria-hidden />
 
       <div className="mt-5 flex flex-wrap gap-2">
-        <Button size="sm" onClick={handleDownload} disabled={saving}>
+        <Button size="sm" onClick={handleShare} disabled={sharing}>
+          <Share2 size={14} className="mr-1.5" />
+          {sharing ? "공유 준비 중…" : "공유하기"}
+        </Button>
+        <Button size="sm" variant="outline" onClick={handleDownload} disabled={saving}>
           <Download size={14} className="mr-1.5" />
           {saving ? "이미지 만드는 중…" : "요약 이미지 저장"}
         </Button>
         <Link href="/mypage">
-          <Button size="sm" variant="outline">
+          <Button size="sm" variant="ghost">
             마이페이지로
             <ArrowRight size={14} className="ml-1.5" />
           </Button>
         </Link>
       </div>
       <p className="mt-3 text-[11px] text-muted-foreground">
-        저장한 이미지는 SNS·포트폴리오에 자유롭게 공유할 수 있어요.
+        공유 링크는 학회 소개 페이지로 이어져요. 개인 활동 데이터는 담기지 않으니
+        동기·후배를 안심하고 초대하세요. 저장한 이미지는 SNS·포트폴리오에도 자유롭게 쓸 수 있어요.
       </p>
     </div>
   );

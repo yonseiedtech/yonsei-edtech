@@ -143,6 +143,8 @@ export interface WrappedCategory {
 
 export interface WrappedMetrics {
   semesterLabel: string;
+  /** 학기키 "YYYY-1"|"YYYY-2" — 공유 링크 소스 태깅용(비 PII). */
+  semesterKey: string;
   startYmd: string;
   endYmd: string;
 
@@ -406,6 +408,7 @@ export function useSemesterWrapped(
 
     return {
       semesterLabel: bounds.label,
+      semesterKey: bounds.key,
       startYmd,
       endYmd,
       totalStudyDays,

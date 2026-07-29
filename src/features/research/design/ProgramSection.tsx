@@ -69,7 +69,7 @@ export function ProgramSection({
             </div>
           </div>
           <Link
-            href="/steppingstone/program-development"
+            href="/archive/program-development"
             className="inline-flex items-center gap-1 text-[11px] text-primary hover:underline"
           >
             프로그램 설계·개발 가이드(ADDIE·가네 9절차·과정안) 열기 <ExternalLink size={10} />

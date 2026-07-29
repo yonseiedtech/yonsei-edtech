@@ -166,7 +166,7 @@ const STEP_TOOLS: Record<ResearchJourneyStep, StepTool[]> = {
     { href: "/archive", label: "개념·변인·측정도구", desc: "교육공학 아카이브에서 개념→변인→측정도구를 따라가며 이론을 구조화", icon: Library },
   ],
   design: [
-    { href: "/steppingstone/program-development", label: "프로그램 설계·개발 가이드", desc: "ADDIE·가네 9절차로 교수·프로그램 설계 절차를 안내", icon: Blocks },
+    { href: "/archive/program-development", label: "프로그램 설계·개발 가이드", desc: "ADDIE·가네 9절차로 교수·프로그램 설계 절차를 안내", icon: Blocks },
     { href: "/archive/statistical-methods", label: "통계방법 가이드", desc: "가정·절차·구문과 대안 비교표 — 분석 계획 수립에 활용", icon: BarChart3 },
     { href: "/archive/method-finder", label: "통계방법 찾기", desc: "몇 가지 질문에 답해 연구 상황에 맞는 통계방법 추천", icon: Target },
   ],

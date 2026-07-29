@@ -25,6 +25,7 @@ import {
   GitFork,
   Rocket,
   Sparkles,
+  Blocks,
 } from "lucide-react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -814,6 +815,31 @@ export default function ArchiveLandingPage() {
                   <h3 className="text-lg font-semibold tracking-tight">APA 7판 참고문헌 작성 가이드</h3>
                   <p className="text-sm text-muted-foreground">
                     학위논문·학술지 투고를 위한 인용·참고문헌 형식 요약 — 자료 유형별 형식과 교육공학 예시
+                  </p>
+                </div>
+                <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">
+                  보기
+                  <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-0.5" aria-hidden />
+                </div>
+              </div>
+            </article>
+          </Link>
+
+          {/* 프로그램 설계·개발 가이드 (인지디딤판에서 이동 — 교수설계 실무 역량) */}
+          <Link
+            href="/archive/program-development"
+            className="group mt-4 block rounded-2xl focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-primary/40 focus-visible:ring-offset-2"
+            aria-label="프로그램 설계·개발 가이드 보기"
+          >
+            <article className="rounded-2xl border-l-4 border-l-cat-1 bg-card shadow-sm transition-all duration-150 hover:-translate-y-0.5 hover:shadow-md">
+              <div className="flex items-center gap-4 p-5">
+                <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-cat-1/10 text-cat-1">
+                  <Blocks className="h-5 w-5" aria-hidden />
+                </div>
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-semibold tracking-tight">프로그램 설계·개발 가이드</h3>
+                  <p className="text-sm text-muted-foreground">
+                    ADDIE와 가네 9절차로 연수·수업·HRD 프로그램을 설계·개발하며, 각 단계에서 참고할 교육공학 개념과 학습목표·과정안 작성 도구를 안내합니다.
                   </p>
                 </div>
                 <div className="hidden shrink-0 items-center gap-1 text-sm font-medium text-primary group-hover:underline sm:flex">

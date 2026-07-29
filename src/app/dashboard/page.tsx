@@ -54,6 +54,7 @@ import ComprehensiveExamCountdown from "@/features/dashboard/ComprehensiveExamCo
 import PageHeader from "@/components/ui/page-header";
 import TermBriefHero from "@/components/dashboard/TermBriefHero";
 import NewMemberOnboardingCard from "@/features/dashboard/NewMemberOnboardingCard";
+import FirstStepsMissionCard from "@/features/dashboard/FirstStepsMissionCard";
 import AlumniHomeWidgets from "@/features/dashboard/AlumniHomeWidgets";
 import AIForumLiveWidget from "@/features/dashboard/AIForumLiveWidget";
 import SpacedRepetitionWidget from "@/features/dashboard/SpacedRepetitionWidget";
@@ -509,6 +510,16 @@ function DashboardContent() {
        *  empty:hidden — 완료/닫힘 회원에게 빈 div 유령 여백 제거. */}
       <div className="mx-auto max-w-6xl px-4 empty:hidden">
         <NewMemberOnboardingCard />
+      </div>
+
+      {/* ── 섹션 0-b: 신입 First-7-Days 핵심행동 미션 (성장 백로그 v19 §B1) ──
+       *  가입 7일 이내 신입에게 3핵심행동(진단·러닝가이드·읽기타이머)을 단일 미션 흐름으로 유도.
+       *  7일 경과 또는 3행동 완료 시 카드가 null 렌더로 자동 숨김(비신입 미영향).
+       *  WidgetBoundary 로 위젯 격리(v18) + empty:hidden 유령 여백 제거. */}
+      <div className="mx-auto mt-4 max-w-6xl px-4 empty:hidden">
+        <WidgetBoundary label="first-steps-mission">
+          <FirstStepsMissionCard />
+        </WidgetBoundary>
       </div>
 
       {/* ── 섹션 1: 헤더 영역 ── */}

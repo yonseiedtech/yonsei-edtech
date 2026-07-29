@@ -1,6 +1,6 @@
 "use client";
 
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, ShieldCheck, UserPlus } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -79,13 +79,22 @@ export default function GuestHistoryPreviewDialog({
           ))}
         </ul>
 
-        <p className="rounded-lg bg-primary/5 p-3 text-sm text-muted-foreground">
-          회원가입을 완료하시면 이 이력이 자동으로 회원 활동에 연동됩니다.
-        </p>
+        <div className="flex items-start gap-2.5 rounded-lg border border-primary/20 bg-primary/5 p-3">
+          <ShieldCheck className="mt-0.5 shrink-0 text-primary" size={18} aria-hidden="true" />
+          <p className="text-sm text-foreground">
+            <strong className="font-semibold">가입하면 이 {count}건이 그대로 지켜집니다.</strong>
+            <br />
+            <span className="text-muted-foreground">
+              지금 입력하신 학번·이메일과 일치하는 기록이라, 남은 단계를 마치고 가입을 완료하면
+              위 이력이 자동으로 마이페이지 활동에 연동돼요.
+            </span>
+          </p>
+        </div>
 
         <DialogFooter>
-          <Button type="button" onClick={() => onOpenChange(false)}>
-            확인하고 계속
+          <Button type="button" onClick={() => onOpenChange(false)} className="w-full sm:w-auto">
+            <UserPlus size={16} className="mr-1.5" />
+            이 활동 저장하고 가입 이어가기
           </Button>
         </DialogFooter>
       </DialogContent>
