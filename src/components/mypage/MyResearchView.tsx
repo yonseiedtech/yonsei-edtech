@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import ResearchCockpit from "@/features/research/ResearchCockpit";
 import ResearchTemplateGallery from "@/features/research/ResearchTemplateGallery";
+import CoreTopicBanner from "@/features/research/topic-explorer/CoreTopicBanner";
 
 // ── Phase 1 체감속도: 탭 패널 대형 컴포넌트 지연 로딩 ─────────────────────────
 // 5개 탭 × 초대형 에디터(각 80~130KB)를 정적 import 하면 첫 진입 번들에 전부
@@ -428,6 +429,11 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
 
           {/* ── 연구보고서 ── */}
           <TabsContent value="reportdoc" className="mt-5">
+            {isSelf && (
+              <div className="mb-4">
+                <CoreTopicBanner />
+              </div>
+            )}
             <ResearchReportEditor user={user} readOnly={!isSelf || readOnly} />
           </TabsContent>
 
@@ -448,6 +454,11 @@ export default function MyResearchView({ userId, readOnly = false }: Props) {
 
           {/* ── 논문 읽기 ── */}
           <TabsContent value="reading" className="mt-5">
+            {isSelf && (
+              <div className="mb-4">
+                <CoreTopicBanner />
+              </div>
+            )}
             <ResearchPaperList
               user={user}
               readOnly={!isSelf || readOnly}

@@ -1,3 +1,5 @@
+import type { SavedTopicDirection } from "./topic-exploration";
+
 // ── 역할 ──
 export type UserRole = "sysadmin" | "admin" | "president" | "staff" | "advisor" | "alumni" | "member" | "guest";
 
@@ -470,6 +472,11 @@ export interface User { [key: string]: unknown;
    * 방학 주간 연구 목표 시간 (방학 모드 v2 게이지). 미설정 시 게이지 대신 목표 설정 유도.
    */
   vacationWeeklyGoalHours?: number;
+  /**
+   * 저장한 추천 주제 방향 (주제 탐색 인터뷰 → 저장). 소량(수~십수 개).
+   * isCore 는 목록 전체에서 단 하나만 true — 새로 지정 시 기존 해제.
+   */
+  savedTopicDirections?: SavedTopicDirection[];
   createdAt: string;
   updatedAt: string;
 }

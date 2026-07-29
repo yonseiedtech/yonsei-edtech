@@ -18,6 +18,7 @@ import {
   ArrowLeft, ArrowRight, RotateCcw, Lightbulb, CheckCircle2,
   GraduationCap, BookMarked, Compass, ClipboardCheck, Copy,
   AlertTriangle, Sparkles, ExternalLink, History, Trash2, X,
+  Bookmark, BookmarkCheck, Star,
 } from "lucide-react";
 import { toast } from "sonner";
 import { Card, CardContent } from "@/components/ui/card";
@@ -32,6 +33,7 @@ import {
   teFieldFromOccupation, teMatchTheses, teMatchConcepts, teAnswersSummary,
   type TEAnswers,
 } from "./topic-explorer-logic";
+import { useSavedTopics } from "./useSavedTopics";
 
 const APPROACH_BADGE: Record<string, string> = {
   "양적": "border-cat-1/30 bg-cat-1/5 text-cat-1",
@@ -216,6 +218,9 @@ export default function TopicExplorer({ user }: Props) {
       toast.error("복사에 실패했습니다.");
     }
   }
+
+  // ── 추천 주제 방향 저장 · 핵심 지정 (2026-07-30 사용자 요청) ──
+  const { saved: savedTopics, coreTopic, isSaved, save: saveTopic, remove: removeTopic, toggleCore } = useSavedTopics();
 
   return (
     <div className="space-y-4">
@@ -422,13 +427,27 @@ export default function TopicExplorer({ user }: Props) {
                       <Badge variant="outline" className={`text-[10px] ${APPROACH_BADGE[f.approach] ?? ""}`}>
                         {f.approach}
                       </Badge>
-                      <button
-                        type="button"
-                        onClick={() => copyFrame(f.sentence)}
-                        className="inline-flex shrink-0 items-center gap-1 rounded-md border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
-                      >
-                        <Copy size={11} /> 복사
-                      </button>
+                      <div className="flex shrink-0 items-center gap-1.5">
+                        <button
+                          type="button"
+                          onClick={() => void saveTopic({ label: f.sentence, approach: f.approach })}
+                          disabled={isSaved(f.sentence)}
+                          className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] transition-colors hover:border-primary/40 hover:text-foreground disabled:cursor-default disabled:border-primary/30 disabled:bg-primary/5 disabled:text-primary text-muted-foreground"
+                        >
+                          {isSaved(f.sentence) ? (
+                            <><BookmarkCheck size={11} /> 저장됨</>
+                          ) : (
+                            <><Bookmark size={11} /> 저장</>
+                          )}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => copyFrame(f.sentence)}
+                          className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] text-muted-foreground transition-colors hover:border-primary/40 hover:text-foreground"
+                        >
+                          <Copy size={11} /> 복사
+                        </button>
+                      </div>
                     </div>
                     <p className="mt-2 text-sm font-semibold leading-relaxed">&ldquo;{f.sentence}&rdquo;</p>
                     <p className="mt-2 text-xs leading-relaxed text-muted-foreground">{f.rationale}</p>
@@ -624,6 +643,77 @@ export default function TopicExplorer({ user }: Props) {
             다시 탐색하기
           </Button>
         </div>
+      )}
+
+      {/* ── 저장한 추천 주제 (화면 하단 별도 영역, 2026-07-30 요청) ── */}
+      {savedTopics.length > 0 && (
+        <Card className="rounded-2xl border-dashed">
+          <CardContent className="p-5">
+            <h3 className="flex items-center gap-1.5 text-sm font-semibold">
+              <Bookmark className="h-4 w-4" aria-hidden />
+              저장한 추천 주제
+              <span className="font-normal text-muted-foreground">({savedTopics.length})</span>
+            </h3>
+            <p className="mt-1 text-xs text-muted-foreground">
+              마음에 드는 방향을 저장해 두고, 그중 하나를 <span className="font-medium text-warning">핵심 주제(★)</span>로 지정하세요.
+              핵심 주제는 논문 읽기·연구보고서 화면 상단에 함께 표시됩니다.
+            </p>
+            <ul className="mt-3 space-y-2">
+              {savedTopics.map((t) => {
+                const isCore = coreTopic?.id === t.id;
+                return (
+                  <li
+                    key={t.id}
+                    className={`rounded-xl border p-3 transition-colors ${isCore ? "border-warning/50 bg-warning/5" : "bg-card"}`}
+                  >
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="min-w-0 flex-1">
+                        <div className="flex flex-wrap items-center gap-1.5">
+                          {t.approach && (
+                            <Badge variant="outline" className={`px-1.5 py-0 text-[9px] ${APPROACH_BADGE[t.approach] ?? ""}`}>
+                              {t.approach}
+                            </Badge>
+                          )}
+                          {isCore && (
+                            <Badge variant="outline" className="border-warning/40 bg-warning/10 px-1.5 py-0 text-[9px] text-warning">
+                              핵심 주제
+                            </Badge>
+                          )}
+                        </div>
+                        <p className="mt-1 text-sm font-medium leading-relaxed">{t.label}</p>
+                      </div>
+                      <div className="flex shrink-0 items-center gap-1">
+                        <button
+                          type="button"
+                          onClick={() => void toggleCore(t.id)}
+                          aria-pressed={isCore}
+                          aria-label={isCore ? "핵심 주제 해제" : "핵심 주제로 지정"}
+                          title={isCore ? "핵심 주제 해제" : "핵심 주제로 지정"}
+                          className={`rounded-md p-1.5 transition-colors ${
+                            isCore
+                              ? "text-warning hover:bg-warning/10"
+                              : "text-muted-foreground hover:bg-muted hover:text-warning"
+                          }`}
+                        >
+                          <Star size={15} className={isCore ? "fill-warning" : ""} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => void removeTopic(t.id)}
+                          aria-label="저장한 주제 삭제"
+                          title="삭제"
+                          className="rounded-md p-1.5 text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
+                        >
+                          <Trash2 size={14} />
+                        </button>
+                      </div>
+                    </div>
+                  </li>
+                );
+              })}
+            </ul>
+          </CardContent>
+        </Card>
       )}
     </div>
   );
