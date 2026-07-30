@@ -528,8 +528,11 @@ export function teMatchTheses(
     let score = 0;
     const reasons: string[] = [];
     const title = t.title ?? "";
-    const keywords = t.keywords ?? [];
-    const subjects = t.analysis?.subjects ?? [];
+    // 레거시 문서 방어: keywords·subjects 가 비배열(문자열·객체 등)로 저장된 경우
+    // `?? []` 는 null/undefined 만 막으므로 truthy 비배열에서 .some/.includes 크래시 발생.
+    const keywords = Array.isArray(t.keywords) ? t.keywords : [];
+    const subjectsRaw = t.analysis?.subjects;
+    const subjects = Array.isArray(subjectsRaw) ? subjectsRaw : [];
 
     for (const term of result.interestTerms) {
       const lower = term.toLowerCase();
@@ -573,7 +576,10 @@ export function teMatchConcepts<T extends TEConceptLike>(
 ): T[] {
   const scored: { c: T; score: number }[] = [];
   for (const c of concepts) {
-    const hay = [c.name, ...(c.altNames ?? []), ...(c.tags ?? [])].join(" ").toLowerCase();
+    // 레거시 문서 방어: altNames·tags 비배열 시 spread(...) 가 "not iterable" 크래시.
+    const altNames = Array.isArray(c.altNames) ? c.altNames : [];
+    const tags = Array.isArray(c.tags) ? c.tags : [];
+    const hay = [c.name, ...altNames, ...tags].join(" ").toLowerCase();
     let score = 0;
     for (const term of result.interestTerms) {
       if (hay.includes(term.toLowerCase())) score += 1;

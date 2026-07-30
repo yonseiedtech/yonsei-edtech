@@ -102,16 +102,20 @@ export default function DiagnosticWeakConceptPath({
         const name = concept?.name ?? weakConceptNames?.[i] ?? "개념";
 
         // 개념 → 변인 → 측정도구
+        // 레거시 문서 방어: variableIds·measurementIds 가 비배열이면 forEach 크래시
+        // (`?? []`·옵셔널 체이닝은 truthy 비배열을 막지 못함).
         const measurementIds = new Set<string>();
-        (concept?.variableIds ?? []).forEach((vid) => {
+        const variableIds = concept && Array.isArray(concept.variableIds) ? concept.variableIds : [];
+        variableIds.forEach((vid) => {
           const variable = allVariables.find((v) => v.id === vid);
-          variable?.measurementIds?.forEach((mid) => measurementIds.add(mid));
+          const mIds = variable && Array.isArray(variable.measurementIds) ? variable.measurementIds : [];
+          mIds.forEach((mid) => measurementIds.add(mid));
         });
         const measurements = allMeasurements.filter((m) => measurementIds.has(m.id));
 
         // 개념 → 졸업생 논문 (최신 학위수여년월 순)
         const theses = allTheses
-          .filter((t) => t.conceptIds?.includes(cid))
+          .filter((t) => Array.isArray(t.conceptIds) && t.conceptIds.includes(cid))
           .sort((a, b) =>
             (b.awardedYearMonth || "").localeCompare(a.awardedYearMonth || ""),
           );

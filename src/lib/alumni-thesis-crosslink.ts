@@ -35,10 +35,10 @@ export function thesesForResearchMethod(
  * 중복 제거 후 상위 limit개. analysis 프로필이 비어 있으면 빈 배열.
  */
 export function thesisMethodTags(t: AlumniThesis, limit = 2): string[] {
-  const tags = [
-    ...(t.analysis?.researchMethods ?? []),
-    ...(t.analysis?.statMethods ?? []),
-  ]
+  // 레거시 문서 방어: researchMethods·statMethods 비배열 시 spread(...) 가 "not iterable" 크래시.
+  const methods = Array.isArray(t.analysis?.researchMethods) ? t.analysis.researchMethods : [];
+  const stats = Array.isArray(t.analysis?.statMethods) ? t.analysis.statMethods : [];
+  const tags = [...methods, ...stats]
     .map((s) => s.trim())
     .filter(Boolean);
   return Array.from(new Set(tags)).slice(0, limit);
