@@ -89,6 +89,7 @@ import { useLogWritingActivity } from "./useWritingPaperHistory";
 import { useResearchDesign } from "./useResearchDesign";
 import { buildResearchMethodDraft } from "@/lib/research-design-draft";
 import ResearchJourneyGuide from "./ResearchJourneyGuide";
+import { asArray } from "./normalize-arrays";
 
 interface Props {
   user: User;
@@ -680,14 +681,18 @@ function buildEmptyForm(approach: ResearchApproachType): FormState {
 }
 
 function normalizeSections(list: WritingSection[]): WritingSection[] {
-  return list.map((s) => ({
-    id: s.id || uid(),
-    heading: s.heading ?? "",
-    paragraphs:
-      s.paragraphs && s.paragraphs.length > 0
-        ? s.paragraphs.map((p) => ({ id: p.id || uid(), text: p.text ?? "" }))
-        : [emptyParagraph()],
-  }));
+  // 하드닝(2026-07-30): 레거시 비배열 paragraphs 방어
+  return list.map((s) => {
+    const paras = asArray<{ id?: string; text?: string }>(s.paragraphs);
+    return {
+      id: s.id || uid(),
+      heading: s.heading ?? "",
+      paragraphs:
+        paras.length > 0
+          ? paras.map((p) => ({ id: p.id || uid(), text: p.text ?? "" }))
+          : [emptyParagraph()],
+    };
+  });
 }
 
 function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType): FormState {
@@ -695,7 +700,7 @@ function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType):
   const sections = {} as SectionsState;
   for (const k of CHAPTER_KEYS) {
     const structured = p.sections?.[k];
-    if (structured && structured.length > 0) {
+    if (Array.isArray(structured) && structured.length > 0) {
       sections[k] = withOverview(normalizeSections(structured));
     } else if (p.chapters?.[k]?.trim()) {
       sections[k] = withOverview(migratePlainText(p.chapters[k]!));
@@ -707,14 +712,20 @@ function fromPaper(p: WritingPaper | undefined, approach: ResearchApproachType):
     title: p.title ?? "",
     sections,
     abstract: p.abstract ?? "",
-    abstractKeywords: p.abstractKeywords ?? [],
+    // 하드닝(2026-07-30): 레거시 비배열 배열 필드 방어 — asArray 로 경계 정규화.
+    // researchQuestions 는 중첩 배열(statMethodIds·researchMethodIds)도 iterate 되므로 함께 정규화.
+    abstractKeywords: asArray<string>(p.abstractKeywords),
     abstractEn: p.abstractEn ?? "",
     references: p.references ?? "",
-    researchQuestions: p.researchQuestions ?? [],
-    appendices: p.appendices ?? [],
-    ethicsChecked: p.ethicsChecked ?? [],
-    instruments: p.instruments ?? [],
-    procedureSteps: p.procedureSteps ?? [],
+    researchQuestions: asArray<ResearchQuestionItem>(p.researchQuestions).map((q) => ({
+      ...q,
+      researchMethodIds: asArray<string>(q.researchMethodIds),
+      statMethodIds: asArray<string>(q.statMethodIds),
+    })),
+    appendices: asArray<AppendixItem>(p.appendices),
+    ethicsChecked: asArray<string>(p.ethicsChecked),
+    instruments: asArray<InstrumentItem>(p.instruments),
+    procedureSteps: asArray<ProcedureStep>(p.procedureSteps),
   };
 }
 

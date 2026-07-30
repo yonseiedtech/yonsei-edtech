@@ -34,6 +34,7 @@ import ResearchReportInterview, { TaskStepsField } from "./ResearchReportIntervi
 import VariableSyncPanel from "./VariableSyncPanel";
 import ResearchQuestionSyncPanel from "./ResearchQuestionSyncPanel";
 import ResearchJourneyGuide from "./ResearchJourneyGuide";
+import { asArray, normalizeVariables } from "./normalize-arrays";
 
 interface Props {
   user: User;
@@ -203,27 +204,29 @@ function newId(): string {
 
 function fromReport(r: ResearchReport | undefined): FormState {
   if (!r) return EMPTY;
+  // 하드닝(2026-07-30): 레거시 비배열 필드가 truthy 비배열이면 `.length>0` 만으로 통과 후
+  // 이후 소비처(.map/spread 등)에서 크래시 → Array.isArray 로 경계 정규화.
   // 마이그레이션: 구버전 단일 텍스트가 있고 신규 배열이 비었으면 첫 항목으로 시드
   const migratedPhenomena =
-    r.problemPhenomena && r.problemPhenomena.length > 0
+    Array.isArray(r.problemPhenomena) && r.problemPhenomena.length > 0
       ? r.problemPhenomena
       : r.problemPhenomenon
         ? [r.problemPhenomenon]
         : ["", ""];
   const migratedEvidences =
-    r.problemEvidences && r.problemEvidences.length > 0
+    Array.isArray(r.problemEvidences) && r.problemEvidences.length > 0
       ? r.problemEvidences
       : r.problemEvidence
         ? [{ id: newId(), type: "" as EvidenceType, content: r.problemEvidence }]
         : [];
   const migratedCauses =
-    r.problemCauses && r.problemCauses.length > 0
+    Array.isArray(r.problemCauses) && r.problemCauses.length > 0
       ? r.problemCauses
       : r.problemCause
         ? [{ id: newId(), type: "" as CauseType, content: r.problemCause }]
         : [];
   const migratedMeasurements =
-    r.problemMeasurements && r.problemMeasurements.length > 0
+    Array.isArray(r.problemMeasurements) && r.problemMeasurements.length > 0
       ? r.problemMeasurements
       : [
           { id: newId(), factor: "", indicator: "" },
@@ -240,8 +243,11 @@ function fromReport(r: ResearchReport | undefined): FormState {
     theoryDefinition: r.theoryDefinition ?? "",
     theoryConnection: r.theoryConnection ?? "",
     priorResearchAnalysis: r.priorResearchAnalysis ?? "",
-    priorResearchPaperIds: r.priorResearchPaperIds ?? [],
-    priorResearchGroups: r.priorResearchGroups ?? [],
+    priorResearchPaperIds: asArray<string>(r.priorResearchPaperIds),
+    priorResearchGroups: asArray<ResearchGroup>(r.priorResearchGroups).map((g) => ({
+      ...g,
+      paperIds: asArray<string>(g.paperIds),
+    })),
     fieldAudience: r.fieldAudience ?? "",
     fieldFormat: r.fieldFormat ?? "",
     fieldSubject: r.fieldSubject ?? "",
@@ -267,7 +273,7 @@ function fromReport(r: ResearchReport | undefined): FormState {
     envTransfer: r.envTransfer ?? "",
     envConstraint: r.envConstraint ?? "",
     taskDecompose: r.taskDecompose ?? "",
-    taskSteps: r.taskSteps && r.taskSteps.length > 0
+    taskSteps: Array.isArray(r.taskSteps) && r.taskSteps.length > 0
       ? r.taskSteps
       : (r.taskDecompose ?? "")
           .split(/\r?\n+/)
@@ -299,13 +305,16 @@ function fromReport(r: ResearchReport | undefined): FormState {
     theoryRelationProblem: r.theoryRelationProblem ?? r.theoryConnection ?? "",
     theoryRelationRoles: r.theoryRelationRoles ?? "",
     theoryRelationIntegration: r.theoryRelationIntegration ?? "",
-    variables: r.variables ?? {},
-    researchQuestions: r.researchQuestions ?? [],
+    variables: normalizeVariables(r.variables),
+    researchQuestions: asArray<string>(r.researchQuestions),
   };
 }
 
 function migrateTheoryCards(r: ResearchReport): TheoryCard[] {
-  if (r.theoryCards && r.theoryCards.length > 0) return r.theoryCards;
+  // 하드닝: theoryCards 자체와 각 카드의 concepts 중첩 배열을 정규화
+  if (Array.isArray(r.theoryCards) && r.theoryCards.length > 0) {
+    return r.theoryCards.map((c) => ({ ...c, concepts: asArray<TheoryConcept>(c.concepts) }));
+  }
   // 구버전: theoryType / theoryDefinition / theoryConnection이 있으면 카드 1개로 이전
   if (r.theoryType || r.theoryDefinition || r.theoryConnection) {
     return [

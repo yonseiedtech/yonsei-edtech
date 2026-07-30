@@ -31,6 +31,7 @@ import { formatApa7 } from "@/lib/apa7";
 import ResearchJourneyGuide from "./ResearchJourneyGuide";
 import ResearchQuestionSyncPanel from "./ResearchQuestionSyncPanel";
 import VariableSyncPanel from "./VariableSyncPanel";
+import { asArray, normalizeVariables } from "./normalize-arrays";
 
 interface Props {
   user: User;
@@ -70,9 +71,9 @@ function fromProposal(p: ResearchProposal | undefined): FormState {
     scope: p.scope ?? "",
     method: p.method ?? "",
     content: p.content ?? "",
-    referencePaperIds: p.referencePaperIds ?? [],
-    researchQuestions: p.researchQuestions ?? [],
-    variables: p.variables ?? {},
+    referencePaperIds: asArray<string>(p.referencePaperIds),
+    researchQuestions: asArray<string>(p.researchQuestions),
+    variables: normalizeVariables(p.variables),
   };
 }
 

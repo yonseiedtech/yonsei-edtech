@@ -17,6 +17,7 @@ import {
   type DesignConditions,
 } from "@/types/research-design";
 import type { ResearchDesign } from "@/types";
+import { asArray } from "../normalize-arrays";
 
 export interface FormState {
   approach: ResearchDesignApproach;
@@ -66,15 +67,16 @@ export function fromDesign(d: ResearchDesign | null | undefined): FormState {
     approachRationale: d.approachRationale ?? "",
     modelId: d.modelId ?? "",
     participants: { ...EMPTY_PARTICIPANTS, ...(d.participants ?? {}) },
-    procedureSteps: d.procedureSteps ?? [],
-    instruments: d.instruments ?? [],
+    // 하드닝(2026-07-30): 레거시 비배열 필드 방어 — asArray 로 경계 정규화
+    procedureSteps: asArray<ResearchDesignProcedureStep>(d.procedureSteps),
+    instruments: asArray<ResearchDesignInstrument>(d.instruments),
     qualInstruments: d.qualInstruments ?? "",
     programDesign: { ...EMPTY_PROGRAM, ...(d.programDesign ?? {}) },
     dataCollection: d.dataCollection ?? "",
     dataAnalysis: d.dataAnalysis ?? "",
-    selectedStatMethods: d.selectedStatMethods ?? [],
+    selectedStatMethods: asArray<string>(d.selectedStatMethods),
     designConditions: { ...EMPTY_DESIGN_CONDITIONS, ...(d.designConditions ?? {}) },
-    ethicsChecked: d.ethicsChecked ?? [],
+    ethicsChecked: asArray<string>(d.ethicsChecked),
   };
 }
 

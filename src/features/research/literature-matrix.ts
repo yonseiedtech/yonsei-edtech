@@ -38,10 +38,15 @@ export function readonlyCellValue(p: ResearchPaper, key: AnyMatrixColumnKey): st
     const v = p.variables;
     if (!v) return "";
     const parts: string[] = [];
-    if (v.independent?.length) parts.push(`독립: ${v.independent.join(", ")}`);
-    if (v.dependent?.length) parts.push(`종속: ${v.dependent.join(", ")}`);
-    if (v.mediator?.length) parts.push(`매개: ${v.mediator.join(", ")}`);
-    if (v.moderator?.length) parts.push(`조절: ${v.moderator.join(", ")}`);
+    // 하드닝(2026-07-30): 레거시 비배열 서브필드 방어 — 옵셔널 체이닝은 truthy 비배열을
+    // 통과시켜 .join 에서 크래시. Array.isArray 로 가드.
+    const add = (label: string, arr: unknown) => {
+      if (Array.isArray(arr) && arr.length > 0) parts.push(`${label}: ${arr.join(", ")}`);
+    };
+    add("독립", v.independent);
+    add("종속", v.dependent);
+    add("매개", v.mediator);
+    add("조절", v.moderator);
     return parts.join(" / ");
   }
   if (key === "rating") return p.rating ? "★".repeat(p.rating) : "";
