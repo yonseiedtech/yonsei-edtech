@@ -17,6 +17,7 @@ import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import { useAuthStore } from "@/features/auth/auth-store";
 import { useUpdateProfile } from "@/features/member/useMembers";
+import { useOrgChart, findOrgTitle } from "@/features/admin/settings/useOrgChart";
 import { downloadVCard, userToContact } from "@/features/card/vcard";
 import PrintBusinessCard from "@/features/card/PrintBusinessCard";
 import {
@@ -55,6 +56,34 @@ async function svgToPngDataUrl(src: string, size: number): Promise<string | unde
   }
 }
 
+/** 원격 프로필 이미지 → PNG data URL(정사각 크롭). CORS 실패(캔버스 오염) 시 undefined → 사진 없이 PDF 생성. */
+async function imageToPngDataUrl(src: string, size: number): Promise<string | undefined> {
+  try {
+    const img = new Image();
+    img.crossOrigin = "anonymous";
+    img.decoding = "async";
+    const loaded = new Promise<void>((resolve, reject) => {
+      img.onload = () => resolve();
+      img.onerror = () => reject(new Error("photo load failed"));
+    });
+    img.src = src;
+    await loaded;
+    const canvas = document.createElement("canvas");
+    canvas.width = size;
+    canvas.height = size;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return undefined;
+    // 정사각 커버 크롭
+    const side = Math.min(img.naturalWidth, img.naturalHeight) || size;
+    const sx = (img.naturalWidth - side) / 2;
+    const sy = (img.naturalHeight - side) / 2;
+    ctx.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+    return canvas.toDataURL("image/png");
+  } catch {
+    return undefined;
+  }
+}
+
 export default function PrintCardSection({
   user,
   profileUrl,
@@ -69,12 +98,17 @@ export default function PrintCardSection({
   const setUser = useAuthStore((s) => s.setUser);
   const { updateProfile } = useUpdateProfile();
 
+  // 현재 학기 조직도에서 본인 운영진 직책(예: "학회장") — 배정 없으면 undefined.
+  const { positions } = useOrgChart();
+  const societyRole = findOrgTitle(positions, user.id);
+
   const [variant, setVariant] = useState<PrintCardVariant>(() =>
     cardThemeToVariant(user.cardTheme as string | undefined),
   );
   const [showEmail, setShowEmail] = useState(true);
   const [showPhone, setShowPhone] = useState(false);
   const [showField, setShowField] = useState(true);
+  const [showPhoto, setShowPhoto] = useState(() => user.cardShowPhoto === true);
   const [includeBack, setIncludeBack] = useState(true);
   const [showCropMarks, setShowCropMarks] = useState(true);
   const [showGuides, setShowGuides] = useState(false);
@@ -124,6 +158,18 @@ export default function PrintCardSection({
       setUser({ ...user, cardTheme: v });
     } catch {
       /* 저장 실패해도 화면 선택은 유지 — 치명적이지 않음 */
+    }
+  }
+
+  // 사진 표시 토글 → 프로필에 저장(상대방 명함 보기에도 반영).
+  async function handleShowPhotoChange(v: boolean) {
+    setShowPhoto(v);
+    if (v === (user.cardShowPhoto === true)) return;
+    try {
+      await updateProfile({ id: user.id, data: { cardShowPhoto: v } });
+      setUser({ ...user, cardShowPhoto: v });
+    } catch {
+      /* 저장 실패해도 화면 선택은 유지 */
     }
   }
 
@@ -180,6 +226,11 @@ export default function PrintCardSection({
       const qrDataUrl = qrCanvasRef.current?.toDataURL("image/png");
       if (!qrDataUrl) throw new Error("QR 생성 실패");
       const emblemDataUrl = await svgToPngDataUrl("/yonsei-emblem.svg", 256);
+      // 사진 표시 시에만 원격 이미지 변환(CORS 실패 시 undefined → 사진 없이 생성).
+      const photoDataUrl =
+        showPhoto && user.profileImage
+          ? await imageToPngDataUrl(user.profileImage, 200)
+          : undefined;
 
       const [{ pdf }, { BusinessCardPrintPdfDocument }] = await Promise.all([
         import("@react-pdf/renderer"),
@@ -202,6 +253,8 @@ export default function PrintCardSection({
           profileUrl={profileUrl}
           qrDataUrl={qrDataUrl}
           emblemDataUrl={emblemDataUrl}
+          societyRole={societyRole}
+          photoDataUrl={photoDataUrl}
           includeBack={includeBack}
           showCropMarks={showCropMarks}
         />,
@@ -244,6 +297,8 @@ export default function PrintCardSection({
               showEmail={showEmail}
               showPhone={showPhone}
               showField={showField}
+              societyRole={societyRole}
+              showPhoto={showPhoto}
               email={emailInput}
               phone={formatPhone(phoneInput)}
               showGuides={showGuides}
@@ -338,6 +393,16 @@ export default function PrintCardSection({
           <button type="button" onClick={() => setShowField((v) => !v)} aria-pressed={showField} className={toggleClass(showField)}>
             관심분야
           </button>
+          <button
+            type="button"
+            onClick={() => handleShowPhotoChange(!showPhoto)}
+            aria-pressed={showPhoto}
+            disabled={!user.profileImage}
+            title={user.profileImage ? undefined : "프로필 사진을 먼저 등록하세요"}
+            className={cn(toggleClass(showPhoto), !user.profileImage && "cursor-not-allowed opacity-50")}
+          >
+            사진 표시
+          </button>
           <button type="button" onClick={() => setIncludeBack((v) => !v)} aria-pressed={includeBack} className={toggleClass(includeBack)}>
             뒷면 포함
           </button>
@@ -348,6 +413,11 @@ export default function PrintCardSection({
             미리보기 가이드
           </button>
         </div>
+        {societyRole && (
+          <p className="mt-2 text-[11px] text-muted-foreground">
+            운영진 직책 <span className="font-semibold text-foreground">{societyRole}</span> 이(가) 명함에 자동 표기됩니다.
+          </p>
+        )}
       </div>
 
       {/* 연락처 입력 (프로필 기본값 · 자유 수정 · 자동 저장) */}

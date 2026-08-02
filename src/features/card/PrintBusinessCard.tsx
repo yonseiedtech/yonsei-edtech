@@ -32,6 +32,10 @@ interface PrintBusinessCardProps {
   email?: string;
   /** 표시할 전화(사용자가 편집 가능) — 미지정 시 프로필 기본값 */
   phone?: string;
+  /** 학회 운영진 직책(예: "학회장", "총무부장") — 있으면 이름 아래 강조 표기 */
+  societyRole?: string;
+  /** 프로필 사진 표시 여부 — true 이고 user.profileImage 있으면 앞면 좌측에 원형 사진 */
+  showPhoto?: boolean;
   /** 재단선(실선)·안전영역(점선) 가이드 오버레이 표시 (미리보기 전용) */
   showGuides?: boolean;
   /** "back" 이면 뒷면 미리보기 렌더 */
@@ -47,6 +51,8 @@ export default function PrintBusinessCard({
   profileUrl,
   email,
   phone,
+  societyRole,
+  showPhoto = false,
   showGuides = false,
   side = "front",
 }: PrintBusinessCardProps) {
@@ -140,34 +146,49 @@ export default function PrintBusinessCard({
             </div>
           </div>
 
-          <div className="my-1">
-            <p className="text-2xl font-bold leading-none" style={{ color: c.name }}>
-              {user.name}
-              {lines.generationLabel && (
-                <span className="ml-1.5 text-[9px] font-normal" style={{ color: c.sub }}>
-                  {lines.generationLabel}
-                </span>
+          <div className="my-1 flex items-start gap-2">
+            {showPhoto && user.profileImage && (
+              <span
+                className="relative mt-0.5 block shrink-0 overflow-hidden rounded-full"
+                style={{ width: 42, height: 42, border: `1px solid ${c.accent}` }}
+              >
+                <Image src={user.profileImage} alt={user.name} fill sizes="42px" className="object-cover" />
+              </span>
+            )}
+            <div className="min-w-0 flex-1">
+              <p className="text-2xl font-bold leading-none" style={{ color: c.name }}>
+                {user.name}
+                {lines.generationLabel && (
+                  <span className="ml-1.5 text-[9px] font-normal" style={{ color: c.sub }}>
+                    {lines.generationLabel}
+                  </span>
+                )}
+              </p>
+              <span
+                className="mt-1.5 mb-1.5 block rounded-full"
+                style={{ width: 34, height: 2.5, backgroundColor: c.accent }}
+              />
+              {societyRole && (
+                <p className="truncate text-[9.5px] font-bold" style={{ color: c.accent }}>
+                  {societyRole}
+                </p>
               )}
-            </p>
-            <span
-              className="mt-1.5 mb-1.5 block rounded-full"
-              style={{ width: 34, height: 2.5, backgroundColor: c.accent }}
-            />
-            {lines.position && (
-              <p className="truncate text-[10px] font-semibold" style={{ color: c.name }}>
-                {lines.position}
-              </p>
-            )}
-            {lines.affiliationLine && (
-              <p className="truncate text-[9px]" style={{ color: c.sub }}>
-                {lines.affiliationLine}
-              </p>
-            )}
-            {showField && user.field && (
-              <p className="truncate text-[8px]" style={{ color: c.accent }}>
-                #{user.field}
-              </p>
-            )}
+              {lines.position && (
+                <p className="truncate text-[10px] font-semibold" style={{ color: c.name }}>
+                  {lines.position}
+                </p>
+              )}
+              {lines.affiliationLine && (
+                <p className="truncate text-[9px]" style={{ color: c.sub }}>
+                  {lines.affiliationLine}
+                </p>
+              )}
+              {showField && user.field && (
+                <p className="truncate text-[8px]" style={{ color: c.accent }}>
+                  #{user.field}
+                </p>
+              )}
+            </div>
           </div>
 
           <div className="space-y-0.5">

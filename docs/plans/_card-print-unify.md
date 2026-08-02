@@ -29,3 +29,26 @@
 ## 검증
 - TSC 0 / ESLint(변경 5파일) 0 / rawcolor 래칫 1(상한 1) / eslint-warning 래칫 146(상한 146, 변동 없음) / next build 0.
 - QA: /mypage 내 명함(미리보기·variant 전환·공유·JPG·PDF), /directory/[id]/card 상대 명함 렌더.
+
+---
+
+## 후속(2026-08-02 2차) — 운영진 직책 표시 + 프로필 사진 선택
+
+### 운영진 직책 표시
+- 직책 소스: `org_chart:{현재학기}`(site_settings)의 position 중 `userId === 본인`인 `title`(예: "학회장", "총무부장"). User 필드가 아님 → 렌더 시 `useOrgChart()` + `findOrgTitle(positions, userId)`.
+- `useOrgChart.ts`에 `findOrgTitle()` 헬퍼 신설(비배열 안전).
+- `PrintBusinessCard` `societyRole?` prop → 이름 아래 accent(골드) 강조 라인. PDF(`BusinessCardPrintPdfDocument` `societyRole?`)도 동일 위치.
+- `PrintCardSection`: 본인 직책 자동 감지 → 미리보기·PDF 반영 + "운영진 직책 …이 자동 표기" 안내. `/directory/[id]/card`도 owner 직책 표기.
+
+### 프로필 사진 선택 표시 (명함 통합 후속)
+- `PrintBusinessCard` `showPhoto?` prop → true이고 `user.profileImage` 있으면 앞면 이름블록 좌측에 원형 사진(42px, accent 테두리). 이름블록을 photo+text 2열 레이아웃으로.
+- 토글 `사진 표시`(사진 없으면 disabled) → `user.cardShowPhoto` 프로필 저장(variant와 동일 패턴) → 상대방 명함 보기에도 반영.
+- PDF: `photoDataUrl?`(34pt 원형). `imageToPngDataUrl()`로 원격 이미지→data URL(정사각 커버 크롭, **CORS 실패 시 undefined→사진 없이 생성** 그레이스풀). 화면 미리보기는 next/image(원격 도메인 기설정)라 CORS 무관.
+- 데이터: `cardShowPhoto` boolean은 User `[key:string]`로 무스키마 저장.
+
+### 변경 파일(2차)
+`useOrgChart.ts`(findOrgTitle) · `PrintBusinessCard.tsx`(societyRole·showPhoto·2열) · `BusinessCardPrintPdfDocument.tsx`(societyRole·photoDataUrl) · `PrintCardSection.tsx`(org조회·사진토글persist·PDF사진변환) · `directory/[id]/card/page.tsx`(owner 직책·사진).
+
+### 검증(2차)
+- TSC 0 / ESLint(변경 5파일) 0 / rawcolor 1 / eslint-warning 146(변동없음) / next build 0.
+- QA 예정: 내 명함 사진토글·운영진 직책 자동표기·PDF 사진 임베드·상대방 명함 반영.

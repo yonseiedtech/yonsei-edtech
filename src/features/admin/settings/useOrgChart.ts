@@ -145,6 +145,19 @@ export function useUpdateOrgChart() {
   });
 }
 
+/**
+ * 특정 회원의 현재 학회 직책명 반환. org_chart positions 에서 `userId` 가 일치하는
+ * 첫 직책의 `title`(예: "학회장", "총무부장"). 배정 없으면 undefined.
+ * 명함(운영진 직책 표기) 등에서 공용. positions 가 비배열이어도 안전.
+ */
+export function findOrgTitle(
+  positions: OrgPosition[] | undefined | null,
+  userId: string | undefined,
+): string | undefined {
+  if (!userId || !Array.isArray(positions)) return undefined;
+  return positions.find((p) => p.userId === userId)?.title;
+}
+
 export function buildOrgTree(positions: OrgPosition[]): OrgTreeNode[] {
   const sorted = [...positions].sort((a, b) => a.order - b.order);
   const map = new Map<string, OrgTreeNode>();

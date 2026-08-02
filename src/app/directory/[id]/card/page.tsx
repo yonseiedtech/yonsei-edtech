@@ -10,6 +10,7 @@ import BackButton from "@/components/ui/back-button";
 import { useAuthStore } from "@/features/auth/auth-store";
 import PrintBusinessCard from "@/features/card/PrintBusinessCard";
 import { cardThemeToVariant } from "@/features/card/print-card";
+import { useOrgChart, findOrgTitle } from "@/features/admin/settings/useOrgChart";
 import { Button } from "@/components/ui/button";
 import { auth, db } from "@/lib/firebase";
 import { downloadVCard, userToContact } from "@/features/card/vcard";
@@ -20,6 +21,7 @@ function ReceivedCardInner() {
   const params = useParams<{ id: string }>();
   const search = useSearchParams();
   const viewer = useAuthStore((s) => s.user);
+  const { positions: orgPositions } = useOrgChart();
   const ownerId = params.id;
   const exchangeLoggedRef = useRef(false);
 
@@ -111,6 +113,8 @@ function ReceivedCardInner() {
             showEmail
             showPhone={false}
             showField
+            societyRole={findOrgTitle(orgPositions, owner.id)}
+            showPhoto={owner.cardShowPhoto === true}
             profileUrl={ownerProfileUrl}
             side="front"
           />

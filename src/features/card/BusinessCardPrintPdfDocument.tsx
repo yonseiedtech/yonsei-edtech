@@ -60,6 +60,10 @@ export interface BusinessCardPrintProps {
   qrDataUrl: string;
   /** 엠블럼 PNG data URL (없으면 텍스트 배지로 대체) */
   emblemDataUrl?: string;
+  /** 학회 운영진 직책(예: "학회장") — 있으면 이름 아래 강조 표기 */
+  societyRole?: string;
+  /** 프로필 사진 PNG data URL — 있으면 앞면 좌측에 원형 사진(변환 실패 시 미지정→미표시) */
+  photoDataUrl?: string;
   /** 뒷면 포함 여부 */
   includeBack: boolean;
   /** 재단선(crop marks) 인쇄 여부 (인쇄소 제출용, 기본 on) */
@@ -75,6 +79,8 @@ export function BusinessCardPrintPdfDocument({
   profileUrl,
   qrDataUrl,
   emblemDataUrl,
+  societyRole,
+  photoDataUrl,
   includeBack,
   showCropMarks,
 }: BusinessCardPrintProps) {
@@ -136,6 +142,27 @@ export function BusinessCardPrintPdfDocument({
     // ── 중앙: 이름 + 직책/소속 ──
     nameBlock: {
       marginVertical: 4,
+    },
+    nameRow: {
+      flexDirection: "row",
+      alignItems: "center",
+      gap: 6,
+    },
+    photo: {
+      width: 34,
+      height: 34,
+      borderRadius: 17,
+      objectFit: "cover",
+      border: `0.75pt solid ${colors.accent}`,
+    },
+    nameCol: {
+      flex: 1,
+    },
+    societyRole: {
+      fontSize: 8,
+      fontWeight: 700,
+      color: colors.accent,
+      marginBottom: 1,
     },
     name: {
       fontSize: 21,
@@ -312,20 +339,29 @@ export function BusinessCardPrintPdfDocument({
               </View>
             </View>
 
-            {/* 이름 + 직책/소속 */}
+            {/* 이름 + 직책/소속 (+ 선택 프로필 사진) */}
             <View style={styles.nameBlock}>
-              <Text style={styles.name}>
-                {fields.name}
-                {fields.generationLabel ? (
-                  <Text style={styles.genLabel}>{`  ${fields.generationLabel}`}</Text>
+              <View style={styles.nameRow}>
+                {photoDataUrl ? (
+                  // eslint-disable-next-line jsx-a11y/alt-text
+                  <Image src={photoDataUrl} style={styles.photo} />
                 ) : null}
-              </Text>
-              <View style={styles.accentRule} />
-              {fields.position ? <Text style={styles.position}>{fields.position}</Text> : null}
-              {fields.affiliationLine ? (
-                <Text style={styles.affiliation}>{fields.affiliationLine}</Text>
-              ) : null}
-              {fieldTag ? <Text style={styles.fieldTag}>#{fieldTag}</Text> : null}
+                <View style={styles.nameCol}>
+                  <Text style={styles.name}>
+                    {fields.name}
+                    {fields.generationLabel ? (
+                      <Text style={styles.genLabel}>{`  ${fields.generationLabel}`}</Text>
+                    ) : null}
+                  </Text>
+                  <View style={styles.accentRule} />
+                  {societyRole ? <Text style={styles.societyRole}>{societyRole}</Text> : null}
+                  {fields.position ? <Text style={styles.position}>{fields.position}</Text> : null}
+                  {fields.affiliationLine ? (
+                    <Text style={styles.affiliation}>{fields.affiliationLine}</Text>
+                  ) : null}
+                  {fieldTag ? <Text style={styles.fieldTag}>#{fieldTag}</Text> : null}
+                </View>
+              </View>
             </View>
 
             {/* 하단 연락처 */}
