@@ -6,15 +6,17 @@
  * /mypage/card/page.tsx 의 CardInner 로직을 추출.
  * MyPageView "내 명함" 탭에 dynamic import로 삽입.
  * AuthGuard 없음 — 부모(MyPageView)가 이미 인증 상태를 보장.
+ *
+ * 명함 디자인을 인쇄용 가로 명함(PrintBusinessCard, 90×50mm)으로 통합(2026-08-02).
+ * 세로 모바일 명함은 제거되고 PrintCardSection 이 미리보기·공유·이미지 저장·PDF 를 담당한다.
  */
 
-import { useCallback, useRef, useState } from "react";
+import { useCallback, useState } from "react";
 import Link from "next/link";
 import { useQuery } from "@tanstack/react-query";
 import { collection, getDocs, orderBy, query, where } from "firebase/firestore";
-import { Download, Share2, Users, CreditCard, History, Camera, BookUser } from "lucide-react";
+import { Users, CreditCard, History, Camera, BookUser } from "lucide-react";
 import { useAuthStore } from "@/features/auth/auth-store";
-import BusinessCard from "@/features/card/BusinessCard";
 import PrintCardSection from "@/features/card/PrintCardSection";
 import ReceivedCardsSection from "@/features/card/ReceivedCardsSection";
 import Cropper from "react-easy-crop";
@@ -29,12 +31,9 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { downloadVCard, userToContact } from "@/features/card/vcard";
 import { db } from "@/lib/firebase";
 import { cn } from "@/lib/utils";
 import type { BusinessCardExchange } from "@/types";
-import { CARD_THEME_KEYS, CARD_THEME_LABELS } from "@/types";
-import { CARD_THEMES } from "@/features/card/card-themes";
 import { toast } from "sonner";
 import { uploadToStorage } from "@/lib/storage";
 import { useUpdateProfile } from "@/features/member/useMembers";
@@ -76,64 +75,22 @@ function CardTab({
   user,
   qrUrl,
   profileUrl,
-  cardRef,
-  handleShare,
-  handleSavePng,
   handlePhotoUpload,
   isUploading,
-  themeKey,
-  onThemeChange,
 }: {
-  user: ReturnType<typeof useAuthStore.getState>["user"];
+  user: NonNullable<ReturnType<typeof useAuthStore.getState>["user"]>;
   qrUrl: string;
   profileUrl: string;
-  cardRef: React.RefObject<HTMLDivElement | null>;
-  handleShare: () => void;
-  handleSavePng: () => void;
   handlePhotoUpload: (file: File) => void;
   isUploading: boolean;
-  themeKey: string;
-  onThemeChange: (key: string) => void;
 }) {
-  if (!user) return null;
   return (
     <div>
-      <div className="mt-2">
-        <BusinessCard ref={cardRef} user={user} qrValue={qrUrl} themeKey={themeKey} />
-      </div>
+      {/* 통합 명함 (인쇄용 규격) — 미리보기·공유·이미지 저장·PDF */}
+      <PrintCardSection user={user} profileUrl={profileUrl} qrUrl={qrUrl} />
 
-      {/* 명함 테마 선택 (사이클 112) — 선택 즉시 미리보기 + 저장 */}
-      <div className="mt-4">
-        <p className="mb-2 text-center text-xs font-medium text-muted-foreground">
-          명함 테마
-        </p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {CARD_THEME_KEYS.map((key) => (
-            <button
-              key={key}
-              type="button"
-              onClick={() => onThemeChange(key)}
-              aria-pressed={themeKey === key}
-              className={cn(
-                "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
-                themeKey === key
-                  ? "border-primary bg-primary/5 text-primary"
-                  : "border-border text-muted-foreground hover:bg-muted",
-              )}
-            >
-              <span
-                className="h-3 w-3 rounded-full"
-                style={{ backgroundColor: CARD_THEMES[key].swatch }}
-                aria-hidden
-              />
-              {CARD_THEME_LABELS[key]}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* 프로필 사진 업로드 */}
-      <div className="mt-4 flex justify-center">
+      {/* 프로필 사진 — 사이트 프로필·회원 명부용 (인쇄 명함에는 미표시) */}
+      <div className="mt-6 flex flex-col items-center gap-1.5">
         <label className={cn("cursor-pointer", isUploading && "pointer-events-none opacity-60")}>
           <input
             type="file"
@@ -156,33 +113,22 @@ function CardTab({
             {isUploading ? "업로드 중…" : "프로필 사진 변경"}
           </span>
         </label>
-      </div>
-
-      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
-        <Button variant="outline" onClick={handleShare}>
-          <Share2 size={16} className="mr-1" />공유하기
-        </Button>
-        <Button variant="outline" onClick={handleSavePng}>
-          <Download size={16} className="mr-1" />이미지 저장
-        </Button>
-        <Button onClick={() => downloadVCard(userToContact(user))}>
-          <Download size={16} className="mr-1" />vCard(.vcf)
-        </Button>
+        <p className="text-[11px] text-muted-foreground">
+          프로필 사진은 회원 명부·프로필에 표시됩니다. (인쇄 명함에는 미표시)
+        </p>
       </div>
 
       <div className="mt-6 rounded-2xl border bg-card p-4 text-xs text-muted-foreground">
         <p className="font-semibold text-foreground">사용 안내</p>
         <ul className="mt-2 list-disc space-y-1 pl-4">
-          <li>프로필 사진: 명함에 표시할 사진을 업로드하세요</li>
+          <li>디자인: 라이트·네이비 중 선택하면 상대가 보는 명함에도 동일하게 적용돼요</li>
           <li>공유하기: 카카오톡·메시지로 명함 링크 전송</li>
-          <li>이미지 저장: 명함을 JPG로 저장해 프로필에 활용</li>
+          <li>이미지 저장: 명함 앞면을 JPG로 저장해 프로필에 활용</li>
+          <li>인쇄용 PDF: 실제 규격(90×50mm)으로 인쇄소에 제출할 수 있어요</li>
           <li>vCard: 연락처 앱에서 바로 열 수 있는 파일</li>
           <li>상대가 내 QR을 스캔하면 교환 기록 탭에 남아요</li>
         </ul>
       </div>
-
-      {/* 인쇄소 제출용 명함 (추가 기능 — 화면용 모바일 명함과 별개) */}
-      <PrintCardSection user={user} profileUrl={profileUrl} />
     </div>
   );
 }
@@ -276,11 +222,7 @@ function ExchangesTab({ userId }: { userId: string }) {
 
 export default function CardSection() {
   const { user, setUser } = useAuthStore();
-  const cardRef = useRef<HTMLDivElement>(null);
   const [tab, setTab] = useState<CardTabKey>("card");
-  const [cardTheme, setCardTheme] = useState<string>(
-    () => (user?.cardTheme as string | undefined) ?? "default",
-  );
   const [isUploading, setIsUploading] = useState(false);
   const { updateProfile } = useUpdateProfile();
 
@@ -302,29 +244,6 @@ export default function CardSection() {
   const qrUrl = `${siteOrigin}/profile/${user.id}?via=qr`;
   // 인쇄 명함 QR·뒷면 URL 은 영구 링크라 via 트래킹 파라미터 없이 깔끔한 공개 프로필 주소 사용.
   const profileUrl = `${siteOrigin}/profile/${user.id}`;
-
-  async function handleShare() {
-    if (!user) return;
-    const shareData = {
-      title: `${user.name}님의 명함`,
-      text: `연세교육공학회 ${user.name}`,
-      url: qrUrl,
-    };
-    if (navigator.share) {
-      try {
-        await navigator.share(shareData);
-      } catch {
-        /* cancelled */
-      }
-    } else {
-      try {
-        await navigator.clipboard.writeText(qrUrl);
-        toast.success("명함 링크를 복사했습니다.");
-      } catch {
-        toast.error("공유를 지원하지 않는 환경입니다.");
-      }
-    }
-  }
 
   function handlePhotoUpload(file: File) {
     const reader = new FileReader();
@@ -358,39 +277,6 @@ export default function CardSection() {
       );
     } finally {
       setIsUploading(false);
-    }
-  }
-
-  async function handleSavePng() {
-    if (!cardRef.current) return;
-    try {
-      const { toJpeg } = await import("html-to-image");
-      const dataUrl = await toJpeg(cardRef.current, {
-        quality: 0.95,
-        backgroundColor: "#ffffff",
-        pixelRatio: 2,
-        cacheBust: true,
-      });
-      const a = document.createElement("a");
-      a.href = dataUrl;
-      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
-      a.download = `명함-${user!.name ?? "card"}-${dateStr}.jpg`;
-      a.click();
-      toast.success("명함이 저장되었습니다.");
-    } catch {
-      toast.error("JPG 저장 실패");
-    }
-  }
-
-  async function handleThemeChange(key: string) {
-    if (!user) return;
-    setCardTheme(key);
-    try {
-      await updateProfile({ id: user.id, data: { cardTheme: key } });
-      setUser({ ...user, cardTheme: key });
-      toast.success("명함 테마를 변경했습니다.");
-    } catch {
-      toast.error("테마 저장에 실패했습니다.");
     }
   }
 
@@ -435,13 +321,8 @@ export default function CardSection() {
             user={user}
             qrUrl={qrUrl}
             profileUrl={profileUrl}
-            cardRef={cardRef}
-            handleShare={handleShare}
-            handleSavePng={handleSavePng}
             handlePhotoUpload={handlePhotoUpload}
             isUploading={isUploading}
-            themeKey={cardTheme}
-            onThemeChange={handleThemeChange}
           />
         ) : tab === "exchanges" ? (
           <ExchangesTab userId={user.id} />

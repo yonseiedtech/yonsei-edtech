@@ -18,25 +18,7 @@ export interface ReceivedBusinessCard {
   updatedAt?: string;
 }
 
-// ── 명함 디자인 테마 (사이클 112, 사용자 요청) ──
-// User.cardTheme 에 저장. 색상 클래스 매핑은 features/card/card-themes.ts.
-
-export type CardThemeKey = "default" | "navy" | "emerald" | "rose" | "slate" | "amber";
-
-export const CARD_THEME_KEYS: CardThemeKey[] = [
-  "default",
-  "navy",
-  "emerald",
-  "rose",
-  "slate",
-  "amber",
-];
-
-export const CARD_THEME_LABELS: Record<CardThemeKey, string> = {
-  default: "연세 블루",
-  navy: "네이비",
-  emerald: "에메랄드",
-  rose: "로즈",
-  slate: "차콜",
-  amber: "앰버",
-};
+// ── 명함 디자인 ──
+// 명함은 인쇄용 가로 규격(PrintBusinessCard, 90×50mm)으로 통합(2026-08-02).
+// User.cardTheme 에 인쇄 variant("light" | "navy")를 저장한다.
+// variant 정규화·색값은 features/card/print-card.ts 참조(레거시 6종 테마 값도 매핑 처리).

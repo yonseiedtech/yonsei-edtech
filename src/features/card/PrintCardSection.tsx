@@ -1,21 +1,26 @@
 "use client";
 
-// ── 인쇄용 명함 섹션 (마이페이지 "내 명함" 내 추가 블록, 2026-07-19) ──
+// ── 명함 관리 섹션 (마이페이지 "내 명함" 탭, 인쇄용 디자인으로 통합 2026-08-02) ──
 //
-// 기존 모바일 명함(BusinessCard, 세로 화면용)은 그대로 두고, 인쇄소 제출용 가로 명함(90×50mm)
-// 미리보기 + 고품질 PDF 다운로드를 추가 기능으로 제공한다.
-// PDF 는 클라이언트에서 생성(선택 필드만 문서에 포함 → 개인정보 최소화). QR·엠블럼은 캔버스로
-// 고해상 PNG 를 만들어 임베드, 텍스트/도형은 @react-pdf 벡터(300dpi 이상 충족).
+// 기존의 세로 모바일 명함(BusinessCard)과 가로 인쇄 명함이 이원화돼 있던 것을,
+// 인쇄소 규격(90×50mm)의 가로 명함 하나로 통합했다. 이 섹션이 화면 미리보기·공유·이미지 저장·
+// 인쇄 PDF 를 모두 담당하는 단일 명함 관리 UI 다. 상대방 명함 보기(/directory/[id]/card)도
+// 동일한 PrintBusinessCard 를 사용한다.
+// 색은 모두 인라인 style(brand-kit/print-card 의 hex) — 인쇄물 그대로를 보여주기 위함(다크모드 무관).
 
 import { useEffect, useRef, useState } from "react";
 import { QRCodeCanvas } from "qrcode.react";
-import { Download, Info, Loader2 } from "lucide-react";
+import { Download, Info, Loader2, Share2, UserSquare } from "lucide-react";
 import { toast } from "sonner";
 import type { User } from "@/types";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { useAuthStore } from "@/features/auth/auth-store";
+import { useUpdateProfile } from "@/features/member/useMembers";
+import { downloadVCard, userToContact } from "@/features/card/vcard";
 import PrintBusinessCard from "@/features/card/PrintBusinessCard";
 import {
+  cardThemeToVariant,
   PRINT_CARD_COLORS,
   PRINT_CARD_CONTACT_STORAGE_KEY,
   PRINT_CARD_VARIANT_LABELS,
@@ -53,19 +58,30 @@ async function svgToPngDataUrl(src: string, size: number): Promise<string | unde
 export default function PrintCardSection({
   user,
   profileUrl,
+  qrUrl,
 }: {
   user: User;
+  /** 명함 QR·뒷면에 담는 공개 프로필 주소 (트래킹 파라미터 없는 영구 링크) */
   profileUrl: string;
+  /** 공유하기 링크 (교환 트래킹 파라미터 포함) */
+  qrUrl: string;
 }) {
-  const [variant, setVariant] = useState<PrintCardVariant>("light");
+  const setUser = useAuthStore((s) => s.setUser);
+  const { updateProfile } = useUpdateProfile();
+
+  const [variant, setVariant] = useState<PrintCardVariant>(() =>
+    cardThemeToVariant(user.cardTheme as string | undefined),
+  );
   const [showEmail, setShowEmail] = useState(true);
   const [showPhone, setShowPhone] = useState(false);
   const [showField, setShowField] = useState(true);
   const [includeBack, setIncludeBack] = useState(true);
   const [showCropMarks, setShowCropMarks] = useState(true);
-  const [showGuides, setShowGuides] = useState(true);
+  const [showGuides, setShowGuides] = useState(false);
   const [isGenerating, setIsGenerating] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
   const qrCanvasRef = useRef<HTMLCanvasElement>(null);
+  const frontRef = useRef<HTMLDivElement>(null);
 
   // 연락처 입력값 — 초기값은 프로필 기본값(SSR/CSR 일치), 마운트 후 localStorage 로 복원.
   const profileDefaults = buildPrintCardLines(user);
@@ -98,6 +114,64 @@ export default function PrintCardSection({
   }, [emailInput, phoneInput]);
 
   const qrFg = PRINT_CARD_COLORS.light.qrFg; // 항상 진한 네이비(양 변형 공통) — 인쇄 대비
+
+  // variant 선택 즉시 프로필에 저장 → 상대방 명함 보기(/directory/[id]/card)도 동일 색으로 표시.
+  async function handleVariantChange(v: PrintCardVariant) {
+    setVariant(v);
+    if (v === cardThemeToVariant(user.cardTheme as string | undefined)) return;
+    try {
+      await updateProfile({ id: user.id, data: { cardTheme: v } });
+      setUser({ ...user, cardTheme: v });
+    } catch {
+      /* 저장 실패해도 화면 선택은 유지 — 치명적이지 않음 */
+    }
+  }
+
+  async function handleShare() {
+    const shareData = {
+      title: `${user.name}님의 명함`,
+      text: `연세교육공학회 ${user.name}`,
+      url: qrUrl,
+    };
+    if (navigator.share) {
+      try {
+        await navigator.share(shareData);
+      } catch {
+        /* cancelled */
+      }
+    } else {
+      try {
+        await navigator.clipboard.writeText(qrUrl);
+        toast.success("명함 링크를 복사했습니다.");
+      } catch {
+        toast.error("공유를 지원하지 않는 환경입니다.");
+      }
+    }
+  }
+
+  async function handleSavePng() {
+    if (!frontRef.current) return;
+    setIsSaving(true);
+    try {
+      const { toJpeg } = await import("html-to-image");
+      const dataUrl = await toJpeg(frontRef.current, {
+        quality: 0.95,
+        backgroundColor: PRINT_CARD_COLORS[variant].bg,
+        pixelRatio: 3,
+        cacheBust: true,
+      });
+      const a = document.createElement("a");
+      a.href = dataUrl;
+      const dateStr = new Date().toISOString().slice(0, 10).replace(/-/g, "");
+      a.download = `명함-${user.name ?? "card"}-${dateStr}.jpg`;
+      a.click();
+      toast.success("명함 이미지를 저장했습니다.");
+    } catch {
+      toast.error("이미지 저장에 실패했습니다.");
+    } finally {
+      setIsSaving(false);
+    }
+  }
 
   async function handleDownloadPdf() {
     if (isGenerating) return;
@@ -158,30 +232,25 @@ export default function PrintCardSection({
     );
 
   return (
-    <section className="mt-8 rounded-2xl border bg-card p-4 sm:p-5">
-      <div className="flex items-center gap-2">
-        <h3 className="text-sm font-semibold text-foreground">인쇄용 명함 (인쇄소 제출용)</h3>
-      </div>
-      <p className="mt-1 text-xs text-muted-foreground">
-        실제 명함 규격(90×50mm)으로 제작해 인쇄소에 그대로 제출할 수 있는 고품질 PDF를 내려받습니다.
-      </p>
-
-      {/* 미리보기 (앞면 + 선택 시 뒷면) */}
-      <div className="mt-4 space-y-3">
+    <section className="mt-2">
+      {/* 명함 미리보기 (앞면 + 선택 시 뒷면) */}
+      <div className="space-y-3">
         <div>
           <p className="mb-1.5 text-center text-[11px] font-medium text-muted-foreground">앞면</p>
-          <PrintBusinessCard
-            user={user}
-            variant={variant}
-            showEmail={showEmail}
-            showPhone={showPhone}
-            showField={showField}
-            email={emailInput}
-            phone={formatPhone(phoneInput)}
-            showGuides={showGuides}
-            profileUrl={profileUrl}
-            side="front"
-          />
+          <div ref={frontRef}>
+            <PrintBusinessCard
+              user={user}
+              variant={variant}
+              showEmail={showEmail}
+              showPhone={showPhone}
+              showField={showField}
+              email={emailInput}
+              phone={formatPhone(phoneInput)}
+              showGuides={showGuides}
+              profileUrl={profileUrl}
+              side="front"
+            />
+          </div>
         </div>
         {includeBack && (
           <div>
@@ -214,15 +283,29 @@ export default function PrintCardSection({
         )}
       </div>
 
+      {/* 공유 / 이미지 저장 / vCard */}
+      <div className="mt-4 grid grid-cols-1 gap-2 sm:grid-cols-3">
+        <Button variant="outline" onClick={handleShare}>
+          <Share2 size={16} className="mr-1" />공유하기
+        </Button>
+        <Button variant="outline" onClick={handleSavePng} disabled={isSaving}>
+          {isSaving ? <Loader2 size={16} className="mr-1 animate-spin" /> : <Download size={16} className="mr-1" />}
+          이미지 저장
+        </Button>
+        <Button variant="outline" onClick={() => downloadVCard(userToContact(user))}>
+          <UserSquare size={16} className="mr-1" />vCard(.vcf)
+        </Button>
+      </div>
+
       {/* 디자인 변형 */}
-      <div className="mt-4">
+      <div className="mt-6">
         <p className="mb-2 text-xs font-medium text-muted-foreground">디자인</p>
         <div className="flex flex-wrap gap-2">
           {VARIANTS.map((v) => (
             <button
               key={v}
               type="button"
-              onClick={() => setVariant(v)}
+              onClick={() => handleVariantChange(v)}
               aria-pressed={variant === v}
               className={cn(
                 "flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition-colors",
@@ -299,27 +382,35 @@ export default function PrintCardSection({
         </p>
       </div>
 
-      {/* 다운로드 */}
-      <div className="mt-4">
-        <Button onClick={handleDownloadPdf} disabled={isGenerating} className="w-full sm:w-auto">
-          {isGenerating ? (
-            <Loader2 size={16} className="mr-1.5 animate-spin" />
-          ) : (
-            <Download size={16} className="mr-1.5" />
-          )}
-          {isGenerating ? "PDF 생성 중…" : "인쇄용 PDF 다운로드"}
-        </Button>
-      </div>
+      {/* 인쇄용 PDF 다운로드 */}
+      <div className="mt-6 rounded-2xl border bg-card p-4 sm:p-5">
+        <div className="flex items-center gap-2">
+          <h3 className="text-sm font-semibold text-foreground">인쇄용 명함 PDF</h3>
+        </div>
+        <p className="mt-1 text-xs text-muted-foreground">
+          실제 명함 규격(90×50mm)으로 제작해 인쇄소에 그대로 제출할 수 있는 고품질 PDF를 내려받습니다.
+        </p>
+        <div className="mt-3">
+          <Button onClick={handleDownloadPdf} disabled={isGenerating} className="w-full sm:w-auto">
+            {isGenerating ? (
+              <Loader2 size={16} className="mr-1.5 animate-spin" />
+            ) : (
+              <Download size={16} className="mr-1.5" />
+            )}
+            {isGenerating ? "PDF 생성 중…" : "인쇄용 PDF 다운로드"}
+          </Button>
+        </div>
 
-      {/* 인쇄 안내 */}
-      <div className="mt-4 flex gap-2 rounded-xl border bg-muted/40 p-3 text-[11px] leading-relaxed text-muted-foreground">
-        <Info size={14} className="mt-0.5 shrink-0" />
-        <div className="space-y-1">
-          <p>재단 크기 90×50mm · 작업 크기 94×54mm(사방 2mm 재단여백 포함) · 안전영역 86×46mm 규격으로 생성됩니다.</p>
-          <p>재단선(crop marks)은 여백 영역에만 표기되어 재단 후 남지 않습니다. 인쇄소 제출 시 켜두는 것을 권장합니다.</p>
-          <p>글자·도형은 벡터라 해상도 제한이 없습니다(300dpi 이상 인쇄 품질 충족).</p>
-          <p>색상은 RGB로 저장됩니다. 인쇄소에서 CMYK 변환을 권장하며, 엠블럼·QR 이미지는 RGB로 포함됩니다.</p>
-          <p>QR은 본인 공개 프로필로 연결됩니다.</p>
+        {/* 인쇄 안내 */}
+        <div className="mt-4 flex gap-2 rounded-xl border bg-muted/40 p-3 text-[11px] leading-relaxed text-muted-foreground">
+          <Info size={14} className="mt-0.5 shrink-0" />
+          <div className="space-y-1">
+            <p>재단 크기 90×50mm · 작업 크기 94×54mm(사방 2mm 재단여백 포함) · 안전영역 86×46mm 규격으로 생성됩니다.</p>
+            <p>재단선(crop marks)은 여백 영역에만 표기되어 재단 후 남지 않습니다. 인쇄소 제출 시 켜두는 것을 권장합니다.</p>
+            <p>글자·도형은 벡터라 해상도 제한이 없습니다(300dpi 이상 인쇄 품질 충족).</p>
+            <p>색상은 RGB로 저장됩니다. 인쇄소에서 CMYK 변환을 권장하며, 엠블럼·QR 이미지는 RGB로 포함됩니다.</p>
+            <p>QR은 본인 공개 프로필로 연결됩니다.</p>
+          </div>
         </div>
       </div>
 

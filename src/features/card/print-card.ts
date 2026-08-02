@@ -91,6 +91,16 @@ export const PRINT_CARD_VARIANT_LABELS: Record<PrintCardVariant, string> = {
   navy: "네이비 (네이비 바탕)",
 };
 
+/**
+ * 명함 variant 결정 — user.cardTheme 에 저장된 값(신규 "light"/"navy" 또는 레거시 6종 테마)을
+ * 인쇄 variant 로 정규화한다. 어두운 계열(navy·slate)은 navy, 그 외는 light.
+ * 명함 디자인을 인쇄용으로 통합(2026-08-02)하며 화면·상대방 보기·PDF 가 이 헬퍼를 공유한다.
+ */
+export function cardThemeToVariant(theme: string | undefined | null): PrintCardVariant {
+  if (theme === "navy" || theme === "slate") return "navy";
+  return "light";
+}
+
 /** 학회명 (국·영문) */
 export const SOCIETY_NAME_KR = "연세교육공학회";
 export const SOCIETY_NAME_EN = "Yonsei Educational Technology Association";

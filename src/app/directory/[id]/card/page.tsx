@@ -8,7 +8,8 @@ import { collection, doc, getDoc, serverTimestamp, setDoc } from "firebase/fires
 import { Download, UserPlus } from "lucide-react";
 import BackButton from "@/components/ui/back-button";
 import { useAuthStore } from "@/features/auth/auth-store";
-import BusinessCard from "@/features/card/BusinessCard";
+import PrintBusinessCard from "@/features/card/PrintBusinessCard";
+import { cardThemeToVariant } from "@/features/card/print-card";
 import { Button } from "@/components/ui/button";
 import { auth, db } from "@/lib/firebase";
 import { downloadVCard, userToContact } from "@/features/card/vcard";
@@ -80,7 +81,7 @@ function ReceivedCardInner() {
   }
 
   const siteOrigin = typeof window !== "undefined" ? window.location.origin : "";
-  const qrUrl = `${siteOrigin}/directory/${owner.id}/card`;
+  const ownerProfileUrl = `${siteOrigin}/profile/${owner.id}`;
   const isSelf = viewer?.id === owner.id;
 
   return (
@@ -104,7 +105,15 @@ function ReceivedCardInner() {
         {!isSelf && <p className="mt-1 text-sm text-muted-foreground">QR 스캔으로 받은 명함이에요.</p>}
 
         <div className="mt-6">
-          <BusinessCard user={owner} qrValue={qrUrl} hideExchangeHint />
+          <PrintBusinessCard
+            user={owner}
+            variant={cardThemeToVariant(owner.cardTheme as string | undefined)}
+            showEmail
+            showPhone={false}
+            showField
+            profileUrl={ownerProfileUrl}
+            side="front"
+          />
         </div>
 
         <div className="mt-6 grid grid-cols-1 gap-2 sm:grid-cols-2">
