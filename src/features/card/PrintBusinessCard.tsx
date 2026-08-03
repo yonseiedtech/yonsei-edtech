@@ -185,7 +185,7 @@ export default function PrintBusinessCard({
               )}
               {showField && user.field && (
                 <p className="truncate text-[8px]" style={{ color: c.accent }}>
-                  #{user.field}
+                  {user.field}
                 </p>
               )}
             </div>

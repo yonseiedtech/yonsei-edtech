@@ -359,7 +359,7 @@ export function BusinessCardPrintPdfDocument({
                   {fields.affiliationLine ? (
                     <Text style={styles.affiliation}>{fields.affiliationLine}</Text>
                   ) : null}
-                  {fieldTag ? <Text style={styles.fieldTag}>#{fieldTag}</Text> : null}
+                  {fieldTag ? <Text style={styles.fieldTag}>{fieldTag}</Text> : null}
                 </View>
               </View>
             </View>
