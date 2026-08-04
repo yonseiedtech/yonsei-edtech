@@ -33,6 +33,7 @@ import { useLogWritingActivity } from "./useWritingPaperHistory";
 import ResearchReportInterview, { TaskStepsField } from "./ResearchReportInterview";
 import VariableSyncPanel from "./VariableSyncPanel";
 import ResearchQuestionSyncPanel from "./ResearchQuestionSyncPanel";
+import TopicDeepDiveSyncPanel from "./TopicDeepDiveSyncPanel";
 import ResearchJourneyGuide from "./ResearchJourneyGuide";
 import { asArray, normalizeVariables } from "./normalize-arrays";
 
@@ -1311,6 +1312,19 @@ function Field11Context({ form, setField, readOnly }: FieldStepProps) {
       sub="본인이 관심 있는 교육 현장의 기본 맥락을 작성해 주세요. 대상 학습자, 교육 형태, 교과 또는 학습 주제, 현장 특성을 중심으로 정리합니다."
     >
       <div className="space-y-4">
+        <TopicDeepDiveSyncPanel
+          readOnly={readOnly}
+          current={{
+            fieldSubject: form.fieldSubject,
+            fieldAudience: form.fieldAudience,
+            researchApproach: form.researchApproach,
+          }}
+          onApply={(patch) => {
+            if (patch.fieldSubject !== undefined) setField("fieldSubject", patch.fieldSubject);
+            if (patch.fieldAudience !== undefined) setField("fieldAudience", patch.fieldAudience);
+            if (patch.researchApproach !== undefined) setField("researchApproach", patch.researchApproach);
+          }}
+        />
         <div className="grid gap-4 sm:grid-cols-2">
           <div>
             <label className="mb-1 block text-xs font-medium text-muted-foreground">대상 학습자</label>

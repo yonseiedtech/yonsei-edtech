@@ -39,6 +39,10 @@ export interface TEResult {
   frames: TETopicFrame[];
   /** 답 조합의 제약을 짚어주는 주의 문구 (예: 효과 검증인데 대상 접근 불가) */
   caution?: string;
+  /** 연구 대상 표현 (예: "중학생") — 저장 시드·보고서 대상 프리필용 */
+  target: string;
+  /** 관심 소재 표현 (예: "생성형 AI") — 저장 시드·보고서 주제 프리필용 */
+  topic: string;
   /** 선배 논문 매칭용 — 연구대상 라벨 (thesis.analysis.subjects 와 대조) */
   subjectTerms: string[];
   /** 선배 논문·아카이브 개념 매칭용 — 관심분야 키워드 */
@@ -505,7 +509,7 @@ export function teRecommend(a: TEAnswers): TEResult | null {
     }
   }
 
-  return { frames, caution, subjectTerms, interestTerms };
+  return { frames, caution, target, topic, subjectTerms, interestTerms };
 }
 
 // ── 선배 논문·아카이브 개념 매칭 ──────────────────────────────────────────

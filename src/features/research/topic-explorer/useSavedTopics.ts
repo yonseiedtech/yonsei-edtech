@@ -14,7 +14,7 @@ import { useCallback, useMemo } from "react";
 import { toast } from "sonner";
 import { profilesApi } from "@/lib/bkend";
 import { useAuthStore } from "@/features/auth/auth-store";
-import type { SavedTopicDirection } from "@/types";
+import type { SavedTopicDirection, TopicSeed } from "@/types";
 
 function newId(): string {
   try {
@@ -33,7 +33,7 @@ export interface UseSavedTopics {
   /** 문장이 이미 저장돼 있는지 (중복 저장 방지용) */
   isSaved: (label: string) => boolean;
   /** 추천 프레임 저장 — 중복이면 건너뜀 */
-  save: (input: { label: string; approach?: string; note?: string }) => Promise<void>;
+  save: (input: { label: string; approach?: string; note?: string; seed?: TopicSeed }) => Promise<void>;
   remove: (id: string) => Promise<void>;
   /** 핵심 주제 토글 — 새로 지정 시 기존 핵심 자동 해제 (단일 보장) */
   toggleCore: (id: string) => Promise<void>;
@@ -71,7 +71,7 @@ export function useSavedTopics(): UseSavedTopics {
   );
 
   const save = useCallback(
-    async (input: { label: string; approach?: string; note?: string }) => {
+    async (input: { label: string; approach?: string; note?: string; seed?: TopicSeed }) => {
       const label = input.label.trim();
       if (!label) return;
       if (saved.some((t) => t.label === label)) {
@@ -84,6 +84,7 @@ export function useSavedTopics(): UseSavedTopics {
         approach: input.approach,
         note: input.note,
         createdAt: new Date().toISOString(),
+        ...(input.seed ? { seed: input.seed } : {}),
       };
       await persist([entry, ...saved], "추천 주제를 저장했어요. 아래 목록에서 핵심 주제를 지정할 수 있어요.");
     },

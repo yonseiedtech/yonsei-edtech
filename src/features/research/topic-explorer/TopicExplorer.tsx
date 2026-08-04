@@ -430,7 +430,19 @@ export default function TopicExplorer({ user }: Props) {
                       <div className="flex shrink-0 items-center gap-1.5">
                         <button
                           type="button"
-                          onClick={() => void saveTopic({ label: f.sentence, approach: f.approach })}
+                          onClick={() =>
+                            void saveTopic({
+                              label: f.sentence,
+                              approach: f.approach,
+                              seed: {
+                                target: result.target,
+                                topic: result.topic,
+                                subjectTerms: result.subjectTerms,
+                                interestTerms: result.interestTerms,
+                                approach: f.approach,
+                              },
+                            })
+                          }
                           disabled={isSaved(f.sentence)}
                           className="inline-flex items-center gap-1 rounded-md border px-2 py-1 text-[11px] transition-colors hover:border-primary/40 hover:text-foreground disabled:cursor-default disabled:border-primary/30 disabled:bg-primary/5 disabled:text-primary text-muted-foreground"
                         >
